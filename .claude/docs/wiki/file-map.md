@@ -13,12 +13,12 @@
 | `js/sprites/ship.js` | 선박 측면 176×128 / 탑다운 28×28 | `shipSprite(hull, opts)`, `shipTopSprite`, `HULLS`, `TINTS`, `FLAGS`, `WATERLINE`, `SW` |
 | `js/sprites/scene.js` | 배경 + 이펙트 400×225 | `mapSprite`, `portSprite(style,seed)`, `openSeaSprite(mood)`, `blastSprite`, `smokeSprite`, `splashSprite`, `ballSprite`, `cannonSprite(kind,recoil)`, `VW/VH` |
 | `js/sprites/icons.js` | 교역품 아이콘 16×16 | `iconSprite(kind)`, `ICON_KEYS` |
-| `js/map/geo.js` | 지중해 지리 | `CITY_GEO`(좌표·깃발·규모), `ROUTES`(항로 그래프), `CURRENTS`(해류), `GEO_BY_ID` |
-| `js/data.js` | 교역품·도시 경제·선박·적 | `GOODS`, `CITY_TRADE`(supply/demand), `CITIES`(=지리+경제 합성), `ROUTES`/`CURRENTS`(geo에서 re-export), `SHIPS`(+`yards`/`rig`/`crewMin`/`upkeep`), `REFITS`, `SHOTS`, `CANNONS`, `TROOPS`(+`hire`), `RECRUITS`, `ENEMIES`, `SEA_EVENTS`, `MARKET`/`SPREAD`/`TARIFF`/`CONTRACT` |
+| `js/map/geo.js` | 지중해 지리 | `CITY_GEO`(좌표·깃발·규모·**`industry` 공업력**·`prizeYard`), `ROUTES`(항로 그래프), `CURRENTS`(해류), `GEO_BY_ID` |
+| `js/data.js` | 교역품·도시 경제·선박·적 | `GOODS`, `CITY_TRADE`(supply/demand), `CITIES`(=지리+경제 합성), `ROUTES`/`CURRENTS`(geo에서 re-export), `SHIPS`(+`tier`/`originFlag`/`era`/`requires`/`yards`=전통 조선지/`rig`/`crewMin`/`upkeep`), `REFITS`, `SHOTS`, `CANNONS`, `TROOPS`(+`hire`), `RECRUITS`, `ENEMIES`, `SEA_EVENTS`, `MARKET`/`SPREAD`/`TARIFF`/`CONTRACT` |
 | `js/world.js` | 저 혼자 도는 세계 — 생성·하루진행·습격·조회 | `initWorld`, `worldTick(days)`, `npcsOnLeg/npcsAtPort/npcPos`, `removeNpc`, `newsLines` |
 | `js/npc/config.js` | NPC 튜닝값(숫자만) | `NPC`(traders·pirates·raidBase·pressure·loadRatio·pickTop), `TRADER_SHIPS`/`PIRATE_SHIPS`, `PURSE` |
 | `js/npc/behavior.js` | NPC 판단(어디로·무엇을) | `chooseTrade`, `choosePirateMove`, `chooseWander` — 게임 모듈을 import하지 않고 `ctx`로만 받는다 |
-| `js/state.js` | 게임 상태 + 규칙 | `state`, `priceOf`, `costFor/gainFor`(시장 깊이), `tariffRate`, `windOf/windFactor/routeFactor`(바람·해류), `voyageCost`, `contractOffer/acceptContract/deliverContract`(대형 주문), `buy/sell`, `repair/hire`, `purchaseShip/boardShip/sellShip`(선단), `buyCannon/removeCannon`·`armsFactor/armsAimAt/zoneFactor`(무장), `setSlot/openSlots/trimLoadout`(갑판 배치), `voyageDays`, `rollSeaEvent`, `pickEnemy`, `playerTroops`, `resetGame` |
+| `js/state.js` | 게임 상태 + 규칙 | `state`, `priceOf`, `costFor/gainFor`(시장 깊이), `tariffRate`, `windOf/windFactor/routeFactor`(바람·해류), `voyageCost`, `contractOffer/acceptContract/deliverContract`(대형 주문), `buy/sell`, `repair/hire`, `purchaseShip/boardShip/sellShip`·`sellsShip/tierNeeded/yardCapable/shipPriceAt/buildableAt`(조선소)·`usedListings/buyUsed`(중고선)·`shipLockedBy`(해금), `buyCannon/removeCannon`·`armsFactor/armsAimAt/zoneFactor`(무장), `setSlot/openSlots/trimLoadout`(갑판 배치), `voyageDays`, `rollSeaEvent`, `pickEnemy`, `playerTroops`, `resetGame` |
 | `js/ui.js` | DOM 오버레이 헬퍼 | `el`, `modal`, `toast`, `refreshHUD`, `refreshLog`, `iconEl`, `spriteEl`, `spriteElTrim`(여백 크롭), `bar` |
 | `js/main.js` | 캔버스/씬 매니저/루프 | `go(scene)`, `toLogical`, `toScreen`, `viewport`, `register` |
 | `js/scenes/port.js` | 항구 — 시세·매매·정비·조선소 | `portScene` |
@@ -57,7 +57,8 @@ port ──출항──▶ map ──도시 클릭──▶ (항해 연출)
 | NPC 수·습격률·시장 영향 | `npc/config.js: NPC` |
 | 도시 수치의 근거·출처 | `content/city-evidence.json` → `node tools/check-evidence.mjs` |
 | 그림을 PNG로 교체 | `assets/manifest.json` (키는 `preview.html`에서) → `assets/README.md` |
-| 선박 성능/가격 | `data.js: SHIPS` |
+| 선박 성능/가격/등급 | `data.js: SHIPS` (`tier`=필요 공업력 · `requires`=해금) |
+| 어느 항구에서 뭘 짓나 | `map/geo.js: industry` (0~3) → [shipyard.md](shipyard.md) |
 | 적 강함·전리품 | `data.js: ENEMIES` |
 | 해적 조우 빈도 | `data.js: SEA_EVENTS`의 weight |
 | 시세 변동폭·주기 | `state.js: wobble()` (현재 3일 주기 ±15%) |

@@ -150,6 +150,30 @@
 
 ---
 
+## 조선소와 선박 — 배는 어디서 났나
+
+도시 특산품과 같은 방식으로 조사했다. 규칙 구현은 [shipyard.md](shipyard.md).
+
+- **베네치아 아르세날레는 배를 팔지 않았다.** 1104년 창설·1320년 확장된 국영 조선소로 갤리와 대형 상선 갤리를 찍어냈지만, 그 배는 국가 소유였고 매년 무역선단(**무다**)마다 **인칸토(incanto) 경매로 운항권만 임대**했다. 참가 자격은 **베네치아 귀족뿐**이었고 낙찰자는 소유권 없이 그 항해만 운영했다. 항로·출항일·선원 규정까지 원로원이 정했다. [Venetian Arsenal](https://en.wikipedia.org/wiki/Venetian_Arsenal) · [Muda (convoy)](https://en.wikipedia.org/wiki/Muda_(convoy))
+- **다만 상선은 민간의 것이었다.** 베네치아 무역량 대부분을 나른 원형 상선(cocca·nave)은 민간 조선소(squeri) 소유였고, 1499년 조사에 240톤 이상급이 **국유 4척 대 민간 25척**이었다. [Venice: the merchant fleet](https://www.venicethefuture.com/schede/uk/165-aliusid=165.htm)
+- **바르셀로나·나폴리·팔레르모 조선소는 전부 왕실 군용 시설이다.** 드라사네스 레이알스는 1283년 아라곤 왕 페드로 3세가 시칠리아 전쟁용으로 지은 갤리 조선소(1400년대 초 선거 16개·갤리 30척)이고, 나폴리 아르세날레도 1278년 앙주의 샤를이 50척 규모로 세운 군용 시설이다. 상선을 파는 상점이 아니었다. [Barcelona Royal Shipyard](https://en.wikipedia.org/wiki/Barcelona_Royal_Shipyard)
+- **제노바만 성격이 다르다** — 국가 독점이 아니라 코멘다 계약 기반의 **민간 자유 조선업**이었고, 캐랙(carraca)의 발상지로 꼽힌다. 그래서 게임에서도 캐랙 원산을 베네치아에서 제노바로 옮겼다. [Carrack](https://www.worldhistory.org/Carrack/)
+- **오스만 테르사네이 아미레(골든혼)가 지중해 최대급이다.** 1455년 메흐메트 2세 창설, 1513~15년 셀림 1세가 **선거 160개**로 확장해 5개월에 갤리 150척 이상을 뽑았다는 기록이 있다. 이스탄불 공업력을 베네치아·제노바와 같은 3으로 둔 근거. [Imperial Arsenal](https://en.wikipedia.org/wiki/Imperial_Arsenal)
+- **알제·튀니스는 자체 건조가 약했다.** 알제는 출항 기지였고 실제 조선 거점은 배후에 목재가 있는 **부지(Bougie)**였다. 튀니스(하프스)는 밧줄·타르·돛·닻·목재를 대부분 **수입**에 의존해, **나포 상선을 개조해 군함으로 쓰는 것**이 중요한 함대 확보 경로였다. 게임의 `prizeYard`(중고 매물이 더 자주·싸게 나오는 항구)가 이것이다. [Story of the Barbary Corsairs](https://www.gutenberg.org/files/22169/22169-h/22169-h.htm) · [History of medieval Tunisia](https://en.wikipedia.org/wiki/History_of_medieval_Tunisia)
+- **배를 구하는 방법**: 신조는 **주문 제작**이 기본이라 수개월~1년이 걸렸고, 재고를 쌓아두고 파는 상점식 판매의 근거는 약하다. 즉시 손에 넣을 수 있는 것은 **중고선과 나포선**이었다 — 나포선 경매·매각은 지중해 사략 관행으로 강하게 확인된다. 게임의 중고 매물이 이 자리를 메운다. [Medieval England — Shipbuilding](https://memp.ace.fordham.edu/shipbuilding/) · [Privateering](https://www.encyclopedia.com/social-sciences-and-law/law/international-law/privateering)
+
+### 선종 이름 — 시대를 벗어났던 것들
+
+| 옛 이름 | 실제 시기 | 바꾼 이름 |
+|---|---|---|
+| 블랙월 프리깃 | **1837~1875년** 런던 블랙월 조선소 | 갈레아스(베네치아 대형 갤리, 레판토의 주역) |
+| 인디아맨 | 17~18세기 동인도회사선 | 라구사 아르고시(두브로브니크 대형 상선) |
+| 슈퍼 프리깃 | 후대 개념 | 대형 갈레온 |
+
+국적 태그도 둘 고쳤다 — **브리간틴은 영국이 아니라 지중해**(이탈리아어 brigantino, 해적선에서 유래), **캐랙은 베네치아보다 제노바 기원설이 우세**하다. 카라벨의 "스페인" 태그는 유지했다: 원산은 포르투갈이지만 나폴리·팔레르모가 1442년부터 아라곤 지배였으므로 아라곤 항구망으로 설명된다.
+
+**플류트는 1590년대 네덜란드 호른에서 발명**돼 게임 시대 초·중반에는 없었다. 이름을 바꾸는 대신 `era: 'modern'` + `requires: 'carrack'`으로 두어, 캐랙을 몰아 본 뒤에야 손에 들어오는 수입 신형선으로 처리했다.
+
 ## 게임성이 고증을 덮어쓴 곳 (의도적)
 
 되돌리기 전에 여기를 먼저 읽을 것. 전부 "고증이 틀려서"가 아니라 **게임이 성립하지 않아서** 둔 것이다.

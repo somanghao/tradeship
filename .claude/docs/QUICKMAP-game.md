@@ -10,7 +10,7 @@
 | 전투 · 포격 · 조준 미니게임 · 거리(range) · 명중/치명타 · 데미지 공식 · **탄종(포도탄·사슬탄·가열탄)** · 돛 손상 · 화재 · 백병전 · 병종 능력치 · 자세(돌격/난전/방진/일제사격) · 적 AI · 적 5티어 · 도주 · 나포 편입 · 격침 · 전리품 · 이펙트 타이밍 · 갑판 배치 | [wiki/battle-system.md](wiki/battle-system.md) | 전투 2단계 규칙과 전 수치 |
 | 선단 · 배 여러 척 · 구입/승선/매각 · **국적별 조선소(어디서 파나)** · 정박지 · 예인 · **개장(동판·장갑·돛증축·골조·격실·레이지)** · 최소 인원 · 대포 종류(경포·중포·장포) · 포문 상한 · 탄약고 · 갑판 슬롯 · 병종 고용비 · 배치 환불 | [wiki/shipyard.md](wiki/shipyard.md) | 조선소 4탭의 규칙과 수치 |
 | 상인/해적 NPC · 세계가 혼자 돈다 · 시장 압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 · NPC 수·행동 규칙 교체 | [wiki/world-npc.md](wiki/world-npc.md) | 세계와 계약. 숫자는 `npc/config.js`, 판단은 `npc/behavior.js`, 집행은 `world.js` |
-| 경제 관측 · 시세가 실제로 움직이나 · 물자가 부족한 항구에 닿나 · 현금 흐름 · 도시×품목 매트릭스 · 자산 곡선 확인 | [wiki/economy-trade.md](wiki/economy-trade.md) | 대시보드 `http://localhost:8891/dashboard/` — 게임 모듈을 그대로 돌려 계측한다 |
+| 경제 관측 · 시세가 실제로 움직이나 · 물자가 부족한 항구에 닿나 · 현금 흐름 · 도시×품목 매트릭스 · 자산 곡선 확인 | `dashboard/` (`measure.mjs`가 계측, `dash.js`가 렌더) | `python serve.py` 후 `/dashboard/` — 게임 모듈을 그대로 돌린다. 수치 근거는 [economy-trade.md](wiki/economy-trade.md) |
 | **도시 특산품 고증** · 어느 도시가 뭘 팔았나 · 깃발/국적 근거 · 왜 이 수치인가 · 사료 출처 | [wiki/city-goods-history.md](wiki/city-goods-history.md) | 서술본. 기계가 읽는 정본은 `content/city-evidence.json` — **`CITY_TRADE`를 고치기 전에 필독** |
 | 파일이 뭘 담당하나 · 데이터 조정 지점 · 씬 흐름 | [wiki/file-map.md](wiki/file-map.md) | 파일↔기능 맵 |
 
