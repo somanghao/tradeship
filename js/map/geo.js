@@ -16,26 +16,32 @@
           15~16세기 기준으로 맞춰져 있다: 로도스=성 요한 기사단(1522년까지) · 마르세유=프랑스(1481년 프로방스 병합)
           · 튀니스=하프스 왕조(오스만 확정은 1574년). 근거 → .claude/docs/wiki/city-goods-history.md
     seed  항구 그림을 결정하는 난수 씨앗(같은 값이면 같은 항구 그림)
-    size  항구 규모 1~3 — 시장 깊이와 입항세가 여기서 나온다 */
+    size  항구 규모 1~3 — 시장 깊이와 입항세가 여기서 나온다
+    industry 조선 공업력 0~3 — **어떤 배를 지을 수 있는가**를 정한다(`SHIPS[].tier` 이상이어야 한다).
+          국적별 조선소를 하드코딩하는 대신 이 수치로 푼다 — 도시를 추가하면 자동으로 정해지고,
+          "제 나라 배는 짓기 쉽다"(원산국 항구는 요구등급 −1)로 기술 전파도 표현된다.
+          0=내륙이라 못 짓는다 · 1=소형까지 · 2=대형 상선까지 · 3=최상급까지.
+    prizeYard 나포선을 뜯어 고쳐 파는 항구 — 중고 매물이 더 자주, 더 싸게 나온다.
+          튀니스·알제는 자체 건조가 약해 나포 상선 개조가 주된 함대 확보 수단이었다. */
 export const CITY_GEO = [
-  { id: 'venezia',    name: '베네치아',     region: '아드리아',   style: 'latin',    x: 141, y: 63,  flag: 'venice',  seed: 1101, size: 3 },
-  { id: 'genova',     name: '제노바',       region: '리구리아',   style: 'latin',    x: 116, y: 76,  flag: 'genoa',   seed: 1202, size: 3 },
-  { id: 'marseille',  name: '마르세유',     region: '프로방스',   style: 'latin',    x: 91,  y: 71,  flag: 'france',  seed: 1303, size: 2 },
-  { id: 'barcelona',  name: '바르셀로나',   region: '카탈루냐',   style: 'latin',    x: 57,  y: 89,  flag: 'spain',   seed: 1404, size: 3 },
-  { id: 'napoli',     name: '나폴리',       region: '캄파니아',   style: 'latin',    x: 131, y: 110, flag: 'spain',   seed: 1505, size: 2 },
-  { id: 'palermo',    name: '팔레르모',     region: '시칠리아',   style: 'latin',    x: 151, y: 144, flag: 'spain',   seed: 1606, size: 2 },
-  { id: 'tunis',      name: '튀니스',       region: '이프리키야', style: 'levant',   x: 174, y: 157, flag: 'hafsid',  seed: 1707, size: 2 },
-  { id: 'algiers',    name: '알제',         region: '마그레브',   style: 'levant',   x: 106, y: 151, flag: 'ottoman', seed: 1808, size: 2 },
-  { id: 'athens',     name: '아테네',       region: '아티카',     style: 'hellenic', x: 191, y: 110, flag: 'ottoman', seed: 1909, size: 2 },
-  { id: 'rodos',      name: '로도스',       region: '에게',       style: 'hellenic', x: 239, y: 109, flag: 'hospitaller', seed: 2010, size: 1 },
-  { id: 'istanbul',   name: '이스탄불',     region: '보스포루스', style: 'hellenic', x: 241, y: 55,  flag: 'ottoman', seed: 2111, size: 3 },
+  { id: 'venezia',    name: '베네치아',     region: '아드리아',   style: 'latin',    x: 141, y: 63,  flag: 'venice',  seed: 1101, size: 3, industry: 3 },
+  { id: 'genova',     name: '제노바',       region: '리구리아',   style: 'latin',    x: 116, y: 76,  flag: 'genoa',   seed: 1202, size: 3, industry: 3 },
+  { id: 'marseille',  name: '마르세유',     region: '프로방스',   style: 'latin',    x: 91,  y: 71,  flag: 'france',  seed: 1303, size: 2, industry: 2 },
+  { id: 'barcelona',  name: '바르셀로나',   region: '카탈루냐',   style: 'latin',    x: 57,  y: 89,  flag: 'spain',   seed: 1404, size: 3, industry: 2 },
+  { id: 'napoli',     name: '나폴리',       region: '캄파니아',   style: 'latin',    x: 131, y: 110, flag: 'spain',   seed: 1505, size: 2, industry: 2 },
+  { id: 'palermo',    name: '팔레르모',     region: '시칠리아',   style: 'latin',    x: 151, y: 144, flag: 'spain',   seed: 1606, size: 2, industry: 2 },
+  { id: 'tunis',      name: '튀니스',       region: '이프리키야', style: 'levant',   x: 174, y: 157, flag: 'hafsid',  seed: 1707, size: 2, industry: 1, prizeYard: true },
+  { id: 'algiers',    name: '알제',         region: '마그레브',   style: 'levant',   x: 106, y: 151, flag: 'ottoman', seed: 1808, size: 2, industry: 1, prizeYard: true },
+  { id: 'athens',     name: '아테네',       region: '아티카',     style: 'hellenic', x: 191, y: 110, flag: 'ottoman', seed: 1909, size: 2, industry: 1 },
+  { id: 'rodos',      name: '로도스',       region: '에게',       style: 'hellenic', x: 239, y: 109, flag: 'hospitaller', seed: 2010, size: 1, industry: 1 },
+  { id: 'istanbul',   name: '이스탄불',     region: '보스포루스', style: 'hellenic', x: 241, y: 55,  flag: 'ottoman', seed: 2111, size: 3, industry: 3 },
   // 부르사·이즈니크는 실제로는 **내륙**이다(부르사의 외항은 뮈단야, 이즈니크는 호수 동안).
   // 이스탄불을 통해서만 이어 두어 "안쪽 시장까지 들어가면 원가에 산다"는 구조로 삼았다.
   // 좌표는 이름표가 이스탄불 표식·서로를 덮지 않는 자리로 잡았다 — 지도에서 이 셋이 가장 붐빈다.
-  { id: 'bursa',      name: '부르사',       region: '비티니아',   style: 'hellenic', x: 222, y: 66,  flag: 'ottoman', seed: 2414, size: 2 },
-  { id: 'iznik',      name: '이즈니크',     region: '비티니아',   style: 'hellenic', x: 242, y: 76,  flag: 'ottoman', seed: 2515, size: 1 },
-  { id: 'beirut',     name: '베이루트',     region: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2 },
-  { id: 'alexandria', name: '알렉산드리아', region: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3 },
+  { id: 'bursa',      name: '부르사',       region: '비티니아',   style: 'hellenic', x: 222, y: 66,  flag: 'ottoman', seed: 2414, size: 2, industry: 0 },
+  { id: 'iznik',      name: '이즈니크',     region: '비티니아',   style: 'hellenic', x: 242, y: 76,  flag: 'ottoman', seed: 2515, size: 1, industry: 0 },
+  { id: 'beirut',     name: '베이루트',     region: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2, industry: 1 },
+  { id: 'alexandria', name: '알렉산드리아', region: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3, industry: 2 },
 ];
 
 /* 항로 — 인접 도시 간 연결. 여기에 없는 두 항구는 직항이 없다.

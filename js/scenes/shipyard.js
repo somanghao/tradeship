@@ -18,6 +18,8 @@ import {
   gunCap, armsTotal, armsFactor, armsAimAt, zoneFactor, buyCannon, removeCannon,
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
   pushLog, hasRefit, buyRefit, sellsShip, yardsOf, buyShot, shipSpeed, shorthanded,
+  industryOf, tierNeeded, shipPriceAt, shipLockedBy, yardCapable, buildableAt,
+  usedListings, buyUsed,
   fleetUpkeep,
 } from '../state.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, spriteEl, spriteElTrim } from '../ui.js';
@@ -153,6 +155,7 @@ function layout() {
 
 const TABS = [
   { id: 'ship', label: '선박' },
+  { id: 'used', label: '중고' },
   { id: 'crew', label: '선원' },
   { id: 'arms', label: '무장' },
   { id: 'refit', label: '개장' },
@@ -179,6 +182,7 @@ function buildUI() {
         onclick: () => { tab = t.id; armsHilite = null; buildUI(); },
       }))),
     el('div.yard-body', {}, tab === 'ship' ? shipTab()
+                          : tab === 'used' ? usedTab()
                           : tab === 'crew' ? crewTab()
                           : tab === 'arms' ? armsTab()
                           : refitTab()),
@@ -222,14 +226,15 @@ function shipTab() {
                  : rec ? el(`span.badge${here ? '.here' : ''}`,
                             { text: here ? '이 항구 정박' : `${CITY_BY_ID[rec.at].name} 정박` })
                        : el(`span.badge${sellsShip(key) ? '.buy' : ''}`, {
-                           text: sellsShip(key) ? `${s.price.toLocaleString('ko-KR')}닢` : '취급 안 함',
+                           text: sellsShip(key) ? `${shipPriceAt(key).toLocaleString('ko-KR')}닢`
+                             : shipLockedBy(key) ? '아직 못 짓는다' : '이 항구엔 못 짓는다',
                          }),
         ]),
         el('div.sp', { text: `선체 ${s.hp} · 화물 ${s.cargo} · 포문 ${s.guns}(최대 ${Math.floor(s.guns * 1.5)}) · 선원 ${s.crewMin ?? 0}~${s.crewMax} · 속력 ${s.speed} · 유지 ${s.upkeep}닢/일` }),
         el('div.ds', { text: s.desc }),
         !rec && !sellsShip(key)
           ? el('div.ds', {
-              text: yardsOf(key).length ? `→ ${yardsOf(key).join(' · ')} 조선소에서 판다` : '→ 시중에 나오지 않는 배',
+              text: whyNot(key, s),
               style: { color: '#8a7f6a' },
             })
           : null,
@@ -239,6 +244,11 @@ function shipTab() {
   }
 
   return el('div', {}, [
+    el('p.yard-note', {
+      html: `<b>${city.name}</b> 조선소 — 공업력 <b>${industryOf()}</b>`
+          + `(0=내륙 · 1=소형 · 2=대형 상선 · 3=최상급). 제 나라 배는 한 등급 쉽게 짓고, `
+          + '오래 지어온 항구는 값이 싸다.',
+    }),
     el('p.yard-note', {
       html: '줄을 누르면 그 배가 <b>화면에 뜬다</b>. 배는 마지막으로 내린 항구에 그대로 남고, '
           + '갈아탈 때 자동으로 팔지 않는다.',
@@ -250,14 +260,78 @@ function shipTab() {
   ]);
 }
 
+/** 왜 여기선 못 짓는지 — 공업력이 모자란 것과 아직 안 열린 것은 다른 문제다 */
+function whyNot(key, s) {
+  if (!s.tier) return '→ 시중에 나오지 않는 배';
+  const lock = shipLockedBy(key);
+  if (lock) return `→ ${lock}을(를) 몰아 본 선주에게만 내놓는다`;
+  const where = buildableAt(key).slice(0, 4).join(' · ');
+  return `→ 이 항구는 공업력 ${industryOf()}, ${tierNeeded(key)} 필요`
+       + (where ? ` — ${where}에서 짓는다` : '');
+}
+
+/** 중고 매물 — 신조만 있으면 "그 항구에 가기 전엔 방법이 없다"가 된다.
+    싸게 즉시 손에 넣되 선체가 상해 있어 수리비가 든다. */
+function usedTab() {
+  const lots = usedListings();
+  const prize = !!city.prizeYard;
+  const head = el('p.yard-note', {
+    html: prize
+      ? `<b>${city.name}</b>는 나포선을 뜯어 고쳐 넘기는 항구다 — 매물이 자주, 싸게 걸린다. `
+        + '선체가 상한 채로 오니 수리비를 셈에 넣어야 한다.'
+      : '중고선은 값이 싸고 <b>지금 바로</b> 손에 들어오지만 선체가 상해 있다. '
+        + '매물은 사흘마다 갈린다.',
+  });
+  if (!lots.length) {
+    return el('div', {}, [head, el('div.yard-seen', { text: '지금은 나온 매물이 없다.' })]);
+  }
+  const rows = lots.map((lot) => {
+    const s = SHIPS[lot.key];
+    const mine = !!state.fleet[lot.key];
+    return el('div.yard-ship', {}, [
+      spriteEl(shipTopSprite(lot.key, { tint: s.tint, flag: city.flag }), 2),
+      el('div.info', {}, [
+        el('div.n', {}, [
+          el('b', { text: s.name }),
+          el('span.origin', { text: lot.prize ? '나포선 개조' : '중고' }),
+          el('span.badge.buy', { text: `${lot.price.toLocaleString('ko-KR')}닢` }),
+          el('span.origin', { text: `정가 ${s.price.toLocaleString('ko-KR')}닢` }),
+        ]),
+        el('div.sp', {
+          text: `선체 ${lot.hp}/${s.hp} (${Math.round(lot.wear * 100)}% 상함) · 화물 ${s.cargo}`
+              + ` · 포문 ${s.guns} · 선원 ${s.crewMin ?? 0}~${s.crewMax} · 속력 ${s.speed}`,
+        }),
+        el('div.ds', { text: s.desc }),
+      ]),
+      el('div.acts', {}, [
+        mine ? el('span.dim', { text: '이미 보유' })
+             : el('button.btn.sm', {
+                 text: '사들이기',
+                 disabled: lot.price > state.gold,
+                 onclick: () => {
+                   const r = buyUsed(lot.key);
+                   if (!r.ok) return toast(r.reason, 'bad');
+                   toast(`${s.name} 중고 매입 · ${r.cost.toLocaleString('ko-KR')}닢 (선체 ${r.hp}/${s.hp})`, 'good');
+                   pushLog(`${city.name}에서 중고 ${s.name}을(를) 사들였다. 선체가 ${Math.round((1 - r.hp / s.hp) * 100)}% 상해 있다.`, 'good');
+                   redraw();
+                 },
+               }),
+      ]),
+    ]);
+  });
+  return el('div', {}, [head, ...rows]);
+}
+
 function shipActions(key, s, rec, aboard, here) {
   if (aboard) return [el('span.dim', { text: '—' })];
 
   if (!rec) {
-    if (!sellsShip(key)) return [el('span.dim', { text: '타국 배' })];
+    if (!sellsShip(key)) {
+      return [el('span.dim', { text: shipLockedBy(key) ? '미해금' : `공업력 ${tierNeeded(key)}` })];
+    }
     return [el('button.btn.sm', {
-      text: '구입',
-      disabled: s.price > state.gold,
+      text: '건조',
+      disabled: shipPriceAt(key) > state.gold,
       onclick: () => {
         const r = purchaseShip(key);
         if (!r.ok) return toast(r.reason, 'bad');

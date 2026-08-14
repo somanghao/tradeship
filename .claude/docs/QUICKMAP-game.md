@@ -22,7 +22,10 @@
 | 시세 성향 | `data.js: CITY_TRADE` — `supply`(배율<1, 산지) / `demand`(배율>1, 수요지). 근거 → [city-goods-history.md](wiki/city-goods-history.md) |
 | 항로 연결 | `map/geo.js: ROUTES` — 선 하나가 경제 전체의 물길을 바꾼다 |
 | 교역품 추가 | `data.js: GOODS` + `sprites/icons.js`에 아이콘 |
-| 선박 성능·가격·국적 | `data.js: SHIPS` — `yards`(파는 항구) · `crewMin`(최소 인원) · `upkeep`(하루 유지비) · `leak`(누수) |
+| 선박 성능·가격·국적 | `data.js: SHIPS` — `tier`(필요 공업력) · `originFlag`(제 나라 항구는 한 등급 쉽다) · `era`/`requires`(해금) · `yards`(**전통 조선지 = 값 할인**, 판매처가 아니다) · `crewMin` · `upkeep` · `leak` |
+| 어느 항구에서 뭘 짓나 | `map/geo.js: industry`(0~3) ≥ `SHIPS[].tier`. 판정은 `state.js: sellsShip/tierNeeded/yardCapable`, 값은 `shipPriceAt` |
+| 중고선·나포선 매물 | `state.js: usedListings/buyUsed` · `data.js: USED`는 `state.js`에 있다(`USED` 상수) · 나포선 개조항은 `map/geo.js: prizeYard` |
+| 상위 선박 해금 | `data.js: SHIPS[].requires` — 그 선종을 몰아 봤어야(`state.everOwned`) 다음 배가 열린다 |
 | 개장 종류·값 | `data.js: REFITS` — 효과 반영은 `state.js`의 `shipSpeed`/`maxHullOf`/`gunCap`/`fleeBonus`/`crewLossFactor` |
 | 탄종 성능·값 | `data.js: SHOTS` (`dmg`/`crew`/`sail`/`fire`) — 재고는 `state.shots`, 소모는 `useShot()` |
 | 적 강함·전리품·나포선 | `data.js: ENEMIES` (`prize`=나포 시 얻는 선종) / 등장 확률은 `state.js: pickEnemy()` |
@@ -37,7 +40,7 @@
 | 입항세 | `data.js: TARIFF` (도시 size별) |
 | 항해 비용 | `state.js: CREW_WAGE`(2.4) · `SUPPLY_UNIT`(1.3) · 선종별 `upkeep` |
 | 바람·해류 | `map/geo.js: CURRENTS` · 배의 `rig` · `state.js: windOf/windFactor/routeFactor` |
-| 계약 규모·보수·위약금 | `data.js: CONTRACT` |
+| 계약 규모·보수·위약금 | `data.js: CONTRACT` — **보수(`value`)를 먼저 정하고 수량을 역산**한다(품목이 비싸다고 계약이 통째로 커지지 않게) |
 | NPC 수·습격률·시장 영향·싣는 양 | `npc/config.js: NPC` (traders·pirates·raidBase·pressure·loadRatio·pickTop) |
 | NPC가 어디로 갈지·무엇을 살지 | `npc/behavior.js: chooseTrade/choosePirateMove` — `ctx`로만 받으므로 통째로 갈아 끼워도 `world.js`는 그대로 |
 | 도시 수치의 근거·출처 | `content/city-evidence.json` (정본) — 고치면 `node tools/check-evidence.mjs`로 정합 확인. 대시보드 매트릭스 **근거** 모드에서도 보인다 |
@@ -63,6 +66,9 @@
 - **`CITY_TRADE` 수치에는 고증 근거가 달려 있다.** 15~16세기 실제 교역을 조사해 맞춰 둔 것이라, 밸런스만 보고 되돌리면 같은 오류가 재발한다(곡물을 북아프리카 수요지로 두는 것이 대표적 — 알제·튀니스는 곡물 **수출**지였다). 게임성 때문에 일부러 고증을 덮어쓴 곳도 문서에 따로 적혀 있으니 고치기 전에 [city-goods-history.md](wiki/city-goods-history.md)를 본다.
 - **품목마다 산지와 수요지가 둘 다 있어야 죽지 않는다.** 산지만 있고 수요가 0이면 그 품목은 중립가로만 팔린다(거래는 되지만 재미가 준다). 반대로 수요만 있고 산지가 0이면 그 칸은 아예 죽는다 — 모피가 그럴 뻔했고 이스탄불(흑해 관문)을 산지로 세워 살렸다. 확인은 대시보드 **물동량** 모드.
 - **도시를 추가하면 지도에서 이름표가 겹친다.** 클릭 판정은 반경 6px(`map.js: onClick`)이라 도시 간 12px 이상이어야 하고, 이름표는 도시 **위쪽**(`y-r-4`)에 배경 박스째 그려져 이웃 도시의 항구 표식을 덮는다. 부르사·이즈니크를 넣었을 때 이스탄불과 4건이 겹쳤다 — 좌표를 넣고 나서 **겹침을 계산해 보고** 자리를 잡는다(라벨 폭은 한글 6px 폰트 기준 글자당 약 6px).
+- **조선소는 하드코딩된 목록이 아니라 도시 공업력이다.** 예전에는 `SHIPS[].yards`에 판매 항구를 박아 뒀는데, 도시를 늘릴 때마다 어긋나고 "왜 여기선 못 사나"가 설명되지 않았다. 지금은 `industry ≥ tier`로 풀고 `yards`는 **값이 싸지는 전통 조선지**로 의미가 바뀌었다 — 옛 뜻으로 읽지 말 것.
+- **계약 보수는 수량 × 단가가 아니라 목표 보수에서 역산한다.** 수량을 먼저 뽑으면 비단·금괴가 걸렸을 때 계약 하나가 5만 닢을 넘었다(시작 자금이 900닢인데). `CONTRACT.value`가 규모를 잡고 수량은 거기서 나온다.
+- **시뮬의 `ORDER`는 화물칸 오름차순이다.** 가격순으로 두면 갤리(비싸고 짐은 적다)를 사서 화물칸이 줄어든다. 그리고 **지금 타는 배보다 나은 것만** 사게 해야 한다 — 안 그러면 싼 배를 사서 하향 갈아탄다(실제로 그랬다).
 - **수요지를 신설해도 항로가 멀면 아무도 안 나른다.** NPC는 이웃 한 칸만 보므로 중간 항구가 먼저 흡수한다. 이스탄불 곡물 수요를 넣었더니 유입이 **1**이었고, 알렉산드리아 직항을 놓고서야 흘렀다. 수요를 추가하면 대시보드 "부족한데 아무도 안 나르는 곳"을 반드시 확인할 것.
 - **도시는 두 파일에 걸쳐 있다.** 지리(`map/geo.js: CITY_GEO`)와 경제(`data.js: CITY_TRADE`)를 id로 맞물려 `CITIES`를 합성한다. 한쪽에만 추가하면 게임은 돌지만 그 항구가 아무것도 안 팔거나 지도에 안 나온다 — 콘솔 경고로만 드러난다.
 - **패배는 게임오버가 아니다.** 금화 50%·화물 전량을 잃고 항구로 예인된다(재기 가능). 이 처리를 바꿀 때 진행 불가 상태가 되지 않게.

@@ -10,11 +10,14 @@ import { GOODS, SHIPS } from '../js/data.js';
 import {
   state, resetGame, advanceDays, neighborsOf, voyageDays, voyageCost,
   buy, sell, costFor, gainFor, tariffRate, purchaseShip, boardShip, sellsShip,
-  cargoFree, repair, hire, shorthanded,
+  cargoFree, repair, hire, shorthanded, shipPriceAt,
 } from '../js/state.js';
 import { initWorld, worldTick } from '../js/world.js';
 
-export const ORDER = ['caravel', 'fluyt', 'brig', 'carrack', 'frigate', 'galleon', 'indiaman', 'superfrigate'];
+/* 무역선으로서의 등급 — **화물칸 오름차순**이다. 이 시뮬은 순수 무역만 재므로
+   전투력이 아니라 얼마나 싣느냐가 곧 등급이다(갤리는 비싸도 짐을 적게 실어 아래에 온다). */
+export const ORDER = ['galley', 'cocca', 'caravel', 'frigate', 'brig',
+  'superfrigate', 'fluyt', 'galleon', 'carrack', 'indiaman'];
 
 /** 목적지 하나에 대해 화물칸을 채우는 최적 조합(그리디).
     실제 플레이어처럼 여러 품목을 섞는다 — 압력이 품목별로 걸리므로 분산이 이득이다. */
@@ -69,10 +72,13 @@ export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
     const goldOpen = state.gold;
     let shipSpend = 0, repairSpend = 0, hireSpend = 0;
 
-    // 지금 항구에서 살 수 있는 배가 있으면 산다(가장 비싼 것부터 — 곧 갈아탈 배)
+    // 지금 항구에서 살 수 있는 배가 있으면 산다(가장 큰 것부터 — 곧 갈아탈 배).
+    // **지금 타는 배보다 나은 것만** — 안 그러면 싼 배를 사서 화물칸이 줄어드는 짓을 한다.
+    const curRank = ORDER.indexOf(state.shipKey);
     for (const key of [...ORDER].reverse()) {
+      if (ORDER.indexOf(key) <= curRank) continue;
       if (state.fleet[key] || !sellsShip(key)) continue;
-      if (SHIPS[key].price > state.gold * 0.92) continue;   // 운영자금은 남긴다
+      if (shipPriceAt(key) > state.gold * 0.92) continue;   // 운영자금은 남긴다 (값은 항구마다 다르다)
       const before = state.gold;
       if (purchaseShip(key).ok) {
         shipSpend += before - state.gold;

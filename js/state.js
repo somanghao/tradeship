@@ -28,6 +28,7 @@ export const state = {
   contract: null,            // 맡은 대형 주문 (한 번에 하나)
   npcs: [],                  // 저 혼자 도는 상인·해적 (world.js가 굴린다)
   known: new Set(['venezia']),
+  everOwned: new Set(['hulk']),   // 한 번이라도 몰아 본 선종 — 상위 선박 해금 조건(SHIPS[].requires)
   log: [],
   stats: { battles: 0, wins: 0, profit: 0, distance: 0 },
 };
@@ -190,11 +191,16 @@ export function contractOffer(cityId = state.at, day = state.day) {
   const goods = wants.length ? wants : GOODS.map((g) => g.id);
   const goodId = goods[Math.floor(hash(cityId, slot, 'good') * goods.length)];
 
-  const [lo, hi] = CONTRACT.size;
-  const qty = Math.round(lo + hash(cityId, slot, 'qty') * (hi - lo));
   const [pl, ph] = CONTRACT.payMul;
   const mul = pl + hash(cityId, slot, 'pay') * (ph - pl);
   const unit = priceOf(to, goodId);
+
+  // 보수를 먼저 정하고 수량을 역산한다 — 품목이 비싸다고 계약이 통째로 커지지 않게.
+  const [vl, vh] = CONTRACT.value;
+  const scale = 0.6 + CITY_BY_ID[cityId].size * 0.28;          // 큰 항구일수록 큰 일감
+  const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale;
+  const [ql, qh] = CONTRACT.qty;
+  const qty = Math.max(ql, Math.min(qh, Math.round(target / Math.max(1, unit * mul))));
   const pay = Math.round(unit * qty * mul);
 
   const legs = Math.max(1, voyageDays(cityId, to, day));
@@ -483,13 +489,65 @@ function stowFlagship() {
 }
 
 /** 이 항구의 조선소가 그 선종을 내놓는가 — 국적별로 파는 배가 다르다 */
-export function sellsShip(key, cityId = state.at) {
-  return (SHIPS[key].yards || []).includes(cityId);
+/* ── 조선소 ───────────────────────────────────────────────────
+   "어느 항구에서 어느 배를 짓는가"는 하드코딩된 목록이 아니라 **도시 공업력**으로 정해진다.
+   `map/geo.js: industry`(0~3) ≥ `SHIPS[].tier`면 지을 수 있고, 제 나라 배는 한 등급 쉽다.
+   도시를 추가해도 규칙이 알아서 따라오고, "왜 여기선 못 사나"가 수치로 설명된다. */
+
+export function industryOf(cityId = state.at) {
+  return CITY_BY_ID[cityId]?.industry ?? 0;
 }
 
-/** 그 배를 파는 항구 이름들 */
+/** 그 항구에서 이 배를 지으려면 필요한 공업력 — 원산국 항구는 1 낮다 */
+export function tierNeeded(key, cityId = state.at) {
+  const s = SHIPS[key];
+  const t = s.tier ?? 0;
+  if (!t) return Infinity;                                    // tier 0 = 시중에 안 나온다(시작배)
+  const home = s.originFlag && CITY_BY_ID[cityId]?.flag === s.originFlag;
+  return Math.max(1, t - (home ? 1 : 0));
+}
+
+/** 아직 열리지 않은 배면 "무엇을 몰아 봐야 하는지"를 돌려준다. 열렸으면 null. */
+export function shipLockedBy(key) {
+  const req = SHIPS[key]?.requires;
+  if (!req) return null;
+  if (state.everOwned?.has(req)) return null;
+  return SHIPS[req]?.name ?? req;
+}
+
+export function sellsShip(key, cityId = state.at) {
+  if (shipLockedBy(key)) return false;
+  return industryOf(cityId) >= tierNeeded(key, cityId);
+}
+
+/** 공업력만 놓고 보면 지을 수 있는가 (해금 여부는 따지지 않는다 — UI에서 이유를 갈라 보여주려고) */
+export function yardCapable(key, cityId = state.at) {
+  return industryOf(cityId) >= tierNeeded(key, cityId);
+}
+
+/** 그 배를 오래 지어온 전통 조선지 이름들 (값이 싸진다 — 살 수 있는 곳과는 다르다) */
 export function yardsOf(key) {
   return (SHIPS[key].yards || []).map((id) => CITY_BY_ID[id].name);
+}
+
+/** 지금 이 배를 지을 수 있는 항구 이름들 */
+export function buildableAt(key) {
+  return CITIES.filter((c) => sellsShip(key, c.id)).map((c) => c.name);
+}
+
+/* 값 — 공업력에 여유가 있는 항구일수록 싸고, 전통 조선지는 한 번 더 깎아준다.
+   같은 배라도 어디서 사느냐로 값이 갈려 "조선 강국까지 가서 산다"는 동기가 남는다. */
+export const YARD_SLACK_OFF = 0.07;   // 공업력 여유 1당
+export const YARD_SLACK_CAP = 0.15;
+export const YARD_TRADITION_OFF = 0.08;
+
+export function shipPriceAt(key, cityId = state.at) {
+  const s = SHIPS[key];
+  if (!sellsShip(key, cityId)) return s.price;
+  const slack = industryOf(cityId) - tierNeeded(key, cityId);
+  let p = s.price * (1 - Math.min(YARD_SLACK_CAP, Math.max(0, slack) * YARD_SLACK_OFF));
+  if ((s.yards || []).includes(cityId)) p *= 1 - YARD_TRADITION_OFF;
+  return Math.round(p);
 }
 
 /** 새 배를 산다 — 구입만 하고 기존 배는 그대로 둔다 */
@@ -497,13 +555,81 @@ export function purchaseShip(key) {
   const s = SHIPS[key];
   if (state.fleet[key]) return { ok: false, reason: '이미 보유한 선종이다' };
   if (!sellsShip(key)) {
-    const where = yardsOf(key);
-    return { ok: false, reason: where.length ? `${where.join('·')} 조선소에서만 판다` : '어디서도 팔지 않는 배다' };
+    if (!s.tier) return { ok: false, reason: '시중에 나오지 않는 배다' };
+    const lock = shipLockedBy(key);
+    if (lock) return { ok: false, reason: `${lock}을(를) 몰아 본 선주에게만 내놓는다` };
+    const where = buildableAt(key);
+    return {
+      ok: false,
+      reason: where.length
+        ? `이 항구는 공업력 ${industryOf()}이라 못 짓는다 (${tierNeeded(key)} 필요) — ${where.slice(0, 4).join('·')}`
+        : '어디서도 짓지 못하는 배다',
+    };
   }
-  if (s.price > state.gold) return { ok: false, reason: `금화가 ${(s.price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
-  state.gold -= s.price;
+  const price = shipPriceAt(key);
+  if (price > state.gold) return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  state.gold -= price;
   state.fleet[key] = { at: state.at, hp: s.hp, arms: { light: 0, medium: s.guns, long: 0 }, refits: {} };
-  return { ok: true, cost: s.price };
+  state.everOwned.add(key);
+  return { ok: true, cost: price };
+}
+
+/* ── 중고선 ───────────────────────────────────────────────────
+   신조만 있으면 "그 항구에 가기 전까지는 방법이 없다"가 된다. 실제로도 즉시 손에 넣을 수 있는 배는
+   신조가 아니라 **중고선과 나포선**이었다. 항구마다 매물이 사흘 주기로 갈리고,
+   나포선을 뜯어 고쳐 파는 항구(`prizeYard` — 튀니스·알제)는 더 자주, 더 싸게 나온다.
+   싸지만 선체가 상해 있어 수리비가 든다. */
+export const USED = {
+  priceMul: [0.52, 0.74],   // 정가 대비
+  hullMul: [0.45, 0.85],    // 선체 잔량
+  slots: 2,                 // 한 항구에 걸리는 매물 수 상한
+  cycle: 3,                 // 며칠마다 갈리나 (시세와 같은 리듬)
+};
+
+export function usedListings(cityId = state.at, day = state.day) {
+  const city = CITY_BY_ID[cityId];
+  if (!city) return [];
+  const ind = industryOf(cityId);
+  if (ind <= 0) return [];        // 내륙 도시는 배가 드나들지 않는다
+  const prize = !!city.prizeYard;
+  // 중고는 흘러드는 것이라 신조보다 관대하다 — 공업력보다 한 등급 위까지 들어온다.
+  const pool = Object.entries(SHIPS)
+    .filter(([k, s]) => s.tier > 0 && s.tier <= ind + 1 && !shipLockedBy(k))
+    .map(([k]) => k);
+  if (!pool.length) return [];
+
+  const out = [];
+  const slots = USED.slots + (prize ? 1 : 0);
+  const cyc = Math.floor(day / USED.cycle);
+  for (let i = 0; i < slots; i++) {
+    // hash()는 0~1 실수를 돌려준다 — 정수 비트연산을 쓰면 전부 0이 되어 매물이 사라진다.
+    if (hash(cityId, 'used', i, cyc) < (prize ? 0.30 : 0.48)) continue;   // 빈 자리도 있다
+    const key = pool[Math.floor(hash(cityId, 'usedkey', i, cyc) * pool.length)];
+    if (out.some((u) => u.key === key)) continue;
+    const s = SHIPS[key];
+    const r1 = hash(cityId, 'usedhull', i, cyc);
+    const r2 = hash(cityId, 'usedprice', i, cyc);
+    const hull = Math.max(8, Math.round(s.hp * (USED.hullMul[0] + r1 * (USED.hullMul[1] - USED.hullMul[0]))));
+    let price = s.price * (USED.priceMul[0] + r2 * (USED.priceMul[1] - USED.priceMul[0]));
+    if (prize) price *= 0.88;                                  // 나포선을 뜯어 고쳐 넘기는 항구
+    out.push({
+      key, hp: hull, price: Math.round(price), prize,
+      wear: 1 - hull / s.hp,
+    });
+  }
+  return out;
+}
+
+export function buyUsed(key, cityId = state.at) {
+  const lot = usedListings(cityId).find((u) => u.key === key);
+  if (!lot) return { ok: false, reason: '그런 매물이 없다' };
+  if (state.fleet[key]) return { ok: false, reason: '이미 보유한 선종이다' };
+  if (lot.price > state.gold) return { ok: false, reason: `금화가 ${(lot.price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  const s = SHIPS[key];
+  state.gold -= lot.price;
+  state.fleet[key] = { at: cityId, hp: lot.hp, arms: { light: 0, medium: s.guns, long: 0 }, refits: {} };
+  state.everOwned.add(key);
+  return { ok: true, cost: lot.price, hp: lot.hp };
 }
 
 /* ── 나포한 배 ────────────────────────────────────────────────
@@ -527,6 +653,7 @@ export function captureShip(key) {
     refits: {},
   };
   state.towing = key;      // 항해 중이라면 다음 입항지까지 끌고 간다
+  state.everOwned.add(key);   // 빼앗은 배도 "몰아 본" 것으로 친다 — 상위 선박 해금 경로가 하나 더 생긴다
   return { ok: true, scrapped: false };
 }
 
@@ -785,7 +912,7 @@ export function resetGame() {
     fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,
     loadout: ['captain', 'sailor', null, null, null, null],
-    known: new Set(['venezia']), log: [],
+    known: new Set(['venezia']), everOwned: new Set(['hulk']), log: [],
     stats: { battles: 0, wins: 0, profit: 0, distance: 0 },
   });
   trimLoadout();

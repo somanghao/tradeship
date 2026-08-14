@@ -47,9 +47,13 @@ export const SPREAD = 0.62;
    화물은 직접 조달해야 하고 기한도 있지만, 성사되면 시세보다 훨씬 후하게 쳐준다.
    "여러 항차를 굴려 모으는 길"과 "한 건을 크게 물어 도약하는 길"을 나란히 두기 위한 장치. */
 export const CONTRACT = {
-  size: [30, 90],         // 요구 수량
-  payMul: [1.30, 1.55],   // 목적지 시세 대비 보수 배율 (관세도 안 뗀다)
-  advance: 0.30,          // 선금 비율 (나머지는 납품할 때)
+  /* 보수를 먼저 정하고 **수량을 역산한다.** 전에는 수량(30~90)을 먼저 뽑고 단가를 곱해서,
+     비단·금괴처럼 비싼 품목이 걸리면 계약 하나가 5만 닢을 넘었다(시작 자금이 900닢인데).
+     지금은 "상관이 이 정도 규모의 일을 낸다"를 먼저 정하므로 품목이 뭐든 규모가 비슷하다. */
+  value: [900, 4000],     // 목표 보수 — 도시 size로 스케일된다(작은 항구는 작은 일감)
+  qty: [5, 64],           // 역산한 수량의 상하한 (화물칸을 넘는 일감도 있어야 큰 배가 값어치를 한다)
+  payMul: [1.22, 1.42],   // 목적지 시세 대비 보수 배율 (관세도 안 뗀다)
+  advance: 0.25,          // 선금 비율 (나머지는 납품할 때)
   daysPad: [4, 10],       // 편도 일수 × 1.6 + 이만큼이 기한
   // 위약금은 **선금보다 커야 한다**. 0.5로 뒀더니 선금만 받고 파기하는 것이
   // 순이득이 됐다(선금 6,896 − 위약금 3,448 = +3,448). 지금은 받은 것을 다 토하고 더 문다.
@@ -189,7 +193,17 @@ for (const id of Object.keys(CITY_TRADE)) {
 export const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
 
 /* 선박.
-   origin/yards = 어느 나라 배이고 어느 항구의 조선소가 그 배를 내놓는가.
+   origin      어느 나라에서 나온 배인가(표시용).
+   originFlag  그 나라 깃발(map/geo.js: flag). **그 깃발을 단 항구는 요구등급이 1 낮다** —
+               "제 나라 배는 짓기 쉽다". 지중해에 본국이 없는 배(플류트 등)는 null.
+   tier        지으려면 필요한 도시 공업력(map/geo.js: industry). 0이면 시중에 안 나온다.
+               예전에는 `yards`에 판매 항구를 하드코딩했으나, 도시를 늘릴 때마다 어긋나고
+               "왜 여기선 못 사나"가 설명되지 않았다. 지금은 공업력 수치로 푼다.
+   yards       **전통 조선지** — 살 수 있는 곳이 아니라 값이 싸지는 곳이다(그 배를 오래 지어온 항구).
+   era         'classic' = 이 바다에서 오래 쓰던 배. 낡았어도 값이 싸고 제 몫이 있다.
+               'modern'  = 시대를 앞선 배. 공업력만으로는 안 되고 `requires`를 거쳐야 열린다.
+   requires    이 선종을 **한 번이라도 몰아 봤어야** 다음 배를 짓는다. 조선소가 그냥 만들어 주는 게
+               아니라 "그런 배를 다뤄 본 선주에게만 내놓는다"는 규칙 — 배 계보가 곧 해금 트리다.
    rig = 스퀘어리그 비율(0=라틴세일뿐 … 1=전부 가로돛). 순풍/역풍 성능을 가른다.
      그림의 돛(`sprites/ship.js: HULLS[].masts[].sail`)과 **같이 고쳐야 한다**.
      지중해 어디서나 같은 배를 사던 것을 국적별로 갈랐다 — 배를 사려면 그 나라 항구까지 가야 한다.
@@ -198,62 +212,86 @@ export const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
    upkeep = 정박해 두기만 해도 나가는 하루 유지비(선단). 배를 쟁여두는 데 값을 매긴다. */
 export const SHIPS = {
   hulk: {
-    hull: 'hulk', name: '낡은 바사', origin: '출처 불명', yards: [], price: 320,
+    hull: 'hulk', name: '낡은 바사', origin: '출처 불명', originFlag: null, tier: 0, era: 'classic', yards: [], price: 320,
     hp: 55, crew: 10, crewMax: 16, crewMin: 5, cargo: 45, guns: 2, speed: 0.85,
     upkeep: 2, rig: 0.50, leak: 2, tint: 'rot',
     desc: '물이 새는 중고선. 항해할 때마다 선체가 삭는다. 오래 탈 배가 아니다.',
   },
+  cocca: {
+    hull: 'hulk', name: '코카', origin: '지중해', originFlag: null, tier: 1, era: 'classic',
+    yards: ['venezia', 'genova', 'napoli', 'palermo', 'athens'],
+    price: 1100,
+    hp: 72, crew: 12, crewMax: 22, crewMin: 6, cargo: 78, guns: 3, speed: 0.95,
+    upkeep: 4, rig: 0.50, tint: 'oak',
+    desc: '중세부터 지중해를 메운 원형 상선. 느리고 볼품없지만 값싸고 제법 싣는다. 첫 배를 갈아탈 자리.',
+  },
+  galley: {
+    hull: 'galley', name: '갤리', origin: '지중해', originFlag: null, tier: 1, era: 'classic',
+    yards: ['venezia', 'istanbul', 'barcelona', 'palermo'],
+    price: 2100,
+    hp: 105, crew: 58, crewMax: 96, crewMin: 36, cargo: 58, guns: 5, speed: 1.45,
+    upkeep: 11, rig: 0.00, tint: 'oak',
+    desc: '노와 라틴세일. 바람이 죽어도 나아가고 좁은 물목에서 빠르지만, 사람을 많이 먹고 짐은 적게 싣는다.',
+  },
   caravel: {
-    hull: 'caravel', name: '카라벨', origin: '스페인', yards: ['barcelona', 'palermo', 'napoli'],
+    hull: 'caravel', name: '카라벨', origin: '스페인(아라곤)', originFlag: 'spain', tier: 1, era: 'classic',
+    yards: ['barcelona', 'palermo', 'napoli'],
     price: 1400,
     hp: 90, crew: 24, crewMax: 34, crewMin: 12, cargo: 90, guns: 6, speed: 1.35,
     upkeep: 6, rig: 0.00, tint: 'oak',
     desc: '작고 날렵하다. 화물칸은 좁지만 바람을 잘 탄다.',
   },
   fluyt: {
-    hull: 'fluyt', name: '플류트', origin: '네덜란드', yards: ['genova', 'marseille'],
+    hull: 'fluyt', name: '플류트', origin: '네덜란드(수입선)', originFlag: null, tier: 2, era: 'modern', requires: 'carrack',
+    yards: ['genova', 'marseille'],
     price: 2600,
     hp: 120, crew: 20, crewMax: 30, crewMin: 14, cargo: 170, guns: 6, speed: 1.10,
     upkeep: 10, rig: 0.67, tint: 'oak',
     desc: '화물선의 정석. 이만한 짐을 이만큼 적은 선원으로 나르는 배는 없다. 대신 포문이 빈약하다.',
   },
   brig: {
-    hull: 'brig', name: '브리간틴', origin: '영국', yards: ['marseille', 'palermo', 'rodos'],
+    hull: 'brig', name: '브리간틴', origin: '지중해', originFlag: null, tier: 1, era: 'classic',
+    yards: ['marseille', 'palermo', 'rodos'],
     price: 4200,
     hp: 130, crew: 34, crewMax: 52, crewMin: 20, cargo: 140, guns: 10, speed: 1.20,
     upkeep: 14, rig: 0.50, tint: 'dark',
     desc: '균형 잡힌 중형선. 무역과 전투 어느 쪽도 무난하다.',
   },
   carrack: {
-    hull: 'carrack', name: '캐랙', origin: '베네치아', yards: ['venezia', 'genova'],
+    hull: 'carrack', name: '캐랙', origin: '제노바', originFlag: 'genoa', tier: 2, era: 'classic',
+    yards: ['genova', 'venezia'],
     price: 9800,
     hp: 190, crew: 48, crewMax: 76, crewMin: 30, cargo: 240, guns: 14, speed: 0.95,
     upkeep: 22, rig: 0.67, tint: 'white',
     desc: '거대한 화물칸. 느리지만 한 번에 많이 싣는다.',
   },
   frigate: {
-    hull: 'frigate', name: '블랙월 프리깃', origin: '영국', yards: ['genova', 'barcelona'],
+    hull: 'frigate', name: '갈레아스', origin: '베네치아', originFlag: 'venice', tier: 3, era: 'classic', requires: 'galley',
+    yards: ['venezia', 'genova'],
     price: 14000,
     hp: 210, crew: 50, crewMax: 90, crewMin: 45, cargo: 110, guns: 18, speed: 1.40,
     upkeep: 30, rig: 1.00, tint: 'dark',
     desc: '작정하고 만든 프리깃 킬러. 빠르고 사납지만 화물칸이 좁고 선원을 많이 먹는다.',
   },
   galleon: {
-    hull: 'galleon', name: '갈레온', origin: '스페인', yards: ['barcelona', 'napoli'],
+    hull: 'galleon', name: '갈레온', origin: '스페인', originFlag: 'spain', tier: 3, era: 'classic', requires: 'carrack',
+    yards: ['barcelona', 'napoli'],
     price: 19500,
     hp: 260, crew: 62, crewMax: 100, crewMin: 46, cargo: 200, guns: 24, speed: 1.05,
     upkeep: 40, rig: 0.67, tint: 'green',
     desc: '떠다니는 요새. 포문 스물넷이 현측을 메운다.',
   },
   indiaman: {
-    hull: 'indiaman', name: '인디아맨', origin: '영국·네덜란드', yards: ['venezia', 'istanbul'],
+    hull: 'indiaman', name: '라구사 아르고시', origin: '라구사', originFlag: null, tier: 3, era: 'modern', requires: 'carrack',
+    yards: ['venezia', 'istanbul'],
     price: 26000,
     hp: 240, crew: 70, crewMax: 110, crewMin: 40, cargo: 320, guns: 20, speed: 1.00,
     upkeep: 46, rig: 0.75, tint: 'white',
     desc: '동인도 항로의 대형 상선. 상선인데도 어지간한 군함만큼 물린다.',
   },
   superfrigate: {
-    hull: 'superfrigate', name: '슈퍼 프리깃', origin: '프랑스', yards: ['marseille'],
+    hull: 'superfrigate', name: '대형 갈레온', origin: '스페인', originFlag: 'spain', tier: 3, era: 'modern', requires: 'galleon',
+    yards: ['barcelona', 'marseille'],
     price: 42000,
     hp: 330, crew: 90, crewMax: 150, crewMin: 70, cargo: 150, guns: 30, speed: 1.30,
     upkeep: 70, rig: 1.00, tint: 'dark',

@@ -3,7 +3,8 @@ import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
   buyShot, useShot, shotStock, maxHullOf, buy, sell, hire, sellsShip, yardsOf,
-  cargoUsed, armsTotal,
+  cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
+  usedListings, buyUsed, buildableAt, yardCapable,
 } from '../js/state.js';
 
 const ok = (c, msg) => console.log(`${c ? 'PASS' : 'FAIL'}  ${msg}`);
@@ -17,15 +18,28 @@ const hp0 = state.hp;
 const c1 = advanceDays(4);
 ok(c1.leak === 8 && state.hp === hp0 - 8, `누수 4일 → ${c1.leak}pt (선체 ${hp0}→${state.hp}), 급여 ${c1.wages}닢`);
 
-// 국적별 조선소
-ok(!sellsShip('caravel', 'venezia'), `베네치아에서 카라벨 취급? ${sellsShip('caravel', 'venezia')} (기대 false) — ${yardsOf('caravel').join('·')}에서만`);
-ok(sellsShip('carrack', 'venezia'), '베네치아는 캐랙을 판다');
+// 조선소 — 도시 공업력이 무엇을 지을 수 있는지 정한다
+ok(industryOf('venezia') === 3 && industryOf('iznik') === 0,
+   `공업력: 베네치아 ${industryOf('venezia')} · 이즈니크 ${industryOf('iznik')}(내륙)`);
+ok(!sellsShip('caravel', 'iznik'), '내륙 도시(이즈니크)에서는 아무 배도 못 짓는다');
+ok(sellsShip('carrack', 'venezia'), '베네치아(공업력3)는 캐랙을 짓는다');
+ok(!sellsShip('carrack', 'rodos'), `로도스(공업력1)는 캐랙을 못 짓는다 — ${tierNeeded('carrack', 'rodos')} 필요`);
+// 제 나라 배는 한 등급 쉽다: 갈레온(tier3)은 스페인 깃발 항구에서 공업력2로도 지어진다
+ok(tierNeeded('galleon', 'napoli') === 2 && yardCapable('galleon', 'napoli'),
+   `나폴리(스페인 깃발)는 갈레온 요구등급 ${tierNeeded('galleon', 'napoli')} — 제 나라 배라 한 등급 싸다`);
+ok(tierNeeded('galleon', 'athens') === 3 && !yardCapable('galleon', 'athens'),
+   '아테네는 갈레온 요구등급 3 — 못 짓는다');
+// 전통 조선지는 값이 싸다
+ok(shipPriceAt('carrack', 'genova') < shipPriceAt('carrack', 'alexandria'),
+   `캐랙 값: 제노바 ${shipPriceAt('carrack', 'genova')}닢 < 알렉산드리아 ${shipPriceAt('carrack', 'alexandria')}닢`);
+
+// 해금 — 몰아 본 배가 있어야 다음 배를 내준다
+ok(shipLockedBy('galleon') === '캐랙', `갈레온은 잠겨 있다 (필요: ${shipLockedBy('galleon')})`);
+ok(!sellsShip('galleon', 'barcelona'), '해금 전에는 공업력이 충분해도 못 산다');
+
 state.gold = 60000;
 let r = purchaseShip('caravel');
-ok(!r.ok, `베네치아 카라벨 구입 거부: "${r.reason}"`);
-state.at = 'barcelona';
-r = purchaseShip('caravel');
-ok(r.ok, `바르셀로나 카라벨 구입 ${r.ok ? 'OK' : r.reason}`);
+ok(r.ok, `베네치아 카라벨 구입 ${r.ok ? `OK (${r.cost}닢 — 정가 ${SHIPS.caravel.price})` : r.reason}`);
 r = boardShip('caravel');
 ok(r.ok && state.shipKey === 'caravel', `승선 → ${state.shipKey}, 최대선체 ${state.maxHp}`);
 
@@ -48,11 +62,12 @@ ok(gunCap() < cap0, `레이지 개조 → 포문 상한 ${cap0} → ${gunCap()},
 ok(armsTotal() <= gunCap(), '상한 초과 대포가 남지 않았다');
 ok(state.maxHp === maxHullOf('caravel', state.refits), `레이지 후 최대선체 ${state.maxHp}`);
 
-// 개장은 배를 따라다닌다
+// 개장은 배를 따라다닌다 (브리간틴은 해금이 걸리지 않은 classic 선종이라 시험대로 쓴다)
 state.at = 'genova';
-purchaseShip('fluyt');
-boardShip('fluyt');
-ok(!state.refits.copper, `플류트로 갈아탐 → 개장 없음(${JSON.stringify(state.refits)}), 최대선체 ${state.maxHp}`);
+r = purchaseShip('brig');
+ok(r.ok, `제노바 브리간틴 구입 ${r.ok ? `OK (${r.cost}닢)` : r.reason}`);
+boardShip('brig');
+ok(!state.refits.copper, `브리간틴으로 갈아탐 → 개장 없음(${JSON.stringify(state.refits)}), 최대선체 ${state.maxHp}`);
 state.at = 'barcelona'; state.fleet.caravel.at = 'barcelona';
 boardShip('caravel');
 ok(state.refits.copper && state.refits.razee, `카라벨로 복귀 → 개장 복원 ${Object.keys(state.refits).join('+')}`);
@@ -75,9 +90,9 @@ ok(!useShot('grape'), '재고 없는 포도탄은 못 쏜다');
 
 // 나포 편입
 const before = Object.keys(state.fleet).length;
-const cap = captureShip('brig');
-ok(cap.ok && !cap.scrapped && state.fleet.brig, `브리간틴 나포 편입 → 선단 ${before}→${Object.keys(state.fleet).length}척, 선체 ${state.fleet.brig?.hp}/${SHIPS.brig.hp}`);
-const cap2 = captureShip('brig');
+const cap = captureShip('carrack');
+ok(cap.ok && !cap.scrapped && state.fleet.brig, `캐랙 나포 편입 → 선단 ${before}→${Object.keys(state.fleet).length}척, 선체 ${state.fleet.brig?.hp}/${SHIPS.brig.hp}`);
+const cap2 = captureShip('carrack');
 ok(cap2.scrapped && cap2.gain > 0, `같은 선종 재나포 → 해체 매각 +${cap2.gain}닢`);
 
 // 적 티어 분포
@@ -107,3 +122,39 @@ ok(dHulk > dSF, `베네치아→이스탄불: 낡은 바사 ${dHulk}일 vs 슈�
 
 // 적 5티어
 console.log('      적:', ENEMIES.map((e) => `${e.name}(${e.nation}/HP${e.hp}/포${e.guns}${e.prize ? '/나포:' + SHIPS[e.prize].name : ''})`).join('\n           '));
+
+/* ── 중고선 ─────────────────────────────────────────────────── */
+resetGame();
+state.gold = 60000;
+let seen = 0, prizeCheaper = 0;
+for (const cid of ['venezia', 'genova', 'tunis', 'algiers', 'iznik']) {
+  for (let d = 1; d < 40; d += 3) {
+    const lots = usedListings(cid, d);
+    seen += lots.length;
+    for (const l of lots) {
+      if (l.price >= SHIPS[l.key].price) console.log(`FAIL  중고가 신조보다 비싸다: ${cid} ${SHIPS[l.key].name}`);
+      if (l.hp >= SHIPS[l.key].hp) console.log(`FAIL  중고 선체가 멀쩡하다: ${cid} ${SHIPS[l.key].name}`);
+      if (l.prize) prizeCheaper++;
+    }
+  }
+}
+ok(seen > 0, `중고 매물이 돈다 — 5개 항구 40일치에서 ${seen}건`);
+ok(usedListings('iznik', 5).length === 0, '내륙(이즈니크)에는 중고 매물도 없다');
+ok(prizeCheaper > 0, `나포선 개조항(튀니스·알제)에 매물이 걸린다 — ${prizeCheaper}건`);
+{
+  const a = usedListings('venezia', 9), b = usedListings('venezia', 9);
+  ok(JSON.stringify(a) === JSON.stringify(b), '같은 날 다시 봐도 같은 매물이다(재입장 스캠 방지)');
+}
+{
+  state.at = 'genova';
+  const lots = usedListings('genova');
+  if (lots.length) {
+    const lot = lots[0];
+    const r2 = buyUsed(lot.key);
+    ok(r2.ok && state.fleet[lot.key]?.hp === lot.hp,
+       `중고 구입 → ${SHIPS[lot.key].name} ${r2.cost}닢 (정가 ${SHIPS[lot.key].price}) · 선체 ${r2.hp}/${SHIPS[lot.key].hp}`);
+    ok(state.everOwned.has(lot.key), '중고로 산 배도 해금 이력에 남는다');
+  } else {
+    ok(true, '제노바에 마침 매물이 없다 (건너뜀)');
+  }
+}

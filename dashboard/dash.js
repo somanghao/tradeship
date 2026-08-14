@@ -5,7 +5,7 @@
 // 상태가 생겨 지표를 믿을 수 없게 된다. 계측만 한다.
 
 import { CITIES, GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, MARKET } from '../js/data.js';
-import { state, marketDepth, tariffRate } from '../js/state.js';
+import { state, marketDepth, tariffRate, tierNeeded, sellsShip, shipPriceAt, shipLockedBy } from '../js/state.js';
 import { measure, statsOf, starvedCells, allCells } from './measure.mjs';
 
 /* 근거 데이터 — 수치가 왜 그 값인지. content/city-evidence.json이 정본이고
@@ -365,17 +365,27 @@ function drawFlat(M) {
 /* ── 선박표 ──────────────────────────────────────────────── */
 function drawShips(M) {
   const t = $('ships');
-  t.innerHTML = '<tr><th>선종</th><th>국적</th><th>조선소</th><th class="n" style="text-align:right">가격</th>'
+  t.innerHTML = '<tr><th>선종</th><th>시대</th><th>원산</th><th style="text-align:right">필요 공업력</th>'
+    + '<th>지을 수 있는 항구</th><th style="text-align:right">가격</th>'
     + '<th style="text-align:right">화물</th><th style="text-align:right">선원</th><th style="text-align:right">포문</th>'
-    + '<th style="text-align:right">속력</th><th style="text-align:right">유지비</th><th>구입 시점</th></tr>';
+    + '<th style="text-align:right">속력</th><th>해금</th><th>구입 시점</th></tr>';
   for (const [key, s] of Object.entries(SHIPS)) {
     const g = M.got[key];
-    const yards = (s.yards || []).map((id) => CITY_BY_ID[id].name).join(' · ') || '—';
+    // 시뮬이 끝난 시점 기준 — 그 판에서 실제로 어디서 지을 수 있었는지
+    const where = CITIES.filter((c) => (c.industry ?? 0) >= tierNeeded(key, c.id));
+    const cheapest = where.length
+      ? where.map((c) => ({ c, p: shipPriceAt(key, c.id) })).sort((a, b) => a.p - b.p)[0] : null;
+    const lock = shipLockedBy(key);
     const tr = el('tr');
-    tr.innerHTML = `<td class="y">${s.name}</td><td class="d">${s.origin}</td><td style="font-size:11px">${yards}</td>`
+    tr.innerHTML = `<td class="y">${s.name}</td>`
+      + `<td class="${s.era === 'modern' ? 'o' : 'd'}">${s.era === 'modern' ? '신형' : '재래'}</td>`
+      + `<td class="d">${s.origin}</td>`
+      + `<td class="n">${s.tier ? s.tier : '<span class="d">—</span>'}</td>`
+      + `<td style="font-size:11px">${where.length ? `${where.length}곳 <span class="d">· 최저 ${cheapest.c.name} ${fmt(cheapest.p)}닢</span>` : '<span class="d">—</span>'}</td>`
       + `<td class="n">${fmt(s.price)}</td><td class="n">${s.cargo}</td>`
       + `<td class="n">${s.crew}~${s.crewMax}</td><td class="n">${s.guns}</td>`
-      + `<td class="n">${s.speed}</td><td class="n d">${s.upkeep}/일</td>`
+      + `<td class="n">${s.speed}</td>`
+      + `<td style="font-size:11px">${lock ? `<span class="o">${lock} 필요</span>` : '<span class="g">열림</span>'}</td>`
       + `<td>${g ? `<span class="g">${g.v}항차 · ${g.day}일차</span>` : '<span class="d">—</span>'}</td>`;
     t.append(tr);
   }
