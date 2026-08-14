@@ -200,6 +200,16 @@ boardShip('cocca');
   state.impact = {};
 }
 
+// 급여 — 벌든 못 벌든 매일 나간다(동업자이지 하인이 아니다)
+{
+  const paid0 = state.officer.paid;
+  const c = advanceDays(5);
+  ok(c.officer === OFFICER.wage * 5 && state.officer.paid === paid0 + c.officer,
+     `급여 5일치 ${c.officer.toLocaleString('ko-KR')}닢이 항해 비용에 실린다 (${OFFICER.wage}닢/일)`);
+  ok(c.total > c.wages + c.supplies + c.fleet - 1 && c.total === c.wages + c.supplies + c.fleet + c.officer,
+     '급여는 선원 일당과 섞이지 않고 따로 잡힌다');
+}
+
 // 성과급 — 남은 이익에서만 뗀다
 {
   state.cargo = { silk: 10 };
@@ -222,7 +232,7 @@ boardShip('cocca');
   const g0 = state.gold;
   const r = dismissOfficer();
   ok(r.ok && !hasOfficer() && state.gold === g0 - r.pay,
-     `내보냈다 — 퇴직금 ${r.pay.toLocaleString('ko-KR')}닢 (그동안 가져간 몫 ${r.earned.toLocaleString('ko-KR')}닢)`);
+     `내보냈다 — 퇴직금 ${r.pay.toLocaleString('ko-KR')}닢 (급여 ${r.paid.toLocaleString('ko-KR')} + 성과급 ${r.earned.toLocaleString('ko-KR')}닢을 가져갔다)`);
   ok(tariffRate('venezia') > withOfficer, '입항세 감면이 사라진다');
   ok(!dismissOfficer().ok, '없는 부관은 내보낼 수 없다');
   ok(officerOffer('venezia') && !officerOffer('venezia').poor, '리알토에 가면 다시 만날 수 있다');

@@ -309,17 +309,17 @@ export function hireOfficer() {
     return { ok: false, reason: `계약금이 ${(OFFICER.fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
   }
   state.gold -= OFFICER.fee;
-  state.officer = { hiredDay: state.day, earned: 0 };
+  state.officer = { hiredDay: state.day, earned: 0, paid: 0 };
   return { ok: true, cost: OFFICER.fee };
 }
 
 export function dismissOfficer() {
   if (!state.officer) return { ok: false, reason: '부관이 없다' };
   const pay = Math.round(OFFICER.fee * OFFICER.severance);
-  const earned = state.officer.earned;
+  const { earned, paid } = state.officer;
   state.gold = Math.max(0, state.gold - pay);
   state.officer = null;
-  return { ok: true, pay, earned };
+  return { ok: true, pay, earned, paid };
 }
 
 /* ── 항구 서비스 ──────────────────────────────────────────── */
@@ -913,7 +913,10 @@ export function voyageCost(days, crew = state.crew) {
   const wages = Math.round(crew * CREW_WAGE * days);
   const supplies = Math.round(crew * SUPPLY_UNIT * days);
   const fleet = fleetUpkeep() * days;
-  return { wages, supplies, fleet, total: wages + supplies + fleet };
+  // 부관 급여 — 벌든 못 벌든 나간다. 선원 급여와 섞지 않고 따로 세운다:
+  // 뭉뚱그리면 "부관을 데리고 있는 값"이 얼마인지 플레이어가 읽을 수 없다.
+  const officer = state.officer ? OFFICER.wage * days : 0;
+  return { wages, supplies, fleet, officer, total: wages + supplies + fleet + officer };
 }
 
 /** 항해 1구간 진행 — 날짜·일당·보급·선단 유지비·누수·시장 회복 */
@@ -921,6 +924,7 @@ export function advanceDays(n) {
   state.day += n;
   const c = voyageCost(n);
   state.gold = Math.max(0, state.gold - c.total);
+  if (state.officer) state.officer.paid += c.officer;   // 급여와 성과급을 따로 센다
 
   // 삭은 배는 항해할수록 물이 샌다
   let leak = 0;

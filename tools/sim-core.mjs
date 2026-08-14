@@ -135,7 +135,8 @@ export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
       v, day: state.day, gold: Math.round(state.gold), goldOpen: Math.round(goldOpen),
       ship: state.shipKey, from, to: run.to, days: dd,
       spend, gain, bought, sold,
-      wages: cost.wages, supplies: cost.supplies, fleetCost: cost.fleet, leak: cost.leak,
+      wages: cost.wages, supplies: cost.supplies, fleetCost: cost.fleet,
+      officerCost: cost.officer, leak: cost.leak,
       shipSpend, repairSpend, hireSpend,
       news,
     };

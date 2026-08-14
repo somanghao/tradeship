@@ -281,8 +281,13 @@ function officerCard() {
                   + ` · 계약 보수 +${Math.round(p.contractUp * 100)}%`,
             }),
             el('div.ctr-sub', {
-              html: `가져간 몫 <b>${state.officer.earned.toLocaleString('ko-KR')}닢</b>`
-                  + ` <span style="color:#6f6858">(매각 이익의 ${Math.round(OFFICER.cut * 100)}%)</span>`,
+              html: `급여 <b>${OFFICER.wage}닢/일</b>`
+                  + ` · 성과급 <b>이익의 ${Math.round(OFFICER.cut * 100)}%</b>`,
+            }),
+            el('div.ctr-sub', {
+              html: `<span style="color:#6f6858">지금까지 급여 `
+                  + `${state.officer.paid.toLocaleString('ko-KR')} · 성과급 `
+                  + `${state.officer.earned.toLocaleString('ko-KR')}닢</span>`,
             }),
           ]),
         ]),
@@ -323,7 +328,8 @@ function officerCard() {
         style: { lineHeight: '1.5' },
       }),
       el('div.ctr-sub', {
-        text: `계약금 ${o.fee.toLocaleString('ko-KR')}닢 · 이후 매각 이익의 ${Math.round(OFFICER.cut * 100)}%를 몫으로 가져간다`,
+        html: `계약금 <b>${o.fee.toLocaleString('ko-KR')}닢</b> · 급여 <b>${OFFICER.wage}닢/일</b>`
+            + ` · 성과급 <b>매각 이익의 ${Math.round(OFFICER.cut * 100)}%</b>`,
       }),
       el('button.btn.sm', {
         text: o.poor ? '지금 배로는 안 된다' : `계약한다 (${o.fee.toLocaleString('ko-KR')}닢)`,

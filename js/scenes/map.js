@@ -261,7 +261,8 @@ function arrive(cityId) {
   const c = CITY_BY_ID[cityId];
   pushLog(`${days}일 항해 끝에 ${c.name}에 입항했다.`
         + ` (일당 ${cost.wages} · 보급 ${cost.supplies}`
-        + (cost.fleet ? ` · 선단 ${cost.fleet}` : '') + `닢)`, 'good');
+        + (cost.fleet ? ` · 선단 ${cost.fleet}` : '')
+        + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢)`, 'good');
   if (cost.leak > 0) pushLog(`항해 중 선체로 물이 새어 ${cost.leak}pt 삭았다. 배를 갈아타야 한다.`, 'bad');
   if (cost.expired) {
     pushLog(`${CITY_BY_ID[cost.expired.to].name} 납품 기한을 넘겨 위약금 ${cost.expired.fine}닢을 물었다.`, 'bad');
@@ -533,7 +534,8 @@ function routeCards() {
     const cost = voyageCost(d);
     return el('div.route-row', {
       title: `일당 ${cost.wages} · 보급 ${cost.supplies}`
-           + (cost.fleet ? ` · 선단 ${cost.fleet}` : '') + `닢`,
+           + (cost.fleet ? ` · 선단 ${cost.fleet}` : '')
+           + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢`,
       onclick: () => startVoyage(id),
     }, [
       el('span.rn', { text: c.name }),

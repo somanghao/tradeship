@@ -131,7 +131,7 @@ function drawBars(M) {
   const s = svg(W, H);
 
   const net = rows.map((r) => r.gain - r.spend - r.wages - r.supplies - r.fleetCost
-    - r.shipSpend - r.repairSpend - r.hireSpend);
+    - (r.officerCost || 0) - r.shipSpend - r.repairSpend - r.hireSpend);
   const lim = Math.max(1, ...net.map((n) => Math.abs(n)));
   const bw = Math.max(1.2, (W - L - R) / rows.length - 1.4);
   const Y0 = T + (H - T - B) / 2;
