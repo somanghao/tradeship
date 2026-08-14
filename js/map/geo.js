@@ -31,8 +31,9 @@ export const CITY_GEO = [
   { id: 'istanbul',   name: '이스탄불',     region: '보스포루스', style: 'hellenic', x: 241, y: 55,  flag: 'ottoman', seed: 2111, size: 3 },
   // 부르사·이즈니크는 실제로는 **내륙**이다(부르사의 외항은 뮈단야, 이즈니크는 호수 동안).
   // 이스탄불을 통해서만 이어 두어 "안쪽 시장까지 들어가면 원가에 산다"는 구조로 삼았다.
-  { id: 'bursa',      name: '부르사',       region: '비티니아',   style: 'hellenic', x: 233, y: 68,  flag: 'ottoman', seed: 2414, size: 2 },
-  { id: 'iznik',      name: '이즈니크',     region: '비티니아',   style: 'hellenic', x: 246, y: 66,  flag: 'ottoman', seed: 2515, size: 1 },
+  // 좌표는 이름표가 이스탄불 표식·서로를 덮지 않는 자리로 잡았다 — 지도에서 이 셋이 가장 붐빈다.
+  { id: 'bursa',      name: '부르사',       region: '비티니아',   style: 'hellenic', x: 222, y: 66,  flag: 'ottoman', seed: 2414, size: 2 },
+  { id: 'iznik',      name: '이즈니크',     region: '비티니아',   style: 'hellenic', x: 242, y: 76,  flag: 'ottoman', seed: 2515, size: 1 },
   { id: 'beirut',     name: '베이루트',     region: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2 },
   { id: 'alexandria', name: '알렉산드리아', region: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3 },
 ];
