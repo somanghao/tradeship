@@ -24,6 +24,8 @@
 | `js/scenes/port.js` | 항구 — 시세·매매·정비·조선소 | `portScene` |
 | `js/scenes/map.js` | 지도 — 항로 선택·항해·해상 이벤트·NPC 조우 | `mapScene` |
 | `js/scenes/battle.js` | 전투 — 포격전·백병전 | `battleScene` |
+| `content/city-evidence.json` | 도시 수치의 **근거 정본** — 항목별 `{side, value, verdict, basis, sources[]}` | 서술본은 [city-goods-history.md](city-goods-history.md), 정합 검사는 `tools/check-evidence.mjs` |
+| `tools/check-evidence.mjs` | 코드(`CITY_TRADE`·깃발) ↔ 근거 JSON 정합 검사 | 불일치·근거누락·유령항목이면 exit 1 |
 | `tools/sim-core.mjs` | 무역 시뮬의 몸통(출력 없음) — CLI와 대시보드가 같은 코드를 돌린다 | `runSim({maxVoyages, hooks})`, `planFor`, `bestRun` |
 | `tools/*.mjs` | 브라우저 없는 검증 (규칙 테스트·세계 테스트·무역 곡선 시뮬) | `node tools/sim-trade.mjs` 등 → [dev-workflow.md](dev-workflow.md) |
 | `dashboard/measure.mjs` | 시뮬을 돌리며 지표 채집(DOM 없음 — node로도 검증 가능) | `measure(voyages)`, `statsOf`, `starvedCells`, `allCells` |
@@ -53,6 +55,7 @@ port ──출항──▶ map ──도시 클릭──▶ (항해 연출)
 | 시세 성향 | `data.js: CITY_TRADE` (supply=산지 배율<1, demand=수요 배율>1) |
 | 항로 연결 | `map/geo.js: ROUTES` |
 | NPC 수·습격률·시장 영향 | `npc/config.js: NPC` |
+| 도시 수치의 근거·출처 | `content/city-evidence.json` → `node tools/check-evidence.mjs` |
 | 그림을 PNG로 교체 | `assets/manifest.json` (키는 `preview.html`에서) → `assets/README.md` |
 | 선박 성능/가격 | `data.js: SHIPS` |
 | 적 강함·전리품 | `data.js: ENEMIES` |

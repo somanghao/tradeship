@@ -8,6 +8,17 @@ import { CITIES, GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, MARKET } from '../js/data
 import { state, marketDepth, tariffRate } from '../js/state.js';
 import { measure, statsOf, starvedCells, allCells } from './measure.mjs';
 
+/* 근거 데이터 — 수치가 왜 그 값인지. content/city-evidence.json이 정본이고
+   `node tools/check-evidence.mjs`가 코드와의 불일치를 잡는다. 여기서는 읽기만 한다. */
+let EV = null;
+const VERDICT_STYLE = {
+  confirmed: { mark: '●', cls: 'g',  label: '사료 확인' },
+  corrected: { mark: '◆', cls: 'y',  label: '조사로 바로잡음' },
+  probable:  { mark: '○', cls: 'b',  label: '개연성' },
+  gameplay:  { mark: '▲', cls: 'o',  label: '게임성 예외' },
+};
+const evidenceOf = (cid, gid) => EV?.cities?.[cid]?.goods?.[gid] ?? null;
+
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
 const el = (tag, cls, html) => {
@@ -211,10 +222,18 @@ function drawMatrix(M) {
         main = d.vol ? (d.net > 0 ? '+' : '') + fmt(d.net) : '·';
         sub = d.vol ? `거래 ${fmt(d.vol)}` : '거래 없음';
         bg = d.vol ? heat(-d.net / volMax) : 'transparent';
-      } else {
+      } else if (MODE === 'press') {
         main = d.press ? d.press.toFixed(0) : '·';
         sub = d.press ? `${Math.round(Math.min(MARKET.cap, MARKET.impact * d.press / marketDepth(c.id)) * 100)}% 벌점` : '—';
         bg = mono(d.press / pressMax, '224,164,92');
+      } else {
+        const e = evidenceOf(c.id, g.id);
+        const v = e && VERDICT_STYLE[e.verdict];
+        main = v ? `<span class="${v.cls}">${v.mark}</span>` : '<span class="d">·</span>';
+        sub = e ? (e.sources?.length ? `출처 ${e.sources.length}` : '출처 없음') : '';
+        bg = e ? (e.verdict === 'gameplay' ? 'rgba(224,164,92,.22)'
+          : e.verdict === 'corrected' ? 'rgba(244,221,134,.20)'
+          : e.verdict === 'confirmed' ? 'rgba(127,216,160,.16)' : 'rgba(127,178,216,.12)') : 'transparent';
       }
 
       td.style.background = bg;
@@ -233,6 +252,7 @@ function drawMatrix(M) {
     range: '시뮬 전 기간 변동폭 (최고−최저)/평균. 좁으면 시장이 안 움직인다는 뜻',
     flow: '순유입 = 그 도시에 팔린 양 − 그 도시에서 사간 양 (주인공+NPC 합)',
     press: '누적 거래 압력의 최고치와 그때 단가에 붙는 벌점',
+    evi: '이 수치가 왜 이 값인지 — content/city-evidence.json. 칸에 올리면 근거와 출처가 뜬다',
   };
   $('mxNote').textContent = notes[MODE];
 
@@ -242,6 +262,8 @@ function drawMatrix(M) {
     range: '<span><i style="background:rgba(244,221,134,.55)"></i>많이 움직였다</span>',
     flow: '<span><i style="background:rgba(224,110,70,.55)"></i>순유입(팔려 들어온다)</span><span><i style="background:rgba(110,178,216,.55)"></i>순유출(실려 나간다)</span>',
     press: '<span><i style="background:rgba(224,164,92,.55)"></i>거래가 몰린 칸</span>',
+    evi: '<span class="g">● 사료 확인</span><span class="y">◆ 조사로 바로잡음</span>'
+       + '<span class="b">○ 개연성</span><span class="o">▲ 게임성 예외</span>',
   };
   $('legend').innerHTML = legends[MODE]
     + '<span><i style="box-shadow:inset 0 0 0 1.5px rgba(127,178,216,.9);background:transparent"></i>산지 설정</span>'
@@ -259,6 +281,14 @@ function showTip(ev, c, g, d) {
     + `유입 ${fmt(d.f.inP + d.f.inN)} <span class="d">(주인공 ${fmt(d.f.inP)} / NPC ${fmt(d.f.inN)})</span><br>`
     + `유출 ${fmt(d.f.outP + d.f.outN)} <span class="d">(주인공 ${fmt(d.f.outP)} / NPC ${fmt(d.f.outN)})</span><br>`
     + `최대 압력 ${d.press.toFixed(1)} / 깊이 ${marketDepth(c.id)}`;
+  const e = evidenceOf(c.id, g.id);
+  if (e) {
+    const v = VERDICT_STYLE[e.verdict];
+    tip.innerHTML += `<hr style="border:0;border-top:1px solid #2e2839;margin:6px 0">`
+      + `<span class="${v?.cls || 'd'}">${v?.mark || ''} ${v?.label || e.verdict}</span><br>`
+      + `<span style="opacity:.9">${e.basis || ''}</span>`
+      + (e.sources?.length ? `<br><span class="d">출처: ${e.sources.map((x) => x.title).join(' · ')}</span>` : '');
+  }
   tip.style.display = 'block';
   moveTip(ev);
 }
@@ -453,4 +483,9 @@ for (const b of $('mode').querySelectorAll('button')) {
   };
 }
 
-run();
+/* 근거 데이터를 먼저 읽는다 — 없어도 대시보드는 돈다(근거 칸만 빈다). */
+fetch('../content/city-evidence.json', { cache: 'no-store' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => { EV = j; })
+  .catch(() => { EV = null; })
+  .finally(run);

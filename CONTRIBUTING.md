@@ -65,6 +65,7 @@ node tools/sim-trade.mjs      # 자산 추이가 무너지지 않았는지
 
 - **도시를 추가**하려면 `CITY_GEO`에 넣고, `js/data.js`의 `CITY_TRADE`에 **같은 id**로 경제(supply/demand)를 넣는다.
   한쪽만 넣으면 시작할 때 콘솔에 경고가 뜬다.
+- **도시 수치에는 근거가 달려 있다.** `content/city-evidence.json`이 항목마다 판정·근거·출처를 들고 있고, `node tools/check-evidence.mjs`가 코드와 어긋나면 실패한다. `CITY_TRADE`나 깃발을 고치면 **같은 커밋에서** 근거도 고친다. 서술본은 `.claude/docs/wiki/city-goods-history.md`.
 - **항로(`ROUTES`)는 선 하나가 경제 전체의 물길을 바꾼다.** NPC도 플레이어도 이 그래프 위에서만 움직인다.
   선을 긋거나 지웠으면 대시보드에서 "부족한데 아무도 안 나르는 곳"이 늘었는지 본다.
 - 지도 **그림**은 `js/sprites/scene.js`의 `mapSprite()`다. 해안선을 고쳤으면 도시 좌표가 물 위에 있지 않은지 함께 본다 (같은 400×225 좌표계다).
@@ -78,9 +79,10 @@ python serve.py                 # 8891. python -m http.server는 쓰지 않는�
 node tools/test-rules.mjs       # 규칙 회귀
 node tools/test-world.mjs       # NPC 세계
 node tools/sim-trade.mjs        # 자산 곡선
+node tools/check-evidence.mjs   # 도시 수치 ↔ 근거 정합
 ```
 
 - **빌드가 없다.** 파일을 고치고 새로고침하면 그게 전부다.
-- 커밋 전에 위 세 개를 돌린다. 전부 `PASS`여야 한다.
+- 커밋 전에 위 네 개를 돌린다. 전부 `PASS`여야 한다.
 - 수치를 고쳤으면 눈으로 판단하지 말고 곡선을 본다. 이 프로젝트에서 여러 번 데인 부분이다.
 - 설계 배경과 결정 이유는 `.claude/docs/` 아래에 있다. 헷갈리면 `.claude/docs/claude-memory.md`부터.

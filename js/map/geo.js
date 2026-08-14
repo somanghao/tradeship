@@ -29,6 +29,10 @@ export const CITY_GEO = [
   { id: 'athens',     name: '아테네',       region: '아티카',     style: 'hellenic', x: 191, y: 110, flag: 'ottoman', seed: 1909, size: 2 },
   { id: 'rodos',      name: '로도스',       region: '에게',       style: 'hellenic', x: 239, y: 109, flag: 'hospitaller', seed: 2010, size: 1 },
   { id: 'istanbul',   name: '이스탄불',     region: '보스포루스', style: 'hellenic', x: 241, y: 55,  flag: 'ottoman', seed: 2111, size: 3 },
+  // 부르사·이즈니크는 실제로는 **내륙**이다(부르사의 외항은 뮈단야, 이즈니크는 호수 동안).
+  // 이스탄불을 통해서만 이어 두어 "안쪽 시장까지 들어가면 원가에 산다"는 구조로 삼았다.
+  { id: 'bursa',      name: '부르사',       region: '비티니아',   style: 'hellenic', x: 233, y: 68,  flag: 'ottoman', seed: 2414, size: 2 },
+  { id: 'iznik',      name: '이즈니크',     region: '비티니아',   style: 'hellenic', x: 246, y: 66,  flag: 'ottoman', seed: 2515, size: 1 },
   { id: 'beirut',     name: '베이루트',     region: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2 },
   { id: 'alexandria', name: '알렉산드리아', region: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3 },
 ];
@@ -50,6 +54,8 @@ export const ROUTES = [
   // 이집트 밀을 제국 수도로 직송하던 간선. 이 선이 없으면 로도스·아테네가 곡물을
   // 먼저 빨아들여 이스탄불까지 한 톨도 못 간다(대시보드에서 유입 1로 확인).
   ['alexandria', 'istanbul'],
+  // 아나톨리아 안쪽 시장 — 이스탄불에서만 들어간다(막다른 주머니).
+  ['istanbul', 'bursa'], ['istanbul', 'iznik'], ['bursa', 'iznik'],
 ];
 
 /* 해류 — 지중해는 대체로 아프리카 연안을 동쪽으로 흐르고 레반트에서 북상해 되돌아온다.
