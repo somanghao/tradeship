@@ -62,59 +62,101 @@ export const TARIFF = { 1: 0.03, 2: 0.045, 3: 0.06 };
 
 /* 도시 경제 — 그 항구가 무엇을 싸게 내놓고 무엇을 비싸게 사는가.
    supply = 산지라 싸다 (배율<1) / demand = 수요지라 비싸다 (배율>1)
-   좌표·항로·깃발·규모는 `js/map/geo.js`에 있고, 여기와는 id로만 맞물린다. */
+   좌표·항로·깃발·규모는 `js/map/geo.js`에 있고, 여기와는 id로만 맞물린다.
+
+   ★ 15~16세기 실제 교역을 조사해 맞춰 두었다. 수치를 바꾸기 전에
+      `.claude/docs/wiki/city-goods-history.md`(도시별 근거·출처)를 먼저 본다.
+      "게임 밸런스상 여기에 X를 넣자"가 고증을 덮어쓸 때는 그 문서에 사유를 남긴다. */
 export const CITY_TRADE = {
   venezia: {
-    supply: { glass: 0.48, silk: 0.72 }, demand: { spice: 1.42, fur: 1.30, grain: 1.18 },
+    // 무라노 유리는 유럽 독점 수출품, 비단업에 인구의 1/5이 종사했다.
+    // 석호 도시라 곡물은 상시 수입. 흑해 타나 모피와 동방 향신료의 재분배 허브.
+    supply: { glass: 0.48, silk: 0.72 },
+    demand: { spice: 1.42, fur: 1.30, grain: 1.18, oliveoil: 1.20 },
     blurb: '유리와 비단의 도시. 동방 향신료라면 값을 아끼지 않는다.',
   },
   genova: {
-    supply: { weapon: 0.66, wine: 0.62 }, demand: { silk: 1.38, ivory: 1.32 },
-    blurb: '베네치아의 숙적. 조선소와 무기고가 항구를 메운다.',
+    // 리구리아 와인과 조알리 벨벳("벨루르 드 젠")이 실제 수출품.
+    // 무기는 밀라노·브레시아가 본산이라 약한 공급으로만 남긴다(아스날은 실재).
+    supply: { wine: 0.62, silk: 0.70, weapon: 0.76 },
+    demand: { spice: 1.30, ivory: 1.28, fur: 1.26 },
+    blurb: '베네치아의 숙적. 조선소가 항구를 메우고 조알리의 벨벳이 실려 나간다.',
   },
   marseille: {
-    supply: { wine: 0.55, oliveoil: 0.60 }, demand: { ceramic: 1.32, spice: 1.34 },
+    // 프로방스 포도밭과 올리브 언덕. 레반트 항로로 향신료·사치직물을 들여온다.
+    supply: { wine: 0.55, oliveoil: 0.60 },
+    demand: { spice: 1.34, silk: 1.28 },
     blurb: '포도밭과 올리브 언덕에 둘러싸인 프랑스의 관문.',
   },
   barcelona: {
-    supply: { weapon: 0.62, salt: 0.52 }, demand: { silk: 1.30, gold: 1.22, spice: 1.26 },
+    // 리폴을 필두로 한 카탈루냐 화기 산업 — 이베리아 최대 산지. 소금은 이비사 염전.
+    // 아라곤 플로린 주조를 위한 금 수요, 레반트 직교역으로 들여온 향신료.
+    supply: { weapon: 0.62, salt: 0.52 },
+    demand: { silk: 1.30, gold: 1.22, spice: 1.26 },
     blurb: '아라곤 왕관의 항구. 대장간 망치 소리가 끊이지 않는다.',
   },
   napoli: {
-    supply: { grain: 0.50, oliveoil: 0.56 }, demand: { fur: 1.40, glass: 1.30 },
-    blurb: '베수비오 아래 곡창지대. 밀이 남아돈다.',
+    // 올리브유는 확실한 수출품. 곡물 잉여는 실은 풀리아 쪽이라 이 항구는 집산에 가깝다.
+    supply: { oliveoil: 0.56, grain: 0.58 },
+    demand: { fur: 1.40, glass: 1.30 },
+    blurb: '왕국의 밀이 모이는 집산항. 언덕마다 올리브가 익는다.',
   },
   palermo: {
-    supply: { grain: 0.46, salt: 0.56 }, demand: { weapon: 1.36, wine: 1.24, fur: 1.28 },
+    // 시칠리아 곡물 수출은 제노바행 정기 항로였고, 소금은 트라파니 염전이 본산.
+    // 와인은 자체 산지라 사들이지 않는다(이슬람 지배기에도 빚었다는 화학 증거).
+    supply: { grain: 0.46, salt: 0.56, wine: 0.72 },
+    demand: { weapon: 1.36, fur: 1.28, glass: 1.26 },
     blurb: '지중해 한복판의 곡물 창고. 해적도 자주 들른다.',
   },
   tunis: {
-    supply: { ivory: 0.62, gold: 0.76 }, demand: { grain: 1.50, wine: 1.42, weapon: 1.30 },
-    blurb: '사하라 대상로의 종착지. 상아와 사금이 흘러든다.',
+    // 사하라 대상로의 종착지 — 금과 상아가 여기로 올라온다. 하프스 왕조는
+    // 곡물·올리브유를 **수출**했다(곡물을 사들이는 항구가 아니다).
+    supply: { ivory: 0.62, gold: 0.76, oliveoil: 0.62 },
+    demand: { weapon: 1.30, silk: 1.30, ceramic: 1.28 },
+    blurb: '사하라 대상로의 종착지. 상아와 사금이 흘러들고 밀과 기름이 실려 나간다.',
   },
   algiers: {
-    supply: { salt: 0.50, fur: 0.72 }, demand: { grain: 1.46, weapon: 1.44 },
-    blurb: '코르세어의 소굴. 항구에 정박한 갤리가 심상치 않다.',
+    // 배후의 미티드자 평원이 "알제의 빵바구니" — 곡물 산지다.
+    // 사략 경제라 화기는 유럽에서 사들인다. 와인은 유럽 상관·포로 대상의 작은 시장.
+    supply: { grain: 0.52, salt: 0.62 },
+    demand: { weapon: 1.44, ceramic: 1.30, wine: 1.26 },
+    blurb: '코르세어의 소굴. 배후의 밀밭이 도시를 먹인다.',
   },
   athens: {
-    supply: { oliveoil: 0.50, ceramic: 0.58 }, demand: { grain: 1.32, silk: 1.36 },
-    blurb: '올리브 기름과 도기의 산지. 폐허가 된 신전이 항구를 굽어본다.',
+    // 아티카 올리브는 고대부터의 지리적 특성. 이 시기 아테네 자체는 쇠락한 소읍이라
+    // 큰 수출항이 아니다(도자기는 고대 아티카 도기와의 혼동이라 뺐다).
+    supply: { oliveoil: 0.50, wine: 0.66 },
+    demand: { grain: 1.32, silk: 1.36 },
+    blurb: '올리브 기름과 포도의 땅. 폐허가 된 신전이 항구를 굽어본다.',
   },
   rodos: {
-    supply: { wine: 0.60, ceramic: 0.64 }, demand: { weapon: 1.38, grain: 1.34 },
-    blurb: '기사단의 요새 섬. 동지중해 항로의 길목이다.',
+    // 기사단령 시절 올리브·포도가 성했다. 도자기는 이곳 생산이 아니라
+    // 이즈니크 도기가 거쳐 가는 **중계**다("로디안 웨어"라는 이름 자체가 후대의 오인).
+    supply: { wine: 0.60, ceramic: 0.68 },
+    demand: { weapon: 1.38, grain: 1.34 },
+    blurb: '기사단의 요새 섬. 동방의 도기가 여기를 거쳐 유럽으로 팔려 나간다.',
   },
   istanbul: {
-    supply: { silk: 0.58, spice: 0.66 }, demand: { glass: 1.42, wine: 1.46, ceramic: 1.24 },
-    blurb: '두 대륙이 만나는 대도시. 대상로의 비단이 여기서 풀린다.',
+    // 부르사에서 올라온 생사, 이즈니크 도기, 흑해에서 보스포루스로 들어오는 모피.
+    // 향신료는 산지가 아니라 최종 소비지라 뺐다. 제국 수도는 이집트 밀의 최대 목적지였고,
+    // 금주령에도 갈라타 술집이 수백 곳이라 와인 수요는 실재했다.
+    supply: { silk: 0.58, ceramic: 0.66, fur: 0.70 },
+    demand: { glass: 1.42, wine: 1.46, grain: 1.30 },
+    blurb: '두 대륙이 만나는 대도시. 부르사의 생사와 흑해의 모피가 여기서 풀린다.',
   },
   beirut: {
-    supply: { spice: 0.54, silk: 0.66 }, demand: { ceramic: 1.42, fur: 1.36, glass: 1.28 },
-    blurb: '인도 항로의 향신료가 처음 배에 실리는 곳.',
+    // 향신료가 지나가긴 하나 본선은 알레포–트리폴리 축이라 1차 산지가 아니다.
+    // 알렉산드리아보다 불리한 값에 실린다.
+    supply: { spice: 0.68, silk: 0.72 },
+    demand: { ceramic: 1.42, fur: 1.36, glass: 1.28 },
+    blurb: '레반트 대상로의 곁가지 항구. 향신료가 여기서도 배에 실린다.',
   },
   alexandria: {
-    supply: { grain: 0.48, ivory: 0.66 }, demand: { wine: 1.52, weapon: 1.34, glass: 1.30 },
-    blurb: '나일의 밀이 쌓이는 항구. 등대 자리엔 이제 요새가 섰다.',
+    // 나일의 밀과 홍해 향신료 — 맘루크가 독점하던 유럽행 향신료의 최대 유통항이다.
+    // 상아는 아프리카 내륙에서 나일을 타고 내려온다. 와인 수요는 이스탄불보다 얕다.
+    supply: { grain: 0.48, spice: 0.62, ivory: 0.66 },
+    demand: { wine: 1.34, weapon: 1.34, glass: 1.30 },
+    blurb: '나일의 밀과 홍해의 향신료가 쌓이는 항구. 등대 자리엔 이제 요새가 섰다.',
   },
 };
 

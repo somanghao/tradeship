@@ -13,19 +13,21 @@
     x,y   지도 위 위치(400×225)
     style 항구 배경 화풍 — latin | hellenic | levant  (sprites/scene.js: STYLES)
     flag  항구에 걸리는 깃발 — sprites/ship.js: FLAGS
+          15~16세기 기준으로 맞춰져 있다: 로도스=성 요한 기사단(1522년까지) · 마르세유=프랑스(1481년 프로방스 병합)
+          · 튀니스=하프스 왕조(오스만 확정은 1574년). 근거 → .claude/docs/wiki/city-goods-history.md
     seed  항구 그림을 결정하는 난수 씨앗(같은 값이면 같은 항구 그림)
     size  항구 규모 1~3 — 시장 깊이와 입항세가 여기서 나온다 */
 export const CITY_GEO = [
   { id: 'venezia',    name: '베네치아',     region: '아드리아',   style: 'latin',    x: 141, y: 63,  flag: 'venice',  seed: 1101, size: 3 },
   { id: 'genova',     name: '제노바',       region: '리구리아',   style: 'latin',    x: 116, y: 76,  flag: 'genoa',   seed: 1202, size: 3 },
-  { id: 'marseille',  name: '마르세유',     region: '프로방스',   style: 'latin',    x: 91,  y: 71,  flag: 'genoa',   seed: 1303, size: 2 },
+  { id: 'marseille',  name: '마르세유',     region: '프로방스',   style: 'latin',    x: 91,  y: 71,  flag: 'france',  seed: 1303, size: 2 },
   { id: 'barcelona',  name: '바르셀로나',   region: '카탈루냐',   style: 'latin',    x: 57,  y: 89,  flag: 'spain',   seed: 1404, size: 3 },
   { id: 'napoli',     name: '나폴리',       region: '캄파니아',   style: 'latin',    x: 131, y: 110, flag: 'spain',   seed: 1505, size: 2 },
   { id: 'palermo',    name: '팔레르모',     region: '시칠리아',   style: 'latin',    x: 151, y: 144, flag: 'spain',   seed: 1606, size: 2 },
-  { id: 'tunis',      name: '튀니스',       region: '이프리키야', style: 'levant',   x: 174, y: 157, flag: 'ottoman', seed: 1707, size: 2 },
+  { id: 'tunis',      name: '튀니스',       region: '이프리키야', style: 'levant',   x: 174, y: 157, flag: 'hafsid',  seed: 1707, size: 2 },
   { id: 'algiers',    name: '알제',         region: '마그레브',   style: 'levant',   x: 106, y: 151, flag: 'ottoman', seed: 1808, size: 2 },
   { id: 'athens',     name: '아테네',       region: '아티카',     style: 'hellenic', x: 191, y: 110, flag: 'ottoman', seed: 1909, size: 2 },
-  { id: 'rodos',      name: '로도스',       region: '에게',       style: 'hellenic', x: 239, y: 109, flag: 'venice',  seed: 2010, size: 1 },
+  { id: 'rodos',      name: '로도스',       region: '에게',       style: 'hellenic', x: 239, y: 109, flag: 'hospitaller', seed: 2010, size: 1 },
   { id: 'istanbul',   name: '이스탄불',     region: '보스포루스', style: 'hellenic', x: 241, y: 55,  flag: 'ottoman', seed: 2111, size: 3 },
   { id: 'beirut',     name: '베이루트',     region: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2 },
   { id: 'alexandria', name: '알렉산드리아', region: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3 },
@@ -45,6 +47,9 @@ export const ROUTES = [
   ['athens', 'rodos'], ['athens', 'istanbul'],
   ['rodos', 'istanbul'], ['rodos', 'beirut'], ['rodos', 'alexandria'],
   ['beirut', 'alexandria'],
+  // 이집트 밀을 제국 수도로 직송하던 간선. 이 선이 없으면 로도스·아테네가 곡물을
+  // 먼저 빨아들여 이스탄불까지 한 톨도 못 간다(대시보드에서 유입 1로 확인).
+  ['alexandria', 'istanbul'],
 ];
 
 /* 해류 — 지중해는 대체로 아프리카 연안을 동쪽으로 흐르고 레반트에서 북상해 되돌아온다.

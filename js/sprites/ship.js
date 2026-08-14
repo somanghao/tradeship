@@ -18,6 +18,10 @@ export const FLAGS = {
   france:  { field: P.blueM,  fieldD: P.blueD,  mark: P.goldL },   // 부르봉 백합
   england: { field: P.clothL, fieldD: P.clothD, mark: P.blueM },
   pirate:  { field: '#1d1a24', fieldD: '#000000', mark: P.clothL },
+  // 성 요한 기사단(로도스) — 붉은 바탕에 흰 십자. 베네치아도 붉은 바탕이지만 마크가 금색이라 갈린다.
+  hospitaller: { field: P.redM, fieldD: P.redD, mark: P.clothL },
+  // 하프스 왕조(튀니스) — 흰 바탕에 검은 초승달. 오스만(녹색)과 구별된다.
+  hafsid:      { field: P.clothL, fieldD: P.clothD, mark: P.blackM },
 };
 
 /* ── 선종 정의 ────────────────────────────────────────────── */
