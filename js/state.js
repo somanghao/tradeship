@@ -3,7 +3,7 @@
 import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
-  REFITS, SHOTS, MARKET, CURRENTS, TARIFF, SPREAD, CONTRACT,
+  REFITS, SHOTS, MARKET, CURRENTS, TARIFF, SPREAD, CONTRACT, OFFICER,
 } from './data.js';
 
 export const state = {
@@ -26,6 +26,7 @@ export const state = {
   prices: {},                // cityId -> goodId -> 단가
   impact: {},                // cityId -> goodId -> 최근 거래 압력 (날짜가 지나면 감쇠)
   contract: null,            // 맡은 대형 주문 (한 번에 하나)
+  officer: null,             // 부관 — { hiredDay, earned }. 오직 한 명(data.js: OFFICER)
   npcs: [],                  // 저 혼자 도는 상인·해적 (world.js가 굴린다)
   known: new Set(['venezia']),
   everOwned: new Set(['hulk']),   // 한 번이라도 몰아 본 선종 — 상위 선박 해금 조건(SHIPS[].requires)
@@ -99,7 +100,8 @@ export function marketDepth(cityId) {
 
 export function impactFactor(cityId, goodId, n = 0) {
   const p = pressureOf(cityId, goodId) + Math.max(0, n - 1) / 2;
-  return Math.min(MARKET.cap, (MARKET.impact * p) / marketDepth(cityId));
+  const raw = Math.min(MARKET.cap, (MARKET.impact * p) / marketDepth(cityId));
+  return raw * (1 - officerPerk('impactOff'));   // 부관이 물량을 나눠 넘긴다
 }
 
 export function addPressure(cityId, goodId, n) {
@@ -141,9 +143,10 @@ export function buy(goodId, qty) {
   return { ok: true, qty: max, cost, unit: Math.round(cost / max), base: state.prices[state.at][goodId] };
 }
 
-/** 그 항구의 입항세율 */
+/** 그 항구의 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
 export function tariffRate(cityId = state.at) {
-  return TARIFF[CITY_BY_ID[cityId].size] ?? 0.045;
+  const base = TARIFF[CITY_BY_ID[cityId].size] ?? 0.045;
+  return base * (1 - officerPerk('tariffOff'));
 }
 
 export function sell(goodId, qty) {
@@ -157,11 +160,21 @@ export function sell(goodId, qty) {
   state.cargo[goodId] = have - max;
   if (state.cargo[goodId] === 0) { delete state.cargo[goodId]; delete state.buyPrice[goodId]; }
   state.gold += gain;
-  state.stats.profit += gain - cost;
+
+  // 부관의 성과급 — 이 인물의 값은 여기서, 오직 남은 이익에서만 나간다.
+  // 밑진 거래에서는 떼지 않는다(손해에 수수료까지 물면 되팔기가 아예 막힌다).
+  const profit = gain - cost;
+  let cut = 0;
+  if (profit > 0 && state.officer) {
+    cut = Math.round(profit * OFFICER.cut);
+    state.gold -= cut;
+    state.officer.earned += cut;
+  }
+  state.stats.profit += profit - cut;
   addPressure(state.at, goodId, max);
   return {
-    ok: true, qty: max, gain, tariff, unit: Math.round(gain / max),
-    base: state.prices[state.at][goodId], profit: gain - cost,
+    ok: true, qty: max, gain, tariff, cut, unit: Math.round(gain / max),
+    base: state.prices[state.at][goodId], profit: profit - cut,
   };
 }
 
@@ -201,7 +214,8 @@ export function contractOffer(cityId = state.at, day = state.day) {
   const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale;
   const [ql, qh] = CONTRACT.qty;
   const qty = Math.max(ql, Math.min(qh, Math.round(target / Math.max(1, unit * mul))));
-  const pay = Math.round(unit * qty * mul);
+  // 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
+  const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp')));
 
   const legs = Math.max(1, voyageDays(cityId, to, day));
   const [dl, dh] = CONTRACT.daysPad;
@@ -261,6 +275,51 @@ function checkContractDue() {
   state.gold = Math.max(0, state.gold - fine);
   state.contract = null;
   return { expired: c, fine };
+}
+
+/* ── 부관 ─────────────────────────────────────────────────────
+   한 명뿐이다(data.js: OFFICER). 배처럼 여러 척 굴리는 것이 아니라 데리고 있거나 없거나다.
+
+   효과는 전부 **기존 파생 함수에 계수로 곱해** 넣는다 — 새 계산 경로를 파면 부관이 붙었을 때와
+   아닐 때의 값이 두 갈래로 갈려 어느 쪽이 정답인지 알 수 없게 된다.
+   대가(성과급)는 `sell()` 한 곳에서만 뗀다. */
+export function hasOfficer() {
+  return !!state.officer;
+}
+
+/** 부관이 있으면 그 계수, 없으면 0 — 호출하는 쪽은 부관 유무를 몰라도 된다 */
+export function officerPerk(key) {
+  return state.officer ? (OFFICER.perks[key] || 0) : 0;
+}
+
+/** 이 항구에서 부관을 만날 수 있는가. `poor`면 만나도 따라나서지 않는다. */
+export function officerOffer(cityId = state.at) {
+  if (state.officer) return null;
+  if (cityId !== OFFICER.home) return null;
+  // 물이 새는 배를 모는 선장에게는 가지 않는다 — 제 몫이 이익에서 나오는 사람이다
+  return { fee: OFFICER.fee, poor: !!ship().leak };
+}
+
+export function hireOfficer() {
+  if (state.officer) return { ok: false, reason: '이미 부관이 있다' };
+  const o = officerOffer();
+  if (!o) return { ok: false, reason: `${CITY_BY_ID[OFFICER.home].name}에 가야 만날 수 있다` };
+  if (o.poor) return { ok: false, reason: '이 배로는 따라나서지 않는다' };
+  if (OFFICER.fee > state.gold) {
+    return { ok: false, reason: `계약금이 ${(OFFICER.fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  }
+  state.gold -= OFFICER.fee;
+  state.officer = { hiredDay: state.day, earned: 0 };
+  return { ok: true, cost: OFFICER.fee };
+}
+
+export function dismissOfficer() {
+  if (!state.officer) return { ok: false, reason: '부관이 없다' };
+  const pay = Math.round(OFFICER.fee * OFFICER.severance);
+  const earned = state.officer.earned;
+  state.gold = Math.max(0, state.gold - pay);
+  state.officer = null;
+  return { ok: true, pay, earned };
 }
 
 /* ── 항구 서비스 ──────────────────────────────────────────── */
@@ -908,7 +967,7 @@ export function resetGame() {
     guns: s.guns, arms: { ...arms },
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
-    cargo: {}, buyPrice: {}, impact: {}, contract: null, npcs: [], at: 'venezia',
+    cargo: {}, buyPrice: {}, impact: {}, contract: null, officer: null, npcs: [], at: 'venezia',
     fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,
     loadout: ['captain', 'sailor', null, null, null, null],

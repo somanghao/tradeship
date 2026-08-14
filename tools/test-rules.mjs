@@ -1,10 +1,12 @@
-import { SHIPS, ENEMIES, REFITS } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
   buyShot, useShot, shotStock, maxHullOf, buy, sell, hire, sellsShip, yardsOf,
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
+  hasOfficer, officerOffer, hireOfficer, dismissOfficer, tariffRate, impactFactor,
+  contractOffer,
 } from '../js/state.js';
 
 const ok = (c, msg) => console.log(`${c ? 'PASS' : 'FAIL'}  ${msg}`);
@@ -157,4 +159,71 @@ ok(prizeCheaper > 0, `나포선 개조항(튀니스·알제)에 매물이 걸린
   } else {
     ok(true, '제노바에 마침 매물이 없다 (건너뜀)');
   }
+}
+
+/* ── 부관 에이미 ─────────────────────────────────────────────
+   한 명뿐인 인물이라 "언제 붙고 언제 떨어지나"와 "값과 대가가 맞물리나"를 본다. */
+resetGame();
+ok(!hasOfficer(), '시작할 때는 부관이 없다');
+{
+  const o = officerOffer('venezia');
+  ok(o && o.poor, '낡은 바사를 몰면 리알토에서 만나도 따라나서지 않는다');
+  ok(!hireOfficer().ok, '거절당한다 — 물 새는 배에는 안 탄다');
+}
+state.at = 'rodos';
+ok(officerOffer() === null, `${OFFICER.home} 밖(로도스)에서는 만날 수 없다`);
+
+// 제대로 된 배로 갈아타면 따라나선다
+state.at = 'venezia';
+state.gold = 60000;
+purchaseShip('cocca');
+boardShip('cocca');
+{
+  const tariffBefore = tariffRate('venezia');
+  state.impact.venezia = { silk: 200 };
+  const impactBefore = impactFactor('venezia', 'silk', 10);
+  const payBefore = contractOffer('venezia', 12).pay;
+
+  const g0 = state.gold;
+  const r = hireOfficer();
+  ok(r.ok && state.gold === g0 - OFFICER.fee && hasOfficer(),
+     `${OFFICER.name} 고용 — 계약금 ${r.cost.toLocaleString('ko-KR')}닢`);
+  ok(!hireOfficer().ok, '부관은 오직 한 명 — 두 번 고용되지 않는다');
+
+  const tariffAfter = tariffRate('venezia');
+  ok(Math.abs(tariffAfter - tariffBefore * (1 - OFFICER.perks.tariffOff)) < 1e-9,
+     `입항세 ${(tariffBefore * 100).toFixed(2)}% → ${(tariffAfter * 100).toFixed(2)}%`);
+  ok(impactFactor('venezia', 'silk', 10) < impactBefore,
+     `대량거래 벌점 ${(impactBefore * 100).toFixed(1)}% → ${(impactFactor('venezia', 'silk', 10) * 100).toFixed(1)}%`);
+  ok(contractOffer('venezia', 12).pay > payBefore,
+     `계약 보수 ${payBefore.toLocaleString('ko-KR')} → ${contractOffer('venezia', 12).pay.toLocaleString('ko-KR')}닢`);
+  state.impact = {};
+}
+
+// 성과급 — 남은 이익에서만 뗀다
+{
+  state.cargo = { silk: 10 };
+  state.buyPrice = { silk: 60 };
+  const earned0 = state.officer.earned;
+  const r = sell('silk', 10);
+  ok(r.ok && r.cut > 0 && state.officer.earned === earned0 + r.cut,
+     `매각 이익에서 ${OFFICER.name} 몫 ${r.cut.toLocaleString('ko-KR')}닢을 뗀다 (손에 남는 이익 ${r.profit.toLocaleString('ko-KR')}닢)`);
+
+  // 밑진 거래에서는 떼지 않는다 — 손해에 수수료까지 물면 되팔기가 막힌다
+  state.cargo = { grain: 10 };
+  state.buyPrice = { grain: 9999 };
+  const r2 = sell('grain', 10);
+  ok(r2.ok && r2.cut === 0 && r2.profit < 0, `밑진 거래에서는 몫을 떼지 않는다 (${r2.profit.toLocaleString('ko-KR')}닢)`);
+}
+
+// 내보내면 효과도 함께 사라진다
+{
+  const withOfficer = tariffRate('venezia');
+  const g0 = state.gold;
+  const r = dismissOfficer();
+  ok(r.ok && !hasOfficer() && state.gold === g0 - r.pay,
+     `내보냈다 — 퇴직금 ${r.pay.toLocaleString('ko-KR')}닢 (그동안 가져간 몫 ${r.earned.toLocaleString('ko-KR')}닢)`);
+  ok(tariffRate('venezia') > withOfficer, '입항세 감면이 사라진다');
+  ok(!dismissOfficer().ok, '없는 부관은 내보낼 수 없다');
+  ok(officerOffer('venezia') && !officerOffer('venezia').poor, '리알토에 가면 다시 만날 수 있다');
 }

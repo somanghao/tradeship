@@ -3,10 +3,11 @@
 import { mapSprite } from '../sprites/scene.js';
 import { shipTopSprite } from '../sprites/ship.js';
 import { blit } from '../pixel.js';
-import { CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS } from '../data.js';
+import { CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER } from '../data.js';
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
+  hasOfficer, officerPerk,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines,
@@ -317,10 +318,11 @@ function meetMerchant(n, finish) {
   const rows = cargoList.map(([gid, q]) =>
     `${GOOD_BY_ID[gid].name} ${q}개`).join(', ') || '빈 배';
 
-  // 흥정: 그가 실은 것을 그가 산 값에 웃돈을 얹어 산다 — 항구 시세보다는 싸다
+  // 흥정: 그가 실은 것을 그가 산 값에 웃돈을 얹어 산다 — 항구 시세보다는 싸다.
+  // 부관이 곁에 있으면 뱃전에서 한 번 더 깎는다.
   const deal = cargoList.length ? (() => {
     const [gid, q] = cargoList[0];
-    const unit = Math.round(state.prices[n.at][gid] * 1.12);
+    const unit = Math.max(1, Math.round(state.prices[n.at][gid] * 1.12 * (1 - officerPerk('haggleOff'))));
     const qty = Math.min(q, cargoFree(), Math.floor(state.gold / Math.max(1, unit)));
     return { gid, unit, qty, cost: unit * qty };
   })() : null;
@@ -370,10 +372,19 @@ function meetMerchant(n, finish) {
         + `싣고 있는 것: <b>${rows}</b><br><br>`
         + (deal && deal.qty > 0
             ? `선장이 <b>${GOOD_BY_ID[deal.gid].name}</b>을(를) 개당 ${deal.unit}닢에 넘기겠다고 한다. 항구 시세보다는 싸다.`
-            : '넘겨받을 만한 것은 없어 보인다.'),
+            : '넘겨받을 만한 것은 없어 보인다.')
+        + (deal && deal.qty > 0 ? officerAside('merchant') : ''),
     actions,
     closable: false,
   });
+}
+
+/* 부관의 한마디 — 모달 본문 끝에 붙인다.
+   새 이벤트를 추가하지 않고 **있던 이벤트가 다르게 풀리는 것**으로 부관을 체감시킨다.
+   SEA_EVENTS의 weight 합은 이미 조율된 값이라 항목을 늘리면 조우 빈도가 통째로 흔들린다. */
+function officerAside(lineKey) {
+  if (!hasOfficer()) return '';
+  return `<br><br><span style="color:#54a89b">${OFFICER.name}: ${OFFICER.lines[lineKey]}</span>`;
 }
 
 function resolveEvent(ev, voyage) {
@@ -402,7 +413,8 @@ function resolveEvent(ev, voyage) {
       modal({
         title: '폭풍우',
         body: `검은 구름이 몰려오더니 파도가 갑판을 덮쳤다.<br>`
-            + `선체가 <b>${dmg}</b> 손상되었다${lost ? `, 선원 <b>${lost}명</b>이 파도에 휩쓸렸다` : ''}.`,
+            + `선체가 <b>${dmg}</b> 손상되었다${lost ? `, 선원 <b>${lost}명</b>이 파도에 휩쓸렸다` : ''}.`
+            + officerAside('storm'),
         actions: [{ label: '버텨낸다', onClick: finish }],
         closable: false,
       });
@@ -411,8 +423,10 @@ function resolveEvent(ev, voyage) {
     case 'drift': {
       const kinds = ['salt', 'wine', 'grain', 'fur', 'ceramic'];
       const id = kinds[Math.floor(Math.random() * kinds.length)];
-      const qty = Math.min(cargoFree(), 3 + Math.floor(Math.random() * 8));
-      const coin = 60 + Math.floor(Math.random() * 240);
+      // 부관이 건질 것과 버릴 것을 셈해 고른다 — 같은 잔해에서 더 많이 나온다
+      const bonus = 1 + officerPerk('salvageUp');
+      const qty = Math.min(cargoFree(), Math.round((3 + Math.floor(Math.random() * 8)) * bonus));
+      const coin = Math.round((60 + Math.floor(Math.random() * 240)) * bonus);
       if (qty > 0) state.cargo[id] = (state.cargo[id] || 0) + qty;
       state.gold += coin;
       const gname = GOOD_BY_ID[id].name;
@@ -421,7 +435,8 @@ function resolveEvent(ev, voyage) {
       modal({
         title: '표류물 발견',
         body: `부서진 선체 조각 사이에서 건질 만한 것이 나왔다.<br>`
-            + (qty > 0 ? `<b>${gname} ${qty}개</b>와 ` : '') + `<b>금화 ${coin}닢</b>.`,
+            + (qty > 0 ? `<b>${gname} ${qty}개</b>와 ` : '') + `<b>금화 ${coin}닢</b>.`
+            + officerAside('salvage'),
         actions: [{ label: '거둬들인다', onClick: finish }],
         closable: false,
       });
@@ -442,7 +457,8 @@ function resolveEvent(ev, voyage) {
       modal({
         title: '돛이 보인다',
         body: `수평선에 검은 깃발. <b>${enemy.name}</b>이(가) 바람을 타고 다가온다.<br>`
-            + `싸워서 나포하거나, 화물 일부를 던져주고 달아날 수 있다.`,
+            + `싸워서 나포하거나, 화물 일부를 던져주고 달아날 수 있다.`
+            + officerAside('pirate'),
         actions: [
           {
             label: '전투 준비', kind: '',

@@ -25,7 +25,7 @@
 
 | 파일 | 담당 |
 |---|---|
-| `sprites/char.js` | 병종 3포즈 |
+| `sprites/char.js` | 병종 3포즈 · 인물(부관 에이미 — 여성 바디 `body:'fem'`) |
 | `sprites/ship.js` | 선박 측면·탑다운, 깃발, 선체 색 |
 | `sprites/scene.js` | 지도·항구·외해 배경, 전투 이펙트, 대포 |
 | `sprites/icons.js` | 교역품 아이콘 |

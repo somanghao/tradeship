@@ -4,15 +4,16 @@ import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS } from '../data.js';
+import { GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, OFFICER } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair, hire,
   marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT, HIRE_UNIT,
   impactFactor, costFor, tariffRate,
   contractOffer, acceptContract, deliverContract, abandonContract,
+  hasOfficer, officerOffer, hireOfficer, dismissOfficer,
 } from '../state.js';
 import { npcsAtPort } from '../world.js';
-import { el, overlay, toast, refreshHUD, iconEl } from '../ui.js';
+import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal } from '../ui.js';
 import { go } from '../main.js';
 
 let bg, city, dockers;
@@ -51,6 +52,11 @@ export const portScene = {
     // 부두 위 사람들
     for (const d of dockers) {
       blit(ctx, unitSprite(d.key, 'idle'), d.x, 150, 1, d.flip);
+    }
+
+    // 부관은 배 곁에 선다 — 사이드패널을 열지 않아도 함께 있다는 것이 보인다
+    if (hasOfficer()) {
+      blit(ctx, unitSprite(OFFICER.sprite, 'idle'), 108, 150, 1);
     }
   },
 };
@@ -156,7 +162,8 @@ function doSell(id, qty) {
   const name = GOODS.find((g) => g.id === id).name;
   toast(`${name} ${r.qty}개 매각 · ${r.gain.toLocaleString('ko-KR')}닢`
         + ` (${r.profit >= 0 ? '+' : ''}${r.profit.toLocaleString('ko-KR')}`
-        + (r.tariff ? ` · 입항세 ${r.tariff.toLocaleString('ko-KR')}` : '') + ')',
+        + (r.tariff ? ` · 입항세 ${r.tariff.toLocaleString('ko-KR')}` : '')
+        + (r.cut ? ` · ${OFFICER.name} 몫 ${r.cut.toLocaleString('ko-KR')}` : '') + ')',
         r.profit >= 0 ? 'good' : 'bad');
   after();
 }
@@ -247,6 +254,97 @@ function contractCard() {
   ]);
 }
 
+/* ── 부관 ──────────────────────────────────────────────
+   데리고 있으면 살림을, 없으면 본인을 보여준다. 리알토(베네치아) 밖에서는 아예 뜨지 않는다. */
+function officerCard() {
+  const portrait = () => el('div', {
+    style: { flex: '0 0 auto', imageRendering: 'pixelated', marginRight: '8px' },
+  }, spriteElTrim(unitSprite(OFFICER.sprite, 'idle'), 2));
+
+  if (hasOfficer()) {
+    const p = OFFICER.perks;
+    return el('div.panel', {}, [
+      el('h3', {}, [
+        el('span', { text: OFFICER.title }),
+        el('span', {
+          text: `${state.day - state.officer.hiredDay}일째`,
+          style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+        }),
+      ]),
+      el('div.svc', {}, [
+        el('div', { style: { display: 'flex', alignItems: 'flex-start' } }, [
+          portrait(),
+          el('div', {}, [
+            el('div.ctr-line', { html: `<b>${OFFICER.name}</b>` }),
+            el('div.ctr-sub', {
+              text: `입항세 −${Math.round(p.tariffOff * 100)}% · 대량거래 벌점 −${Math.round(p.impactOff * 100)}%`
+                  + ` · 계약 보수 +${Math.round(p.contractUp * 100)}%`,
+            }),
+            el('div.ctr-sub', {
+              html: `가져간 몫 <b>${state.officer.earned.toLocaleString('ko-KR')}닢</b>`
+                  + ` <span style="color:#6f6858">(매각 이익의 ${Math.round(OFFICER.cut * 100)}%)</span>`,
+            }),
+          ]),
+        ]),
+        el('button.btn.sm.dark', {
+          text: `내보낸다 (퇴직금 ${Math.round(OFFICER.fee * OFFICER.severance).toLocaleString('ko-KR')}닢)`,
+          onclick: () => {
+            const r = dismissOfficer();
+            if (!r.ok) return toast(r.reason, 'bad');
+            modal({
+              title: `${OFFICER.name}`,
+              body: `${OFFICER.lines.dismiss}<br><br>`
+                  + `<span style="color:#8f8878">함께한 동안 가져간 몫 ${r.earned.toLocaleString('ko-KR')}닢 · `
+                  + `퇴직금 ${r.pay.toLocaleString('ko-KR')}닢</span>`,
+              actions: [{ label: '보낸다', onClick: () => { after(); } }],
+            });
+          },
+        }),
+      ]),
+    ]);
+  }
+
+  const o = officerOffer();
+  if (!o) return null;
+  return el('div.panel', {}, [
+    el('h3', {}, el('span', { text: '리알토 상관' })),
+    el('div.svc', {}, [
+      el('div', { style: { display: 'flex', alignItems: 'flex-start' } }, [
+        portrait(),
+        el('div', {}, [
+          el('div.ctr-line', { html: `<b>${OFFICER.name}</b> — ${OFFICER.title} 자리를 찾고 있다` }),
+          el('div.ctr-sub', { text: OFFICER.blurb }),
+        ]),
+      ]),
+      el('div.ctr-sub', {
+        html: o.poor
+          ? `<span style="color:#d05a4a">${OFFICER.lines.poor}</span>`
+          : `${OFFICER.lines.greet}`,
+        style: { lineHeight: '1.5' },
+      }),
+      el('div.ctr-sub', {
+        text: `계약금 ${o.fee.toLocaleString('ko-KR')}닢 · 이후 매각 이익의 ${Math.round(OFFICER.cut * 100)}%를 몫으로 가져간다`,
+      }),
+      el('button.btn.sm', {
+        text: o.poor ? '지금 배로는 안 된다' : `계약한다 (${o.fee.toLocaleString('ko-KR')}닢)`,
+        disabled: o.poor || o.fee > state.gold,
+        onclick: () => {
+          const r = hireOfficer();
+          if (!r.ok) return toast(r.reason, 'bad');
+          pushLog(`${OFFICER.name}을(를) ${OFFICER.title}으로 맞았다. 계약금 ${r.cost.toLocaleString('ko-KR')}닢.`, 'good');
+          modal({
+            title: `${OFFICER.name}이 승선했다`,
+            body: `${OFFICER.lines.hire}<br><br>`
+                + `<span style="color:#8f8878">세관과 시장, 계약서를 맡는다. 대신 매각 이익의 `
+                + `${Math.round(OFFICER.cut * 100)}%가 그의 몫이다.</span>`,
+            actions: [{ label: '함께 간다', onClick: () => { after(); } }],
+          });
+        },
+      }),
+    ]),
+  ]);
+}
+
 /* 이 항구에 지금 들어와 있는 배들 — 세계가 혼자 돌아간다는 것이 보이는 창 */
 function harborCard() {
   const ships = npcsAtPort(city.id);
@@ -304,6 +402,7 @@ function sidePanel() {
       ]),
     ]),
 
+    officerCard(),
     contractCard(),
     harborCard(),
 
