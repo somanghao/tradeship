@@ -1,6 +1,8 @@
 // pixel.js — 픽셀아트 드로잉 코어
 // 모든 스프라이트는 논리 픽셀 그리드(1u = 1px)에 그린 뒤 정수배로 확대한다.
 
+import { overrideFor } from './assets.js';
+
 /* ── 공용 팔레트 ────────────────────────────────────────────────
    각 색군은 D(그림자) / M(기본) / L(하이라이트) 3톤 + 공용 아웃라인.
    난잡함을 막기 위해 스프라이트는 반드시 이 표에서만 색을 고른다. */
@@ -99,23 +101,49 @@ export function rng(seed) {
 }
 
 /* ── 스프라이트 베이킹 ──────────────────────────────────────────
-   draw(g, opts) 를 1배 오프스크린 캔버스에 한 번만 그려 캐시한다. */
+   draw(g, opts) 를 1배 오프스크린 캔버스에 한 번만 그려 캐시한다.
+
+   여기가 **모든 스프라이트가 지나가는 한 곳**이다. 그래서 에셋 팩(`js/assets.js`)이
+   같은 key로 이미지를 등록해 두었으면 그리지 않고 그것을 쓴다 — 그림을 PNG로
+   갈아 끼우는 데 sprites/ 코드를 고칠 필요가 없다. */
 const cache = new Map();
+const bakedKeys = new Map();   // key -> {w, h}  미리보기에서 "어떤 키가 있는지" 보여주는 데 쓴다
+const keyByCanvas = new WeakMap();   // 구워진 캔버스 -> key (미리보기가 키를 되짚는 데 쓴다)
 
 export function bake(key, w, h, draw) {
   const hit = cache.get(key);
   if (hit) return hit;
+  bakedKeys.set(key, { w, h });
+
+  const ov = overrideFor(key);
+  if (ov) {
+    if (ov.width !== w || ov.height !== h) {
+      console.warn(`[assets] '${key}' 규격이 다르다 — 코드 기준 ${w}×${h}, 넣은 그림 ${ov.width}×${ov.height}. `
+        + '앵커(수면선·발밑)가 어긋날 수 있다.');
+    }
+    cache.set(key, ov);
+    keyByCanvas.set(ov, key);
+    return ov;
+  }
+
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   const ctx = cv.getContext('2d');
   ctx.imageSmoothingEnabled = false;
   draw(new G(ctx), ctx);
   cache.set(key, cv);
+  keyByCanvas.set(cv, key);
   return cv;
 }
 
 /** 캐시 무효화 (에셋 미리보기에서 핫리로드용) */
 export function clearCache() { cache.clear(); }
+
+/** 지금까지 구워진 스프라이트 키와 규격 — 에셋 팩 manifest를 쓸 때 이 목록을 본다 */
+export function knownKeys() { return [...bakedKeys.entries()].map(([key, s]) => ({ key, ...s })); }
+
+/** 구워진 캔버스가 어떤 키였는지 — 미리보기에서 그림 밑에 키를 적는 데 쓴다 */
+export function keyOf(canvas) { return keyByCanvas.get(canvas) || null; }
 
 /* ── 자동 외곽선 ────────────────────────────────────────────────
    불투명 픽셀에 인접한 빈 픽셀을 1px 아웃라인으로 채운다.

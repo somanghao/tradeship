@@ -1,6 +1,7 @@
 // main.js — 캔버스 셋업, 씬 매니저, 메인 루프
 
 import { VW, VH } from './sprites/scene.js';
+import { loadAssetPack } from './assets.js';
 import { state, resetGame } from './state.js';
 import { initWorld } from './world.js';
 import { refreshHUD, refreshLog, clearOverlay, el, overlay } from './ui.js';
@@ -85,6 +86,10 @@ function frame(now) {
 
 /* ── 시작 ───────────────────────────────────────────── */
 async function boot() {
+  // 그림을 갈아 끼운 팩이 있으면 먼저 읽는다. 없는 것이 기본 — 그때는 코드 생성 그대로다.
+  // 반드시 첫 스프라이트가 구워지기 전이어야 한다(한 번 구우면 캐시에 박힌다).
+  await loadAssetPack();
+
   const { mapScene } = await import('./scenes/map.js');
   const { portScene } = await import('./scenes/port.js');
   const { battleScene } = await import('./scenes/battle.js');

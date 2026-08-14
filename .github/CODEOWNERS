@@ -1,0 +1,23 @@
+# 영역별 리뷰어 — 그 파일이 바뀐 PR에 자동으로 리뷰가 걸린다.
+# 경계의 근거는 CONTRIBUTING.md에 있다.
+#
+# 아직 담당이 정해지지 않아 전부 저장소 주인에게 걸어 둔다.
+# 담당이 정해지면 해당 줄의 @somanghao를 그 사람으로 바꾼다.
+
+*                       @somanghao
+
+# 그림 — 코드를 몰라도 assets/ 아래만으로 그림을 바꿀 수 있다
+/assets/                @somanghao
+/js/sprites/            @somanghao
+
+# NPC — 숫자만 만질 거면 config.js 한 파일이면 된다
+/js/npc/                @somanghao
+/js/world.js            @somanghao
+
+# 지도 — 좌표·항로·해류
+/js/map/                @somanghao
+
+# 규칙과 수치 — 바꾸면 경제 전체가 흔들린다. 리뷰 없이 넘기지 않는다
+/js/state.js            @somanghao
+/js/data.js             @somanghao
+/tools/                 @somanghao

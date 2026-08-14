@@ -9,15 +9,17 @@
 | 시세 · 가격 · 물가 · 산지/수요 · `wobble` · 매매 · 사기/팔기 · 손익 · 매입가 · 화물 · 적재 · 수리/고용/대포/조선소 단가 · 선박 성능표 · 항해 일수 · 급여 · 선단 유지비 · 누수 · 초기 조건 · 도시 추가 · 교역품 추가 | [wiki/economy-trade.md](wiki/economy-trade.md) | 시세 공식과 경제 규칙 전 수치 |
 | 전투 · 포격 · 조준 미니게임 · 거리(range) · 명중/치명타 · 데미지 공식 · **탄종(포도탄·사슬탄·가열탄)** · 돛 손상 · 화재 · 백병전 · 병종 능력치 · 자세(돌격/난전/방진/일제사격) · 적 AI · 적 5티어 · 도주 · 나포 편입 · 격침 · 전리품 · 이펙트 타이밍 · 갑판 배치 | [wiki/battle-system.md](wiki/battle-system.md) | 전투 2단계 규칙과 전 수치 |
 | 선단 · 배 여러 척 · 구입/승선/매각 · **국적별 조선소(어디서 파나)** · 정박지 · 예인 · **개장(동판·장갑·돛증축·골조·격실·레이지)** · 최소 인원 · 대포 종류(경포·중포·장포) · 포문 상한 · 탄약고 · 갑판 슬롯 · 병종 고용비 · 배치 환불 | [wiki/shipyard.md](wiki/shipyard.md) | 조선소 4탭의 규칙과 수치 |
-| 상인/해적 NPC · 세계가 혼자 돈다 · 시장 압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 | [wiki/world-npc.md](wiki/world-npc.md) | `world.js`가 굴리는 세계와 계약 |
+| 상인/해적 NPC · 세계가 혼자 돈다 · 시장 압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 · NPC 수·행동 규칙 교체 | [wiki/world-npc.md](wiki/world-npc.md) | 세계와 계약. 숫자는 `npc/config.js`, 판단은 `npc/behavior.js`, 집행은 `world.js` |
+| 경제 관측 · 시세가 실제로 움직이나 · 물자가 부족한 항구에 닿나 · 현금 흐름 · 도시×품목 매트릭스 · 자산 곡선 확인 | [wiki/economy-trade.md](wiki/economy-trade.md) | 대시보드 `http://localhost:8891/dashboard/` — 게임 모듈을 그대로 돌려 계측한다 |
 | 파일이 뭘 담당하나 · 데이터 조정 지점 · 씬 흐름 | [wiki/file-map.md](wiki/file-map.md) | 파일↔기능 맵 |
 
 ## 2. 자주 하는 일
 
 | 하고 싶은 것 | 어디 |
 |---|---|
-| 도시 추가 / 시세 성향 | `data.js: CITIES` — `supply`(배율<1, 산지) / `demand`(배율>1, 수요지) |
-| 항로 연결 | `data.js: ROUTES` |
+| 도시 추가 | `map/geo.js: CITY_GEO`(좌표·깃발·규모) **와** `data.js: CITY_TRADE`(경제)에 **같은 id**로 — 한쪽만 넣으면 콘솔 경고 |
+| 시세 성향 | `data.js: CITY_TRADE` — `supply`(배율<1, 산지) / `demand`(배율>1, 수요지) |
+| 항로 연결 | `map/geo.js: ROUTES` — 선 하나가 경제 전체의 물길을 바꾼다 |
 | 교역품 추가 | `data.js: GOODS` + `sprites/icons.js`에 아이콘 |
 | 선박 성능·가격·국적 | `data.js: SHIPS` — `yards`(파는 항구) · `crewMin`(최소 인원) · `upkeep`(하루 유지비) · `leak`(누수) |
 | 개장 종류·값 | `data.js: REFITS` — 효과 반영은 `state.js`의 `shipSpeed`/`maxHullOf`/`gunCap`/`fleeBonus`/`crewLossFactor` |
@@ -33,9 +35,11 @@
 | 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`) |
 | 입항세 | `data.js: TARIFF` (도시 size별) |
 | 항해 비용 | `state.js: CREW_WAGE`(2.4) · `SUPPLY_UNIT`(1.3) · 선종별 `upkeep` |
-| 바람·해류 | `data.js: CURRENTS` · 배의 `rig` · `state.js: windOf/windFactor/routeFactor` |
+| 바람·해류 | `map/geo.js: CURRENTS` · 배의 `rig` · `state.js: windOf/windFactor/routeFactor` |
 | 계약 규모·보수·위약금 | `data.js: CONTRACT` |
-| NPC 수·습격률·시장 영향 | `world.js: TRADERS/PIRATES/RAID_BASE/NPC_PRESSURE` |
+| NPC 수·습격률·시장 영향·싣는 양 | `npc/config.js: NPC` (traders·pirates·raidBase·pressure·loadRatio·pickTop) |
+| NPC가 어디로 갈지·무엇을 살지 | `npc/behavior.js: chooseTrade/choosePirateMove` — `ctx`로만 받으므로 통째로 갈아 끼워도 `world.js`는 그대로 |
+| 경제가 실제로 도는지 확인 | 대시보드 `dashboard/` (`python serve.py` 후 `/dashboard/`) · 계측만 떼서 보려면 `node -e "import('./dashboard/measure.mjs')…"` |
 
 ## 3. 이 도메인 전용 함정·가드
 
@@ -52,5 +56,6 @@
 - **대포 밸런스는 "거리 구간"으로 가른다.** 배율 하나로 전 구간을 좋게/나쁘게 만들면 상위호환이 생긴다(장포 사건). 수치를 건드리면 기대피해를 검산해 **거리별 1위가 2종 이상인지** 확인할 것.
 - **경제 수치를 건드리면 `node tools/sim-trade.mjs`를 다시 돌린다.** 최적 플레이·다품목·NPC를 가정한 무역 곡선으로 "몇 항차에 어느 배"가 나온다. `SPREAD` 하나만 움직여도 초반이 무너지거나 후반이 막힌다 — 눈으로 판단하지 말 것.
 - **선금이 있는 계약은 위약금이 선금보다 커야 한다.** 위약금을 선금의 50%로 뒀더니 "받고 파기"가 순이득이었다(+3,448닢). 지금은 ×1.25.
-- **NPC가 시장을 선점하면 플레이어가 굶는다.** NPC 거래 압력을 100% 반영했더니 5~15항차 자산이 바닥을 겼다. `NPC_PRESSURE`(0.5)로 절반만 남긴다.
+- **NPC가 시장을 선점하면 플레이어가 굶는다.** NPC 거래 압력을 100% 반영했더니 5~15항차 자산이 바닥을 겼다. `npc/config.js: NPC.pressure`(0.5)로 절반만 남긴다.
+- **도시는 두 파일에 걸쳐 있다.** 지리(`map/geo.js: CITY_GEO`)와 경제(`data.js: CITY_TRADE`)를 id로 맞물려 `CITIES`를 합성한다. 한쪽에만 추가하면 게임은 돌지만 그 항구가 아무것도 안 팔거나 지도에 안 나온다 — 콘솔 경고로만 드러난다.
 - **패배는 게임오버가 아니다.** 금화 50%·화물 전량을 잃고 항구로 예인된다(재기 가능). 이 처리를 바꿀 때 진행 불가 상태가 되지 않게.

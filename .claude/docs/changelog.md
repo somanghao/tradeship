@@ -5,6 +5,20 @@
 
 ## 2026-08
 
+- **[2026-08-14] #collab #infra** — GitHub 공개(`somanghao/tradeship`, public/main) + 협업 가능하도록 **세 영역 분리**. 다른 개발자가 남의 파일을 열지 않고 일할 수 있게 경계를 그었다.
+  - **그림**: `bake(key,…)`가 모든 스프라이트의 단일 통로라는 점을 이용해 여기에 오버라이드 훅을 걸었다(`js/assets.js`). `assets/manifest.json`에 `"키": "파일.png"`만 적으면 코드 수정 없이 그 스프라이트가 PNG로 대체된다. 키를 알 수 있게 `pixel.js: keyOf/knownKeys` 역맵을 두고 `preview.html`이 그림마다 키를 표시(+ 전체 복사 버튼). 규격 불일치는 콘솔 경고.
+  - **NPC**: `world.js`를 3겹으로 갈랐다 — 숫자만 있는 `npc/config.js`, 판단만 하는 `npc/behavior.js`(게임 모듈을 import하지 않고 `ctx`로만 받는다), 집행하는 `world.js`. 행동 규칙을 통째로 갈아 끼워도 `world.js`는 그대로다.
+  - **지도**: 좌표·항로·해류를 `js/map/geo.js: CITY_GEO/ROUTES/CURRENTS`로 분리하고, `data.js`는 경제(`CITY_TRADE`)만 갖는다. `CITIES`는 둘을 id로 합성한 결과라 읽는 쪽 코드는 그대로. 한쪽에만 도시를 추가하면 콘솔 경고가 뜬다.
+  - 문서: 루트 `CONTRIBUTING.md`(영역 표·검증 절차) · `assets/README.md`(그림 교체 절차) · `.github/CODEOWNERS` · `README.md`. 협업자 `yoush28` write 초대.
+  - 회귀: `test-rules` 25 PASS · `test-world` 10 PASS · `sim-trade` 곡선 유지 · 전 모듈 import 링크 확인.
+
+- **[2026-08-14] #game #tool** — **경제 대시보드** `/dashboard/` 신설. "NPC가 실제로 무역을 하는가 · 가격이 정말 움직이는가 · 물자가 부족한 항구까지 닿는가"를 눈이 아니라 수치로 본다.
+  - 규칙을 재구현하지 않는다 — 게임 모듈(`state.js`·`world.js`)을 그대로 import해 돌린다. 재구현했다면 "대시보드에서는 맞는데 게임에서는 다른" 지표가 됐을 것이다.
+  - 이를 위해 `tools/sim-trade.mjs`를 몸통(`tools/sim-core.mjs`, 출력 없음 + `hooks.onVoyage`)과 CLI 출력으로 갈랐다. 계측은 `dashboard/measure.mjs`에 DOM 없이 두어 node로도 검증된다.
+  - 화면: 요약 카드 · 현금흐름(주인공 자산 vs NPC 상인 자산 띠 + 배 갈아탄 시점) · 항차별 수지 막대 · 도시×품목 매트릭스 5모드(가격/배율/변동폭/물동량/압력) · **부족한데 아무도 안 나르는 곳** · 가격이 안 움직이는 칸 · 선박표 · NPC 목록 · 거래·습격 로그.
+  - `serve.py`에 `.mjs` MIME 등록(파이썬 `mimetypes`에 없어 `text/plain`으로 나가면 브라우저가 모듈 로드를 거부).
+  - 첫 관측(90항차): 수요 33칸 중 유입 0인 칸은 없으나 베이루트 유리 9·베네치아 곡물 12는 사실상 미도달. 156칸 중 3칸은 거래가 아예 0.
+
 - **[2026-08-08] #init #art** — 픽셀 에셋 시스템 구축. `pixel.js`(팔레트·드로잉 DSL·bake 캐시·자동 외곽선) 위에 캐릭터/선박/배경/아이콘/이펙트 모듈. `preview.html`로 톤 확인 후 진행.
   - 병종 9종 × 3포즈: 베이스 바디 1개 + 파츠(머리장구 7·무기 7·방어구 4) + 팔레트 스왑 6종으로 조립.
   - 선박 5종: 현호/용골 곡선 함수로 선체 생성 → `HULLS` 비례값만 바꿔 선종 추가 가능.

@@ -15,6 +15,10 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 
 class NoCacheHandler(SimpleHTTPRequestHandler):
+    # 대시보드가 tools/*.mjs를 그대로 import한다. 파이썬 mimetypes에는 .mjs가 없어서
+    # 등록하지 않으면 text/plain으로 나가고 브라우저가 모듈 로드를 거부한다.
+    extensions_map = {**SimpleHTTPRequestHandler.extensions_map, '.mjs': 'text/javascript'}
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')

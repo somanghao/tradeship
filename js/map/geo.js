@@ -1,0 +1,66 @@
+// map/geo.js — 지중해의 지리 (지도 담당 영역)
+//
+// ★ 이 파일은 "어디에 무엇이 있고 어떻게 이어지는가"만 다룬다.
+//   교역품 산지·수요지 같은 **경제 수치는 `js/data.js`**에 있다. 둘을 갈라 둔 이유는
+//   지도를 손보는 사람과 경제를 조율하는 사람이 같은 줄을 놓고 충돌하지 않게 하기 위해서다.
+//   두 쪽은 `id`로만 맞물린다 — 여기에 도시를 추가하면 data.js의 `CITY_TRADE`에도
+//   같은 id를 넣어야 하고, 빠지면 시작할 때 콘솔에 경고가 뜬다.
+//
+// 좌표계: 논리 해상도 400×225 기준. 지도 그림(`js/sprites/scene.js: mapSprite`)과
+//   같은 좌표계이므로, 해안선을 고치면 도시 좌표도 함께 봐야 한다.
+
+/** 도시의 지리·외형.
+    x,y   지도 위 위치(400×225)
+    style 항구 배경 화풍 — latin | hellenic | levant  (sprites/scene.js: STYLES)
+    flag  항구에 걸리는 깃발 — sprites/ship.js: FLAGS
+    seed  항구 그림을 결정하는 난수 씨앗(같은 값이면 같은 항구 그림)
+    size  항구 규모 1~3 — 시장 깊이와 입항세가 여기서 나온다 */
+export const CITY_GEO = [
+  { id: 'venezia',    name: '베네치아',     region: '아드리아',   style: 'latin',    x: 141, y: 63,  flag: 'venice',  seed: 1101, size: 3 },
+  { id: 'genova',     name: '제노바',       region: '리구리아',   style: 'latin',    x: 116, y: 76,  flag: 'genoa',   seed: 1202, size: 3 },
+  { id: 'marseille',  name: '마르세유',     region: '프로방스',   style: 'latin',    x: 91,  y: 71,  flag: 'genoa',   seed: 1303, size: 2 },
+  { id: 'barcelona',  name: '바르셀로나',   region: '카탈루냐',   style: 'latin',    x: 57,  y: 89,  flag: 'spain',   seed: 1404, size: 3 },
+  { id: 'napoli',     name: '나폴리',       region: '캄파니아',   style: 'latin',    x: 131, y: 110, flag: 'spain',   seed: 1505, size: 2 },
+  { id: 'palermo',    name: '팔레르모',     region: '시칠리아',   style: 'latin',    x: 151, y: 144, flag: 'spain',   seed: 1606, size: 2 },
+  { id: 'tunis',      name: '튀니스',       region: '이프리키야', style: 'levant',   x: 174, y: 157, flag: 'ottoman', seed: 1707, size: 2 },
+  { id: 'algiers',    name: '알제',         region: '마그레브',   style: 'levant',   x: 106, y: 151, flag: 'ottoman', seed: 1808, size: 2 },
+  { id: 'athens',     name: '아테네',       region: '아티카',     style: 'hellenic', x: 191, y: 110, flag: 'ottoman', seed: 1909, size: 2 },
+  { id: 'rodos',      name: '로도스',       region: '에게',       style: 'hellenic', x: 239, y: 109, flag: 'venice',  seed: 2010, size: 1 },
+  { id: 'istanbul',   name: '이스탄불',     region: '보스포루스', style: 'hellenic', x: 241, y: 55,  flag: 'ottoman', seed: 2111, size: 3 },
+  { id: 'beirut',     name: '베이루트',     region: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2 },
+  { id: 'alexandria', name: '알렉산드리아', region: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3 },
+];
+
+/* 항로 — 인접 도시 간 연결. 여기에 없는 두 항구는 직항이 없다.
+   NPC도 플레이어도 이 그래프 위에서만 움직이므로, 선 하나를 긋고 지우는 것이
+   경제 전체의 물길을 바꾼다. 값은 `distanceBetween`이 좌표에서 직접 잰다. */
+export const ROUTES = [
+  ['venezia', 'genova'], ['venezia', 'rodos'], ['venezia', 'athens'], ['venezia', 'napoli'],
+  ['genova', 'marseille'], ['genova', 'napoli'],
+  ['marseille', 'barcelona'],
+  ['barcelona', 'algiers'], ['barcelona', 'palermo'],
+  ['napoli', 'palermo'], ['napoli', 'athens'],
+  ['palermo', 'tunis'], ['palermo', 'algiers'], ['palermo', 'athens'],
+  ['tunis', 'algiers'], ['tunis', 'alexandria'],
+  ['athens', 'rodos'], ['athens', 'istanbul'],
+  ['rodos', 'istanbul'], ['rodos', 'beirut'], ['rodos', 'alexandria'],
+  ['beirut', 'alexandria'],
+];
+
+/* 해류 — 지중해는 대체로 아프리카 연안을 동쪽으로 흐르고 레반트에서 북상해 되돌아온다.
+   `from` 방향으로 가면 물길을 타고, 거스르면 그만큼 느리다. 실린 구간만 반영한다.
+   키는 도시 두 개를 정렬해 이은 것. */
+export const CURRENTS = {
+  'algiers|barcelona':  { from: 'barcelona',  push: 0.06 },
+  'algiers|tunis':      { from: 'algiers',    push: 0.10 },
+  'palermo|tunis':      { from: 'palermo',    push: 0.06 },
+  'alexandria|tunis':   { from: 'tunis',      push: 0.12 },
+  'alexandria|beirut':  { from: 'alexandria', push: 0.10 },
+  'beirut|rodos':       { from: 'beirut',     push: 0.08 },
+  'athens|rodos':       { from: 'rodos',      push: 0.06 },
+  'istanbul|rodos':     { from: 'istanbul',   push: 0.10 },   // 보스포루스에서 밀려 나오는 물
+  'napoli|palermo':     { from: 'napoli',     push: 0.05 },
+  'genova|venezia':     { from: 'venezia',    push: 0.05 },
+};
+
+export const GEO_BY_ID = Object.fromEntries(CITY_GEO.map((c) => [c.id, c]));

@@ -1,8 +1,13 @@
-// world.js — 지중해에서 저 혼자 돌아가는 세계
+// world.js — 지중해에서 저 혼자 돌아가는 세계 (NPC 담당 영역)
 //
 // 상인 NPC가 실제로 항구를 돌며 사고팔고, 해적 NPC가 그들을 노린다.
 // 핵심은 "연출"이 아니라 **같은 시장을 쓴다**는 것 — NPC의 거래가 플레이어가 보는
 // 시세에 그대로 압력으로 남는다. 늦게 가면 이미 쓸어간 뒤다.
+//
+// ★ 이 파일은 **생성·시간진행·습격 처리·조회**만 한다.
+//   · 몇 척이 어떤 배로 도는가 → `js/npc/config.js`
+//   · 어디로 갈지 어떻게 정하는가 → `js/npc/behavior.js`
+//   판단을 저쪽에 몰아둔 덕에, 행동 규칙을 통째로 갈아 끼워도 여기는 그대로다.
 //
 // state.js를 한 방향으로만 import한다(여기서 state를 쓰고, state는 여기를 모른다).
 // 그래서 순환 참조가 없다. 시간 진행은 호출자(map.js)가 advanceDays 뒤에 worldTick을 부른다.
@@ -11,41 +16,41 @@ import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS } from './data.js';
 import {
   state, neighborsOf, distanceBetween, priceOf, addPressure, tariffRate, pushLog,
 } from './state.js';
-
-const TRADERS = 9;         // 동시에 도는 상인 수
-const PIRATES = 4;         // 배회하는 해적 수
-const RAID_BASE = 0.16;    // 같은 구간에서 마주쳤을 때 해적이 덮칠 확률(하루당)
-/* NPC 거래가 시장에 남기는 몫. 1.0으로 두면 아홉 척이 매일 사고팔아 시세를 계속
-   불리하게 만들어 플레이어가 벌 곳이 없어진다(시뮬레이션에서 5~15항차 자산이 바닥을 겼다).
-   세계가 살아 있다는 감각은 주되, 시장을 통째로 선점하지는 않게 절반만 남긴다. */
-const NPC_PRESSURE = 0.5;
-
-const TRADER_NAMES = [
-  '산타 마리아', '레드티', '골든 로즈', '루나 디 마레', '세인트 조지',
-  '비앙카', '알 부라크', '스텔라', '메르쿠리오', '포르투나', '아르고',
-];
-const PIRATE_NAMES = ['검은 갈매기', '붉은 이빨', '해골 깃발', '살렘의 늑대', '자칼'];
+import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
+import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 
 let seq = 0;
 const rnd = () => Math.random();
 const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+const between = ([lo, hi]) => lo + Math.round(rnd() * (hi - lo));
+
+/** behavior.js가 판단에 쓰는 창구 — 게임 모듈을 저쪽에 노출하지 않기 위한 얇은 껍데기 */
+const ctx = {
+  neighbors: neighborsOf,
+  price: priceOf,
+  tariff: tariffRate,
+  goods: GOODS,
+  ships: SHIPS,
+  tradersNear: (cityId) => tradersNear(cityId),
+  rnd,
+};
 
 /* ── 생성 ─────────────────────────────────────────────────── */
 export function initWorld() {
   seq = 0;
   state.npcs = [];
-  for (let i = 0; i < TRADERS; i++) state.npcs.push(makeTrader());
-  for (let i = 0; i < PIRATES; i++) state.npcs.push(makePirate());
+  for (let i = 0; i < NPC.traders; i++) state.npcs.push(makeTrader());
+  for (let i = 0; i < NPC.pirates; i++) state.npcs.push(makePirate());
 }
 
 function makeTrader() {
   const at = pick(CITIES).id;
-  const shipKey = pick(['caravel', 'fluyt', 'brig', 'carrack']);
+  const shipKey = pick(TRADER_SHIPS);
   return {
     id: ++seq, kind: 'trader',
     name: TRADER_NAMES[seq % TRADER_NAMES.length],
     shipKey, at, to: null, days: 0, legs: 0,
-    gold: 900 + Math.round(rnd() * 2600),
+    gold: between(PURSE.trader),
     cargo: {}, hp: SHIPS[shipKey].hp,
   };
 }
@@ -55,8 +60,8 @@ function makePirate() {
   return {
     id: ++seq, kind: 'pirate',
     name: PIRATE_NAMES[seq % PIRATE_NAMES.length],
-    shipKey: pick(['brig', 'caravel']), at, to: null, days: 0, legs: 0,
-    gold: 300 + Math.round(rnd() * 900),
+    shipKey: pick(PIRATE_SHIPS), at, to: null, days: 0, legs: 0,
+    gold: between(PURSE.pirate),
     cargo: {}, hp: 90, kills: 0,
   };
 }
@@ -72,8 +77,8 @@ export function worldTick(days = 1) {
   // 사라진 배를 채워 세계가 비지 않게 한다
   const traders = state.npcs.filter((n) => n.kind === 'trader').length;
   const pirates = state.npcs.filter((n) => n.kind === 'pirate').length;
-  for (let i = traders; i < TRADERS; i++) state.npcs.push(makeTrader());
-  for (let i = pirates; i < PIRATES; i++) state.npcs.push(makePirate());
+  for (let i = traders; i < NPC.traders; i++) state.npcs.push(makeTrader());
+  for (let i = pirates; i < NPC.pirates; i++) state.npcs.push(makePirate());
   return news;
 }
 
@@ -94,51 +99,30 @@ function arrivePort(n, news) {
     const unit = priceOf(n.at, gid);
     const gain = Math.round(unit * qty * (1 - tariffRate(n.at)));
     n.gold += gain;
-    addPressure(n.at, gid, qty * NPC_PRESSURE);   // 플레이어가 보는 시세가 실제로 움직인다
+    addPressure(n.at, gid, qty * NPC.pressure);   // 플레이어가 보는 시세가 실제로 움직인다
     news.push({ kind: 'sold', who: n.name, city: n.at, goodId: gid, qty });
   }
   n.cargo = {};
 }
 
-/** 다음 항구를 골라 싣고 떠난다 */
+/** 다음 항구를 골라 싣고 떠난다 — 무엇을 살지·어디로 갈지는 behavior.js가 정한다 */
 function depart(n, news) {
-  const nb = neighborsOf(n.at);
-  if (!nb.length) return;
-
   if (n.kind === 'trader') {
-    // 이웃 중 가장 남는 곳으로 — 플레이어와 같은 판단을 한다
-    const cands = [];
-    for (const to of nb) {
-      for (const g of GOODS) {
-        const buyAt = priceOf(n.at, g.id), sellAt = priceOf(to, g.id);
-        const margin = sellAt * (1 - tariffRate(to)) - buyAt;
-        if (margin <= 0) continue;
-        const room = Math.floor(SHIPS[n.shipKey].cargo * (0.35 + rnd() * 0.35));
-        const qty = Math.min(room, Math.floor(n.gold / buyAt));
-        if (qty < 5) continue;
-        cands.push({ to, gid: g.id, qty, buyAt, score: margin * qty });
-      }
-    }
-    // 상위 후보 중에서 고른다 — 전부 같은 최적해로 몰리면 한 항구만 계속 짓눌린다
-    cands.sort((a, b) => b.score - a.score);
-    const best = cands.length ? cands[Math.floor(rnd() * Math.min(4, cands.length))] : null;
+    const best = chooseTrade(n, ctx);
     if (best) {
       n.gold -= best.buyAt * best.qty;
       n.cargo[best.gid] = (n.cargo[best.gid] || 0) + best.qty;
-      addPressure(n.at, best.gid, best.qty * NPC_PRESSURE);
+      addPressure(n.at, best.gid, best.qty * NPC.pressure);
       news.push({ kind: 'bought', who: n.name, city: n.at, goodId: best.gid, qty: best.qty });
       setSail(n, best.to);
-    } else {
-      setSail(n, pick(nb));            // 남는 게 없으면 그냥 옮겨 다닌다
+      return;
     }
+    const to = chooseWander(n, ctx);      // 남는 게 없으면 그냥 옮겨 다닌다
+    if (to) setSail(n, to);
     return;
   }
-  // 해적은 상인이 많은 쪽으로 기운다
-  const weights = nb.map((to) => 1 + tradersNear(to) * 1.6);
-  let r = rnd() * weights.reduce((a, b) => a + b, 0);
-  let idx = 0;
-  for (; idx < nb.length; idx++) { r -= weights[idx]; if (r <= 0) break; }
-  setSail(n, nb[Math.min(idx, nb.length - 1)]);
+  const to = choosePirateMove(n, ctx);
+  if (to) setSail(n, to);
 }
 
 function setSail(n, to) {
@@ -162,7 +146,7 @@ function raids(news) {
     const prey = state.npcs.filter((n) => n.kind === 'trader' && n.to && sameLeg(p, n));
     if (!prey.length) continue;
     const victim = pick(prey);
-    if (rnd() > RAID_BASE) continue;
+    if (rnd() > NPC.raidBase) continue;
     // 화물과 금화를 빼앗고 상인은 사라진다
     const loot = Object.entries(victim.cargo).map(([gid, q]) => `${GOOD_BY_ID[gid].name} ${q}`).join(', ');
     p.gold += victim.gold;

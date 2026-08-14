@@ -27,11 +27,32 @@
   .cell canvas { display: block; image-rendering: pixelated; margin: 0 auto; }
   .cap { font-size: 11px; color: #9a92a8; margin-top: 6px; }
   .cap b { color: #ded2b8; font-weight: 600; }
+  .cap .key {
+    margin-top: 4px; font-size: 9.5px; color: #6f6880; font-family: Consolas, monospace;
+    user-select: all; cursor: text; word-break: break-all;
+  }
+  .howto {
+    background: #1d1a26; border: 1px solid #2e2839; border-left: 3px solid #f4dd86;
+    border-radius: 0 4px 4px 0; padding: 10px 14px; margin: 0 0 22px; font-size: 12px; line-height: 1.7;
+  }
+  .howto code { color: #a8c8e0; font-family: Consolas, monospace; }
+  .howto button {
+    background: #2a2438; color: #ded2b8; border: 1px solid #3b3348; border-radius: 4px;
+    padding: 4px 11px; font: inherit; font-size: 11px; cursor: pointer; margin-left: 6px;
+  }
 </style>
 </head>
 <body>
 <h1>대항해 데모 — 픽셀 에셋 미리보기</h1>
 <p class="sub">코드 생성 스프라이트 · 안티에일리어싱 off · 정수배 확대</p>
+
+<div class="howto">
+  <b>그림을 직접 그린 것으로 바꾸려면</b> — 코드를 고칠 필요가 없다.
+  각 그림 밑의 회색 <code>키</code>를 <code>assets/manifest.json</code>에 적고 PNG를 같은 폴더에 두면 그 그림만 교체된다.
+  규격(가로×세로)이 다르면 콘솔에 경고가 뜬다 — 수면선·발밑 같은 기준점이 어긋나기 때문이다.
+  자세한 절차는 <code>assets/README.md</code>.
+  <button id="copyKeys">키 전체 복사</button>
+</div>
 
 <h2>병종 (48×48 원본)</h2>
 <div class="row" id="units"></div>
@@ -61,7 +82,7 @@
 <div class="row" id="pal"></div>
 
 <script type="module">
-import { PAL, blit } from './js/pixel.js';
+import { PAL, blit, keyOf, knownKeys } from './js/pixel.js';
 import { unitSprite, UNITS, UNIT_KEYS, CW, CH } from './js/sprites/char.js';
 import { shipSprite, shipTopSprite, HULLS, HULL_KEYS, SW, SH, TOP_W, TOP_H } from './js/sprites/ship.js';
 
@@ -76,7 +97,9 @@ function cell(parent, sprite, scale, caption, sea) {
   d.appendChild(cv);
   const c = document.createElement('div');
   c.className = 'cap';
-  c.innerHTML = caption;
+  const key = keyOf(sprite);
+  c.innerHTML = caption
+    + (key ? `<div class="key" title="assets/manifest.json에 이 키로 적으면 그림이 바뀐다">${key}</div>` : '');
   d.appendChild(c);
   parent.appendChild(d);
   return d;
@@ -153,6 +176,20 @@ for (const [name, hex] of Object.entries(PAL)) {
                  <div class="cap">${name}<br>${hex}</div>`;
   plw.appendChild(d);
 }
+
+// 키 전체를 manifest 뼈대 모양으로 복사한다 — 팩을 시작할 때 이걸 붙여넣으면 된다
+document.getElementById('copyKeys').onclick = async () => {
+  const sprites = {};
+  for (const { key, w, h } of knownKeys()) sprites[key] = `TODO/${key.replace(/[:|]/g, '_')}.png  (${w}x${h})`;
+  const txt = JSON.stringify({ name: '새 에셋 팩', sprites }, null, 2);
+  try {
+    await navigator.clipboard.writeText(txt);
+    document.getElementById('copyKeys').textContent = `복사했다 (${Object.keys(sprites).length}개)`;
+  } catch {
+    console.log(txt);
+    document.getElementById('copyKeys').textContent = '콘솔에 출력했다';
+  }
+};
 </script>
 </body>
 </html>

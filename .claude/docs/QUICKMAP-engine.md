@@ -24,6 +24,8 @@
 | 조선소 화면 | `scenes/shipyard.js` + `css/style.css`의 `#yard-panel` 계열 → [wiki/shipyard.md](wiki/shipyard.md) |
 | UI가 게임 그림을 가릴 때 | 패널을 고정 px 대신 `viewport()` 기반 논리좌표로 배치 (조선소 씬 `layout()`이 본보기) |
 | 키 입력 | 현재 전투 `Space`(발사)뿐 — `battle.js` 하단 `keydown` |
+| 경제 대시보드 | `dashboard/` — `index.html`(화면) · `dash.js`(렌더) · `measure.mjs`(계측, DOM 없음) |
+| 부팅 순서 | `main.js: boot()` — **에셋 팩 로드가 첫 `bake`보다 먼저**여야 한다(한 번 구우면 캐시에 박힌다) |
 
 ## 3. 이 도메인 전용 함정·가드
 
@@ -35,3 +37,4 @@
 - **DOM 패널을 고정 px로 깔면 게임 그림을 덮는다.** 항구 사이드패널(292px)이 정박한 배를 절반 넘게 가리고 있었다. 그림을 보여줘야 하는 화면은 `viewport()`로 논리좌표에 맞춰 배치한다.
 - **씬 전환 시 남은 `setTimeout` 체인** — 전투 턴이 타이머 체인이라 씬을 급히 벗어나면 콜백이 살아 있다. 각 콜백이 `if (!B) return`으로 방어 중이니 이 가드를 지울 것.
 - **정수배 스케일 정책** 때문에 창이 작으면 `scale=1`로 떨어진다(1.9배를 못 씀). 버그가 아니라 픽셀 선명도를 지키는 의도된 동작.
+- **`.mjs`는 서버가 MIME을 안 주면 모듈로 안 읽힌다.** 파이썬 `mimetypes`에 `.mjs`가 없어 `text/plain`으로 나가고 브라우저가 거부한다. `serve.py`가 `extensions_map`에 등록해 둔 이유 — 대시보드가 `tools/*.mjs`를 직접 import한다.

@@ -22,7 +22,8 @@
 | 국가 깃발 추가 | `sprites/ship.js: FLAGS` (venice/genoa/spain/ottoman/france/england/pirate) |
 | 도시 건축 양식 추가 | `sprites/scene.js: STYLES` |
 | 지형 수정 | `sprites/scene.js: SEA_SPANS`(격자) / `ISLES`(섬) — 먼저 [map-terrain.md](wiki/map-terrain.md) |
-| 에셋 확인 | `preview.html` — 새 에셋은 여기에도 셀 추가 |
+| 에셋 확인 | `preview.html` — 새 에셋은 여기에도 셀 추가. 그림마다 `bake` 키가 함께 표시된다 |
+| **그림을 PNG로 교체**(코드 수정 없이) | `assets/manifest.json`에 `"bake 키": "파일.png"` → `assets/README.md`. 훅은 `pixel.js: bake` → `assets.js: overrideFor` |
 
 ## 3. 이 도메인 전용 함정·가드
 
@@ -32,6 +33,7 @@
 - **식생·사막 경계를 상수로 자르면 띠로 보인다.** 주기가 다른 sin 2개를 겹쳐 흔들 것.
 - **배경은 세로 배치표를 지킨다** (뒤→앞). 성벽을 바다보다 먼저 그렸다가 수면 아래로 잠겨 사라진 적 있다. 부두 프롭도 `QUAY_Y` 기준 아래(`pz`)에 놓아야 물에 안 뜬다. → [port-scene.md](wiki/port-scene.md)
 - **스프라이트 가장자리에 1px 여백**을 남긴다. 꽉 채우면 `outline()`이 그려질 자리가 없다.
+- **에셋 팩 PNG는 규격이 맞아야 한다.** 크기가 다르면 그려지긴 하나 기준점(선박 `WATERLINE`=y104, 병종 발밑)이 어긋나 배가 잠기고 사람이 뜬다. 콘솔 경고로만 알려준다.
 - **섬은 격자가 아니라 확대 후 좌표로** 찍는다. 격자에 넣으면 스무딩에 먹혀 사라진다.
 - **그리는 순서가 곧 z축**이다(뒤팔 → 몸 → 머리 → 앞팔 → 무기). 순서를 바꾸면 무기가 손 뒤로 들어간다.
 - **선체 부속은 고정 픽셀이 아니라 `len` 비례로.** 선수 사장을 22px로 박아 뒀더니 짧은 선체(낡은 바사 84)에서 장대처럼 튀어나왔다. 지금은 `clamp(len × 0.2, 14, 24)`. 선종이 늘면 고정값은 반드시 깨진다.

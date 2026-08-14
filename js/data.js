@@ -1,5 +1,13 @@
-// data.js — 도시 / 교역품 / 선박 / 적 정의
-// 지도 좌표는 400x225 논리 해상도 기준.
+// data.js — 교역품 / 도시 경제 / 선박 / 적 정의
+//
+// ★ 도시의 **지리**(좌표·항로·해류·깃발·규모)는 `js/map/geo.js`에 있다.
+//   여기에는 그 도시가 무엇을 싸게 내놓고 무엇을 비싸게 사는지(경제)만 둔다.
+//   지도를 손보는 사람과 경제를 조율하는 사람이 같은 줄에서 충돌하지 않게 가른 것이다.
+//   `CITIES`는 둘을 id로 맞물려 합성한 결과다 — 읽는 쪽 코드는 예전과 똑같이 쓰면 된다.
+
+import { CITY_GEO, GEO_BY_ID, ROUTES, CURRENTS } from './map/geo.js';
+
+export { ROUTES, CURRENTS };
 
 export const GOODS = [
   { id: 'grain',    name: '곡물',     base: 20,  icon: 'grain',    bulk: 1 },
@@ -52,120 +60,77 @@ export const CONTRACT = {
    (도시 `size` 기준. 밀무역·면세 특권은 뒷날의 확장 자리다) */
 export const TARIFF = { 1: 0.03, 2: 0.045, 3: 0.06 };
 
-/* 도시.
-   supply = 산지라 싸다 (배율<1) / demand = 수요지라 비싸다 (배율>1) */
-export const CITIES = [
-  {
-    id: 'venezia', name: '베네치아', region: '아드리아', style: 'latin',
-    x: 141, y: 63, flag: 'venice', seed: 1101, size: 3,
+/* 도시 경제 — 그 항구가 무엇을 싸게 내놓고 무엇을 비싸게 사는가.
+   supply = 산지라 싸다 (배율<1) / demand = 수요지라 비싸다 (배율>1)
+   좌표·항로·깃발·규모는 `js/map/geo.js`에 있고, 여기와는 id로만 맞물린다. */
+export const CITY_TRADE = {
+  venezia: {
     supply: { glass: 0.48, silk: 0.72 }, demand: { spice: 1.42, fur: 1.30, grain: 1.18 },
     blurb: '유리와 비단의 도시. 동방 향신료라면 값을 아끼지 않는다.',
   },
-  {
-    id: 'genova', name: '제노바', region: '리구리아', style: 'latin',
-    x: 116, y: 76, flag: 'genoa', seed: 1202, size: 3,
+  genova: {
     supply: { weapon: 0.66, wine: 0.62 }, demand: { silk: 1.38, ivory: 1.32 },
     blurb: '베네치아의 숙적. 조선소와 무기고가 항구를 메운다.',
   },
-  {
-    id: 'marseille', name: '마르세유', region: '프로방스', style: 'latin',
-    x: 91, y: 71, flag: 'genoa', seed: 1303, size: 2,
+  marseille: {
     supply: { wine: 0.55, oliveoil: 0.60 }, demand: { ceramic: 1.32, spice: 1.34 },
     blurb: '포도밭과 올리브 언덕에 둘러싸인 프랑스의 관문.',
   },
-  {
-    id: 'barcelona', name: '바르셀로나', region: '카탈루냐', style: 'latin',
-    x: 57, y: 89, flag: 'spain', seed: 1404, size: 3,
+  barcelona: {
     supply: { weapon: 0.62, salt: 0.52 }, demand: { silk: 1.30, gold: 1.22, spice: 1.26 },
     blurb: '아라곤 왕관의 항구. 대장간 망치 소리가 끊이지 않는다.',
   },
-  {
-    id: 'napoli', name: '나폴리', region: '캄파니아', style: 'latin',
-    x: 131, y: 110, flag: 'spain', seed: 1505, size: 2,
+  napoli: {
     supply: { grain: 0.50, oliveoil: 0.56 }, demand: { fur: 1.40, glass: 1.30 },
     blurb: '베수비오 아래 곡창지대. 밀이 남아돈다.',
   },
-  {
-    id: 'palermo', name: '팔레르모', region: '시칠리아', style: 'latin',
-    x: 151, y: 144, flag: 'spain', seed: 1606, size: 2,
+  palermo: {
     supply: { grain: 0.46, salt: 0.56 }, demand: { weapon: 1.36, wine: 1.24, fur: 1.28 },
     blurb: '지중해 한복판의 곡물 창고. 해적도 자주 들른다.',
   },
-  {
-    id: 'tunis', name: '튀니스', region: '이프리키야', style: 'levant',
-    x: 174, y: 157, flag: 'ottoman', seed: 1707, size: 2,
+  tunis: {
     supply: { ivory: 0.62, gold: 0.76 }, demand: { grain: 1.50, wine: 1.42, weapon: 1.30 },
     blurb: '사하라 대상로의 종착지. 상아와 사금이 흘러든다.',
   },
-  {
-    id: 'algiers', name: '알제', region: '마그레브', style: 'levant',
-    x: 106, y: 151, flag: 'ottoman', seed: 1808, size: 2,
+  algiers: {
     supply: { salt: 0.50, fur: 0.72 }, demand: { grain: 1.46, weapon: 1.44 },
     blurb: '코르세어의 소굴. 항구에 정박한 갤리가 심상치 않다.',
   },
-  {
-    id: 'athens', name: '아테네', region: '아티카', style: 'hellenic',
-    x: 191, y: 110, flag: 'ottoman', seed: 1909, size: 2,
+  athens: {
     supply: { oliveoil: 0.50, ceramic: 0.58 }, demand: { grain: 1.32, silk: 1.36 },
     blurb: '올리브 기름과 도기의 산지. 폐허가 된 신전이 항구를 굽어본다.',
   },
-  {
-    id: 'rodos', name: '로도스', region: '에게', style: 'hellenic',
-    x: 239, y: 109, flag: 'venice', seed: 2010, size: 1,
+  rodos: {
     supply: { wine: 0.60, ceramic: 0.64 }, demand: { weapon: 1.38, grain: 1.34 },
     blurb: '기사단의 요새 섬. 동지중해 항로의 길목이다.',
   },
-  {
-    id: 'istanbul', name: '이스탄불', region: '보스포루스', style: 'hellenic',
-    x: 241, y: 55, flag: 'ottoman', seed: 2111, size: 3,
+  istanbul: {
     supply: { silk: 0.58, spice: 0.66 }, demand: { glass: 1.42, wine: 1.46, ceramic: 1.24 },
     blurb: '두 대륙이 만나는 대도시. 대상로의 비단이 여기서 풀린다.',
   },
-  {
-    id: 'beirut', name: '베이루트', region: '레반트', style: 'levant',
-    x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2,
+  beirut: {
     supply: { spice: 0.54, silk: 0.66 }, demand: { ceramic: 1.42, fur: 1.36, glass: 1.28 },
     blurb: '인도 항로의 향신료가 처음 배에 실리는 곳.',
   },
-  {
-    id: 'alexandria', name: '알렉산드리아', region: '이집트', style: 'levant',
-    x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3,
+  alexandria: {
     supply: { grain: 0.48, ivory: 0.66 }, demand: { wine: 1.52, weapon: 1.34, glass: 1.30 },
     blurb: '나일의 밀이 쌓이는 항구. 등대 자리엔 이제 요새가 섰다.',
   },
-];
+};
+
+/* 지리(map/geo.js) + 경제(위) 를 합쳐 읽는 쪽이 쓰던 모양 그대로 돌려준다.
+   한쪽에만 도시를 추가하면 조용히 어긋나므로 시작할 때 경고를 띄운다. */
+export const CITIES = CITY_GEO.map((geo) => {
+  const t = CITY_TRADE[geo.id];
+  if (!t) console.warn(`[data] '${geo.id}': 경제 설정(CITY_TRADE)이 없다 — 아무것도 안 나고 안 사는 항구가 된다.`);
+  return { ...geo, supply: t?.supply ?? {}, demand: t?.demand ?? {}, blurb: t?.blurb ?? '' };
+});
+
+for (const id of Object.keys(CITY_TRADE)) {
+  if (!GEO_BY_ID[id]) console.warn(`[data] '${id}': 지리 설정(map/geo.js)이 없다 — 지도에 나타나지 않는다.`);
+}
 
 export const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
-
-/* 항로 — 인접 도시 간 연결. 값은 거리(항해 일수 계산에 사용) */
-export const ROUTES = [
-  ['venezia', 'genova'], ['venezia', 'rodos'], ['venezia', 'athens'], ['venezia', 'napoli'],
-  ['genova', 'marseille'], ['genova', 'napoli'],
-  ['marseille', 'barcelona'],
-  ['barcelona', 'algiers'], ['barcelona', 'palermo'],
-  ['napoli', 'palermo'], ['napoli', 'athens'],
-  ['palermo', 'tunis'], ['palermo', 'algiers'], ['palermo', 'athens'],
-  ['tunis', 'algiers'], ['tunis', 'alexandria'],
-  ['athens', 'rodos'], ['athens', 'istanbul'],
-  ['rodos', 'istanbul'], ['rodos', 'beirut'], ['rodos', 'alexandria'],
-  ['beirut', 'alexandria'],
-];
-
-/* 해류 — 지중해는 대체로 아프리카 연안을 동쪽으로 흐르고 레반트에서 북상해 되돌아온다.
-   `from` 방향으로 가면 물길을 타고, 거스르면 그만큼 느리다. 실린 구간만 반영한다.
-   키는 도시 두 개를 정렬해 이은 것. */
-export const CURRENTS = {
-  'algiers|barcelona':  { from: 'barcelona',  push: 0.06 },
-  'algiers|tunis':      { from: 'algiers',    push: 0.10 },
-  'palermo|tunis':      { from: 'palermo',    push: 0.06 },
-  'alexandria|tunis':   { from: 'tunis',      push: 0.12 },
-  'alexandria|beirut':  { from: 'alexandria', push: 0.10 },
-  'beirut|rodos':       { from: 'beirut',     push: 0.08 },
-  'athens|rodos':       { from: 'rodos',      push: 0.06 },
-  'istanbul|rodos':     { from: 'istanbul',   push: 0.10 },   // 보스포루스에서 밀려 나오는 물
-  'napoli|palermo':     { from: 'napoli',     push: 0.05 },
-  'genova|venezia':     { from: 'venezia',    push: 0.05 },
-};
 
 /* 선박.
    origin/yards = 어느 나라 배이고 어느 항구의 조선소가 그 배를 내놓는가.

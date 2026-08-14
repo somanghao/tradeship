@@ -1,0 +1,10 @@
+{
+  "_설명": "이 파일을 manifest.json으로 복사해서 쓴다. 키 목록은 preview.html에서 [키 전체 복사]로 얻는다.",
+  "_주의": "바꾸고 싶은 것만 남긴다. 여기 적힌 키는 예시이며 실제 키는 옵션 조합에 따라 달라진다.",
+  "name": "예시 팩",
+  "sprites": {
+    "icon:spice": "icons/spice.png",
+    "icon:silk": "icons/silk.png",
+    "scene:map": "map/mediterranean.png"
+  }
+}
