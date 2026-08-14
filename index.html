@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지중해 교역기 — 대항해 데모</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 상단 상태바 -->
+  <header id="hud">
+    <div class="hud-brand">지중해 교역기</div>
+    <div class="hud-stats">
+      <span class="stat" id="hud-day"   title="경과 일수"><i>📅</i><b>1</b>일차</span>
+      <span class="stat gold" id="hud-gold" title="보유 금화"><i>🪙</i><b>0</b></span>
+      <span class="stat" id="hud-ship"  title="선박"><i>⛵</i><b>카라벨</b></span>
+      <span class="stat" id="hud-hull"  title="선체"><i>🛠</i><b>0/0</b></span>
+      <span class="stat" id="hud-crew"  title="선원"><i>⚓</i><b>0/0</b></span>
+      <span class="stat" id="hud-guns"  title="대포"><i>💥</i><b>0</b>문</span>
+      <span class="stat" id="hud-cargo" title="적재"><i>📦</i><b>0/0</b></span>
+    </div>
+  </header>
+
+  <!-- 게임 화면 -->
+  <div id="stage">
+    <canvas id="screen"></canvas>
+    <div id="overlay"></div>
+    <div id="toast"></div>
+  </div>
+
+  <!-- 항해일지 -->
+  <footer id="logbar">
+    <span class="log-label">항해일지</span>
+    <div id="log-line">—</div>
+    <button id="log-toggle" class="mini">전체</button>
+  </footer>
+
+</div>
+
+<!-- 전체 일지 -->
+<div id="logmodal" class="modal hidden">
+  <div class="modal-box">
+    <h3>항해일지</h3>
+    <div id="logfull"></div>
+    <button class="btn" data-close-log>닫기</button>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

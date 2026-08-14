@@ -1,0 +1,16 @@
+# Claude Code 로컬 설정 (문서는 .claude/docs 아래를 그대로 올린다)
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 편집기
+.vscode/
+.idea/
+*.swp
+
+# 런타임 산출물
+node_modules/
+*.log

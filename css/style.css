@@ -1,0 +1,615 @@
+/* style.css — 목재/황동 톤의 픽셀풍 UI 셸 */
+
+:root {
+  --ink:      #17121c;
+  --wood-d:   #2a1d14;
+  --wood:     #3d2a1b;
+  --wood-l:   #6b4626;
+  --brass:    #d2a52a;
+  --brass-d:  #8a641a;
+  --brass-l:  #f4dd86;
+  --parch:    #ded2b8;
+  --parch-d:  #a89a84;
+  --sea:      #1b5570;
+  --sea-d:    #0e2a40;
+  --good:     #79a44f;
+  --bad:      #d05a4a;
+  --warn:     #e0a63a;
+  --panel:    #1d1a26;
+  --panel-2:  #262231;
+  --line:     #43384a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #0d0b11;
+  color: var(--parch);
+  font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", system-ui, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 0%, #1a2130 0%, #0d0b11 70%);
+}
+
+/* ── 상태바 ─────────────────────────────────────────── */
+#hud {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 18px;
+  padding: 8px 16px;
+  background: linear-gradient(#3a2a1c, #241a12);
+  border-bottom: 2px solid var(--brass-d);
+  box-shadow: 0 2px 0 #0006;
+}
+.hud-brand {
+  font-weight: 700; letter-spacing: .06em;
+  color: var(--brass-l);
+  text-shadow: 0 1px 0 #000;
+  padding-right: 14px;
+  border-right: 1px solid #ffffff1a;
+}
+.hud-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.stat {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  font-size: 13px; color: #cbbfa6;
+}
+.stat i { font-style: normal; opacity: .85; font-size: 13px; }
+.stat b { color: var(--parch); font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat.gold b { color: var(--brass-l); }
+.stat.low b { color: var(--bad); }
+
+/* ── 무대 ───────────────────────────────────────────── */
+#stage {
+  flex: 1 1 auto;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  min-height: 0;
+}
+#screen {
+  image-rendering: pixelated;
+  display: block;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+#overlay {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+#overlay > * { pointer-events: auto; }
+
+/* ── 공통 패널 ──────────────────────────────────────── */
+.panel {
+  background: linear-gradient(var(--panel-2), var(--panel));
+  border: 2px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 6px 18px #000a, inset 0 1px 0 #ffffff10;
+}
+.panel > h3 {
+  font-size: 13px; letter-spacing: .08em;
+  padding: 7px 10px;
+  background: linear-gradient(#3a2a1c, #2a1e14);
+  border-bottom: 1px solid var(--brass-d);
+  color: var(--brass-l);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* ── 버튼 ───────────────────────────────────────────── */
+.btn {
+  font: inherit; font-size: 13px; font-weight: 600;
+  color: #241a12;
+  background: linear-gradient(#e6c96a, #c39c2c);
+  border: 2px solid #6f5214;
+  border-radius: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 #fff6, 0 2px 0 #0007;
+  transition: filter .08s, transform .08s;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.1); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 #fff6; }
+.btn:disabled { opacity: .42; cursor: not-allowed; filter: grayscale(.5); }
+.btn.dark {
+  color: var(--parch);
+  background: linear-gradient(#3b3448, #2a2534);
+  border-color: #4e4560;
+  box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #0007;
+}
+.btn.danger {
+  color: #fff0ea;
+  background: linear-gradient(#c14b3c, #8f2f26);
+  border-color: #5d1c16;
+}
+.btn.sm { padding: 3px 8px; font-size: 12px; }
+.mini {
+  font: inherit; font-size: 11px;
+  background: #2a2534; color: var(--parch-d);
+  border: 1px solid var(--line); border-radius: 2px;
+  padding: 2px 7px; cursor: pointer;
+}
+.mini:hover { color: var(--parch); border-color: var(--brass-d); }
+
+/* ── 항해일지 바 ────────────────────────────────────── */
+#logbar {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 14px;
+  background: #16121d;
+  border-top: 2px solid #2e2637;
+  font-size: 12.5px;
+}
+.log-label {
+  color: var(--brass-d); font-weight: 700; letter-spacing: .06em;
+  flex: 0 0 auto;
+}
+#log-line {
+  flex: 1 1 auto; color: #b6ac9c;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#log-line.good { color: var(--good); }
+#log-line.bad  { color: var(--bad); }
+#log-line.warn { color: var(--warn); }
+
+/* ── 토스트 ─────────────────────────────────────────── */
+#toast {
+  position: absolute; left: 50%; top: 14px;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+  z-index: 40;
+}
+.toast-item {
+  padding: 7px 14px;
+  background: #1d1a26f2;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brass);
+  border-radius: 2px;
+  font-size: 13px;
+  box-shadow: 0 4px 14px #000a;
+  animation: toastIn .18s ease-out;
+}
+.toast-item.good { border-left-color: var(--good); }
+.toast-item.bad  { border-left-color: var(--bad); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-8px); } }
+
+/* ── 모달 ───────────────────────────────────────────── */
+.modal {
+  position: fixed; inset: 0; z-index: 60;
+  background: #000000b0;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal.hidden { display: none; }
+.modal-box {
+  width: min(560px, 90vw);
+  max-height: 80vh; overflow: auto;
+  background: linear-gradient(var(--panel-2), var(--panel));
+  border: 2px solid var(--brass-d);
+  border-radius: 3px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 40px #000c;
+}
+.modal-box h3 {
+  color: var(--brass-l); font-size: 15px; margin-bottom: 12px;
+  letter-spacing: .05em;
+}
+.modal-box p { line-height: 1.65; color: #c5baa8; margin-bottom: 10px; font-size: 13.5px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+#logfull { max-height: 46vh; overflow: auto; font-size: 12.5px; line-height: 1.7; }
+#logfull div { padding: 3px 0; border-bottom: 1px solid #ffffff0d; color: #b6ac9c; }
+#logfull .d { color: var(--brass-d); margin-right: 8px; font-variant-numeric: tabular-nums; }
+#logfull .good { color: var(--good); }
+#logfull .bad { color: var(--bad); }
+#logfull .warn { color: var(--warn); }
+
+/* ── 시장 테이블 ────────────────────────────────────── */
+.market { width: 100%; border-collapse: collapse; font-size: 13px; }
+.market th {
+  text-align: left; font-size: 11px; letter-spacing: .06em;
+  color: var(--parch-d); font-weight: 600;
+  padding: 5px 8px; border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; background: var(--panel);
+}
+.market th.num, .market td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.market td { padding: 3px 8px; border-bottom: 1px solid #ffffff08; }
+.market tr:hover td { background: #ffffff08; }
+.market .gname { display: flex; align-items: center; gap: 7px; }
+.market canvas { image-rendering: pixelated; }
+.tag {
+  font-size: 10px; padding: 1px 5px; border-radius: 2px;
+  border: 1px solid currentColor; letter-spacing: .04em;
+}
+.tag.supply { color: var(--good); }
+.tag.demand { color: var(--warn); }
+.qty { color: var(--brass-l); font-weight: 700; }
+.profit-up { color: var(--good); }
+.profit-dn { color: var(--bad); }
+.trade-btns { display: flex; gap: 3px; justify-content: flex-end; }
+
+/* ── 스크롤바 ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #14111b; }
+::-webkit-scrollbar-thumb { background: #3b3448; border: 2px solid #14111b; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #524a63; }
+
+/* ── 지도 씬 ────────────────────────────────────────── */
+#map-side {
+  position: absolute; right: 14px; top: 14px; width: 268px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.city-card { padding: 10px 12px; font-size: 12.5px; line-height: 1.6; }
+.city-card .cname { color: var(--brass-l); font-weight: 700; font-size: 14px; }
+.city-card .creg { color: var(--parch-d); font-size: 11px; margin-left: 6px; }
+.city-card .cblurb { color: #b0a692; margin: 6px 0 10px; }
+.route-list { display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+.route-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 2px;
+  background: #ffffff08; font-size: 12.5px;
+  cursor: pointer; border: 1px solid transparent;
+}
+.route-row:hover { background: #ffffff14; border-color: var(--brass-d); }
+.route-row .rn { flex: 1 1 auto; }
+.route-row .rd { color: var(--parch-d); font-size: 11.5px; }
+
+/* ── 항구 씬 ────────────────────────────────────────── */
+#port-wrap {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: 452px 1fr 292px; gap: 12px;
+  padding: 12px;
+  align-items: start;
+  /* 가운데 열은 비워 둔다 — 항구 그림이 보이는 자리 */
+}
+#port-market {
+  grid-column: 1; max-height: 100%;
+  display: flex; flex-direction: column; min-height: 0;
+}
+#port-market .scroll { overflow: auto; min-height: 0; }
+#port-side {
+  grid-column: 3;
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 100%; overflow: auto;
+}
+.svc { padding: 10px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
+.svc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.svc-row .lbl { color: #b6ac9c; }
+.svc-row .val { color: var(--parch); font-variant-numeric: tabular-nums; }
+
+/* ── 전투 씬 ────────────────────────────────────────── */
+#battle-ui { position: absolute; inset: 0; }
+.bar-wrap {
+  position: absolute; width: 190px;
+  font-size: 11px; letter-spacing: .04em;
+}
+.bar-wrap.left  { left: 16px;  top: 12px; }
+.bar-wrap.right { right: 16px; top: 12px; text-align: right; }
+.bar-name { color: var(--parch); font-weight: 700; margin-bottom: 3px; text-shadow: 0 1px 2px #000; }
+.bar {
+  height: 11px; background: #12101a;
+  border: 1px solid #000; border-radius: 1px;
+  box-shadow: inset 0 1px 0 #ffffff10;
+  overflow: hidden; margin-bottom: 3px;
+}
+.bar > i { display: block; height: 100%; transition: width .28s; }
+.bar.hp > i   { background: linear-gradient(#d05a4a, #8f2f26); }
+.bar.crew > i { background: linear-gradient(#5d9ec9, #2f5d8c); }
+.bar-num { color: #c5baa8; text-shadow: 0 1px 2px #000; font-variant-numeric: tabular-nums; }
+
+#battle-cmd {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 12px;
+}
+#battle-phase {
+  position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+  font-size: 12px; letter-spacing: .1em; color: var(--brass-l);
+  background: #0d0b11cc; padding: 4px 14px; border: 1px solid var(--brass-d);
+  border-radius: 2px; text-shadow: 0 1px 2px #000;
+}
+#range-wrap {
+  position: absolute; left: 50%; top: 40px; transform: translateX(-50%);
+  width: 260px; text-align: center; font-size: 11px; color: #c5baa8;
+}
+#range-bar {
+  height: 8px; background: #12101a; border: 1px solid #000; margin-top: 3px;
+  position: relative; overflow: hidden;
+}
+#range-bar > i {
+  position: absolute; top: 0; bottom: 0; width: 3px; background: var(--brass-l);
+  transition: left .3s;
+}
+#range-bar .zone { position: absolute; top: 0; bottom: 0; background: #79a44f33; }
+
+/* 조준 미니게임 */
+#aim {
+  position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%);
+  width: 340px; padding: 10px 12px; text-align: center;
+}
+#aim .hint { font-size: 11.5px; color: #b6ac9c; margin-bottom: 7px; }
+
+/* 탄종 선택 — 조준 패널 안. 고르는 동안에도 바늘은 계속 움직인다 */
+#shot-row { display: flex; gap: 5px; margin-bottom: 8px; }
+#shot-row .shot {
+  flex: 1; font: inherit; cursor: pointer;
+  display: flex; flex-direction: column; gap: 1px; align-items: center;
+  padding: 4px 2px;
+  background: #1a1520; border: 1px solid #000; border-radius: 2px;
+  color: #b6ac9c;
+}
+#shot-row .shot b { font-size: 11px; font-weight: 600; }
+#shot-row .shot span { font-size: 10px; color: #8b8171; }
+#shot-row .shot:hover:not(:disabled) { background: #241d2c; color: var(--brass-l); }
+#shot-row .shot.on {
+  background: linear-gradient(#4a3720, #33260f);
+  border-color: var(--brass-d); color: var(--brass-l);
+  box-shadow: inset 0 1px 0 #ffffff18;
+}
+#shot-row .shot:disabled { opacity: .35; cursor: default; }
+#aim-track {
+  position: relative; height: 22px;
+  background: #12101a; border: 1px solid #000;
+  box-shadow: inset 0 1px 0 #ffffff10;
+}
+#aim-track .band { position: absolute; top: 0; bottom: 0; }
+#aim-track .band.good { background: #79a44f55; border-left: 1px solid #79a44f; border-right: 1px solid #79a44f; }
+#aim-track .band.crit { background: #d2a52a66; border-left: 1px solid var(--brass-l); border-right: 1px solid var(--brass-l); }
+#aim-needle {
+  position: absolute; top: -3px; bottom: -3px; width: 3px;
+  background: #fff; box-shadow: 0 0 6px #fff8;
+}
+
+/* 백병전 병력 표시 */
+.melee-side {
+  position: absolute; bottom: 74px; font-size: 11px;
+  display: flex; gap: 4px;
+}
+.melee-side.left { left: 16px; }
+.melee-side.right { right: 16px; flex-direction: row-reverse; }
+.unit-chip {
+  width: 34px; padding: 2px 0; text-align: center;
+  background: #1d1a26cc; border: 1px solid var(--line); border-radius: 2px;
+}
+.unit-chip .uhp { display: block; height: 3px; background: #12101a; margin-top: 2px; }
+.unit-chip .uhp i { display: block; height: 100%; background: var(--good); }
+.unit-chip.dead { opacity: .3; }
+.unit-chip.dead .uhp i { background: var(--bad); }
+
+/* ── 결과 화면 ──────────────────────────────────────── */
+.result-list { display: flex; flex-direction: column; gap: 5px; margin: 12px 0; }
+.result-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 5px 10px; background: #ffffff08; border-radius: 2px; font-size: 13px;
+}
+.result-row b { color: var(--brass-l); font-variant-numeric: tabular-nums; }
+
+/* ── 조선소 씬 ──────────────────────────────────────────
+   패널 위치·크기는 shipyard.js가 논리좌표 기준으로 인라인 지정한다.
+   여기서는 안쪽 모양만 잡는다. */
+#yard-panel {
+  position: absolute;
+  display: flex; flex-direction: column;
+  background: linear-gradient(var(--panel-2), var(--panel));
+  border: 2px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 6px 18px #000a, inset 0 1px 0 #ffffff10;
+  overflow: hidden;
+}
+#yard-panel canvas { image-rendering: pixelated; display: block; }
+
+.yard-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(#3a2a1c, #2a1e14);
+  border-bottom: 1px solid var(--brass-d);
+}
+.yard-head h3 { font-size: 13px; letter-spacing: .08em; color: var(--brass-l); }
+.yard-head .sub { font-size: 11px; color: #a89a84; margin-top: 3px; }
+
+.yard-tabs { flex: 0 0 auto; display: flex; border-bottom: 1px solid var(--line); }
+.yard-tab {
+  flex: 1; font: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 7px 0; cursor: pointer;
+  color: #8f8878; background: #ffffff06; border: 0;
+  border-right: 1px solid var(--line);
+}
+.yard-tab:last-child { border-right: 0; }
+.yard-tab:hover { color: var(--parch); background: #ffffff0e; }
+.yard-tab.on {
+  color: var(--brass-l); background: #d2a52a1c;
+  box-shadow: inset 0 -2px 0 var(--brass);
+}
+
+.yard-body { flex: 1 1 auto; overflow: auto; padding: 10px; min-height: 0; }
+.yard-note { font-size: 11.5px; color: #8f8878; line-height: 1.6; margin-bottom: 9px; }
+.yard-note b { color: var(--parch); }
+.yard-warn { font-size: 11.5px; color: var(--bad); margin-top: 8px; }
+.yard-body .dim { font-size: 11.5px; color: #5d5768; }
+
+/* 선박 탭 */
+.yard-ship {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 8px; margin-bottom: 5px;
+  background: #ffffff08; border: 1px solid transparent; border-radius: 2px;
+  cursor: pointer;
+}
+.yard-ship:hover { background: #ffffff12; }
+.yard-ship.on { background: #d2a52a14; border-color: var(--brass-d); }
+.yard-seen {
+  font-size: 11px; color: var(--brass-l); margin-bottom: 6px;
+  padding: 3px 7px; background: #d2a52a14; border-left: 2px solid var(--brass); border-radius: 2px;
+}
+.yard-ship .info { flex: 1 1 auto; min-width: 0; }
+.yard-ship .n { display: flex; align-items: center; gap: 6px; }
+.yard-ship .n b { color: var(--brass-l); font-size: 13px; }
+.yard-ship .sp { font-size: 11px; color: #8f8878; margin-top: 2px; line-height: 1.45; }
+.yard-ship .ds { font-size: 11px; color: #6f6858; margin-top: 1px; }
+.yard-ship .acts { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.badge {
+  font-size: 10px; padding: 1px 5px; border-radius: 2px;
+  border: 1px solid currentColor; color: #8f8878; letter-spacing: .03em;
+}
+.badge.now { color: var(--good); }
+.badge.here { color: var(--brass); }
+.badge.buy { color: var(--parch-d); }
+
+/* 선원 탭 */
+.slot-row { display: flex; gap: 5px; margin-bottom: 10px; }
+.slot {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 2px 5px;
+  background: #ffffff08; border: 1px solid transparent; border-radius: 2px;
+  cursor: pointer;
+}
+.slot:hover:not(.fixed):not(.locked) { background: #ffffff14; border-color: var(--brass-d); }
+.slot.fixed { cursor: default; background: #d2a52a14; border-color: var(--brass-d); }
+.slot.locked { cursor: default; opacity: .45; }
+.slot .empty {
+  width: 26px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  color: #5d5768; font-size: 16px;
+}
+.slot .sn { font-size: 10.5px; color: #a89a84; text-align: center; white-space: nowrap; }
+.slot .sn2 { font-size: 10px; color: #6f6858; margin-top: -2px; }
+
+.yard-sum {
+  display: flex; gap: 5px; margin: 10px 0;
+}
+.yard-sum > div {
+  flex: 1; text-align: center; padding: 5px 2px;
+  background: #ffffff08; border-radius: 2px;
+}
+.yard-sum .k { display: block; font-size: 10.5px; color: #6f6858; }
+.yard-sum b { color: var(--brass-l); font-size: 14px; font-variant-numeric: tabular-nums; }
+.yard-svc { display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
+
+.pick-list { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
+.pick {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 10px; background: #ffffff08; border-radius: 2px;
+  border: 1px solid transparent;
+}
+.pick.on { background: #d2a52a14; border-color: var(--brass-d); }
+.pick canvas { image-rendering: pixelated; }
+.pick .info { flex: 1 1 auto; }
+.pick .n { display: flex; align-items: baseline; gap: 8px; }
+.pick .n b { color: var(--brass-l); }
+.pick .st { font-size: 11px; color: #8f8878; font-variant-numeric: tabular-nums; }
+.pick .ds { font-size: 11.5px; color: #6f6858; margin-top: 1px; }
+
+/* 무장 탭 */
+.port-bar { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 10px; }
+.port {
+  width: 11px; height: 11px; border-radius: 1px;
+  background: #ffffff0c; border: 1px solid var(--line);
+}
+.port.on { background: var(--brass); border-color: var(--brass-d); }
+.arm-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; margin-bottom: 5px;
+  background: #ffffff08; border: 1px solid transparent; border-radius: 2px;
+}
+.arm-row.on { background: #d2a52a12; border-color: #d2a52a44; }
+.arm-row .zn { font-size: 10.5px; color: var(--brass); }
+.zone-bar {
+  position: relative; height: 6px; margin: 5px 0 4px;
+  background: #ffffff0c; border-radius: 1px; overflow: hidden;
+}
+.zone-bar .band {
+  position: absolute; top: 0; bottom: 0;
+  background: linear-gradient(#d2a52a, #8a641a);
+}
+.zone-bar .tick {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  margin-left: -1px; background: var(--parch);
+}
+.arm-row .info { flex: 1 1 auto; min-width: 0; }
+.arm-row .n { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.arm-row .n b { color: var(--brass-l); font-size: 13px; }
+.arm-row .st { font-size: 10.5px; color: #8f8878; font-variant-numeric: tabular-nums; }
+.arm-row .ds { font-size: 11px; color: #6f6858; margin-top: 2px; }
+.arm-row .cnt {
+  flex: 0 0 auto; min-width: 34px; text-align: right;
+  color: var(--brass-l); font-variant-numeric: tabular-nums;
+}
+.arm-row .acts { flex: 0 0 auto; display: flex; gap: 3px; }
+
+/* 선박 국적 꼬리표 */
+.yard-ship .origin {
+  font-size: 10px; color: #8f8878; letter-spacing: .04em;
+  padding: 0 4px; border-left: 2px solid #d2a52a55;
+}
+
+/* 조선소 탄약고 — 대포 행과 같은 골격 */
+.yard-body .shot-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; margin-bottom: 4px;
+  background: #ffffff08; border-radius: 2px;
+}
+.yard-body .shot-row .info { flex: 1 1 auto; min-width: 0; }
+.yard-body .shot-row .n { display: flex; align-items: baseline; gap: 8px; }
+.yard-body .shot-row .n b { color: var(--brass-l); font-size: 12.5px; }
+.yard-body .shot-row .st { font-size: 10.5px; color: #8f8878; }
+.yard-body .shot-row .ds { font-size: 11px; color: #6f6858; margin-top: 2px; line-height: 1.45; }
+.yard-body .shot-row .cnt {
+  flex: 0 0 auto; min-width: 34px; text-align: right;
+  color: var(--brass-l); font-variant-numeric: tabular-nums;
+}
+.yard-sub {
+  font-size: 12px; letter-spacing: .08em; color: var(--brass-l);
+  margin: 14px 0 6px; padding-top: 10px; border-top: 1px solid #ffffff14;
+}
+
+/* 개장 탭 */
+.refit-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 8px; margin-bottom: 5px;
+  background: #ffffff08; border: 1px solid transparent; border-radius: 2px;
+}
+.refit-row.on { background: #79a44f14; border-color: #79a44f44; }
+.refit-row .info { flex: 1 1 auto; min-width: 0; }
+.refit-row .n { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.refit-row .n b { color: var(--brass-l); font-size: 13px; }
+.refit-row .st { font-size: 10.5px; color: var(--brass); }
+.refit-row .ds { font-size: 11px; color: #6f6858; margin-top: 2px; line-height: 1.45; }
+
+/* ── 시작 화면 ──────────────────────────────────────── */
+#title-screen {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px;
+  background: #0d0b11e8;
+}
+#title-screen h1 {
+  font-size: 30px; letter-spacing: .14em; color: var(--brass-l);
+  text-shadow: 0 3px 0 #000, 0 0 24px #d2a52a44;
+}
+#title-screen .sub { color: #9a917f; font-size: 13px; letter-spacing: .05em; }
+#title-screen .keys { color: #6f6858; font-size: 12px; line-height: 1.9; text-align: center; }
+
+/* 항로 행의 순풍/역풍 꼬리표 */
+.route-row .rw {
+  font-size: 10.5px; padding: 0 5px; border-radius: 2px;
+  border: 1px solid currentColor; letter-spacing: .02em;
+}
+.route-row .rw.good { color: var(--good); }
+.route-row .rw.warn { color: var(--brass); }
+.route-row .rw.bad  { color: var(--bad); }
+.route-row .rw.calm { color: #7d8ca3; }
+
+/* 시장 압력 — 많이 거래해 값이 불리해진 품목 */
+.press { font-size: 10.5px; color: var(--bad); }
+
+/* 대형 주문 · 정박선 */
+.ctr-line { font-size: 13px; color: var(--parch); line-height: 1.6; }
+.ctr-line b { color: var(--brass-l); }
+.ctr-sub { font-size: 11.5px; color: #8f8878; line-height: 1.6; }

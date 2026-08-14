@@ -1,0 +1,109 @@
+import { SHIPS, ENEMIES, REFITS } from '../js/data.js';
+import {
+  state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
+  shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
+  buyShot, useShot, shotStock, maxHullOf, buy, sell, hire, sellsShip, yardsOf,
+  cargoUsed, armsTotal,
+} from '../js/state.js';
+
+const ok = (c, msg) => console.log(`${c ? 'PASS' : 'FAIL'}  ${msg}`);
+
+resetGame();
+ok(state.shipKey === 'hulk' && state.gold === 900, `시작: ${state.shipKey} / ${state.gold}닢 / 선체 ${state.hp} / 화물칸 ${state.cargoCap}`);
+ok(armsTotal() === state.guns, `포문 동기화 ${state.guns}문`);
+
+// 누수: 항해하면 선체가 삭는다
+const hp0 = state.hp;
+const c1 = advanceDays(4);
+ok(c1.leak === 8 && state.hp === hp0 - 8, `누수 4일 → ${c1.leak}pt (선체 ${hp0}→${state.hp}), 급여 ${c1.wages}닢`);
+
+// 국적별 조선소
+ok(!sellsShip('caravel', 'venezia'), `베네치아에서 카라벨 취급? ${sellsShip('caravel', 'venezia')} (기대 false) — ${yardsOf('caravel').join('·')}에서만`);
+ok(sellsShip('carrack', 'venezia'), '베네치아는 캐랙을 판다');
+state.gold = 60000;
+let r = purchaseShip('caravel');
+ok(!r.ok, `베네치아 카라벨 구입 거부: "${r.reason}"`);
+state.at = 'barcelona';
+r = purchaseShip('caravel');
+ok(r.ok, `바르셀로나 카라벨 구입 ${r.ok ? 'OK' : r.reason}`);
+r = boardShip('caravel');
+ok(r.ok && state.shipKey === 'caravel', `승선 → ${state.shipKey}, 최대선체 ${state.maxHp}`);
+
+// 선단 유지비: 낡은 바사가 베네치아에 남아 있다
+ok(fleetUpkeep() === SHIPS.hulk.upkeep, `선단 유지비 ${fleetUpkeep()}닢/일 (정박 중인 바사)`);
+const c2 = advanceDays(3);
+ok(c2.fleet === SHIPS.hulk.upkeep * 3 && c2.leak === 0, `3일 → 선단비 ${c2.fleet}닢, 누수 ${c2.leak} (카라벨은 안 샌다)`);
+
+// 개장
+state.gold = 60000;
+const spd0 = shipSpeed(), cap0 = gunCap();
+buyRefit('copper'); buyRefit('sails');
+ok(shipSpeed() > spd0, `동판+돛 증축 → 속력 ${spd0.toFixed(2)} → ${shipSpeed().toFixed(2)}`);
+const max0 = state.maxHp;
+buyRefit('oakArmor');
+ok(state.maxHp === Math.round(SHIPS.caravel.hp * 1.25 * 1), `떡갈나무 장갑 → 최대선체 ${max0} → ${state.maxHp}`);
+const armsBefore = armsTotal();
+const rz = buyRefit('razee');
+ok(gunCap() < cap0, `레이지 개조 → 포문 상한 ${cap0} → ${gunCap()}, 뜯긴 대포 ${rz.dropped}문 (${armsBefore}→${armsTotal()})`);
+ok(armsTotal() <= gunCap(), '상한 초과 대포가 남지 않았다');
+ok(state.maxHp === maxHullOf('caravel', state.refits), `레이지 후 최대선체 ${state.maxHp}`);
+
+// 개장은 배를 따라다닌다
+state.at = 'genova';
+purchaseShip('fluyt');
+boardShip('fluyt');
+ok(!state.refits.copper, `플류트로 갈아탐 → 개장 없음(${JSON.stringify(state.refits)}), 최대선체 ${state.maxHp}`);
+state.at = 'barcelona'; state.fleet.caravel.at = 'barcelona';
+boardShip('caravel');
+ok(state.refits.copper && state.refits.razee, `카라벨로 복귀 → 개장 복원 ${Object.keys(state.refits).join('+')}`);
+
+// 인원 부족
+state.crew = 30;
+const spdFull = shipSpeed();
+state.crew = 3;
+ok(shorthanded() && Math.abs(shipSpeed() - spdFull * 0.75) < 1e-9,
+   `선원 3명(최소 ${SHIPS.caravel.crewMin}) → 속력 ${spdFull.toFixed(2)} → ${shipSpeed().toFixed(2)} (×0.75)`);
+state.crew = 30;
+
+// 특수탄
+state.gold = 5000;
+const bs = buyShot('chain', 5);
+ok(bs.ok && shotStock('chain') === 5, `사슬탄 5발 구입 ${bs.cost}닢 → 재고 ${shotStock('chain')}`);
+useShot('chain');
+ok(shotStock('chain') === 4 && shotStock('round') === Infinity, `1발 소모 → ${shotStock('chain')}발, 일반탄 무한`);
+ok(!useShot('grape'), '재고 없는 포도탄은 못 쏜다');
+
+// 나포 편입
+const before = Object.keys(state.fleet).length;
+const cap = captureShip('brig');
+ok(cap.ok && !cap.scrapped && state.fleet.brig, `브리간틴 나포 편입 → 선단 ${before}→${Object.keys(state.fleet).length}척, 선체 ${state.fleet.brig?.hp}/${SHIPS.brig.hp}`);
+const cap2 = captureShip('brig');
+ok(cap2.scrapped && cap2.gain > 0, `같은 선종 재나포 → 해체 매각 +${cap2.gain}닢`);
+
+// 적 티어 분포
+state.shipKey = 'hulk';
+{
+  const cnt = {};
+  state.gold = 4000; state.cargo = { silk: 40 };
+  for (let i = 0; i < 4000; i++) { const e = pickEnemy(); cnt[e.name] = (cnt[e.name] || 0) + 1; }
+  ok(!cnt['검은 깃발단'] && !cnt['프랑스 순찰 프리깃 팡당'],
+     `낡은 바사 + 자산 6400닢 → ${Object.entries(cnt).map(([k, v]) => `${k} ${(v / 40).toFixed(0)}%`).join(', ')}`);
+}
+state.shipKey = 'caravel'; state.cargo = {};
+for (const wealth of [500, 3000, 9000, 20000, 50000]) {
+  state.gold = wealth; state.cargo = {};
+  const cnt = {};
+  for (let i = 0; i < 4000; i++) { const e = pickEnemy(); cnt[e.name] = (cnt[e.name] || 0) + 1; }
+  const s = Object.entries(cnt).map(([k, v]) => `${k} ${(v / 40).toFixed(0)}%`).join(', ');
+  console.log(`      자산 ${wealth}닢 → ${s}`);
+}
+
+// 항해 일수 비교
+state.shipKey = 'hulk'; state.refits = {}; state.crew = 10;
+const dHulk = voyageDays('venezia', 'istanbul');
+state.shipKey = 'superfrigate'; state.crew = 100;
+const dSF = voyageDays('venezia', 'istanbul');
+ok(dHulk > dSF, `베네치아→이스탄불: 낡은 바사 ${dHulk}일 vs 슈퍼 프리깃 ${dSF}일`);
+
+// 적 5티어
+console.log('      적:', ENEMIES.map((e) => `${e.name}(${e.nation}/HP${e.hp}/포${e.guns}${e.prize ? '/나포:' + SHIPS[e.prize].name : ''})`).join('\n           '));

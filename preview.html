@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>대항해 데모 — 에셋 미리보기</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 28px 60px;
+    background: #14121a;
+    color: #ded2b8;
+    font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif;
+  }
+  h1 { font-size: 18px; letter-spacing: .04em; margin: 0 0 4px; color: #f4dd86; }
+  p.sub { margin: 0 0 24px; font-size: 12px; color: #8b8394; }
+  h2 {
+    font-size: 13px; margin: 28px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px solid #2a2434; color: #a8c8e0; letter-spacing: .08em;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  .cell {
+    background: #1d1a26; border: 1px solid #2e2839; border-radius: 4px;
+    padding: 8px; text-align: center;
+  }
+  .cell.sea { background: linear-gradient(#243b52 0%, #1b5570 62%, #14384c 100%); }
+  .cell canvas { display: block; image-rendering: pixelated; margin: 0 auto; }
+  .cap { font-size: 11px; color: #9a92a8; margin-top: 6px; }
+  .cap b { color: #ded2b8; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>대항해 데모 — 픽셀 에셋 미리보기</h1>
+<p class="sub">코드 생성 스프라이트 · 안티에일리어싱 off · 정수배 확대</p>
+
+<h2>병종 (48×48 원본)</h2>
+<div class="row" id="units"></div>
+
+<h2>포즈 — 대기 / 공격 / 피격</h2>
+<div class="row" id="poses"></div>
+
+<h2>선박 측면 (176×128 원본)</h2>
+<div class="row" id="ships"></div>
+
+<h2>선박 상태 — 돛 접음 / 발포 / 피해</h2>
+<div class="row" id="shipstates"></div>
+
+<h2>선박 탑다운 (지도용, 28×28 원본)</h2>
+<div class="row" id="tops"></div>
+
+<h2>교역품 아이콘 (16×16 원본)</h2>
+<div class="row" id="icons"></div>
+
+<h2>배경 — 지중해 지도 / 항구 / 외해 (400×225 원본)</h2>
+<div class="row" id="scenes"></div>
+
+<h2>이펙트</h2>
+<div class="row" id="fx"></div>
+
+<h2>팔레트</h2>
+<div class="row" id="pal"></div>
+
+<script type="module">
+import { PAL, blit } from './js/pixel.js';
+import { unitSprite, UNITS, UNIT_KEYS, CW, CH } from './js/sprites/char.js';
+import { shipSprite, shipTopSprite, HULLS, HULL_KEYS, SW, SH, TOP_W, TOP_H } from './js/sprites/ship.js';
+
+function cell(parent, sprite, scale, caption, sea) {
+  const d = document.createElement('div');
+  d.className = 'cell' + (sea ? ' sea' : '');
+  const cv = document.createElement('canvas');
+  cv.width = sprite.width * scale;
+  cv.height = sprite.height * scale;
+  const ctx = cv.getContext('2d');
+  blit(ctx, sprite, 0, 0, scale);
+  d.appendChild(cv);
+  const c = document.createElement('div');
+  c.className = 'cap';
+  c.innerHTML = caption;
+  d.appendChild(c);
+  parent.appendChild(d);
+  return d;
+}
+
+// 병종
+const uw = document.getElementById('units');
+for (const k of UNIT_KEYS) {
+  cell(uw, unitSprite(k, 'idle'), 4, `<b>${UNITS[k].name}</b><br>${k}`);
+}
+
+// 포즈
+const pw = document.getElementById('poses');
+for (const k of ['sailor', 'pikeman', 'musketeer', 'corsair']) {
+  for (const p of ['idle', 'attack', 'hit']) {
+    cell(pw, unitSprite(k, p), 4, `${UNITS[k].name} · ${p}`);
+  }
+}
+
+// 선박
+const sw = document.getElementById('ships');
+const shipTint = { caravel: 'oak', carrack: 'white', galleon: 'green', galley: 'oak', brig: 'dark' };
+const shipFlag = { caravel: 'venice', carrack: 'genoa', galleon: 'spain', galley: 'ottoman', brig: 'pirate' };
+for (const k of HULL_KEYS) {
+  cell(sw, shipSprite(k, { tint: shipTint[k], flag: shipFlag[k] }), 2,
+       `<b>${HULLS[k].name}</b><br>${k}`, true);
+}
+
+// 상태
+const stw = document.getElementById('shipstates');
+cell(stw, shipSprite('galleon', { tint: 'green', flag: 'spain', furl: true }), 2, '돛 접음', true);
+cell(stw, shipSprite('galleon', { tint: 'green', flag: 'spain', firing: 3 }), 2, '발포', true);
+cell(stw, shipSprite('carrack', { tint: 'white', flag: 'genoa', damaged: 1 }), 2, '피해 1', true);
+cell(stw, shipSprite('carrack', { tint: 'white', flag: 'genoa', damaged: 2 }), 2, '피해 2 (돛대 파손)', true);
+
+// 탑다운
+const tw = document.getElementById('tops');
+for (const k of HULL_KEYS) {
+  cell(tw, shipTopSprite(k, { tint: shipTint[k], flag: shipFlag[k] }), 4, HULLS[k].name, true);
+}
+
+// 아이콘
+import { iconSprite, ICON_KEYS } from './js/sprites/icons.js';
+const icw = document.getElementById('icons');
+for (const k of ICON_KEYS) cell(icw, iconSprite(k), 4, k);
+
+// 배경
+import { mapSprite, portSprite, openSeaSprite, smokeSprite, blastSprite,
+         splashSprite, cannonSprite, ballSprite } from './js/sprites/scene.js';
+const scw = document.getElementById('scenes');
+cell(scw, mapSprite(), 2, '지중해 지도');
+cell(scw, portSprite('latin', 101), 2, '항구 · 라틴 (베네치아풍)');
+cell(scw, portSprite('hellenic', 202), 2, '항구 · 헬레닉 (아테네풍)');
+cell(scw, portSprite('levant', 303), 2, '항구 · 레반트 (튀니스풍)');
+cell(scw, openSeaSprite('day'), 2, '외해 · 낮');
+cell(scw, openSeaSprite('dusk'), 2, '외해 · 황혼');
+cell(scw, openSeaSprite('storm'), 2, '외해 · 폭풍');
+
+// 이펙트
+const fxw = document.getElementById('fx');
+for (let i = 0; i < 4; i++) cell(fxw, blastSprite(i), 3, `폭발 ${i}`, true);
+for (let i = 0; i < 4; i++) cell(fxw, smokeSprite(i), 3, `포연 ${i}`, true);
+for (let i = 0; i < 4; i++) cell(fxw, splashSprite(i), 3, `물기둥 ${i}`, true);
+for (const k of ['light', 'medium', 'long']) cell(fxw, cannonSprite(k), 3, `대포 · ${k}`, true);
+cell(fxw, cannonSprite('medium', 5), 3, '대포 (반동)', true);
+cell(fxw, ballSprite(), 6, '포탄', true);
+
+// 팔레트
+const plw = document.getElementById('pal');
+for (const [name, hex] of Object.entries(PAL)) {
+  const d = document.createElement('div');
+  d.className = 'cell';
+  d.innerHTML = `<div style="width:44px;height:32px;background:${hex};border:1px solid #0008"></div>
+                 <div class="cap">${name}<br>${hex}</div>`;
+  plw.appendChild(d);
+}
+</script>
+</body>
+</html>
