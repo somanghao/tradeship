@@ -119,10 +119,15 @@ export const PIRATES = [
    **발트해에서 바르바리 코르세어가 나왔다.**
    세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
    갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+/* ★ `flag`를 반드시 적는다. 처음에 이름·국적·선체만 갈아 끼웠더니 `localize()`가
+   `flag: skin.flag ?? base.flag`로 떨어져 **`ENEMIES`의 유럽 깃발이 그대로 남았다** —
+   명 수군 순찰선이 부르봉 백합기를, 왜구 대선단이 오스만기를 달고 나왔다.
+   이름만 바꾸는 것으로는 "이 바다의 적"이 되지 않는다. 쓸 수 있는 깃발은
+   `js/sprites/ship.js: FLAGS`의 키다. */
 export const FOES = [
-  { name: '던커크 소형 사략선', nation: '던커크', hull: 'brig', tint: 'dark', goods: ['salt', 'grain', 'cloth'] },
-  { name: '젤란트 사략선', nation: '젤란트', hull: 'fluyt', tint: 'oak', goods: ['herring', 'timber', 'cloth'] },
-  { name: '식량형제단 잔당', nation: '해적', hull: 'carrack', tint: 'dark', goods: ['grain', 'fur', 'wax'] },
-  { name: '잉글랜드 사략 선단', nation: '잉글랜드', hull: 'frigate', tint: 'white', goods: ['wine', 'weapon', 'cloth'] },
-  { name: '스페인 은함대 호위기함', nation: '스페인', hull: 'galleon', tint: 'green', goods: ['gold', 'weapon', 'wine'] },
+  { name: '던커크 소형 사략선', nation: '던커크', flag: 'spain', hull: 'brig', tint: 'dark', goods: ['salt', 'grain', 'cloth'] },
+  { name: '젤란트 사략선', nation: '젤란트', flag: 'burgundy', hull: 'fluyt', tint: 'oak', goods: ['herring', 'timber', 'cloth'] },
+  { name: '식량형제단 잔당', nation: '해적', flag: 'pirate', hull: 'carrack', tint: 'dark', goods: ['grain', 'fur', 'wax'] },
+  { name: '잉글랜드 사략 선단', nation: '잉글랜드', flag: 'england', hull: 'frigate', tint: 'white', goods: ['wine', 'weapon', 'cloth'] },
+  { name: '스페인 은함대 호위기함', nation: '스페인', flag: 'spain', hull: 'galleon', tint: 'green', goods: ['gold', 'weapon', 'wine'] },
 ];

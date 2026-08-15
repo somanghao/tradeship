@@ -24,10 +24,25 @@ let offX = 0, offY = 0;
      라무·모가디슈. 더 나쁜 것은 **가려진 항구 자리를 누르면 패널의 다른 항구 줄이 눌려
      엉뚱한 데로 출항한다**는 것이었다. 창이 1920px는 되어야 안 가려지니 사실상 전부 해당했다. */
 let insetR = 0;
+let span = null;      // { lo, hi } — 이 화면에서 **반드시 보여야 하는** 논리 x 범위
+
 export function setInsetRight(px) {
   const v = Math.max(0, Math.round(px));
   if (v === insetR) return;
   insetR = v;
+  fit();
+}
+
+/* 그림 400칸을 다 보여줄 필요는 없다 — **도시가 있는 범위**만 보이면 된다.
+   ★ 이것이 없으면 배율이 한 단계 떨어진다. 패널을 피해 가용폭이 1104가 되면
+     `1104/400 = 2.76` → 정수배 2가 되어 지도가 800×450으로 쪼그라들고 캔버스의 31%만 쓴다.
+     그런데 도시가 실제로 쓰는 폭은 권역마다 292~354칸뿐이라, 그 범위로 재면 3이 나온다.
+     남는 가장자리(도시가 없는 바다)는 잘려도 아무것도 잃지 않는다. */
+export function setViewSpan(lo, hi) {
+  const next = lo == null ? null : { lo, hi };
+  const same = (!next && !span) || (next && span && next.lo === span.lo && next.hi === span.hi);
+  if (same) return;
+  span = next;
   fit();
 }
 
@@ -37,8 +52,15 @@ function fit() {
   canvas.width = w;
   canvas.height = h;
   const usableW = Math.max(240, w - insetR);
-  scale = Math.max(1, Math.floor(Math.min(usableW / VW, h / VH)));
-  offX = Math.round((usableW - VW * scale) / 2);
+  if (span) {
+    const need = (span.hi - span.lo) + 14;            // 이름표가 좌우로 조금 삐져나온다
+    scale = Math.max(1, Math.floor(Math.min(usableW / need, h / VH)));
+    // 보여야 하는 범위를 가용폭 한가운데에 놓는다(그림 전체가 아니라)
+    offX = Math.round((usableW - need * scale) / 2 - (span.lo - 7) * scale);
+  } else {
+    scale = Math.max(1, Math.floor(Math.min(usableW / VW, h / VH)));
+    offX = Math.round((usableW - VW * scale) / 2);
+  }
   offY = Math.round((h - VH * scale) / 2);
   ctx.imageSmoothingEnabled = false;
   current?.resize?.();

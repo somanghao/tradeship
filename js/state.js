@@ -7,7 +7,7 @@ import {
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
   laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
   FOES_BY_REGION,
-  TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL,
+  TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL, PIRATE_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
   START_GOLD, REPAIR_UNIT, HIRE_UNIT,
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
@@ -505,7 +505,12 @@ export function tavernCrews(cityId = state.at, day = state.day) {
   // 나포선 경매항(튀니스·알제·몰타)에는 거친 자들이 더 모인다 — 그 도시의 성격이
   // 시장·조선소만이 아니라 **사람**에서도 드러나야 한다.
   const roughPort = !!city.prizeYard;
-  const pool = CREW_NAMES[CREW_NAME_POOL[city.flag] ?? 'latin'];
+  /* 해적 소굴(flag==='pirate')은 나라가 없으니 **그 바다**로 고른다 — 안 그러면
+     토르투가·쌍서·계롱 술집에 이탈리아 이름 무리가 앉는다. */
+  const poolKey = city.flag === 'pirate'
+    ? (PIRATE_NAME_POOL[regionOf(cityId)] ?? 'latin')
+    : (CREW_NAME_POOL[city.flag] ?? 'latin');
+  const pool = CREW_NAMES[poolKey];
 
   const out = [];
   for (let i = 0; i < slots; i++) {

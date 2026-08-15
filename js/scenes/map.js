@@ -22,7 +22,7 @@ import {
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
-import { go, toLogical, canvas, setInsetRight } from '../main.js';
+import { go, toLogical, canvas, setInsetRight, setViewSpan } from '../main.js';
 
 let bg, hover = null, sailing = null, pendingArrival = null;
 let bgRegion = null;      // 지금 구워 둔 배경이 어느 권역 것인가
@@ -42,6 +42,9 @@ function syncBg() {
   if (bgRegion === rid && bg) return;
   bg = mapSprite(rid, viewCities(), viewRoutes());
   bgRegion = rid;
+  // 이 바다의 도시가 걸쳐 있는 폭만 보이면 된다 — 그래야 배율이 한 단계 안 떨어진다
+  const xs = viewCities().map((c) => c.x);
+  if (xs.length) setViewSpan(Math.min(...xs), Math.max(...xs));
 }
 
 /* 항해 연출 길이(초) = BASE + 일수 × PER_DAY.
@@ -81,8 +84,8 @@ function startVoyage(toId) {
 
 export const mapScene = {
   enter() {
-    // 오른쪽 항로 패널이 지도를 덮지 않게 그 폭만큼 좁혀 그린다(268px + 여백 14px씩)
-    setInsetRight(296);
+    // 오른쪽 항로 패널이 지도를 덮지 않게 그 폭만큼 좁혀 그린다(240px + 여백 14px씩)
+    setInsetRight(268);
     syncBg();
     hover = null;
     sailing = null;
@@ -94,6 +97,7 @@ export const mapScene = {
   },
   exit() {
     setInsetRight(0);
+    setViewSpan(null);
     canvas.removeEventListener('mousemove', onMove);
     canvas.removeEventListener('click', onClick);
     canvas.style.cursor = 'default';
@@ -684,10 +688,19 @@ function resolveEvent(ev0, voyage) {
       /* 깃발을 사실대로 적는다. 예전에는 무엇이 오든 "수평선에 검은 깃발"이었는데,
          이 표에는 프랑스 순찰 프리깃과 바르바리 기함도 들어 있다 —
          **국왕의 배가 검은 깃발을 달지는 않는다.** 왜 그 배가 상선을 세우는지도 함께 적는다. */
-      const blackFlag = enemy.flag === 'pirate' || enemy.nation === '해적';
-      const flagLine = blackFlag
-        ? '수평선에 검은 깃발.'
-        : `수평선에 ${enemy.nation} 깃발. 사략 허가장을 쥔 배다 — 이 바다에서 그것은 해적과 같은 말이다.`;
+      /* ★ 깃발이 해적기가 아니라고 다 사략선인 것은 아니다. 처음에는 둘로만 갈랐다가
+         **왜구에게 사략 허가장을 쥐여 주고, 명 수군 정규 순찰선에도 같은 문장을 붙였다.**
+         셋으로 가른다 — 무법자(검은 깃발) · 왕의 배(임검) · 허가장을 쥔 사략선. */
+      const outlaw = enemy.flag === 'pirate' || /해적|왜구/.test(enemy.nation ?? '');
+      const official = !outlaw && /수군|함대|순찰|관|기함/.test(enemy.name ?? '');
+      const flagLine = outlaw
+        ? (enemy.nation && enemy.nation !== '해적'
+            ? `수평선에 ${enemy.nation} 배다. 어느 나라 깃발도 달지 않았다.`
+            : '수평선에 검은 깃발.')
+        : official
+          ? `수평선에 ${enemy.nation} 깃발. 왕의 배다 — 뱃짐과 문서를 보자고 할 것이다.`
+          : `수평선에 ${enemy.nation} 깃발. 사략 허가장을 쥔 배다 — 이 바다에서 그것은 해적과 같은 말이다.`;
+      const blackFlag = outlaw;
       const rank = RANK_WORD[blackFlag ? 'pirate' : 'navy'][enemy.level] ?? '';
 
       pushLog(`${name}${josa(name, '이/가')} 항로를 막아섰다!`, 'warn');

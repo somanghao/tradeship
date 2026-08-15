@@ -136,10 +136,15 @@ export const PIRATES = [
    그것이 홍해와 대만 해협까지 나갔다. 여기 옮겨 적어 **이 바다의 것으로 되돌린다.**
    세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
    갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+/* ★ `flag`를 반드시 적는다. 처음에 이름·국적·선체만 갈아 끼웠더니 `localize()`가
+   `flag: skin.flag ?? base.flag`로 떨어져 **`ENEMIES`의 유럽 깃발이 그대로 남았다** —
+   명 수군 순찰선이 부르봉 백합기를, 왜구 대선단이 오스만기를 달고 나왔다.
+   이름만 바꾸는 것으로는 "이 바다의 적"이 되지 않는다. 쓸 수 있는 깃발은
+   `js/sprites/ship.js: FLAGS`의 키다. */
 export const FOES = [
-  { name: '해적 소함', nation: '해적', hull: 'brig', tint: 'dark', goods: ['salt', 'wine', 'grain'] },
-  { name: '바르바리 코르세어', nation: '바르바리', hull: 'galley', tint: 'oak', goods: ['ivory', 'spice', 'salt'] },
-  { name: '검은 깃발단', nation: '해적', hull: 'carrack', tint: 'dark', goods: ['silk', 'gold', 'spice'] },
-  { name: '프랑스 순찰 프리깃 팡당', nation: '프랑스', hull: 'frigate', tint: 'white', goods: ['wine', 'weapon', 'glass'] },
-  { name: '바르바리 기함 알 사파', nation: '바르바리', hull: 'galleon', tint: 'green', goods: ['gold', 'ivory', 'silk'] },
+  { name: '해적 소함', nation: '해적', flag: 'pirate', hull: 'brig', tint: 'dark', goods: ['salt', 'wine', 'grain'] },
+  { name: '바르바리 코르세어', nation: '바르바리', flag: 'hafsid', hull: 'galley', tint: 'oak', goods: ['ivory', 'spice', 'salt'] },
+  { name: '검은 깃발단', nation: '해적', flag: 'pirate', hull: 'carrack', tint: 'dark', goods: ['silk', 'gold', 'spice'] },
+  { name: '프랑스 순찰 프리깃 팡당', nation: '프랑스', flag: 'france', hull: 'frigate', tint: 'white', goods: ['wine', 'weapon', 'glass'] },
+  { name: '바르바리 기함 알 사파', nation: '바르바리', flag: 'ottoman', hull: 'galleon', tint: 'green', goods: ['gold', 'ivory', 'silk'] },
 ];

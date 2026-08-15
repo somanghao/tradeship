@@ -112,10 +112,15 @@ export const PIRATES = [
    부카니에와 과르다코스타가 같은 물에 떠 있던 바다다.
    세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
    갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+/* ★ `flag`를 반드시 적는다. 처음에 이름·국적·선체만 갈아 끼웠더니 `localize()`가
+   `flag: skin.flag ?? base.flag`로 떨어져 **`ENEMIES`의 유럽 깃발이 그대로 남았다** —
+   명 수군 순찰선이 부르봉 백합기를, 왜구 대선단이 오스만기를 달고 나왔다.
+   이름만 바꾸는 것으로는 "이 바다의 적"이 되지 않는다. 쓸 수 있는 깃발은
+   `js/sprites/ship.js: FLAGS`의 키다. */
 export const FOES = [
-  { name: '부카니에 소선', nation: '해적', hull: 'brig', tint: 'dark', goods: ['salt', 'grain', 'hide'] },
-  { name: '프랑스 해적', nation: '프랑스', hull: 'brig', tint: 'oak', goods: ['sugar', 'hide', 'salt'] },
-  { name: '잉글랜드 사략선', nation: '잉글랜드', hull: 'carrack', tint: 'white', goods: ['silver', 'sugar', 'hide'] },
-  { name: '과르다코스타 순찰선', nation: '스페인', hull: 'frigate', tint: 'white', goods: ['silver', 'pearl', 'sugar'] },
-  { name: '스페인 은함대 호위기함', nation: '스페인', hull: 'galleon', tint: 'green', goods: ['silver', 'gold', 'pearl'] },
+  { name: '부카니에 소선', nation: '해적', flag: 'pirate', hull: 'brig', tint: 'dark', goods: ['salt', 'grain', 'hide'] },
+  { name: '프랑스 해적', nation: '프랑스', flag: 'france', hull: 'brig', tint: 'oak', goods: ['sugar', 'hide', 'salt'] },
+  { name: '잉글랜드 사략선', nation: '잉글랜드', flag: 'england', hull: 'carrack', tint: 'white', goods: ['silver', 'sugar', 'hide'] },
+  { name: '과르다코스타 순찰선', nation: '스페인', flag: 'spain', hull: 'frigate', tint: 'white', goods: ['silver', 'pearl', 'sugar'] },
+  { name: '스페인 은함대 호위기함', nation: '스페인', flag: 'spain', hull: 'galleon', tint: 'green', goods: ['silver', 'gold', 'pearl'] },
 ];

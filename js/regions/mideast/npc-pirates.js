@@ -85,10 +85,15 @@ export const PIRATES = [
    카르타스를 단속하는 포르투갈 순찰선이거나 걸프의 습격선이다.
    세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
    갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+/* ★ `flag`를 반드시 적는다. 처음에 이름·국적·선체만 갈아 끼웠더니 `localize()`가
+   `flag: skin.flag ?? base.flag`로 떨어져 **`ENEMIES`의 유럽 깃발이 그대로 남았다** —
+   명 수군 순찰선이 부르봉 백합기를, 왜구 대선단이 오스만기를 달고 나왔다.
+   이름만 바꾸는 것으로는 "이 바다의 적"이 되지 않는다. 쓸 수 있는 깃발은
+   `js/sprites/ship.js: FLAGS`의 키다. */
 export const FOES = [
-  { name: '홍해 잡배', nation: '해적', hull: 'galley', tint: 'oak', goods: ['salt', 'grain', 'spice'] },
-  { name: '카와심 습격선', nation: '카와심', hull: 'galley', tint: 'dark', goods: ['spice', 'ivory', 'salt'] },
-  { name: '포르투갈 순찰 카라크', nation: '포르투갈', hull: 'carrack', tint: 'white', goods: ['spice', 'silk', 'gold'] },
-  { name: '오스만 홍해 함대', nation: '오스만', hull: 'frigate', tint: 'green', goods: ['spice', 'silk', 'gold'] },
-  { name: '포르투갈 인도 함대', nation: '포르투갈', hull: 'galleon', tint: 'white', goods: ['gold', 'spice', 'silk'] },
+  { name: '홍해 잡배', nation: '해적', flag: 'pirate', hull: 'galley', tint: 'oak', goods: ['salt', 'grain', 'spice'] },
+  { name: '카와심 습격선', nation: '카와심', flag: 'oman', hull: 'galley', tint: 'dark', goods: ['spice', 'ivory', 'salt'] },
+  { name: '포르투갈 순찰 카라크', nation: '포르투갈', flag: 'portugal', hull: 'carrack', tint: 'white', goods: ['spice', 'silk', 'gold'] },
+  { name: '오스만 홍해 함대', nation: '오스만', flag: 'ottoman', hull: 'frigate', tint: 'green', goods: ['spice', 'silk', 'gold'] },
+  { name: '포르투갈 인도 함대', nation: '포르투갈', flag: 'portugal', hull: 'galleon', tint: 'white', goods: ['gold', 'spice', 'silk'] },
 ];

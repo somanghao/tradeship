@@ -242,7 +242,7 @@ html, body {
 
 /* ── 지도 씬 ────────────────────────────────────────── */
 #map-side {
-  position: absolute; right: 14px; top: 14px; width: 268px;
+  position: absolute; right: 14px; top: 14px; width: 240px;
   display: flex; flex-direction: column; gap: 10px;
 }
 .city-card { padding: 10px 12px; font-size: 12.5px; line-height: 1.6; }
@@ -259,6 +259,13 @@ html, body {
 .route-row:hover { background: #ffffff14; border-color: var(--brass-d); }
 .route-row .rn { flex: 1 1 auto; }
 .route-row .rd { color: var(--parch-d); font-size: 11.5px; }
+/* ★ 패널을 240px로 좁힌 뒤(지도 배율을 한 단계 살리려고) 원양 항로 줄이 넘쳤다 —
+   "살바도 르" · "제노 바"로 이름이 잘려 읽혔다. 항구 이름은 절대 안 자르고,
+   배지와 값이 대신 줄어들게 한다. 줄이 길면 두 줄로 눕는다. */
+.route-row { flex-wrap: wrap; row-gap: 3px; }
+.route-row .rn { white-space: nowrap; }
+.route-row .rd { margin-left: auto; white-space: nowrap; }
+.route-row .rw { flex: 0 0 auto; font-size: 10.5px; }
 
 /* ── 항구 씬 ────────────────────────────────────────── */
 #port-wrap {

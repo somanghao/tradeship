@@ -465,6 +465,15 @@ export const CREW_NAME_POOL = {
   ming: 'sinic', ryukyu: 'sinic', japan: 'japanese', joseon: 'korean',
 };
 
+/* 해적 소굴은 깃발이 `pirate`라 **나라를 알 수 없다.** 그래서 이름 풀을 못 고르고
+   전부 `latin`으로 떨어져 **쌍서와 계롱 술집에 조반니 패가 앉았다**(동아시아 테스터 보고).
+   깃발 하나로는 세 대륙을 못 가르므로 **그 바다를 본다** — 해적도 근처에서 태운다. */
+export const PIRATE_NAME_POOL = {
+  mediterranean: 'latin', atlantic: 'germanic', africa: 'guinean', mideast: 'levant',
+  indian: 'indic', seasia: 'malay', eastasia: 'sinic', caribbean: 'antilles', southamerica: 'andean',
+};
+
+
 /* 해상 이벤트 가중치 */
 export const SEA_EVENTS = [
   { id: 'calm',     weight: 40, name: '순조로운 항해' },
