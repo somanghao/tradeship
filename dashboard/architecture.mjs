@@ -80,6 +80,9 @@ export const LAYERS = [
       ['js/sprites/char.js', '병종 캐릭터 48×48'],
       ['js/sprites/ship.js', '선박 측면 176×128 · 탑다운 28×28'],
       ['js/sprites/scene.js', '배경 400×225 — 지도·항구·외해·술집 + 이펙트'],
+      ['js/sprites/maps/index.js', '권역별 지도 정의 + 기후 팔레트 — 바다마다 색이 달라야 "다른 바다"가 된다'],
+      ['js/sprites/maps/auto.js', '**도시 좌표에서 바다를 역산한다** — 항구가 반드시 물가에 오는 지도 생성기'],
+      ['js/sprites/maps/mediterranean.js', '지중해만 손으로 찍은 격자 — 실루엣을 정확히 통제한다'],
       ['js/sprites/icons.js', '교역품 아이콘 16×16'],
     ],
   },
@@ -88,6 +91,7 @@ export const LAYERS = [
     what: '값이 왜 그 값인가. 카테고리마다 파일이 다르다 — 파일 이름만 봐도 어디를 고칠지 정해진다.',
     files: [
       ['content/evidence-meta.json', '**판정 라벨·시대 전제·항로 공식** — 권역이 공유하는 규약(여기 한 곳뿐)'],
+      ['content/ocean-lanes-evidence.json', '원양 항로 — 권역 **사이**의 선이라 어느 권역에도 넣지 않는다'],
       ...REGIONS.map((r) => [`content/regions/${r.id}-evidence.json`,
         `${r.name} — 도시 특산·깃발·입항세 + 항로 위험도`]),
       ['content/goods-evidence.json', '교역품 물가 — 대조 2축의 정본'],

@@ -38,8 +38,17 @@ function mergeSection(section) {
   return { out, from };
 }
 
+/** 원양 항로는 어느 권역의 것도 아니다 — 권역과 권역 **사이**의 선이라 따로 둔다.
+    권역 파일에 넣으면 양쪽이 서로 자기 것이라 여겨 두 벌이 생기거나 아무도 안 적는다. */
+export const LANE_EV = (() => {
+  try { return read('content/ocean-lanes-evidence.json').routes ?? {}; }
+  catch { return {}; }
+})();
+
 const cityMerged = mergeSection('cities');
 const routeMerged = mergeSection('routes');
+// 권역 안 항로 + 원양 항로를 한 표로 낸다. check-routes.mjs는 둘을 구별할 필요가 없다.
+Object.assign(routeMerged.out, LANE_EV);
 const goodsMerged = mergeSection('goods');
 const shipsMerged = mergeSection('ships');
 

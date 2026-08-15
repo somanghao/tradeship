@@ -1,9 +1,16 @@
-// scenes/map.js — 지중해 지도: 항로 선택, 항해 연출, 해상 이벤트
+// scenes/map.js — 권역 지도: 항로 선택, 항해 연출, 해상 이벤트
+//
+// ★ 지도는 **한 번에 한 권역만** 보여준다. 권역마다 좌표계가 따로이기 때문에
+//   전 세계 도시를 한 화면에 찍으면 좌표가 겹쳐 엉킨다. 다른 바다로 가는 길
+//   (원양 항로)은 선으로 긋지 않고 **항로 목록에만** 나온다 — 그을 좌표가 없다.
 
 import { mapSprite } from '../sprites/scene.js';
 import { shipTopSprite } from '../sprites/ship.js';
 import { blit } from '../pixel.js';
-import { CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER } from '../data.js';
+import {
+  CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER,
+  REGION_OF_CITY, REGION_BY_ID, laneOf,
+} from '../data.js';
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
@@ -17,6 +24,24 @@ import { el, overlay, toast, modal, refreshHUD, refreshLog } from '../ui.js';
 import { go, toLogical, canvas } from '../main.js';
 
 let bg, hover = null, sailing = null, pendingArrival = null;
+let bgRegion = null;      // 지금 구워 둔 배경이 어느 권역 것인가
+
+/* ── 권역 ─────────────────────────────────────────────────────
+   지도는 지금 정박한 바다만 그린다. 다른 권역 도시는 좌표계가 달라 찍을 수 없다. */
+const curRegion = () => REGION_OF_CITY[state.at] ?? 'mediterranean';
+const viewCities = () => CITIES.filter((c) => c.region === curRegion());
+const viewRoutes = () => {
+  const rid = curRegion();
+  return ROUTES.filter(([a, b]) => REGION_OF_CITY[a] === rid && REGION_OF_CITY[b] === rid);
+};
+
+/** 배경을 지금 권역에 맞춰 굽는다. 권역이 그대로면 캐시를 그대로 쓴다. */
+function syncBg() {
+  const rid = curRegion();
+  if (bgRegion === rid && bg) return;
+  bg = mapSprite(rid, viewCities(), viewRoutes());
+  bgRegion = rid;
+}
 
 /* 항해 연출 길이(초) = BASE + 일수 × PER_DAY.
    처음엔 3일 항로가 1초 만에 끝나 "언제 움직였는지 모르겠다"는 소리를 들었다. */
@@ -43,7 +68,7 @@ function startVoyage(toId) {
 
 export const mapScene = {
   enter() {
-    bg = mapSprite();
+    syncBg();
     hover = null;
     sailing = null;
     pendingArrival = null;
@@ -83,6 +108,7 @@ export const mapScene = {
   },
 
   draw(ctx, t) {
+    syncBg();   // 항해로 다른 바다에 닿았으면 배경을 갈아 끼운다
     blit(ctx, bg, 0, 0, 1);
     drawRoutes(ctx, t);
     drawNpcs(ctx, t);
@@ -94,7 +120,7 @@ export const mapScene = {
 /* ── 그리기 ─────────────────────────────────────────── */
 function drawRoutes(ctx, t) {
   const reachable = new Set(neighborsOf(state.at));
-  for (const [a, b] of ROUTES) {
+  for (const [a, b] of viewRoutes()) {
     const A = CITY_BY_ID[a], B = CITY_BY_ID[b];
     const live = !sailing && (a === state.at || b === state.at);
     const dash = live ? 3 : 2, gap = live ? 3 : 5;
@@ -114,7 +140,7 @@ function drawRoutes(ctx, t) {
 
 function drawCities(ctx, t) {
   const reachable = new Set(neighborsOf(state.at));
-  for (const c of CITIES) {
+  for (const c of viewCities()) {
     const here = c.id === state.at;
     const near = reachable.has(c.id);
     const hot = hover === c.id;
@@ -222,7 +248,7 @@ function onMove(ev) {
   if (sailing) { hover = null; return; }
   const p = toLogical(ev);
   let found = null;
-  for (const c of CITIES) {
+  for (const c of viewCities()) {
     if (Math.hypot(c.x - p.x, c.y - p.y) <= 6) { found = c.id; break; }
   }
   const near = found && neighborsOf(state.at).includes(found);
@@ -235,7 +261,7 @@ function onMove(ev) {
 function onClick(ev) {
   if (sailing) return;
   const p = toLogical(ev);
-  for (const c of CITIES) {
+  for (const c of viewCities()) {
     if (Math.hypot(c.x - p.x, c.y - p.y) <= 6) {
       if (c.id === state.at) return;
       if (!neighborsOf(state.at).includes(c.id)) {
@@ -574,7 +600,12 @@ function sailingCard() {
 function routeCards() {
   const here = CITY_BY_ID[state.at];
   const nb = neighborsOf(state.at);
-  const rows = nb.map((id) => {
+  /* 이웃을 둘로 가른다 — 같은 바다 안이냐, 다른 바다로 나가는 원양 항로냐.
+     한 목록에 섞으면 "며칠짜리 항해인지" 감각이 뭉개진다. 스무 날짜리 대양 항해와
+     이틀짜리 연안 항해는 애초에 다른 결정이다. */
+  const inSea = nb.filter((id) => !laneOf(state.at, id));
+  const oceanIds = nb.filter((id) => laneOf(state.at, id));
+  const rows = inSea.map((id) => {
     const c = CITY_BY_ID[id];
     const d = voyageDays(state.at, id);
     const w = routeWindLabel(state.at, id);
@@ -600,6 +631,36 @@ function routeCards() {
     ]);
   });
 
+  /* 다른 바다로 — 원양 항로.
+     선으로 긋지 않는 이유는 그을 좌표가 없기 때문이다(권역마다 좌표계가 따로다).
+     대신 어디로 이어지고 며칠이 걸리는지를 글로 준다. */
+  const oceanRows = oceanIds.map((id) => {
+    const c = CITY_BY_ID[id];
+    const lane = laneOf(state.at, id);
+    const rg = REGION_BY_ID[REGION_OF_CITY[id]];
+    const d = voyageDays(state.at, id);
+    const cost = voyageCost(d, state.crew, { from: state.at, to: id });
+    const threat = pirateThreat(state.at, id);
+    const dg = routeDangerLabel({ from: state.at, to: id, threat });
+    return el('div.route-row', {
+      title: [
+        lane.note,
+        `기준 ${lane.days}일 (이 배로 ${d}일) · 항해비 ${cost.total}닢`,
+        `해적 조우 ${Math.round(dg.odds * 100)}%`,
+        lane.monsoon ? '★ 계절풍 구간 — 철을 잘못 잡으면 훨씬 오래 걸린다' : null,
+        lane.overland ? '★ 육로 환적 — 배가 아니라 짐이 넘어간다' : null,
+      ].filter(Boolean).join('\n'),
+      onclick: () => startVoyage(id),
+    }, [
+      el('span.rn', { text: c.name }),
+      el('span.rw', { text: rg?.name ?? '', style: { color: '#8fb4d8' } }),
+      el(`span.rw.${dg.kind || 'calm'}`, {
+        text: lane.monsoon ? '계절풍' : lane.overland ? '육로' : dg.text,
+      }),
+      el('span.rd', { text: `${d}일 · ${cost.total}닢` }),
+    ]);
+  });
+
   /* 지금 값이 흔들리는 곳 — 소식을 들어야 달려갈 수 있다.
      사건형 대박을 넣어 놓고 화면에 안 띄우면 플레이어에겐 없는 것과 같다. */
   const shocks = activeShocks().sort((a, b) => b.mult - a.mult);
@@ -616,7 +677,13 @@ function routeCards() {
 
   const cards = [
     el('div.panel', {}, [
-      el('h3', {}, el('span', { text: '현재 위치' })),
+      el('h3', {}, [
+        el('span', { text: '현재 위치' }),
+        el('span', {
+          text: REGION_BY_ID[curRegion()]?.name ?? '',
+          style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+        }),
+      ]),
       el('div.city-card', {}, [
         el('div', {}, [
           el('span.cname', { text: here.name }),
@@ -637,6 +704,19 @@ function routeCards() {
       el('div.route-list', {}, rows),
     ]),
   ];
+
+  if (oceanRows.length) {
+    cards.push(el('div.panel', {}, [
+      el('h3', {}, [
+        el('span', { text: '다른 바다로' }),
+        el('span', {
+          text: '원양 항로',
+          style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+        }),
+      ]),
+      el('div.route-list', {}, oceanRows),
+    ]));
+  }
 
   if (shockRows.length) {
     cards.push(el('div.panel', {}, [

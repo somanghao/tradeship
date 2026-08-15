@@ -13,7 +13,8 @@
 import { ROUTES, ROUTE_RISK, riskKey, REGIONS, REGION_OF_CITY, isOceanLane } from '../js/map/geo.js';
 import { CITY_BY_ID } from '../js/data.js';
 import { encounterOdds, routeRisk } from '../js/state.js';
-import { ROUTE_EV, ROUTE_VERDICTS, ERA, META } from './evidence-load.mjs';
+import { ROUTE_EV, ROUTE_VERDICTS, ERA, META, LANE_EV } from './evidence-load.mjs';
+import { OCEAN_LANES } from '../js/regions/index.js';
 
 // 근거는 권역마다 파일이 다르다. 원양 항로(권역과 권역을 잇는 선)는
 // `content/ocean-lanes-evidence.json`이 정본이고 로더가 함께 모아 준다.
@@ -54,8 +55,15 @@ for (const [a, b] of ROUTES) {
 
 /* ── 2. 근거에만 있고 항로에 없는 것 (항로를 지웠는데 근거가 남은 경우) ── */
 const live = new Set(ROUTES.map(([a, b]) => riskKey(a, b)));
+/* 원양 항로는 **한쪽 권역이 아직 안 채워졌을 수 있다.** 그때 `js/regions/index.js`가
+   그 선을 잇지 않으므로(LIVE_LANES) 여기서는 유령이 아니라 '대기'로 다룬다 —
+   여러 바다를 동시에 채우는 동안 검증이 남의 진도 때문에 실패하면 안 된다. */
+const laneKeys = new Set(OCEAN_LANES.map((l) => riskKey(l.a, l.b)));
+let pendingLanes = 0;
 for (const key of Object.keys(EV.routes)) {
-  if (!live.has(key)) warn('유령', key, '이 항로는 ROUTES에 없다 — 근거만 남아 있다');
+  if (live.has(key)) continue;
+  if (laneKeys.has(key)) { pendingLanes++; continue; }
+  warn('유령', key, '이 항로는 ROUTES에 없다 — 근거만 남아 있다');
 }
 for (const key of Object.keys(ROUTE_RISK)) {
   if (!live.has(key)) warn('유령', key, 'ROUTE_RISK에 있으나 ROUTES에 없다');
@@ -79,6 +87,9 @@ if (hi - lo < 0.05) {
 /* ── 보고 ────────────────────────────────────────────────── */
 console.log(`\n=== 항로 근거 점검 (${EV.era.label}) ===`);
 console.log(`항로 ${ROUTES.length} · 출처가 달린 항로 ${sourced} · 해적 미적용(내해·육로) ${inland}`);
+if (pendingLanes) {
+  console.log(`원양 항로 ${pendingLanes}개는 아직 안 이어졌다 — 한쪽 권역의 항구가 없다(권역을 채우면 저절로 이어진다).`);
+}
 console.log('권역별 항로: ' + REGIONS.map((r) => {
   const n = ROUTES.filter(([a, b]) => REGION_OF_CITY[a] === r.id && REGION_OF_CITY[b] === r.id).length;
   return `${r.name} ${n}`;

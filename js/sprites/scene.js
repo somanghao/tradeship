@@ -1,92 +1,30 @@
-// scene.js — 배경 스프라이트 (지중해 지도 / 항구 도시 / 외해)
+// scene.js — 배경 스프라이트 (권역 지도 / 항구 도시 / 외해)
 // 게임 논리 해상도 400x225 기준으로 그린 뒤 정수배 확대해서 쓴다.
 
 import { PAL as P, G, bake, outline, rng } from '../pixel.js';
+import { autoLandMap, scatterIsles } from './maps/auto.js';
+import { mapDefOf, climateOf } from './maps/index.js';
 
 export const VW = 400, VH = 225;
 
 /* ══════════════════════════════════════════════════════════════
-   1. 지중해 지도
+   1. 권역 지도
    ══════════════════════════════════════════════════════════════ */
 
-/* ── 지중해 수역 격자 ───────────────────────────────────────────
-   100x56 저해상 격자에 "행별 바다 구간"을 적어두고 4배로 키운 뒤
-   경계를 스무딩한다. 폴리곤보다 형태를 정확히 통제할 수 있다.
-   x: 0=대서양 … 99=레반트 내륙 / y: 0=알프스 이북 … 55=사하라 */
-const GW = 100, GH = 56, GS = 4;
+/* ── 지도는 권역마다 다르다 ─────────────────────────────────────
+   지중해는 손으로 찍은 격자를 쓰고(`maps/mediterranean.js`), 나머지 여섯 바다는
+   **도시 좌표에서 바다를 역산한다**(`maps/auto.js`). 후자를 택한 이유는
+   외주 지도를 두 번 반려한 경험이다 — 지형을 먼저 그리면 항구가 사하라 한복판에 앉는다.
+   좌표를 먼저 놓고 그 점들이 물가에 오도록 지형을 만들면 어긋날 수가 없다. */
 
-const SEA_SPANS = {
-  6:  [[68, 78]],                                          // 흑해
-  7:  [[65, 81]],
-  8:  [[63, 83]],
-  9:  [[62, 84]],
-  10: [[62, 83]],
-  11: [[61, 80]],
-  12: [[59, 63]],                                          // 보스포루스·마르마라
-  13: [[56, 62]],                                          // 다르다넬스
-  14: [[34, 36], [52, 60]],                                // 아드리아 북단 · 에게 북단
-  15: [[33, 37], [51, 60]],
-  16: [[21, 24], [32, 38], [50, 60]],                      // 리옹만
-  17: [[19, 25], [31, 39], [49, 61]],
-  18: [[17, 28], [35, 40], [48, 61]],                      // 리구리아해 · 아드리아
-  19: [[15, 29], [35, 41], [47, 61]],
-  20: [[13, 29], [36, 42], [47, 61]],
-  21: [[12, 30], [36, 42], [46, 60]],
-  22: [[0, 3], [11, 30], [36, 43], [47, 60]],              // 그리스 서안 43 · 동안 47
-  23: [[0, 3], [10, 31], [37, 43], [47, 59]],
-  24: [[0, 3], [9, 31], [37, 43], [48, 59]],
-  25: [[0, 3], [8, 31], [36, 43], [48, 58]],
-  26: [[0, 3], [8, 32], [37, 44], [49, 60]],               // 펠로폰네소스
-  27: [[0, 3], [7, 32], [39, 45], [49, 68]],               // 풀리아 돌출 · 아나톨리아 남안 동진
-  28: [[0, 3], [7, 33], [42, 78]],                         // 오트란토 해협 개통
-  29: [[0, 3], [6, 33], [41, 88]],
-  30: [[0, 3], [6, 34], [40, 88]],
-  31: [[0, 34], [39, 88]],                                 // 지브롤터 개통
-  32: [[0, 35], [39, 88]],
-  33: [[0, 3], [5, 36], [40, 88]],
-  34: [[0, 3], [5, 36], [40, 88]],
-  35: [[0, 3], [5, 37], [41, 88]],
-  36: [[0, 3], [5, 37], [42, 88]],
-  37: [[0, 3], [5, 38], [43, 88]],
-  38: [[0, 3], [45, 87]],                                  // 아프리카 북안 도달
-  39: [[0, 3], [47, 68], [71, 86]],                        // 시르테만 · 이집트 앞바다
-  40: [[0, 3], [49, 66], [73, 85]],
-  41: [[0, 3], [51, 64], [75, 84]],
-  42: [[0, 3], [53, 62], [77, 83]],
-  43: [[0, 3], [55, 60]],
-  44: [[0, 3]],
-  45: [[0, 3]],
-};
+const GS_DEFAULT = 4;
 
-/* 섬 — 확대 후 좌표(400x225)로 직접 찍는다. 격자에 넣으면 스무딩에 먹힌다.
-   [중심x, 중심y, 반경x, 반경y] */
-const ISLES = [
-  [117, 90, 5, 8],     // 코르시카
-  [119, 110, 6, 11],   // 사르데냐
-  [156, 147, 13, 5],   // 시칠리아
-  [225, 135, 17, 3],   // 크레타
-  [329, 111, 10, 3],   // 키프로스
-  [85, 111, 10, 3],    // 발레아레스
-  [239, 109, 3, 4],    // 로도스
-  // 몰타 — 시칠리아 남동쪽 약 90km. 지도 축척이 대략 10km/px이므로 9px은 띄워야 한다.
-  // 처음에 y=154로 두었더니 시칠리아 남안(y=152)과 **맞붙어** 한 덩어리로 보였다.
-  [169, 161, 2, 2],    // 몰타
-  [216, 100, 3, 3],    // 에게 제도
-  [226, 92, 2, 3],
-  [209, 88, 3, 2],
-  [232, 84, 2, 2],
-  [196, 121, 3, 4],    // 이오니아 제도
-  [188, 108, 2, 3],
-];
-
-/** 격자 → 확대 → 스무딩한 육지 불리언 맵 */
-function buildLandMap() {
+/** 손으로 찍은 격자 → 확대 → 스무딩한 육지 불리언 맵 */
+function landFromSpans(spans, GW, GH, GS) {
   const sea = new Uint8Array(GW * GH);
-  for (const [yStr, spans] of Object.entries(SEA_SPANS)) {
+  for (const [yStr, list] of Object.entries(spans)) {
     const y = +yStr;
-    for (const [x0, x1] of spans) {
-      for (let x = x0; x <= x1; x++) sea[y * GW + x] = 1;
-    }
+    for (const [x0, x1] of list) for (let x = x0; x <= x1; x++) sea[y * GW + x] = 1;
   }
   // 이중선형 보간으로 확대한다. 최근접으로 키우면 대각 해안이
   // 4px 톱니가 되는데, 보간하면 경계가 실수값이라 매끄럽게 떨어진다.
@@ -129,45 +67,105 @@ function buildLandMap() {
   return land;
 }
 
-export function mapSprite() {
-  return bake('scene:map', VW, VH, (g, ctx) => {
-    const r = rng(0xC0FFEE);
+/** 산줄기를 자동으로 놓는다 — 손으로 찍은 폴리라인이 없는 권역용.
+    육지 덩어리의 안쪽(바다에서 먼 곳)을 따라 굽은 선을 몇 줄 앉힌다.
+    실제 산맥을 재현하는 게 아니라 **육지가 평평해 보이지 않게** 하는 장치다. */
+function autoRanges(land, seed) {
+  const r = rng(seed ^ 0x3A17);
+  const inland = [];
+  for (let y = 12; y < VH - 12; y += 3) {
+    for (let x = 12; x < VW - 12; x += 3) {
+      if (!land[y * VW + x]) continue;
+      // 사방 9px이 다 육지면 '안쪽'이다
+      let deep = true;
+      for (const [dx, dy] of [[9, 0], [-9, 0], [0, 9], [0, -9]]) {
+        if (!land[(y + dy) * VW + (x + dx)]) { deep = false; break; }
+      }
+      if (deep) inland.push([x, y]);
+    }
+  }
+  const out = [];
+  for (let n = 0; n < 7 && inland.length; n++) {
+    const [sx, sy] = inland[Math.floor(r() * inland.length)];
+    const path = [[sx, sy]];
+    let x = sx, y = sy;
+    const dx = (r() - 0.5) * 26, dy = (r() - 0.5) * 20;
+    for (let k = 0; k < 2; k++) {
+      x = Math.round(x + dx + (r() - 0.5) * 14);
+      y = Math.round(y + dy + (r() - 0.5) * 12);
+      path.push([x, y]);
+    }
+    out.push(path);
+  }
+  return out;
+}
 
-    // 1) 육지 찍기
-    const land = buildLandMap();
+/**
+ * 권역 지도.
+ * @param regionId 권역 id. 없으면 지중해.
+ * @param cities   그 권역의 도시 [{id,x,y,size}] — 자동 생성 권역에만 쓰인다
+ * @param routes   그 권역 **안**의 항로 [[aId,bId]]
+ */
+export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) {
+  const def = mapDefOf(regionId);
+  const clim = climateOf(regionId);
+
+  return bake(`scene:map:${regionId}`, VW, VH, (g, ctx) => {
+    const seed = def.auto?.seed ?? 0xC0FFEE;
+    const r = rng(seed);
+
+    // 1) 육지 만들기 — 손으로 찍은 격자가 있으면 그것, 없으면 도시 좌표에서 역산
+    let land, isles, ranges;
+    if (def.hand) {
+      land = landFromSpans(def.hand.spans, def.hand.gw, def.hand.gh, def.hand.gs ?? GS_DEFAULT);
+      isles = def.hand.isles ?? [];
+      ranges = def.hand.ranges ?? [];
+    } else {
+      land = autoLandMap(cities, routes, def.auto);
+      isles = scatterIsles(land, cities, routes, { seed: seed ^ 0x15E5, count: def.auto?.isles ?? 14 });
+      ranges = autoRanges(land, seed);
+    }
+
+    // 2) 육지 찍기
     for (let y = 0; y < VH; y++) {
       let run = -1;
       for (let x = 0; x <= VW; x++) {
         const on = x < VW && land[y * VW + x];
         if (on && run < 0) run = x;
-        else if (!on && run >= 0) { g.h(y, run, x - 1, P.grnM); run = -1; }
+        else if (!on && run >= 0) { g.h(y, run, x - 1, clim.land); run = -1; }
       }
     }
-    // 2) 섬
-    for (const [cx, cy, rx, ry] of ISLES) g.ellipse(cx, cy, rx, ry, P.grnM);
+    // 3) 섬
+    for (const [cx, cy, rx, ry] of isles) g.ellipse(cx, cy, rx, ry, clim.land);
 
-    // 3) 육지 마스크 확보 — 이후 텍스처를 육지 안에만 찍기 위해
+    // 4) 육지 마스크 확보 — 이후 텍스처를 육지 안에만 찍기 위해
     const mask = ctx.getImageData(0, 0, VW, VH).data;
     const isLand = (x, y) =>
       x >= 0 && y >= 0 && x < VW && y < VH && mask[((y | 0) * VW + (x | 0)) * 4 + 3] > 0;
 
-    // 4) 지대 색조 — 삼림 / 지중해 관목 / 사막.
-    //    경계를 직선으로 두면 띠처럼 보이므로 파형으로 흔든다.
-    const desertY = (x) => 152 + Math.sin(x * 0.031) * 7 + Math.sin(x * 0.011 + 2) * 6;
-    const scrubY  = (x) => 78 + Math.sin(x * 0.024 + 1) * 12 + Math.sin(x * 0.009) * 9;
+    /* 5) 지대 색조 — 삼림 / 관목 / 사막 / 툰드라.
+       경계를 직선으로 두면 띠처럼 보이므로 기후 정의가 파형 함수를 준다.
+       `zones`가 없는 기후(열대)는 통짜 초록이다 — 그것이 그 바다의 인상이다. */
+    const Z = clim.zones;
     const zoneOf = (x, y) => {
-      if (y > desertY(x) || (x > 352 && y > 116 + Math.sin(y * 0.06) * 8)) return 'desert';
-      return y > scrubY(x) ? 'scrub' : 'forest';
+      if (!Z) return 'forest';
+      const extra = Z.extra?.(x, y);
+      if (extra) return extra;
+      if (Z.desertY && y > Z.desertY(x)) return 'desert';
+      if (Z.tundraY && y < Z.tundraY(x)) return 'tundra';
+      if (Z.forestY && y > Z.forestY(x)) return 'forest';
+      if (Z.scrubY && y > Z.scrubY(x)) return 'scrub';
+      return 'forest';
     };
     for (let y = 0; y < VH; y++) {
       for (let x = 0; x < VW; x++) {
         if (!isLand(x, y)) continue;
-        const z = zoneOf(x, y);
-        if (z === 'desert') g.px(x, y, P.sandM);
-        else if (z === 'scrub') g.px(x, y, '#6f8347');
+        const c = clim.zone?.[zoneOf(x, y)];
+        if (c) g.px(x, y, c);
       }
     }
-    // 5) 내륙 얼룩 (육지 한정)
+    // 6) 내륙 얼룩 (육지 한정) — 통짜 색면을 깨서 손으로 칠한 느낌을 낸다
+    const [altD, altM, altL] = clim.alt;
     for (let i = 0; i < 16000; i++) {
       const x = Math.floor(r() * VW), y = Math.floor(r() * VH);
       if (!isLand(x, y)) continue;
@@ -175,22 +173,11 @@ export function mapSprite() {
       if (z === 'desert') {
         if (v < 0.32) g.px(x, y, P.sandD);
         else if (v < 0.48) g.px(x, y, '#d4b47c');
-      } else if (v < 0.24) g.px(x, y, P.grnD);
-      else if (v < 0.36) g.px(x, y, z === 'scrub' ? '#87995a' : P.grnL);
+      } else if (v < 0.24) g.px(x, y, altD);
+      else if (v < 0.36) g.px(x, y, z === 'scrub' ? altL : altM);
     }
 
-    // 6) 산맥 (육지 한정)
-    const ranges = [
-      [[20, 124], [40, 118], [56, 112]],    // 시에라네바다
-      [[24, 96], [48, 92], [66, 96]],       // 이베리아 중앙 산지
-      [[54, 80], [72, 78], [86, 74]],       // 피레네
-      [[92, 62], [110, 58], [126, 64]],     // 알프스
-      [[126, 78], [140, 100], [154, 126]],  // 아펜니노
-      [[162, 66], [176, 84], [188, 104]],   // 디나르알프스
-      [[252, 100], [296, 104], [338, 102]], // 타우루스
-      [[262, 74], [304, 70], [344, 74]],    // 아나톨리아 고원
-      [[44, 164], [92, 168], [140, 162]],   // 아틀라스
-    ];
+    // 7) 산맥 (육지 한정)
     for (const path of ranges) {
       for (let i = 0; i < path.length - 1; i++) {
         const [x0, y0] = path[i], [x1, y1] = path[i + 1];
@@ -209,30 +196,27 @@ export function mapSprite() {
       }
     }
 
-    // 7) 해안선 → 얕은 바다 순으로 바깥으로 번지게
-    outline(ctx, VW, VH, P.sandL);      // 백사장
-    outline(ctx, VW, VH, '#6fc4cc');
-    outline(ctx, VW, VH, P.seaL);
-    outline(ctx, VW, VH, '#2c6f8c');
+    // 8) 해안선 → 얕은 바다 순으로 바깥으로 번지게
+    for (const c of clim.shore) outline(ctx, VW, VH, c);
 
-    // 8) 남은 빈 픽셀 = 외해
+    // 9) 남은 빈 픽셀 = 외해
     ctx.save();
     ctx.globalCompositeOperation = 'destination-over';
     const grad = ctx.createLinearGradient(0, 0, 0, VH);
-    grad.addColorStop(0, '#154762');
-    grad.addColorStop(0.55, P.seaD);
-    grad.addColorStop(1, '#0a2033');
+    grad.addColorStop(0, clim.sea[0]);
+    grad.addColorStop(0.55, clim.sea[1]);
+    grad.addColorStop(1, clim.sea[2]);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, VW, VH);
     ctx.restore();
 
-    // 9) 해류 결 — 바다 위에만
-    const r2 = rng(0x51DE);
+    // 10) 해류 결 — 바다 위에만
+    const r2 = rng(seed ^ 0x51DE);
     for (let i = 0; i < 400; i++) {
       const x = Math.floor(r2() * VW), y = Math.floor(r2() * VH);
       if (isLand(x, y) || isLand(x, y - 4) || isLand(x, y + 4)) continue;
       const len = 2 + Math.floor(r2() * 4);
-      g.h(y, x, x + len, '#2a6d88');
+      g.h(y, x, x + len, clim.shore[3]);
     }
   });
 }
