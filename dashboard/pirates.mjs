@@ -146,7 +146,13 @@ export function measureWorld({ days = 240, frameEvery = 2 } = {}) {
 
   const meanOcc = routes.reduce((s, r) => s + r.occupancy, 0) / routes.length;
 
-  // 지금 살아 있는 해적 명부 — 보유 금화가 곧 현상금이 된다(pirateEnemy가 정본)
+  /* 지금 살아 있는 해적 명부 — 보유 금화가 곧 현상금이 된다(pirateEnemy가 정본).
+     ★ 전리품에는 **플레이어 자산에 따른 상한**이 걸린다(state.js: capLoot — 옮겨 실을 수
+       있는 만큼만 가져간다). 이 표는 해적끼리 비교하는 자리라 **상한 전 정가**를 보여야 한다.
+       공식을 여기서 다시 쓰면 계측이 재구현으로 갈라지므로, 재는 동안만 금고를 크게 잡아
+       상한이 안 걸리게 한다. 실제로 손에 쥐는 값은 이보다 작다(초반일수록 훨씬). */
+  const goldWas = state.gold;
+  state.gold = 1e9;
   const roster = state.npcs
     .filter((n) => n.kind === 'pirate')
     .map((n) => {
@@ -163,6 +169,7 @@ export function measureWorld({ days = 240, frameEvery = 2 } = {}) {
       };
     })
     .sort((p, q) => q.gold - p.gold);
+  state.gold = goldWas;
 
   return {
     days, frames, routes, meanOcc, roster, raids,

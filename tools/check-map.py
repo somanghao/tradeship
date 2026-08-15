@@ -23,9 +23,53 @@ except ImportError:
     sys.exit("Pillow가 필요하다:  pip install pillow")
 
 ROOT = Path(__file__).resolve().parent.parent
-GEO = (ROOT / "js/map/geo.js").read_text(encoding="utf-8")
 
-# ── 좌표·항로는 geo.js에서 읽는다 (여기에 베껴 적으면 반드시 어긋난다) ──
+# ── 어느 바다의 지도인가 ─────────────────────────────────────
+#  세계가 아홉 권역으로 갈리면서 `js/map/geo.js`는 **합성 계층**이 되어 좌표를 담지 않는다.
+#  좌표의 정본은 `js/regions/<권역>/geo.js`이므로 파일 이름에서 권역을 알아내 그쪽을 읽는다.
+#      python tools/check-map.py assets/map/indian.webp     → indian 권역으로 검사
+#      python tools/check-map.py --all                      → 아홉 장을 차례로
+REGIONS = ["mediterranean", "atlantic", "africa", "mideast", "indian",
+           "seasia", "eastasia", "caribbean", "southamerica"]
+
+
+def load_geo(region):
+    return (ROOT / f"js/regions/{region}/geo.js").read_text(encoding="utf-8")
+
+
+def region_of(path):
+    stem = Path(path).stem
+    if stem in REGIONS:
+        return stem
+    sys.exit(f"'{stem}'이 어느 권역인지 모르겠다. 파일 이름을 권역 id로 두어라: {', '.join(REGIONS)}")
+
+
+# `--all`이면 아홉 장을 차례로 돌리고 요약만 낸다
+if "--all" in sys.argv:
+    import subprocess
+    bad = []
+    for r in REGIONS:
+        f = ROOT / f"assets/map/{r}.webp"
+        if not f.exists():
+            f = ROOT / f"assets/map/{r}.png"
+        if not f.exists():
+            print(f"  {r:16s} 그림 없음")
+            continue
+        out = subprocess.run([sys.executable, __file__, str(f)],
+                             capture_output=True, text=True, encoding="utf-8", errors="replace")
+        head = [l for l in out.stdout.splitlines() if "판정" in l or "실패" in l]
+        print(f"  {r:16s} {'통과' if out.returncode == 0 else '실패'}"
+              + (f"  {head[-1].strip()}" if head else ""))
+        if out.returncode:
+            bad.append(r)
+    print(f"\n아홉 장 중 {9 - len(bad)}장 통과" + (f" · 실패: {', '.join(bad)}" if bad else ""))
+    sys.exit(1 if bad else 0)
+
+_img_arg = sys.argv[1] if len(sys.argv) > 1 else "assets/map/mediterranean.webp"
+REGION = region_of(_img_arg)
+GEO = load_geo(REGION)
+
+# ── 좌표·항로는 권역 geo.js에서 읽는다 (여기에 베껴 적으면 반드시 어긋난다) ──
 CITIES = [
     {"id": m.group(1), "name": m.group(2), "x": int(m.group(3)), "y": int(m.group(4))}
     for m in re.finditer(
@@ -35,7 +79,9 @@ ROUTES = re.findall(r"\['(\w+)',\s*'(\w+)'\]", GEO.split("export const ROUTES")[
 BY = {c["id"]: c for c in CITIES}
 
 W, H = 400, 225
-img_path = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "assets/map/mediterranean.webp"
+img_path = Path(_img_arg)
+if not img_path.is_absolute():
+    img_path = (ROOT / img_path).resolve()
 
 fails, warns, notes = [], [], []
 def fail(k, m): fails.append((k, m))

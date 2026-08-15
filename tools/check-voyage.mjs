@@ -30,7 +30,10 @@
 import { readFileSync } from 'node:fs';
 import { runSim } from './sim-core.mjs';
 import { SHIPS, SEA_EVENTS, INLAND_ODDS } from '../js/data.js';
-import { jettisonOdds, isInland, INSURANCE_COVER, INSURANCE_RATE } from '../js/state.js';
+import {
+  jettisonOdds, isInland, INSURANCE_COVER, INSURANCE_RATE,
+  state, resetGame, pickEnemy,
+} from '../js/state.js';
 
 const EV = JSON.parse(readFileSync(new URL('../content/voyage-evidence.json', import.meta.url), 'utf8'));
 const T = EV.gameTargets;
@@ -140,6 +143,44 @@ if (T.windfallIsEventDriven?.value) {
   }
 }
 
+/* ── 5-2. 사건 밀도가 세계 크기를 따라가는가 ────────────────
+   `SHOCK.events[].perDay`는 **세계 전체**의 하루 발생 건수다. 도시를 늘리면 한 도시가
+   사건을 겪는 주기가 그만큼 길어져, "대박은 사건에서 나온다"가 배선은 살아 있는 채로
+   사실상 죽는다(16 → 175항구에서 도시당 20개월 → 216개월). 그래서 밀도 환산을 강제한다. */
+if (T.shockDensityPerCity?.value) {
+  const src = readFileSync(new URL('../js/state.js', import.meta.url), 'utf8');
+  if (!/densityBase/.test(src)) {
+    fail('시장 충격 밀도', 'rollShockEvents가 도시 수로 환산하지 않는다 — 바다를 넓힐수록 사건이 닿지 않는 곳에서만 일어난다');
+  }
+}
+
+/* ── 5-3. 전리품이 성장 사다리를 건너뛰지 않는가 ─────────────
+   전리품은 **진 자의 크기**로 정해지는데 뜻은 **이긴 자의 크기**로 읽힌다.
+   상한이 없으면 세기 1 좀도둑 하나가 시작 자산의 다섯 배가 되어 초반이 통째로 사라진다. */
+if (T.spoilsVsAssets) {
+  const world = readFileSync(new URL('../js/world.js', import.meta.url), 'utf8');
+  if (!/capLoot/.test(world)) {
+    fail('전리품 상한', 'world.js: pirateEnemy가 capLoot을 통과하지 않는다 — 명부 해적만 상한 밖이 된다');
+  }
+  resetGame();                       // 출항 전 시작 상태에서 잰다
+  const assets = state.gold;
+  let sum = 0;
+  const ROLLS = 400;
+  withSeed(20260816, () => {
+    for (let i = 0; i < ROLLS; i++) {
+      const [lo, hi] = pickEnemy().loot.gold;
+      sum += (lo + hi) / 2;
+    }
+  });
+  const share = sum / ROLLS / assets;
+  if (!band(share, T.spoilsVsAssets.value)) {
+    warn('전리품 vs 자산', `시작 상태에서 한 판의 노획 금화가 자산의 ${pct(share, 0)}`
+      + ` — 참고 밴드 ${T.spoilsVsAssets.value.map((v) => pct(v, 0)).join('~')}.`
+      + ' 위로 벗어나면 전투 한 판이 다음 배를 사 버리고, 아래면 싸울 이유가 없다(도주 비용 34%).');
+  }
+  var spoilsShare = share;           // 출력용
+}
+
 /* ── 6. 톤/승조원 — 선종의 정체성 ─────────────────────────── */
 const tpc = [];
 const exempt = T.tonsPerCrewMin.gameplay ?? {};
@@ -172,6 +213,10 @@ console.log(`  적자 항차           ${pct(negShare)}`);
 console.log(`  화물 손실 사건       ${pad(perVoyages.toFixed(0) + '항차', 8)} 목표 ${T.lossEventPerVoyages.value.join('~')}항차에 1건`);
 console.log(`  내해·육로 통과       ${pct(inlandTrips / trips, 0)} (뭍의 사고 ${pct(INLAND_ODDS, 0)})`);
 console.log(`  보험 보상률          ${pct(INSURANCE_COVER, 0)} (요율 계수 ${pct(INSURANCE_RATE, 0)})`);
+if (typeof spoilsShare === 'number') {
+  console.log(`  전리품 vs 자산       ${pad(pct(spoilsShare, 0), 8)} 목표 ${T.spoilsVsAssets.value.map((v) => pct(v, 0)).join('~')}`
+    + ' (시작 상태 · 나포선 제외)');
+}
 console.log('\n  톤/승조원 1인 — 선종의 정체성');
 for (const t of tpc) {
   console.log(`    ${pad(t.name, 12)} ${pad(t.v.toFixed(1), 6)} 참고 ${pad(t.target.join('~'), 8)}`

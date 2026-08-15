@@ -18,7 +18,7 @@ import {
   state, settlePayroll, payrollOwed, ledgerTotal, MONTH_DAYS,
   pushLog, cargoUsed, priceOf, DESERT_AT,
 } from './state.js';
-import { el, modal, refreshHUD, refreshLog, iconEl } from './ui.js';
+import { el, modal, refreshHUD, refreshLog, iconEl, josa } from './ui.js';
 
 /* 장부 항목의 표시 이름. `LEDGER_*` 키와 1:1이라 여기 빠진 항목은 화면에서 사라진다 —
    state.js에 항목을 더하면 여기도 더한다(그러라고 §장부 주석에 적어 두었다). */
@@ -224,17 +224,30 @@ function report(r, onDone) {
     pushLog(`급여 ${won(r.paid)}닢을 모두 치렀다.`, 'good');
   }
 
+  /* ★ 이 대목은 이 게임에서 가장 무거운 장면이다 — 사람이 배를 버리고, 밀린 삯 대신
+     **선창을 열어** 값나가는 것을 들고 내려간다. 그런데 문장은 정산표의 한 줄이었다.
+     떠나는 쪽에도 할 말이 있어야 한다. 여기서는 설명하지 않고 **장면으로** 적는다. */
+  if (r.deserted.length) {
+    lines.push(el('p.pay-danger', {
+      html: '삯을 못 받은 자들이 선창 문을 열었다. 말리는 사람은 없었다 — 그들이 옳기 때문이다.',
+    }));
+  }
   for (const d of r.deserted) {
     const took = Object.entries(d.lost).map(([gid, n]) => `${GOOD_BY_ID[gid].name} ${n}칸`).join(' · ');
+    const tail = took ? String(Object.values(d.lost).at(-1)) + '칸' : '';
     lines.push(el('p.pay-danger', {
-      html: `<b>${d.name}</b>(${d.n}명)이(가) 배를 떠났다.`
-          + (took ? ` 밀린 삯 대신 <b>${took}</b>을(를) 들고 갔다(${won(d.value)}닢어치).` : ' 가져갈 것도 없었다.'),
+      html: `<b>${d.name}</b>(${d.n}명)${josa('명', '이/가')} 짐을 챙겨 부두로 내려갔다.`
+          + (took
+              ? ` 밀린 삯 대신 <b>${took}</b>${josa(tail, '을/를')} 들고 갔다(${won(d.value)}닢어치).`
+              : ' 들고 갈 것조차 없어 빈손으로 갔다. 그쪽이 더 아프다.'),
     }));
-    pushLog(`${d.name} ${d.n}명이 이탈했다.${took ? ` ${took}을(를) 들고 갔다.` : ''}`, 'bad');
+    pushLog(`${d.name} ${d.n}명이 이탈했다.${took ? ` ${took}${josa(tail, '을/를')} 들고 갔다.` : ''}`, 'bad');
   }
 
   if (r.deserted.length && state.crew === 0) {
-    lines.push(el('p.pay-danger', { html: '<b>갑판에 아무도 없다.</b> 술집에서 다시 사람을 모아야 한다.' }));
+    lines.push(el('p.pay-danger', {
+      html: '<b>갑판에 아무도 남지 않았다.</b> 배는 부두에 묶였다 — 술집에서 다시 사람을 모으는 수밖에 없다.',
+    }));
   }
 
   refreshLog();

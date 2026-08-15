@@ -20,7 +20,8 @@ import {
 import {
   worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
-import { el, overlay, toast, modal, refreshHUD, refreshLog } from '../ui.js';
+import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
+import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
 import { go, toLogical, canvas } from '../main.js';
 
 let bg, hover = null, sailing = null, pendingArrival = null;
@@ -293,7 +294,8 @@ function arrive(cityId) {
   // 항해 중 나포해 끌고 오던 배는 여기서 내린다
   if (state.towing && state.fleet[state.towing]) {
     state.fleet[state.towing].at = cityId;
-    pushLog(`나포한 ${SHIPS[state.towing].name}을(를) ${CITY_BY_ID[cityId].name} 부두에 매어 두었다.`, 'good');
+    const prizeName = SHIPS[state.towing].name;
+    pushLog(`나포한 ${prizeName}${josa(prizeName, '을/를')} ${CITY_BY_ID[cityId].name} 부두에 매어 두었다.`, 'good');
   }
   state.towing = null;
   state.known.add(cityId);
@@ -321,12 +323,33 @@ function arrive(cityId) {
 
 /* 해적 NPC → 전투용 적 변환은 규칙이라 `world.js`가 정본이다(대시보드도 같은 값을 읽는다). */
 
+/* ── 명부에 적힌 사람을 화면으로 꺼낸다 ───────────────────────
+   `regions/*/npc-traders.js`·`npc-pirates.js`에는 배마다 `blurb`와
+   `lines{greet,deal,refuse}`·`lines{hail,spare}`가 적혀 있는데 **아무도 읽지 않았다.**
+   그래서 바르바로사와 이름 없는 좀도둑이 화면에서 똑같이 "돛이 보인다"였다.
+   여기서 명부를 되짚어 그 한 줄을 만나는 순간에 얹는다 — 새 규칙은 없고, 말만 붙는다. */
+const defOf = (n) => (n?.defId
+  ? (n.kind === 'pirate' ? ALL_PIRATES : ALL_TRADERS).find((d) => d.id === n.defId)
+  : null);
+
+/** 그 사람이 하는 말 — 명부에 없으면 빈 문자열(연출이 조용해질 뿐 깨지지 않는다) */
+function quote(line, color = '#c9b98a') {
+  return line ? `<br><br><span style="color:${color}">${line}</span>` : '';
+}
+
+/** 이름만으로는 급이 안 보인다. 명부의 소개가 있으면 그것을, 없으면 세기를 말로 옮긴다. */
+const RANK_WORD = [
+  '', '이름도 못 얻은 잡배다.', '몇 번 굴러 본 무리다.',
+  '이 바다에서 이름이 도는 자다.', '두목급이다. 상선단이 철을 피해 다니는 이름이다.',
+  '이 바다의 주인 행세를 하는 자다.',
+];
+
 /** 상선 NPC를 전투용 적으로 — 무장이 빈약한 대신 화물이 실려 있다 */
 function merchantEnemy(n) {
   const s = SHIPS[n.shipKey];
   const goods = Object.keys(n.cargo);
   return {
-    id: `npc:${n.id}`, name: `상선 ${n.name}호`, nation: '상인',
+    id: `npc:${n.id}`, name: npcTitle(n), nation: '상인',
     hull: s.hull, tint: s.tint, flag: 'genoa',
     hp: Math.round(s.hp * 0.85), guns: Math.max(2, Math.round(s.guns * 0.5)),
     crew: Math.max(12, Math.round(s.crewMax * 0.45)),
@@ -344,6 +367,8 @@ function meetMerchant(n, finish) {
   const to = n.to ? CITY_BY_ID[n.to].name : '어딘가';
   const rows = cargoList.map(([gid, q]) =>
     `${GOOD_BY_ID[gid].name} ${q}개`).join(', ') || '빈 배';
+  const def = defOf(n);
+  const who = npcTitle(n);
 
   // 흥정: 그가 실은 것을 그가 산 값에 웃돈을 얹어 산다 — 항구 시세보다는 싸다.
   // 부관이 곁에 있으면 뱃전에서 한 번 더 깎는다.
@@ -367,7 +392,7 @@ function meetMerchant(n, finish) {
         n.cargo[deal.gid] -= deal.qty;
         if (n.cargo[deal.gid] <= 0) delete n.cargo[deal.gid];
         n.gold += deal.cost;
-        pushLog(`${n.name}호에게서 ${GOOD_BY_ID[deal.gid].name} ${deal.qty}개를 샀다.`, 'good');
+        pushLog(`${who}에게서 ${GOOD_BY_ID[deal.gid].name} ${deal.qty}개를 샀다.`, 'good');
         toast('해상 거래 성사', 'good');
         refreshHUD(); refreshLog();
         finish();
@@ -377,7 +402,10 @@ function meetMerchant(n, finish) {
   actions.push({
     label: '덮친다', kind: 'danger',
     onClick: () => {
-      pushLog(`${n.name}호를 덮치기로 했다.`, 'warn');
+      /* 이쪽이 먼저 손을 대는 순간이다. 상대의 마지막 말을 여기서 한 번 들려준다 —
+         "원로원의 화물이오. 손대면 총독이 안다" 같은 줄이 명부에 이미 적혀 있었다. */
+      pushLog(`${who}${josa(who, '을/를')} 덮치기로 했다.`
+            + (def?.lines?.refuse ? ` ${def.lines.refuse}` : ''), 'warn');
       refreshLog();
       go('battle', {
         enemy: merchantEnemy(n),
@@ -395,10 +423,15 @@ function meetMerchant(n, finish) {
 
   modal({
     title: '돛이 보인다 — 상선',
-    body: `${CITY_BY_ID[n.at].name}에서 ${to}로 가는 <b>${n.name}호</b>(${SHIPS[n.shipKey].name}).<br>`
-        + `싣고 있는 것: <b>${rows}</b><br><br>`
+    body: `${CITY_BY_ID[n.at].name}에서 ${to}로 가는 <b>${who}</b>(${SHIPS[n.shipKey].name}).<br>`
+        + (def?.blurb ? `<span style="opacity:.75">${def.blurb}</span><br>` : '')
+        + `싣고 있는 것: <b>${rows}</b>`
+        + quote(def?.lines?.greet)
+        + '<br><br>'
         + (deal && deal.qty > 0
-            ? `선장이 <b>${GOOD_BY_ID[deal.gid].name}</b>을(를) 개당 ${deal.unit}닢에 넘기겠다고 한다. 항구 시세보다는 싸다.`
+            ? `선장이 <b>${GOOD_BY_ID[deal.gid].name}</b>${josa(GOOD_BY_ID[deal.gid].name, '을/를')} `
+              + `개당 ${deal.unit}닢에 넘기겠다고 한다. 항구 시세보다는 싸다.`
+              + quote(def?.lines?.deal)
             : '넘겨받을 만한 것은 없어 보인다.')
         + (deal && deal.qty > 0 ? officerAside('merchant') : ''),
     actions,
@@ -414,7 +447,23 @@ function officerAside(lineKey) {
   return `<br><br><span style="color:#54a89b">${OFFICER.name}: ${OFFICER.lines[lineKey]}</span>`;
 }
 
-function resolveEvent(ev, voyage) {
+/* ── 이 구간은 바다인가 ───────────────────────────────────────
+   원양 항로 둘(홍해 제다~알렉산드리아 · 바스라~베이루트)은 `overland: true`다.
+   **배가 아니라 짐이 낙타에 실려 넘어가는 길**이라고 항로 설명에 적혀 있는데도,
+   보험 요율이 숫자로 붙어 있는 탓에 `isInland`(요율 null)가 이 둘을 못 걸렀다.
+   그래서 사막 한복판에서 "파도가 갑판을 덮쳤다"와 "수평선에 검은 깃발"이 떴다.
+   ★ 여기서 고치는 것은 **어떤 사건이 어디서 일어나는가**다. 확률표(state.js)와
+     피해량은 건드리지 않는다 — 같은 크기의 사고가 그 길에 맞는 얼굴로 온다. */
+const isCaravan = (v) => !!laneOf(v.from.id, v.to.id)?.overland;
+
+/** 대상로에서는 바다의 사건이 뭍의 사건으로 갈린다.
+    폭풍→모래폭풍은 그대로 두고(같은 손해를 다른 말로 적는다), 배가 있어야 성립하는
+    해적 조우·상선 조우·표류물만 길 위의 것으로 바꾼다. */
+const CARAVAN_EVENT = { pirate: 'bandit', merchant: 'toll', drift: 'bandit' };
+
+function resolveEvent(ev0, voyage) {
+  const caravan = isCaravan(voyage);
+  const ev = caravan && CARAVAN_EVENT[ev0.id] ? { ...ev0, id: CARAVAN_EVENT[ev0.id] } : ev0;
   const finish = () => {
     // 이벤트 처리 후 남은 항로를 마저 간다
     sailing = { ...voyage, eventDone: true };
@@ -424,8 +473,10 @@ function resolveEvent(ev, voyage) {
   switch (ev.id) {
     case 'wind': {
       voyage.t = Math.min(0.95, voyage.t + 0.25);
-      pushLog('순풍을 만나 항해가 빨라졌다.', 'good');
-      toast('순풍! 항로를 앞당겼다', 'good');
+      pushLog(caravan
+        ? '길이 말라 있었다. 대열이 하루를 벌었다.'
+        : '순풍을 만나 항해가 빨라졌다.', 'good');
+      toast(caravan ? '길이 좋다 — 하루를 벌었다' : '순풍! 항로를 앞당겼다', 'good');
       refreshLog();
       finish();
       break;
@@ -443,45 +494,63 @@ function resolveEvent(ev, voyage) {
       const jet = Math.random() < jettisonOdds({ from: voyage.from.id, to: voyage.to.id })
         ? jettisonCargo() : null;
       const jetLine = jet
-        ? `<br><br>파도가 갑판을 쓸자 갑판장이 소리쳤다. <b>짐을 던져라.</b><br>`
+        ? (caravan
+            ? `<br><br>짐승이 주저앉기 시작하자 대상장이 소리쳤다. <b>짐을 버려라.</b><br>`
+            : `<br><br>파도가 갑판을 쓸자 갑판장이 소리쳤다. <b>짐을 던져라.</b><br>`)
           + Object.entries(jet.lost).map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ')
-          + `를 바다에 버렸다(${jet.value.toLocaleString('ko-KR')}닢어치).`
+          + `를 ${caravan ? '모래' : '바다'}에 버렸다(${jet.value.toLocaleString('ko-KR')}닢어치).`
           + (jet.payout > 0
               ? `<br>적하보험이 <b>${jet.payout.toLocaleString('ko-KR')}닢</b>을 물어 준다.`
               : '')
         : '';
       if (jet) {
-        pushLog(`폭풍에 짐을 던졌다 — ${jet.value.toLocaleString('ko-KR')}닢어치. 보험금 ${jet.payout.toLocaleString('ko-KR')}닢.`, 'bad');
+        pushLog(`${caravan ? '모래폭풍에' : '폭풍에'} 짐을 버렸다 — ${jet.value.toLocaleString('ko-KR')}닢어치.`
+              + ` 보험금 ${jet.payout.toLocaleString('ko-KR')}닢.`, 'bad');
       }
 
-      pushLog(`폭풍우에 휩쓸렸다. 선체 ${dmg} 손상${lost ? `, 선원 ${lost}명 실종` : ''}.`, 'bad');
+      pushLog(caravan
+        ? `모래폭풍에 대열이 흩어졌다. 짐과 짐승이 ${dmg} 상했다${lost ? `, 인부 ${lost}명 실종` : ''}.`
+        : `폭풍우에 휩쓸렸다. 선체 ${dmg} 손상${lost ? `, 선원 ${lost}명 실종` : ''}.`, 'bad');
       refreshHUD(); refreshLog();
       modal({
-        title: jet ? '폭풍우 — 짐을 던지다' : '폭풍우',
-        body: `검은 구름이 몰려오더니 파도가 갑판을 덮쳤다.<br>`
-            + `선체가 <b>${dmg}</b> 손상되었다${lost ? `, 선원 <b>${lost}명</b>이 파도에 휩쓸렸다` : ''}.`
+        title: caravan
+          ? (jet ? '모래폭풍 — 짐을 버리다' : '모래폭풍')
+          : (jet ? '폭풍우 — 짐을 던지다' : '폭풍우'),
+        body: (caravan
+                ? `지평선이 누렇게 부풀더니 모래가 대열을 삼켰다.<br>`
+                  + `짐과 짐승이 <b>${dmg}</b>만큼 상했다${lost ? `, 인부 <b>${lost}명</b>이 모래에 묻혔다` : ''}.`
+                : `검은 구름이 몰려오더니 파도가 갑판을 덮쳤다.<br>`
+                  + `선체가 <b>${dmg}</b> 손상되었다${lost ? `, 선원 <b>${lost}명</b>이 파도에 휩쓸렸다` : ''}.`)
             + jetLine
             + officerAside('storm'),
-        actions: [{ label: '버텨낸다', onClick: finish }],
+        actions: [{ label: caravan ? '모래가 지나가길 기다린다' : '버텨낸다', onClick: finish }],
         closable: false,
       });
       break;
     }
     case 'bandit': {
-      // 뭍의 구간 — 코르세어 대신 노상강도. 값나가는 것부터 집어간다.
+      /* 뭍의 구간 — 코르세어 대신 노상강도. 값나가는 것부터 집어간다.
+         ★ '산길'이라고 못박아 두었더니 파라나 강배도 슈테크니츠 운하도 마르마라 내해도
+           전부 산을 넘게 됐다. 길의 모양은 구간마다 다르므로 **길목**까지만 적는다. */
       const hit = banditRaid();
-      const line = Object.entries(hit.lost).map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ');
+      const lostRows = Object.entries(hit.lost);
+      const line = lostRows.map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ');
+      // 조사는 **마지막에 읽히는 글자**를 따른다 — 목록 끝은 수량이다(‘도자기 3을’ / ‘소금 5를’)
+      const tail = String(lostRows.at(-1)?.[1] ?? '');
+      const where = caravan ? '사막' : '길';
       pushLog(hit.value
-        ? `산길에서 강도를 만나 ${hit.value.toLocaleString('ko-KR')}닢어치를 빼앗겼다.`
-        : '산길에서 강도를 만났으나 실은 것이 없었다.', 'bad');
+        ? `${where}에서 강도를 만나 ${hit.value.toLocaleString('ko-KR')}닢어치를 빼앗겼다.`
+        : `${where}에서 강도를 만났으나 실은 것이 없었다.`, 'bad');
       refreshHUD(); refreshLog();
       modal({
-        title: '노상강도',
-        body: `좁은 산길에 사내들이 막아섰다. 여기는 바다가 아니라 대포도 소용없다.<br>`
+        title: caravan ? '대상을 덮치다' : '노상강도',
+        body: (caravan
+                ? `모래 언덕 뒤에서 기마 한 무리가 대열 옆구리를 갈랐다. 낙타는 달아나지 못한다.<br>`
+                : `길이 좁아지는 곳에서 사내들이 앞을 막았다. 여기는 바다가 아니라 현측의 포도 소용없다.<br>`)
             + (hit.value
-                ? `${line}을(를) 빼앗겼다 — <b>${hit.value.toLocaleString('ko-KR')}닢</b>어치.<br>`
+                ? `${line}${josa(tail, '을/를')} 빼앗겼다 — <b>${hit.value.toLocaleString('ko-KR')}닢</b>어치.<br>`
                   + `<span style="opacity:.7">해상보험은 바다의 위험만 인수한다. 이 손해는 보상되지 않는다.</span>`
-                : `빈 수레라 가져갈 것이 없었다.`),
+                : `실은 것이 없어 가져갈 것도 없었다. 그들도 헛걸음이다.`),
         actions: [{ label: '길을 재촉한다', onClick: finish }],
         closable: false,
       });
@@ -493,7 +562,9 @@ function resolveEvent(ev, voyage) {
       refreshHUD(); refreshLog();
       modal({
         title: '통행세 징수',
-        body: `길목의 초소가 짐을 헤아린다. 서류를 갖춰도 세는 셈은 그들의 것이다.<br>`
+        body: (caravan
+                ? `우물을 낀 마을이 길을 막고 있다. 물값이라 부르지만 값은 짐을 보고 매긴다.<br>`
+                : `길목의 초소가 짐을 헤아린다. 서류를 갖춰도 세는 셈은 그들의 것이다.<br>`)
             + `<b>${fee.toLocaleString('ko-KR')}닢</b>을 물었다.`,
         actions: [{ label: '치르고 지나간다', onClick: finish }],
         closable: false,
@@ -524,7 +595,15 @@ function resolveEvent(ev, voyage) {
     }
     case 'merchant': {
       const met = voyage.ships?.[0];
-      if (!met) { finish(); break; }
+      /* ★ 이 구간에 상선이 하나도 안 떠 있으면 예전에는 **아무 말도 없이** 지나갔다.
+         조우 열두 번 중 한 번이 소리 없이 사라진 셈이라, 플레이어에게는 그냥 멈칫한
+         항해였다. 만난 것이 없으면 없는 대로 한 줄은 나와야 한다 — 바다는 넓다는 말이다. */
+      if (!met) {
+        pushLog('멀리 돛 하나가 지나갔다. 깃발만 확인하고 각자 길을 갔다.');
+        refreshLog();
+        finish();
+        break;
+      }
       meetMerchant(met, finish);
       break;
     }
@@ -532,12 +611,35 @@ function resolveEvent(ev, voyage) {
       // 이 구간에 실제 해적이 떠 있으면 그놈이 온다. 없으면 떠돌이 해적.
       const npc = voyage.foes?.[0] || null;
       const enemy = npc ? pirateEnemy(npc) : pickEnemy();
-      pushLog(`${enemy.name}이(가) 항로를 막아섰다!`, 'warn');
+      const pdef = defOf(npc);
+      if (npc) {
+        /* `world.js`는 명부 이름 뒤에 '호'를 붙인다 — '왕직호'·'식량형제단호'가 그렇게 나왔다.
+           부르는 법은 화면의 몫이므로 여기서 바로잡고, 명부의 대사도 함께 실어 보낸다
+           (전투 씬이 도주·격침 순간에 그 줄을 쓴다). */
+        enemy.name = npcTitle(npc);
+        enemy.hail = pdef?.lines?.hail ?? null;
+        enemy.spare = pdef?.lines?.spare ?? null;
+        enemy.blurb = pdef?.blurb ?? null;
+        enemy.bounty = npc.bounty ?? null;
+      }
+      const name = enemy.name;
+
+      /* 깃발을 사실대로 적는다. 예전에는 무엇이 오든 "수평선에 검은 깃발"이었는데,
+         이 표에는 프랑스 순찰 프리깃과 바르바리 기함도 들어 있다 —
+         **국왕의 배가 검은 깃발을 달지는 않는다.** 왜 그 배가 상선을 세우는지도 함께 적는다. */
+      const flagLine = (enemy.flag === 'pirate' || enemy.nation === '해적')
+        ? '수평선에 검은 깃발.'
+        : `수평선에 ${enemy.nation} 깃발. 사략 허가장을 쥔 배다 — 이 바다에서 그것은 해적과 같은 말이다.`;
+
+      pushLog(`${name}${josa(name, '이/가')} 항로를 막아섰다!`, 'warn');
       refreshLog();
       modal({
         title: '돛이 보인다',
-        body: `수평선에 검은 깃발. <b>${enemy.name}</b>이(가) 바람을 타고 다가온다.<br>`
-            + `싸워서 나포하거나, 화물 일부를 던져주고 달아날 수 있다.`
+        body: `${flagLine} <b>${name}</b>${josa(name, '이/가')} 바람을 타고 다가온다.<br>`
+            + `<span style="opacity:.75">${enemy.blurb ?? RANK_WORD[enemy.level] ?? ''}`
+            + `${enemy.bounty ? ' 목에 값이 걸린 자다.' : ''}</span>`
+            + quote(enemy.hail)
+            + `<br><br>싸워서 나포하거나, 실은 것을 넘겨주고 달아날 수 있다.`
             + officerAside('pirate'),
         actions: [
           {
@@ -561,7 +663,13 @@ function resolveEvent(ev, voyage) {
             },
           },
           {
-            label: '화물을 던지고 도주', kind: 'dark',
+            /* ★ 이 단추는 **금고에도 손을 댄다**(12%). 그런데 글에는 화물 이야기밖에 없어서,
+               빈 배로 도망친 플레이어가 금화가 왜 줄었는지 알 방법이 없었다.
+               고르기 전에 값을 보여 주는 것이 선택의 조건이다 — 값을 숨기면 선택이 아니다. */
+            label: Object.keys(state.cargo).length
+              ? `짐을 넘기고 도주 (화물 35% · 금화 ${Math.round(state.gold * 0.12).toLocaleString('ko-KR')}닢)`
+              : `뱃삯을 물고 도주 (금화 ${Math.round(state.gold * 0.12).toLocaleString('ko-KR')}닢)`,
+            kind: 'dark',
             onClick: () => {
               const ids = Object.keys(state.cargo);
               let dumped = 0;
@@ -572,9 +680,13 @@ function resolveEvent(ev, voyage) {
               }
               const coin = Math.round(state.gold * 0.12);
               state.gold -= coin;
-              pushLog(`화물 ${dumped}개와 금화 ${coin}닢을 넘기고 간신히 빠져나왔다.`, 'bad');
+              pushLog(dumped
+                ? `화물 ${dumped}개와 금화 ${coin}닢을 넘기고 ${name}에게서 빠져나왔다.`
+                : `실은 것이 없어 금고를 열었다. 금화 ${coin}닢을 넘기고 ${name}에게서 빠져나왔다.`, 'bad');
               refreshHUD(); refreshLog();
-              toast(`화물 ${dumped}개 · ${coin}닢 손실`, 'bad');
+              // 명부에 "짐만 놓고 가라"고 적어 둔 자들이 있다. 물러설 때 그 줄이 나온다.
+              if (enemy.spare) pushLog(enemy.spare, 'warn');
+              toast(dumped ? `화물 ${dumped}개 · ${coin}닢 손실` : `${coin}닢 손실`, 'bad');
               finish();
             },
           },

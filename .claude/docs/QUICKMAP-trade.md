@@ -54,7 +54,7 @@
 | 경제가 실제로 도는지 확인 | 대시보드 `/dashboard/` · 곡선 `node tools/sim-trade.mjs` · 실효 위험 `node tools/sim-risk.mjs` · 항차 수익 분포 `node tools/check-voyage.mjs` · 화면 없이 계측만 `node -e "import('./dashboard/measure.mjs')…"` |
 | 대시보드 탭이 무엇을 보여주나 | **5탭** — 오버뷰(구조·동적생성·세이브 대상) · 경제 · 해적 · 항구 · 보수·물가. 탭↔파일 대응과 탭별 내용은 [file-map.md](wiki/file-map.md) `dashboard/` 행이 정본이고, 화면 왼쪽 사이드바의 하위 목록이 그 탭의 절을 그대로 보여준다 |
 | 대시보드 탭 추가 | `index.html`에 nav `.grp` + `section.tabpage` → `app.js`에 `run*()`/`*Loaded()` 배선 → 계측 `*.mjs`(**DOM 없음**) + 그리기 `*-view.js`(**DOM 있음**)로 가른다. 파일을 늘리면 `dashboard/architecture.mjs` 트리에도 적는다 — 안 적으면 `check-architecture.mjs`가 실패시킨다 |
-| 시장 충격(기근·봉쇄·풍작·나포) | `data.js: SHOCK.events`(종류·확률·문구) · 판정 `state.js: shockFactor/addShock/rollShockEvents` · 나포 배선 `world.js: raids()` · 화면 `scenes/map.js` "뱃사람들의 소문" |
+| 시장 충격(기근·봉쇄·풍작·나포) | `data.js: SHOCK.events`(종류·확률·문구) + `SHOCK.densityBase`(**perDay는 세계 전체 건수라 도시 수로 환산한다**) · 판정 `state.js: shockFactor/addShock/rollShockEvents` · 나포 배선 `world.js: raids()` · 화면 `scenes/map.js` "뱃사람들의 소문" |
 | 화물을 잃는 사건 | 폭풍 투하 `state.js: jettisonOdds/jettisonCargo` · 보상 `INSURANCE_COVER` · 뭍의 사고 `banditRaid/payToll`(`INLAND_ODDS`) · 빈도 검증 `node tools/sim-risk.mjs` |
 | 게임이 근거 JSON을 읽는 곳 | `js/evidence.js` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓으려고 `content/city-evidence.json`을 읽는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
 

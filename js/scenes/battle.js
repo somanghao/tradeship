@@ -11,7 +11,7 @@ import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
   shotStock, useShot, fleeBonus, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL,
 } from '../state.js';
-import { el, overlay, toast, modal, refreshHUD, refreshLog, bar } from '../ui.js';
+import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa } from '../ui.js';
 import { go } from '../main.js';
 
 const SEA_Y = 138;          // 두 배가 떠 있는 기준 수면 y
@@ -21,6 +21,22 @@ const gapOf = (range) => 14 + (range / MAX_RANGE) * 68;
 
 let B = null;               // 전투 상태
 let fx = [];                // 이펙트 목록
+
+/* 이름이 없는 상대의 첫마디 — 세기가 곧 성격이다.
+   명부에서 온 자는 제 대사(`lines.hail`)를 쓰므로 여기까지 오지 않는다. */
+const OPENING = {
+  1: '저쪽 갑판에서 누군가 소리친다. “돛을 내려라!”',
+  2: '뱃전에 사람이 늘어선다. 익숙한 손놀림이다.',
+  3: '상대가 포문을 연다 — 세어 볼 것도 없이 이쪽보다 많다.',
+  4: '깃발이 오른다. 이 이름을 아는 배는 대개 싸우지 않고 짐을 내린다.',
+  5: '상대가 속도를 줄이지 않는다. 이쪽을 이미 제 것으로 셈한 자세다.',
+};
+
+/** 이 상대를 무엇이라 부르나 — 나포·격침 문구가 갈리는 기준이다 */
+const foeKind = (e) =>
+  e.nation === '상인' ? 'merchant'
+  : (e.flag === 'pirate' || e.nation === '해적') ? 'pirate'
+  : 'navy';
 
 /* ══════════════════════════════════════════════════════════════
    진입 / 상태
@@ -46,6 +62,10 @@ export const battleScene = {
     };
     fx = [];
     state.stats.battles++;
+    /* 첫 줄을 상대에게 준다. 명부(`regions/*/npc-pirates.js`)에 적혀 있던 `lines.hail`이
+       여기서 처음 화면에 뜬다 — 없는 상대는 급으로 대신한다. 이 한 줄이 있고 없고가
+       "바르바로사와 붙었다"와 "적선과 붙었다"를 가른다. */
+    logLine(enemy.hail ?? OPENING[enemy.level] ?? OPENING[1], 'warn');
     buildUI();
   },
 
@@ -241,7 +261,10 @@ function tryFlee() {
   const chance = 0.24 + (B.range / MAX_RANGE) * 0.52 + (shipSpeed() - 1) * 0.25
                + fleeBonus() + (B.foe.sailDmg / 100) * 0.30 - (B.you.sailDmg / 100) * 0.25;
   if (Math.random() < chance) {
-    pushLog(`${B.enemy.name}을(를) 따돌리고 항로로 돌아왔다.`, 'warn');
+    const e = B.enemy;
+    pushLog(`${e.name}${josa(e.name, '을/를')} 따돌리고 항로로 돌아왔다.`, 'warn');
+    // 놓아 주는 자에게는 놓아 주는 말이 있다 — 명부의 `lines.spare`
+    if (e.spare) pushLog(e.spare, 'warn');
     refreshLog();
     toast('도주 성공', 'good');
     const back = B.retreatTo;
@@ -293,11 +316,11 @@ function foeTurn() {
     const step = Math.round((14 + Math.random() * 10) * Math.max(0.25, rig));
     B.range = Math.max(MIN_RANGE, B.range - step);
     logLine(B.foe.sailDmg > 30
-      ? `${e.name}이(가) 찢어진 돛으로 힘겹게 거리를 좁힌다.`
-      : `${e.name}이(가) 거리를 좁혀온다.`, 'warn');
+      ? `${e.name}${josa(e.name, '이/가')} 찢어진 돛으로 힘겹게 거리를 좁힌다.`
+      : `${e.name}${josa(e.name, '이/가')} 거리를 좁혀온다.`, 'warn');
   } else if (act === 'withdraw') {
     B.range = Math.min(MAX_RANGE, B.range + Math.round(14 * Math.max(0.25, rig)));
-    logLine(`${e.name}이(가) 물러선다.`);
+    logLine(`${e.name}${josa(e.name, '이/가')} 물러선다.`);
   } else {
     const gap = gapOf(B.range);
     const fromX = VW / 2 + gap + 10, toX = VW / 2 - gap - 10;
@@ -397,7 +420,7 @@ function toMelee() {
     u.maxHp = u.hp;
   }
   logLine('갈고리가 걸렸다 — 백병전!', 'warn');
-  pushLog(`${B.enemy.name}과(와) 갑판에서 맞붙었다.`, 'warn');
+  pushLog(`${B.enemy.name}${josa(B.enemy.name, '과/와')} 갑판에서 맞붙었다.`, 'warn');
   refreshLog();
   buildUI();
 }
@@ -531,11 +554,20 @@ function finish(kind) {
     state.hp = Math.max(12, Math.round(state.maxHp * 0.25));
     state.crew = Math.max(4, Math.round(state.crew * 0.5));
     trimLoadout();
-    pushLog(`${e.name}에게 나포당했다. 화물과 금화 ${lostGold}닢을 빼앗겼다.`, 'bad');
+    /* ★ 여기는 언제나 "해적들이 화물칸을 털어갔다"였다. 그런데 이 자리에는
+       국왕의 순찰선도 오고, **내가 먼저 덮친 상선**도 온다 — 그때 이 문장은
+       누가 도둑이었는지를 통째로 뒤집는다. 진 상대가 누구였는지로 말을 가른다. */
+    const k = foeKind(e);
+    const scene = k === 'merchant'
+      ? '덮친 쪽이 갑판을 잃었다. 상선의 선원들이 우리 화물칸을 열어 값을 받아 갔다.'
+      : k === 'navy'
+        ? '저항할 힘이 남지 않았다. 임검이라는 이름으로 화물칸이 열렸고, 장부에 적힌 것은 하나도 남지 않았다.'
+        : '저항할 힘이 남지 않았다. 해적들이 화물칸을 털어갔다.';
+    pushLog(`${e.name}에게 배를 내주었다. 화물과 금화 ${lostGold}닢을 빼앗겼다.`, 'bad');
     refreshHUD(); refreshLog();
     modal({
-      title: '나포당했다',
-      body: `저항할 힘이 남지 않았다. 해적들이 화물칸을 털어갔다.<br><br>`
+      title: k === 'merchant' ? '되레 털렸다' : k === 'navy' ? '임검당했다' : '나포당했다',
+      body: `${scene}<br><br>`
           + `<b>금화 ${lostGold.toLocaleString('ko-KR')}닢</b> 상실`
           + (dumped.length ? `<br>화물 전량 상실 — ${dumped.join(', ')}` : '')
           + `<br>가까스로 목숨은 건져 항구로 예인되었다.`,
@@ -586,10 +618,10 @@ function finish(kind) {
     const r = captureShip(prizeKey);
     if (!r.ok) return toast(r.reason, 'bad');
     if (r.scrapped) {
-      pushLog(`끌고 갈 인원이 없어 ${prize.name}을(를) 해체해 자재로 팔았다. +${r.gain}닢`, 'good');
+      pushLog(`끌고 갈 인원이 없어 ${prize.name}${josa(prize.name, '을/를')} 해체해 자재로 팔았다. +${r.gain}닢`, 'good');
       toast(`해체 매각 · +${r.gain.toLocaleString('ko-KR')}닢`, 'good');
     } else {
-      pushLog(`${prize.name}을(를) 나포해 선단에 편입했다. 선체는 상한 채로 끌려온다.`, 'good');
+      pushLog(`${prize.name}${josa(prize.name, '을/를')} 나포해 선단에 편입했다. 선체는 상한 채로 끌려온다.`, 'good');
       toast(`${prize.name} 편입`, 'good');
     }
     refreshHUD(); refreshLog();
@@ -597,24 +629,29 @@ function finish(kind) {
   };
 
   pushLog(kind === 'capture'
-    ? `${e.name}을(를) 나포했다. 금화 ${coin}닢 노획.`
-    : `${e.name}을(를) 격침시켰다. 잔해에서 금화 ${coin}닢을 건졌다.`, 'good');
+    ? `${e.name}${josa(e.name, '을/를')} 나포했다. 금화 ${coin}닢 노획.`
+    : `${e.name}${josa(e.name, '을/를')} 격침시켰다. 잔해에서 금화 ${coin}닢을 건졌다.`, 'good');
   refreshHUD(); refreshLog();
+
+  /* 이긴 순간에도 상대가 누구였는지가 남는다. 이름난 자를 잡았으면 그 사실을 적는다 —
+     그러지 않으면 두목을 잡은 항차와 좀도둑을 쫓은 항차가 같은 문장으로 끝난다. */
+  const won = kind === 'capture'
+    ? '갑판을 장악했다. 적선의 화물칸을 열어 쓸 만한 것을 옮겨 실었다.'
+    : '적선이 기울더니 마스트부터 물속으로 사라졌다. 화물은 대부분 함께 가라앉았다.';
+  const weight = e.bounty
+    ? ' 이 이름에는 값이 걸려 있었다 — 다음 항구에서 그 이야기가 먼저 도착할 것이다.'
+    : e.level >= 4 ? ' 이 구간을 쥐고 있던 이름이 하나 사라졌다.' : '';
 
   modal({
     title: kind === 'capture' ? '나포 성공' : '적선 격침',
     body: el('div', {}, [
-      el('p', {
-        text: kind === 'capture'
-          ? '갑판을 장악했다. 적선의 화물칸을 열어 쓸 만한 것을 옮겨 실었다.'
-          : '적선이 기울더니 마스트부터 물속으로 사라졌다. 화물은 대부분 함께 가라앉았다.',
-      }),
+      el('p', { text: won + weight }),
       rows,
       prize ? el('p', {
         style: { marginTop: '6px', color: '#9a927f', fontSize: '12px' },
         text: state.fleet[prizeKey]
           ? `같은 선종을 이미 가지고 있다. 끌고 갈 선원이 없으니 해체해 자재로 팔 수 있다.`
-          : `${prize.name}은(는) 선체가 ${Math.round(PRIZE_HULL * 100)}%만 남았다. 다음 입항지까지 예인하면 선단에 들어온다.`,
+          : `${prize.name}${josa(prize.name, '은/는')} 선체가 ${Math.round(PRIZE_HULL * 100)}%만 남았다. 다음 입항지까지 예인하면 선단에 들어온다.`,
       }) : null,
     ].filter(Boolean)),
     actions: [
@@ -729,8 +766,16 @@ function sideBar(side, name, s, color) {
     s.sailDmg > 0 ? `돛 ${s.sailDmg}% 손상` : null,
     s.fire > 0 ? `화재 ${s.fire}턴` : null,
   ].filter(Boolean).join(' · ');
+  /* 상대가 누구인지를 이름표 밑에 한 줄로 둔다.
+     ★ 명부에 세기(strength)를 적어 두었는데 화면에는 이름뿐이라, 좀도둑과 바르바로사가
+       같은 무게로 읽혔다. 숫자를 그대로 내보이지 않고 말로 옮긴다 — 이 게임의 방식이다. */
+  const tag = side === 'right'
+    ? [B.enemy.nation, ['', '잡배', '무리', '이름난 자', '두목', '이 바다의 주인'][B.enemy.level] || null,
+       B.enemy.bounty ? '현상금' : null].filter(Boolean).join(' · ')
+    : null;
   return el(`div.bar-wrap.${side}`, {}, [
     el('div.bar-name', { text: name, style: { color } }),
+    tag ? el('div.bar-num', { text: tag, style: { color: '#a2957c' } }) : null,
     bar('hp', s.hp, s.maxHp),
     el('div.bar-num', { text: `선체 ${s.hp}/${s.maxHp}` }),
     bar('crew', s.crew, Math.max(s.crew, side === 'left' ? state.crewMax : B.enemy.crew)),
