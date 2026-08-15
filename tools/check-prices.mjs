@@ -5,6 +5,10 @@
 //   content/asset-evidence.json   선박가 · 부동산(집세·주택) · 임금 대비 배값
 //   content/upkeep-evidence.json  선체·무장 유지비 · 적하보험 · 화물 유인
 //   content/wage-evidence.json    임금(→ check-wages.mjs가 본다. 여기서는 배값 계산에만 쓴다)
+//   content/regions/<권역>-evidence.json: goods   그 권역이 세계에 처음 들여온 교역품의 근거
+//
+// ★ **근거가 아직 없는 품목은 경고일 뿐 실패가 아니다.** 새 바다를 열 때마다 조사를
+//   먼저 끝내야 품목을 넣을 수 있다면 검증이 콘텐츠를 억제하는 장치가 된다(최상위 지침).
 //
 // 코드 정본은 js/data.js: GOODS[].base·SHIPS[].price 와 js/state.js의 임금·유지비 상수다.
 //
@@ -15,6 +19,7 @@
 
 import { readFileSync } from 'node:fs';
 import { GOODS, GOOD_BY_ID, SHIPS, OFFICER, MARKET } from '../js/data.js';
+import { GOODS_EV as REGION_GOODS_EV } from './evidence-load.mjs';
 import {
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP, INSURANCE_RATE,
 } from '../js/state.js';
@@ -33,18 +38,42 @@ const T = {
 const problems = [];
 const warn = (kind, msg) => problems.push({ kind, msg });
 
+/* ★ 실패와 경고를 가른다 — **검증이 콘텐츠를 억제하는 장치가 되면 안 된다**(최상위 지침).
+   권역이 새 교역품을 들여올 때마다 목표 비율을 먼저 적어야 통과한다면, 품목을 늘리려면
+   조사부터 끝내야 하는 구조가 된다. 그래서 *근거가 아직 없는 것*은 경고로만 잡고,
+   실패는 **코드와 근거가 어긋난 경우**로 한정한다. */
+const softs = [];
+const soft = (kind, msg) => softs.push({ kind, msg });
+
 /* ── 1. 교역품 상대가격 (곡물 = 1) ────────────────────────── */
 const grain = GOOD_BY_ID.grain.base;
 const RATIO_TOL = 0.12;                 // 12%까지는 반올림·미세조정 여지로 둔다
 const rows = [];
 
+let regionSourced = 0;
 for (const g of GOODS) {
   const target = T.goodsRatioToGrain[g.id];
   const actual = g.base / grain;
+
   if (target == null) {
-    warn('근거없음', `'${g.id}'(${g.name})의 목표 비율이 goods-evidence.json에 없다`);
+    /* 권역이 새로 들여온 품목은 목표 비율이 아직 전역 표에 없다.
+       대신 그 권역 근거 파일(content/regions/<권역>-evidence.json)의 goods 절에
+       base가 적혀 있으면 **그것과 코드가 맞는지**는 여기서 지킬 수 있다 —
+       "왜 이 값인가"는 아직 몰라도 "적어 둔 값과 다르다"는 잡아야 한다. */
+    const rev = REGION_GOODS_EV[g.id];
+    if (rev && rev.base != null) {
+      regionSourced++;
+      if (rev.base !== g.base) {
+        warn('불일치', `${g.name}: 코드 base ${g.base} ≠ 권역 근거 ${rev.base}`);
+      }
+      soft('전역목표없음', `'${g.id}'(${g.name}) 곡물의 ${actual.toFixed(2)}배 — ` +
+        '권역 근거는 있으나 goods-evidence.json의 목표 비율에는 아직 없다');
+    } else {
+      soft('미조사', `'${g.id}'(${g.name}) 곡물의 ${actual.toFixed(2)}배 — 아직 근거가 없다. 굴려 본 뒤 채워라`);
+    }
     continue;
   }
+
   const off = Math.abs(actual - target) / target;
   rows.push({ id: g.id, name: g.name, base: g.base, actual, target, off });
   if (off > RATIO_TOL) {
@@ -113,10 +142,18 @@ console.log(`유지비: 선체 ×${HULL_UPKEEP} · 무장 ${ARM_UPKEEP.light}/${
   `보험 요율×${INSURANCE_RATE} · 시장깊이 cap ${MARKET.cap}`);
 console.log(`목표에서 가장 먼 품목: ` +
   worst.map((r) => `${r.name} ${(r.off * 100).toFixed(0)}%`).join(' · '));
+console.log(`전역 목표 대조 ${rows.length}종 · 권역 근거만 있는 것 ${regionSourced}종 · ` +
+  `아직 근거 없는 것 ${GOODS.length - rows.length - regionSourced}종`);
 console.log();
 
+if (softs.length) {
+  console.log(`경고 ${softs.length}건 (실패는 아니다 — 콘텐츠를 막지 않는다):`);
+  for (const p of softs) console.log(`  [${p.kind}] ${p.msg}`);
+  console.log();
+}
+
 if (!problems.length) {
-  console.log('PASS — 물가·임금·유지비가 근거와 일치한다.');
+  console.log('PASS — 물가·임금·유지비가 근거와 일치한다.' + (softs.length ? ' (경고는 위에)' : ''));
   process.exit(0);
 }
 for (const p of problems) console.log(`  [${p.kind}] ${p.msg}`);
