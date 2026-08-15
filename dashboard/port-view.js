@@ -1,6 +1,6 @@
 // port-view.js — 항구 탭 그리기
 //
-// 계측은 `ports.mjs`, 근거는 `content/city-evidence.json`·`asset-evidence.json`이 정본이고
+// 계측은 `ports.mjs`, 근거는 `content/regions/<권역>-evidence.json`·`asset-evidence.json`이 정본이고
 // 여기서는 그리기만 한다. 이 탭이 답해야 하는 질문은 셋이다:
 //   ① 이 항구는 무엇을 팔고 무엇을 사는가 — 그리고 **그중 무엇이 믿을 만한가**
 //   ② 배를 지을 수 있는가 (공업력)
@@ -12,9 +12,9 @@
 
 import { portRows, goodsOf, realEstate, RANK } from './ports.mjs';
 import { CREW_WAGE } from '../js/state.js';
-import { $, fmt, pct, el, svg, node, withTip, mono } from './shared.js';
+import { $, fmt, pct, el, svg, node, withTip, mono, loadRegionEvidence } from './shared.js';
 
-let EV = null;    // content/city-evidence.json
+let EV = null;    // 권역 근거를 합친 것 (shared.js: loadRegionEvidence)
 let AE = null;    // content/asset-evidence.json
 let rows = null;  // portRows(EV)
 let sel = 'venezia';
@@ -43,7 +43,7 @@ const RANK_COLOR = ['224,164,92', '127,178,216', '139,131,148'];
 
 /* ── 근거 읽기 ───────────────────────────────────────────── */
 Promise.all([
-  fetch('../content/city-evidence.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  loadRegionEvidence(),
   fetch('../content/asset-evidence.json', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
 ]).then(([c, a]) => {
   EV = c; AE = a;
@@ -115,7 +115,7 @@ function tariffBox(r) {
          </p>`
       : `<p class="legend para" style="margin:6px 0 0"><span class="d">규모별 기본율로 굴러간다 —
            이 항구만의 세율을 두려면 <code>js/data.js: CITY_TARIFF</code>에 적고
-           <code>content/city-evidence.json</code>의 <code>tariff</code>에 근거를 남긴다.</span></p>`}`;
+           <code>content/regions/&lt;권역&gt;-evidence.json</code>의 <code>tariff</code>에 근거를 남긴다.</span></p>`}`;
   return box;
 }
 
@@ -133,7 +133,7 @@ function drawList() {
     if (r.id === sel) tr.style.background = '#2a2338';
     const ind = r.yard.industry;
     tr.innerHTML = `
-      <td><b class="${r.id === sel ? 'y' : ''}">${r.name}</b> <span class="d">${r.region}</span></td>
+      <td><b class="${r.id === sel ? 'y' : ''}">${r.name}</b> <span class="d">${r.area}</span></td>
       <td class="d">${FLAG_NAME[r.flag] ?? r.flag}</td>
       <td class="n">${'★'.repeat(r.size)}</td>
       <td class="n">${r.routes}</td>
@@ -166,7 +166,7 @@ function drawDetail() {
 
   const head = el('div');
   head.innerHTML = `<h3 style="margin:0 0 3px;font-size:15px;color:var(--gold)">${r.name}
-      <span class="d" style="font-size:12px;font-weight:400">${r.region} · ${FLAG_NAME[r.flag] ?? r.flag}</span></h3>
+      <span class="d" style="font-size:12px;font-weight:400">${r.area} · ${FLAG_NAME[r.flag] ?? r.flag}</span></h3>
     <p class="legend para" style="margin:0 0 10px">
       규모 ${'★'.repeat(r.size)} · 항로 ${r.routes}개 ·
       입항세 ${pct(r.tariff, 1)}<span class="d">(부관 특전은 빼고 본다)</span> ·
@@ -377,6 +377,6 @@ function drawEvidence() {
     box.append(w);
   }
   box.append(para(
-    `정본은 <code>content/city-evidence.json</code> · 검증 <code>node tools/check-evidence.mjs</code>. ` +
+    `정본은 <code>content/regions/&lt;권역&gt;-evidence.json</code> · 검증 <code>node tools/check-evidence.mjs</code>. ` +
     `<b>교역 항목이 많은 항구가 좋은 항구가 아니다</b> — 목록은 값이 아니라 근거의 신뢰도 순으로 쌓았다.`));
 }

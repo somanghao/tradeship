@@ -1,9 +1,9 @@
 // check-evidence.mjs — 수치와 근거가 어긋나지 않았는지 본다
 //
 // 도시 데이터는 세 겹이다:
-//   ① js/map/geo.js       좌표·깃발·규모        (UI 도시)
-//   ② js/data.js          CITY_TRADE 수치        (도시 테이블)
-//   ③ content/city-evidence.json  근거·출처      (근거 데이터)
+//   ① js/regions/<권역>/geo.js    좌표·깃발·규모   (UI 도시)
+//   ② js/regions/<권역>/trade.js  supply/demand    (도시 테이블)
+//   ③ content/regions/<권역>-evidence.json  근거·출처   (근거 데이터 · 권역마다 파일이 다르다)
 //
 // 수치만 고치고 근거를 안 고치면 셋이 조용히 어긋난다. 그 순간
 // "왜 이 값인지"를 아무도 모르게 되고, 다음 사람이 고증을 되돌려 놓는다.
@@ -11,12 +11,13 @@
 //
 //   node tools/check-evidence.mjs
 
-import { readFileSync } from 'node:fs';
 import { CITIES, GOOD_BY_ID, CITY_TARIFF } from '../js/data.js';
 import { baseTariff } from '../js/state.js';
-import { GEO_BY_ID } from '../js/map/geo.js';
+import { GEO_BY_ID, REGIONS } from '../js/map/geo.js';
+import { CITY_EV, VERDICTS, ERA } from './evidence-load.mjs';
 
-const EV = JSON.parse(readFileSync(new URL('../content/city-evidence.json', import.meta.url), 'utf8'));
+// 근거는 권역마다 파일이 다르다 — `tools/evidence-load.mjs`가 모아서 준다.
+const EV = { cities: CITY_EV, verdicts: VERDICTS, era: ERA };
 
 const problems = [];
 const warn = (kind, where, msg) => problems.push({ kind, where, msg });
@@ -52,7 +53,7 @@ for (const city of CITIES) {
   const ev = EV.cities[city.id];
   if (!ev) {
     // 도시를 새로 넣었다 — 막지 않는다. 근거는 뒤따라오면 된다.
-    soft('미조사', city.name, '이 도시가 아직 city-evidence.json에 없다 — 굴려 본 뒤 채워라');
+    soft('미조사', city.name, '이 도시가 아직 권역 근거 파일에 없다 — 굴려 본 뒤 채워라');
     continue;
   }
 
@@ -109,7 +110,7 @@ for (const city of CITIES) {
     if (!e) {
       // 실패가 아니라 경고 — 새로 넣은 교역품은 먼저 굴려 보고 근거를 채워도 된다
       soft('미조사', `${city.name} · ${name}`,
-        `${code.side} ${code.value} — 아직 근거가 없다. 굴려 본 뒤 city-evidence.json에 채워라`);
+        `${code.side} ${code.value} — 아직 근거가 없다. 굴려 본 뒤 권역 근거 파일에 채워라`);
       continue;
     }
     if (e.side !== code.side) {

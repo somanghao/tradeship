@@ -1,21 +1,23 @@
 // check-routes.mjs — 항로 위험도와 근거가 어긋나지 않았는지 본다
 //
 // 항로 데이터는 세 겹이다:
-//   ① js/map/geo.js: ROUTES        어디와 어디가 이어지는가
-//   ② js/map/geo.js: ROUTE_RISK    그 항로의 보험료율(%)         ← 코드 정본
-//   ③ content/route-evidence.json  판정·근거·출처               ← 근거 정본
+//   ① js/regions/<권역>/geo.js: ROUTES      어디와 어디가 이어지는가
+//   ② js/regions/<권역>/geo.js: ROUTE_RISK  그 항로의 보험료율(%)   ← 코드 정본
+//   ③ content/regions/<권역>-evidence.json: routes  판정·근거·출처   ← 근거 정본
 //
 // 요율만 고치고 근거를 안 고치면 "왜 이 값인지"를 아무도 모르게 되고,
 // 다음 사람이 밸런스만 보고 고증을 되돌린다. 도시 특산품에서 이미 겪은 실패다.
 //
 //   node tools/check-routes.mjs
 
-import { readFileSync } from 'node:fs';
-import { ROUTES, ROUTE_RISK, riskKey } from '../js/map/geo.js';
+import { ROUTES, ROUTE_RISK, riskKey, REGIONS, REGION_OF_CITY, isOceanLane } from '../js/map/geo.js';
 import { CITY_BY_ID } from '../js/data.js';
 import { encounterOdds, routeRisk } from '../js/state.js';
+import { ROUTE_EV, ROUTE_VERDICTS, ERA, META } from './evidence-load.mjs';
 
-const EV = JSON.parse(readFileSync(new URL('../content/route-evidence.json', import.meta.url), 'utf8'));
+// 근거는 권역마다 파일이 다르다. 원양 항로(권역과 권역을 잇는 선)는
+// `content/ocean-lanes-evidence.json`이 정본이고 로더가 함께 모아 준다.
+const EV = { routes: ROUTE_EV, verdicts: ROUTE_VERDICTS, era: ERA, formula: META.routeFormula };
 
 const problems = [];
 const warn = (kind, where, msg) => problems.push({ kind, where, msg });
@@ -34,7 +36,7 @@ for (const [a, b] of ROUTES) {
   }
   const ev = EV.routes[key];
   if (!ev) {
-    warn('근거없음', where, `route-evidence.json에 '${key}'가 없다`);
+    warn('근거없음', where, `권역 근거 파일에 '${key}'가 없다`);
     continue;
   }
   const code = ROUTE_RISK[key];
@@ -77,6 +79,10 @@ if (hi - lo < 0.05) {
 /* ── 보고 ────────────────────────────────────────────────── */
 console.log(`\n=== 항로 근거 점검 (${EV.era.label}) ===`);
 console.log(`항로 ${ROUTES.length} · 출처가 달린 항로 ${sourced} · 해적 미적용(내해·육로) ${inland}`);
+console.log('권역별 항로: ' + REGIONS.map((r) => {
+  const n = ROUTES.filter(([a, b]) => REGION_OF_CITY[a] === r.id && REGION_OF_CITY[b] === r.id).length;
+  return `${r.name} ${n}`;
+}).join(' · ') + ` · 원양 ${ROUTES.filter(([a, b]) => isOceanLane(a, b)).length}`);
 console.log('판정 분포: ' + Object.entries(byVerdict)
   .map(([k, v]) => `${EV.verdicts[k] ?? k} ${v}`).join(' · '));
 console.log(`\n환산식: ${EV.formula.text}`);

@@ -5,6 +5,7 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
+  laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
   START_GOLD, REPAIR_UNIT, HIRE_UNIT,
@@ -980,10 +981,20 @@ export function neighborsOf(cityId) {
   return out;
 }
 
+/** 두 항구 사이의 거리.
+    ★ 권역이 다르면 **좌표로 잴 수 없다** — 지도마다 좌표계가 따로이기 때문이다.
+      그런 구간(원양 항로)은 `days`를 직접 적어 두었으므로 그것을 거리로 환산한다
+      (항해 일수 공식이 `거리 / (13 × 속력)`이라 13을 곱하면 속력 1.0에서 그 일수가 된다). */
 export function distanceBetween(aId, bId) {
+  const lane = laneOf(aId, bId);
+  if (lane) return lane.days * 13;
   const a = CITY_BY_ID[aId], b = CITY_BY_ID[bId];
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
+
+/** 지금 있는 권역 */
+export const regionOf = (cityId) => REGION_OF_CITY[cityId] ?? HOME_REGION;
+export const currentRegion = () => regionOf(state.at);
 
 /* ── 바람과 해류 ──────────────────────────────────────────────
    범선은 어디로 가느냐에 따라 걸리는 날이 달라진다. 이 게임에서 "항로 선택"이

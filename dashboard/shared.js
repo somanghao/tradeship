@@ -81,3 +81,39 @@ export function withTip(target, html) {
   target.addEventListener('mouseleave', tipHide);
   return target;
 }
+
+/* ── 근거 파일 ────────────────────────────────────────────────
+   근거는 **권역마다 파일이 다르다**(content/regions/<권역>-evidence.json).
+   탭마다 따로 받아 합치면 반드시 한 곳을 빠뜨리므로 여기 하나로 모은다.
+   한 권역이 실패해도 나머지는 살린다 — 바다 하나 때문에 화면 전체가 근거를 잃을 이유가 없다. */
+export const REGION_IDS = [
+  'mediterranean', 'atlantic', 'africa', 'mideast', 'indian', 'seasia', 'eastasia',
+];
+
+let evCache = null;
+
+/** { cities, routes, goods, ships, byRegion, meta } — 못 읽으면 null */
+export async function loadRegionEvidence() {
+  if (evCache) return evCache;
+  const get = async (url) => {
+    try { const r = await fetch(url, { cache: 'no-store' }); return r.ok ? await r.json() : null; }
+    catch { return null; }
+  };
+  const [meta, ...parts] = await Promise.all([
+    get('../content/evidence-meta.json'),
+    ...REGION_IDS.map((rid) => get(`../content/regions/${rid}-evidence.json`)),
+  ]);
+  const out = { cities: {}, routes: {}, goods: {}, ships: {}, byRegion: {}, meta };
+  let any = false;
+  parts.forEach((j, i) => {
+    if (!j) return;
+    any = true;
+    out.byRegion[REGION_IDS[i]] = j;
+    for (const k of ['cities', 'routes', 'goods', 'ships']) Object.assign(out[k], j[k] ?? {});
+  });
+  if (!any && !meta) return null;
+  // 판정 라벨은 공통 메타가 정본이다 — 권역 파일에는 없다
+  out.verdicts = meta?.verdicts ?? {};
+  evCache = out;
+  return out;
+}

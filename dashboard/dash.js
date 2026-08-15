@@ -8,9 +8,9 @@ import { CITIES, GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, MARKET } from '../js/data
 import { state, marketDepth, tariffRate, tierNeeded, sellsShip, shipPriceAt, shipLockedBy } from '../js/state.js';
 import { measure, statsOf, starvedCells, allCells } from './measure.mjs';
 /* 그리기 도구는 `shared.js`가 정본 — 해적 탭과 같은 것을 써야 한 화면으로 보인다 */
-import { $, fmt, el, heat, mono, svg, node } from './shared.js';
+import { $, fmt, el, heat, mono, svg, node, loadRegionEvidence } from './shared.js';
 
-/* 근거 데이터 — 수치가 왜 그 값인지. content/city-evidence.json이 정본이고
+/* 근거 데이터 — 수치가 왜 그 값인지. content/regions/<권역>-evidence.json이 정본이고
    `node tools/check-evidence.mjs`가 코드와의 불일치를 잡는다. 여기서는 읽기만 한다. */
 let EV = null;
 const VERDICT_STYLE = {
@@ -217,7 +217,7 @@ function drawMatrix(M) {
     range: '시뮬 전 기간 변동폭 (최고−최저)/평균. 좁으면 시장이 안 움직인다는 뜻',
     flow: '순유입 = 그 도시에 팔린 양 − 그 도시에서 사간 양 (주인공+NPC 합)',
     press: '누적 거래 압력의 최고치와 그때 단가에 붙는 벌점',
-    evi: '이 수치가 왜 이 값인지 — content/city-evidence.json. 칸에 올리면 근거와 출처가 뜬다',
+    evi: '이 수치가 왜 이 값인지 — content/regions/<권역>-evidence.json. 칸에 올리면 근거와 출처가 뜬다',
   };
   $('mxNote').textContent = notes[MODE];
 
@@ -458,9 +458,9 @@ for (const b of $('mode').querySelectorAll('button')) {
   };
 }
 
-/* 근거 데이터를 먼저 읽는다 — 없어도 대시보드는 돈다(근거 칸만 빈다). */
-fetch('../content/city-evidence.json', { cache: 'no-store' })
-  .then((r) => (r.ok ? r.json() : null))
+/* 근거 데이터를 먼저 읽는다 — 없어도 대시보드는 돈다(근거 칸만 빈다).
+   근거는 **권역마다 파일이 다르므로** shared.js의 로더가 모아서 준다. */
+loadRegionEvidence()
   .then((j) => { EV = j; })
   .catch(() => { EV = null; })
   .finally(run);

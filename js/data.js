@@ -5,24 +5,26 @@
 //   지도를 손보는 사람과 경제를 조율하는 사람이 같은 줄에서 충돌하지 않게 가른 것이다.
 //   `CITIES`는 둘을 id로 맞물려 합성한 결과다 — 읽는 쪽 코드는 예전과 똑같이 쓰면 된다.
 
-import { CITY_GEO, GEO_BY_ID, ROUTES, CURRENTS, ROUTE_RISK, riskKey } from './map/geo.js';
+import {
+  CITY_GEO, GEO_BY_ID, ROUTES, CURRENTS, ROUTE_RISK, riskKey,
+  OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
+  REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
+} from './map/geo.js';
+import { ALL_GOODS, ALL_SHIPS, ALL_CITY_TRADE, ALL_CITY_TARIFF } from './regions/index.js';
 
-export { ROUTES, CURRENTS, ROUTE_RISK, riskKey };
+export {
+  ROUTES, CURRENTS, ROUTE_RISK, riskKey,
+  OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
+  REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
+};
 
-export const GOODS = [
-  { id: 'grain',    name: '곡물',     base: 20,  icon: 'grain',    bulk: 1 },
-  { id: 'salt',     name: '소금',     base: 48,  icon: 'salt',     bulk: 1 },
-  { id: 'oliveoil', name: '올리브유', base: 52,  icon: 'oliveoil', bulk: 1 },
-  { id: 'wine',     name: '와인',     base: 38,  icon: 'wine',     bulk: 1 },
-  { id: 'ceramic',  name: '도자기',   base: 130, icon: 'ceramic',  bulk: 1 },
-  { id: 'fur',      name: '모피',     base: 175, icon: 'fur',      bulk: 1 },
-  { id: 'glass',    name: '유리세공', base: 190, icon: 'glass',    bulk: 1 },
-  { id: 'weapon',   name: '무기',     base: 165, icon: 'weapon',   bulk: 1 },
-  { id: 'spice',    name: '향신료',   base: 330, icon: 'spice',    bulk: 1 },
-  { id: 'ivory',    name: '상아',     base: 300, icon: 'ivory',    bulk: 1 },
-  { id: 'silk',     name: '비단',     base: 420, icon: 'silk',     bulk: 1 },
-  { id: 'gold',     name: '금괴',     base: 700, icon: 'gold',     bulk: 1 },
-];
+/* 교역품 — **권역마다 갈라져 있다.** 그 물건이 나온 권역의 `js/regions/<권역>/goods.js`가
+   정본이고, 여기서는 모아서 예전과 같은 모양으로 내놓는다.
+   id는 세계에서 하나뿐이라 두 권역이 같은 id를 적으면 index.js가 경고하고 뒤엣것을 버린다.
+
+   base 기준가는 **곡물 20닢 대비 사료 비율**이다(향신료 ×16.5·비단 ×21·금괴 ×35).
+   고치면 `content/goods-evidence.json`도 같은 커밋에서 — check-prices.mjs가 대조한다. */
+export const GOODS = ALL_GOODS;
 
 export const GOOD_BY_ID = Object.fromEntries(GOODS.map((g) => [g.id, g]));
 
@@ -75,144 +77,20 @@ export const CONTRACT = {
 
    ★ 오버라이드를 비워 두면 기본율이 그대로 쓰인다 — 그러니 여기 없는 도시가
      "빠진 것"이 아니다. 관세가 도시 성격의 일부인 곳만 적는 자리다.
-   ★ 값을 적었으면 `content/city-evidence.json`의 `cities[id].tariff`에도
+   ★ 값을 적었으면 `content/regions/<권역>-evidence.json`의 `cities[id].tariff`에도
      같은 값과 근거를 적는다(`node tools/check-evidence.mjs`가 불일치를 실패시킨다). */
 export const TARIFF = { 1: 0.03, 2: 0.045, 3: 0.06 };
 
-export const CITY_TARIFF = {
-  // 맘루크는 유럽 상인에게 무거운 세를 물렸고 향신료에는 특히 그랬다. 게임은
-  // **매각에만** 물어 사료의 10~20%를 그대로 옮기면 이 항구가 통째로 죽는다 —
-  // 성격이 드러날 만큼만 올린다. 근거·판정은 city-evidence.json에.
-  alexandria: 0.085,
-  // 카피툴레이션으로 유럽 상인에게 정률 관세를 물린 것이 오스만의 방식이다.
-  // 수도라 규모는 크지만 세율 자체는 맘루크만큼 무겁지 않았다.
-  istanbul: 0.07,
-  // 자유항에 가까웠다 — 제노바는 상인의 도시였고 통과 무역을 막지 않았다.
-  genova: 0.045,
-};
+export const CITY_TARIFF = ALL_CITY_TARIFF;
 
 /* 도시 경제 — 그 항구가 무엇을 싸게 내놓고 무엇을 비싸게 사는가.
-   supply = 산지라 싸다 (배율<1) / demand = 수요지라 비싸다 (배율>1)
-   좌표·항로·깃발·규모는 `js/map/geo.js`에 있고, 여기와는 id로만 맞물린다.
+   **권역마다 갈라져 있다** — 정본은 `js/regions/<권역>/trade.js`이고 여기서는 모으기만 한다.
+   좌표·항로·깃발·규모는 `js/regions/<권역>/geo.js`에 있고, 둘은 id로만 맞물린다.
 
    ★ 15~16세기 실제 교역을 조사해 맞춰 두었다. 수치를 바꾸기 전에
-      `.claude/docs/wiki/city-goods-history.md`(도시별 근거·출처)를 먼저 본다.
-      "게임 밸런스상 여기에 X를 넣자"가 고증을 덮어쓸 때는 그 문서에 사유를 남긴다. */
-export const CITY_TRADE = {
-  venezia: {
-    // 무라노 유리는 유럽 독점 수출품, 비단업에 인구의 1/5이 종사했다.
-    // 석호 도시라 곡물은 상시 수입. 흑해 타나 모피와 동방 향신료의 재분배 허브.
-    supply: { glass: 0.48, silk: 0.72 },
-    demand: { spice: 1.42, fur: 1.30, grain: 1.18, oliveoil: 1.20 },
-    blurb: '유리와 비단의 도시. 동방 향신료라면 값을 아끼지 않는다.',
-  },
-  genova: {
-    // 리구리아 와인과 조알리 벨벳("벨루르 드 젠")이 실제 수출품.
-    // 무기는 밀라노·브레시아가 본산이라 약한 공급으로만 남긴다(아스날은 실재).
-    supply: { wine: 0.62, silk: 0.70, weapon: 0.76 },
-    demand: { spice: 1.30, ivory: 1.28, fur: 1.26 },
-    blurb: '베네치아의 숙적. 조선소가 항구를 메우고 조알리의 벨벳이 실려 나간다.',
-  },
-  marseille: {
-    // 프로방스 포도밭과 올리브 언덕. 레반트 항로로 향신료·사치직물을 들여온다.
-    supply: { wine: 0.55, oliveoil: 0.60 },
-    demand: { spice: 1.34, silk: 1.28 },
-    blurb: '포도밭과 올리브 언덕에 둘러싸인 프랑스의 관문.',
-  },
-  barcelona: {
-    // 리폴을 필두로 한 카탈루냐 화기 산업 — 이베리아 최대 산지. 소금은 이비사 염전.
-    // 아라곤 플로린 주조를 위한 금 수요, 레반트 직교역으로 들여온 향신료.
-    supply: { weapon: 0.62, salt: 0.52 },
-    demand: { silk: 1.30, gold: 1.22, spice: 1.26 },
-    blurb: '아라곤 왕관의 항구. 대장간 망치 소리가 끊이지 않는다.',
-  },
-  napoli: {
-    // 올리브유는 확실한 수출품. 곡물 잉여는 실은 풀리아 쪽이라 이 항구는 집산에 가깝다.
-    supply: { oliveoil: 0.56, grain: 0.58 },
-    demand: { fur: 1.40, glass: 1.30 },
-    blurb: '왕국의 밀이 모이는 집산항. 언덕마다 올리브가 익는다.',
-  },
-  palermo: {
-    // 시칠리아 곡물 수출은 제노바행 정기 항로였고, 소금은 트라파니 염전이 본산.
-    // 와인은 자체 산지라 사들이지 않는다(이슬람 지배기에도 빚었다는 화학 증거).
-    supply: { grain: 0.46, salt: 0.56, wine: 0.72 },
-    demand: { weapon: 1.36, fur: 1.28, glass: 1.26 },
-    blurb: '지중해 한복판의 곡물 창고. 해적도 자주 들른다.',
-  },
-  tunis: {
-    // 사하라 대상로의 종착지 — 금과 상아가 여기로 올라온다. 하프스 왕조는
-    // 곡물·올리브유를 **수출**했다(곡물을 사들이는 항구가 아니다).
-    supply: { ivory: 0.62, gold: 0.76, oliveoil: 0.62 },
-    demand: { weapon: 1.30, silk: 1.30, ceramic: 1.28 },
-    blurb: '사하라 대상로의 종착지. 상아와 사금이 흘러들고 밀과 기름이 실려 나간다.',
-  },
-  algiers: {
-    // 배후의 미티드자 평원이 "알제의 빵바구니" — 곡물 산지다.
-    // 사략 경제라 화기는 유럽에서 사들인다. 와인은 유럽 상관·포로 대상의 작은 시장.
-    supply: { grain: 0.52, salt: 0.62 },
-    demand: { weapon: 1.44, ceramic: 1.30, wine: 1.26 },
-    blurb: '코르세어의 소굴. 배후의 밀밭이 도시를 먹인다.',
-  },
-  athens: {
-    // 아티카 올리브는 고대부터의 지리적 특성. 이 시기 아테네 자체는 쇠락한 소읍이라
-    // 큰 수출항이 아니다(도자기는 고대 아티카 도기와의 혼동이라 뺐다).
-    supply: { oliveoil: 0.50, wine: 0.66 },
-    demand: { grain: 1.32, silk: 1.36 },
-    blurb: '올리브 기름과 포도의 땅. 폐허가 된 신전이 항구를 굽어본다.',
-  },
-  rodos: {
-    // 기사단령 시절 올리브·포도가 성했다. 도자기는 이곳 생산이 아니라
-    // 이즈니크 도기가 거쳐 가는 **중계**다("로디안 웨어"라는 이름 자체가 후대의 오인).
-    supply: { wine: 0.60, ceramic: 0.74 },
-    demand: { weapon: 1.38, grain: 1.34 },
-    blurb: '기사단의 요새 섬. 동방의 도기가 여기를 거쳐 유럽으로 팔려 나간다.',
-  },
-  istanbul: {
-    // 부르사에서 올라온 생사, 이즈니크 도기, 흑해에서 보스포루스로 들어오는 모피.
-    // 비단·도자기는 안쪽 시장(부르사·이즈니크)보다 값이 붙는다 — 여기는 재유통 거점이다.
-    // 향신료는 산지가 아니라 최종 소비지라 뺐다. 제국 수도는 이집트 밀의 최대 목적지였고,
-    // 금주령에도 갈라타 술집이 수백 곳이라 와인 수요는 실재했다.
-    supply: { silk: 0.62, ceramic: 0.70, fur: 0.70 },
-    demand: { glass: 1.42, wine: 1.46, grain: 1.30 },
-    blurb: '두 대륙이 만나는 대도시. 부르사의 생사와 흑해의 모피가 여기서 풀린다.',
-  },
-  bursa: {
-    // 1400~1630년 이란산 원료 생사의 국제 시장. 이탈리아 상인이 여기까지 와서
-    // 생사를 사고 금·은화로 결제했다 — 그 금이 다시 동방으로 빠져나간다.
-    supply: { silk: 0.46 },
-    demand: { gold: 1.26, glass: 1.30, spice: 1.22 },
-    blurb: '이란 생사가 풀리는 아나톨리아의 시장. 배는 뮈단야에 대고 뭍길로 들어간다.',
-  },
-  iznik: {
-    // 오스만 도기의 본산. 궁정 주문으로 먹고 사는 도공 마을이라 먹을 것은 밖에서 온다.
-    supply: { ceramic: 0.44 },
-    demand: { grain: 1.28, oliveoil: 1.22, wine: 1.18 },
-    blurb: '가마 연기가 걷히지 않는 도공의 마을. 이 도기가 유럽에서 로도스산으로 오해받는다.',
-  },
-  beirut: {
-    // 향신료가 지나가긴 하나 본선은 알레포–트리폴리 축이라 1차 산지가 아니다.
-    // 알렉산드리아보다 불리한 값에 실린다.
-    supply: { spice: 0.68, silk: 0.72 },
-    demand: { ceramic: 1.42, fur: 1.36, glass: 1.28 },
-    blurb: '레반트 대상로의 곁가지 항구. 향신료가 여기서도 배에 실린다.',
-  },
-  alexandria: {
-    // 나일의 밀과 홍해 향신료 — 맘루크가 독점하던 유럽행 향신료의 최대 유통항이다.
-    // 상아는 아프리카 내륙에서 나일을 타고 내려온다. 와인 수요는 이스탄불보다 얕다.
-    supply: { grain: 0.48, spice: 0.62, ivory: 0.66 },
-    demand: { wine: 1.34, weapon: 1.34, glass: 1.30 },
-    blurb: '나일의 밀과 홍해의 향신료가 쌓이는 항구. 등대 자리엔 이제 요새가 섰다.',
-  },
-  malta: {
-    // 바위섬이라 자급이 안 된다 — 곡물은 시칠리아에서 상시 수입했고, 그것이 이 섬의
-    // 항구적 약점이자 봉쇄에 취약한 이유였다. 내놓을 것은 고조의 염전 소금 정도.
-    // **나포품(비단·향신료) 재판매를 supply로 넣지 않았다** — 넣으면 산지보다 싼
-    // 향신료 창구가 생겨 경제가 통째로 여기로 쏠린다. 그 성격은 prizeYard(중고선)로만 준다.
-    supply: { salt: 0.60 },
-    demand: { grain: 1.44, wine: 1.22, weapon: 1.26 },
-    blurb: '해협 한복판의 바위섬. 곡물은 실어 와야 하고, 부두에는 나포선이 매물로 선다.',
-  },
-};
+      `content/regions/<권역>-evidence.json`(도시별 근거·출처)을 먼저 본다. */
+export const CITY_TRADE = ALL_CITY_TRADE;
+
 
 /* 지리(map/geo.js) + 경제(위) 를 합쳐 읽는 쪽이 쓰던 모양 그대로 돌려준다.
    한쪽에만 도시를 추가하면 조용히 어긋나므로 시작할 때 경고를 띄운다. */
@@ -228,116 +106,11 @@ for (const id of Object.keys(CITY_TRADE)) {
 
 export const CITY_BY_ID = Object.fromEntries(CITIES.map((c) => [c.id, c]));
 
-/* 선박.
-   origin      어느 나라에서 나온 배인가(표시용).
-   originFlag  그 나라 깃발(map/geo.js: flag). **그 깃발을 단 항구는 요구등급이 1 낮다** —
-               "제 나라 배는 짓기 쉽다". 지중해에 본국이 없는 배(플류트 등)는 null.
-   tier        지으려면 필요한 도시 공업력(map/geo.js: industry). 0이면 시중에 안 나온다.
-               예전에는 `yards`에 판매 항구를 하드코딩했으나, 도시를 늘릴 때마다 어긋나고
-               "왜 여기선 못 사나"가 설명되지 않았다. 지금은 공업력 수치로 푼다.
-   yards       **전통 조선지** — 살 수 있는 곳이 아니라 값이 싸지는 곳이다(그 배를 오래 지어온 항구).
-   era         'classic' = 이 바다에서 오래 쓰던 배. 낡았어도 값이 싸고 제 몫이 있다.
-               'modern'  = 시대를 앞선 배. 공업력만으로는 안 되고 `requires`를 거쳐야 열린다.
-   requires    이 선종을 **한 번이라도 몰아 봤어야** 다음 배를 짓는다. 조선소가 그냥 만들어 주는 게
-               아니라 "그런 배를 다뤄 본 선주에게만 내놓는다"는 규칙 — 배 계보가 곧 해금 트리다.
-   rig = 스퀘어리그 비율(0=라틴세일뿐 … 1=전부 가로돛). 순풍/역풍 성능을 가른다.
-     그림의 돛(`sprites/ship.js: HULLS[].masts[].sail`)과 **같이 고쳐야 한다**.
-     지중해 어디서나 같은 배를 사던 것을 국적별로 갈랐다 — 배를 사려면 그 나라 항구까지 가야 한다.
-   crewMin = 돛과 키를 다루는 데 필요한 최소 인원. 미달이면 배가 제 속력을 못 낸다.
-     플류트처럼 "적은 선원으로 많이 싣는" 배와 프리깃처럼 "사람을 많이 먹는" 배를 가르는 축.
-   upkeep = 정박해 두기만 해도 나가는 하루 유지비(선단). 배를 쟁여두는 데 값을 매긴다. */
-export const SHIPS = {
-  hulk: {
-    hull: 'hulk', name: '낡은 바사', origin: '출처 불명', originFlag: null, tier: 0, era: 'classic', yards: [], price: 320,
-    hp: 55, crew: 10, crewMax: 16, crewMin: 5, cargo: 45, guns: 2, speed: 0.85,
-    upkeep: 2, rig: 0.50, leak: 2, tint: 'rot',
-    desc: '물이 새는 중고선. 항해할 때마다 선체가 삭는다. 오래 탈 배가 아니다.',
-  },
-  cocca: {
-    hull: 'hulk', name: '코카', origin: '지중해', originFlag: null, tier: 1, era: 'classic',
-    yards: ['venezia', 'genova', 'napoli', 'palermo', 'athens'],
-    price: 1100,
-    hp: 72, crew: 12, crewMax: 22, crewMin: 6, cargo: 78, guns: 3, speed: 0.95,
-    upkeep: 4, rig: 0.50, tint: 'oak',
-    desc: '중세부터 지중해를 메운 원형 상선. 느리고 볼품없지만 값싸고 제법 싣는다. 첫 배를 갈아탈 자리.',
-  },
-  galley: {
-    hull: 'galley', name: '갤리', origin: '지중해', originFlag: null, tier: 1, era: 'classic',
-    yards: ['venezia', 'istanbul', 'barcelona', 'palermo'],
-    price: 2100,
-    hp: 105, crew: 58, crewMax: 96, crewMin: 36, cargo: 58, guns: 5, speed: 1.45,
-    upkeep: 11, rig: 0.00, tint: 'oak',
-    desc: '노와 라틴세일. 바람이 죽어도 나아가고 좁은 물목에서 빠르지만, 사람을 많이 먹고 짐은 적게 싣는다.',
-  },
-  caravel: {
-    hull: 'caravel', name: '카라벨', origin: '스페인(아라곤)', originFlag: 'spain', tier: 1, era: 'classic',
-    yards: ['barcelona', 'palermo', 'napoli'],
-    price: 1400,
-    hp: 90, crew: 24, crewMax: 34, crewMin: 12, cargo: 90, guns: 6, speed: 1.35,
-    upkeep: 6, rig: 0.00, tint: 'oak',
-    desc: '작고 날렵하다. 화물칸은 좁지만 바람을 잘 탄다.',
-  },
-  fluyt: {
-    hull: 'fluyt', name: '플류트', origin: '네덜란드(수입선)', originFlag: null, tier: 2, era: 'modern', requires: 'carrack',
-    yards: ['genova', 'marseille'],
-    price: 2600,
-    // crewMin 14→9: 플류트의 역사적 정체성이 바로 이 숫자다. 화물톤/승조원 1인이
-    // 사료로 20 안팎(코카 10·갤리 1.2)인데 14명이면 12.1이 되어 **코카(13.0)와 사실상 같아진다**.
-    // 9명이면 18.9로 밴드에 들고, "적은 선원으로 많이 싣는 배"가 비용에서 실제로 드러난다.
-    // → .claude/docs/wiki/research-voyage-returns.md §3-1
-    hp: 120, crew: 20, crewMax: 30, crewMin: 9, cargo: 170, guns: 6, speed: 1.10,
-    upkeep: 10, rig: 0.67, tint: 'oak',
-    desc: '화물선의 정석. 이만한 짐을 이만큼 적은 선원으로 나르는 배는 없다. 대신 포문이 빈약하다.',
-  },
-  brig: {
-    hull: 'brig', name: '브리간틴', origin: '지중해', originFlag: null, tier: 1, era: 'classic',
-    yards: ['marseille', 'palermo', 'rodos'],
-    price: 4200,
-    hp: 130, crew: 34, crewMax: 52, crewMin: 20, cargo: 140, guns: 10, speed: 1.20,
-    upkeep: 14, rig: 0.50, tint: 'dark',
-    desc: '균형 잡힌 중형선. 무역과 전투 어느 쪽도 무난하다.',
-  },
-  carrack: {
-    hull: 'carrack', name: '캐랙', origin: '제노바', originFlag: 'genoa', tier: 2, era: 'classic',
-    yards: ['genova', 'venezia'],
-    price: 9800,
-    hp: 190, crew: 48, crewMax: 76, crewMin: 30, cargo: 240, guns: 14, speed: 0.95,
-    upkeep: 22, rig: 0.67, tint: 'white',
-    desc: '거대한 화물칸. 느리지만 한 번에 많이 싣는다.',
-  },
-  frigate: {
-    hull: 'frigate', name: '갈레아스', origin: '베네치아', originFlag: 'venice', tier: 3, era: 'classic', requires: 'galley',
-    yards: ['venezia', 'genova'],
-    price: 14000,
-    hp: 210, crew: 50, crewMax: 90, crewMin: 45, cargo: 110, guns: 18, speed: 1.40,
-    upkeep: 30, rig: 1.00, tint: 'dark',
-    desc: '작정하고 만든 프리깃 킬러. 빠르고 사납지만 화물칸이 좁고 선원을 많이 먹는다.',
-  },
-  galleon: {
-    hull: 'galleon', name: '갈레온', origin: '스페인', originFlag: 'spain', tier: 3, era: 'classic', requires: 'carrack',
-    yards: ['barcelona', 'napoli'],
-    price: 19500,
-    hp: 260, crew: 62, crewMax: 100, crewMin: 46, cargo: 200, guns: 24, speed: 1.05,
-    upkeep: 40, rig: 0.67, tint: 'green',
-    desc: '떠다니는 요새. 포문 스물넷이 현측을 메운다.',
-  },
-  indiaman: {
-    hull: 'indiaman', name: '라구사 아르고시', origin: '라구사', originFlag: null, tier: 3, era: 'modern', requires: 'carrack',
-    yards: ['venezia', 'istanbul'],
-    price: 26000,
-    hp: 240, crew: 70, crewMax: 110, crewMin: 40, cargo: 320, guns: 20, speed: 1.00,
-    upkeep: 46, rig: 0.75, tint: 'white',
-    desc: '동인도 항로의 대형 상선. 상선인데도 어지간한 군함만큼 물린다.',
-  },
-  superfrigate: {
-    hull: 'superfrigate', name: '대형 갈레온', origin: '스페인', originFlag: 'spain', tier: 3, era: 'modern', requires: 'galleon',
-    yards: ['barcelona', 'marseille'],
-    price: 42000,
-    hp: 330, crew: 90, crewMax: 150, crewMin: 70, cargo: 150, guns: 30, speed: 1.30,
-    upkeep: 70, rig: 1.00, tint: 'dark',
-    desc: '전열함의 화력에 프리깃의 발을 달았다. 유지비가 무겁다.',
-  },
-};
+/* 선박 — **권역마다 갈라져 있다.** 그 배가 나온 권역의 `js/regions/<권역>/ships.js`가
+   정본이고 여기서는 모으기만 한다. 필드 설명은 그 파일들의 머리주석에 있다.
+   요구 공업력(`tier`)·원산국 깃발(`originFlag`)·계보(`requires`)가 해금 트리를 만든다. */
+export const SHIPS = ALL_SHIPS;
+
 
 /* 개장 — 배 한 척에 영구히 붙는다. 배마다 따로 관리(state.fleet[key].refits) */
 export const REFITS = {

@@ -370,7 +370,7 @@ function sidePanel() {
       el('div.city-card', {}, [
         el('div', {}, [
           el('span.cname', { text: city.name }),
-          el('span.creg', { text: city.region }),
+          el('span.creg', { text: city.area }),
         ]),
         el('div.cblurb', { text: city.blurb }),
       ]),

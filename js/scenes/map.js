@@ -620,7 +620,7 @@ function routeCards() {
       el('div.city-card', {}, [
         el('div', {}, [
           el('span.cname', { text: here.name }),
-          el('span.creg', { text: here.region }),
+          el('span.creg', { text: here.area }),
         ]),
         el('div.cblurb', { text: here.blurb }),
         el('button.btn.sm.dark', { text: '항구로 들어가기', onclick: () => go('port') }),
@@ -656,7 +656,7 @@ function routeCards() {
     cards.push(el('div.panel', {}, [
       el('h3', {}, el('span', { text: '항구 정보' })),
       el('div.city-card', {}, [
-        el('div', {}, [el('span.cname', { text: c.name }), el('span.creg', { text: c.region })]),
+        el('div', {}, [el('span.cname', { text: c.name }), el('span.creg', { text: c.area })]),
         el('div.cblurb', { text: c.blurb }),
         el('div', {
           style: { fontSize: '11.5px', lineHeight: 1.7 },

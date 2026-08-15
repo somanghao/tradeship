@@ -1,6 +1,6 @@
 // evidence.js — 근거 계층을 게임 화면이 읽는 자리
 //
-// `content/city-evidence.json`은 원래 **개발용 정본**이다(검증은 tools/check-evidence.mjs).
+// `content/regions/<권역>-evidence.json`은 원래 **개발용 정본**이다(검증은 tools/check-evidence.mjs).
 // 그런데 항구 시장 목록을 "무엇이 진짜 특산인가" 순으로 쌓으려면 게임도 그것을 알아야 한다.
 // 교역 항목이 많다고 좋은 항구가 아니다 — 사료로 확인된 수요 하나가 구색으로 넣은
 // 다섯 줄보다 그 항구를 더 잘 설명하고, 플레이어가 먼저 봐야 하는 것도 그쪽이다.
@@ -38,14 +38,30 @@ export function goodBasis(cityId, goodId) {
 
 export function evidenceLoaded() { return !!EV; }
 
-/** 근거를 읽어 둔다. 실패는 전부 삼킨다 — 없으면 원래 순서로 돈다. */
-export async function loadEvidence(url = 'content/city-evidence.json') {
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return null;
-    EV = await res.json();
-    return EV;
-  } catch {
-    return null;
-  }
+/** 근거를 읽어 둔다. 실패는 전부 삼킨다 — 없으면 원래 순서로 돈다.
+    권역마다 파일이 다르므로 전부 받아 합친다. 한 권역이 실패해도 나머지는 살린다 —
+    바다 하나의 근거 파일이 깨졌다고 게임 전체가 근거를 잃을 이유가 없다. */
+export async function loadEvidence(regionIds = null) {
+  const ids = regionIds ?? REGION_IDS_FALLBACK;
+  const merged = { cities: {} };
+  let any = false;
+  await Promise.all(ids.map(async (rid) => {
+    try {
+      const res = await fetch(`content/regions/${rid}-evidence.json`, { cache: 'no-store' });
+      if (!res.ok) return;
+      const j = await res.json();
+      Object.assign(merged.cities, j.cities ?? {});
+      any = true;
+    } catch { /* 이 권역만 건너뛴다 */ }
+  }));
+  if (!any) return null;
+  EV = merged;
+  return EV;
 }
+
+/** 호출부가 권역 목록을 안 넘겨도 돌게 하는 기본값.
+    `js/regions/index.js`를 import하면 이 파일이 데이터 계층에 묶여 fail-soft 성격이 흐려지므로
+    이름만 들고 있는다 — 권역을 추가하면 여기에도 한 줄 적는다. */
+const REGION_IDS_FALLBACK = [
+  'mediterranean', 'atlantic', 'africa', 'mideast', 'indian', 'seasia', 'eastasia',
+];

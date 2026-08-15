@@ -1,0 +1,11 @@
+{
+  "region": "eastasia",
+  "regionName": "동아시아",
+  "_읽는이에게": "동아시아 권역의 사료 근거. 코드 정본은 js/regions/eastasia/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
+  "version": 1,
+  "cities": {},
+  "routes": {},
+  "goods": {},
+  "ships": {},
+  "openQuestions": []
+}

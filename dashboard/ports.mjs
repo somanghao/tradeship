@@ -41,7 +41,7 @@ export function rankOf(side, ev) {
 }
 
 /** 한 항구의 교역품을 신뢰 등급 → 값 순으로 정렬해 돌려준다.
-    `ev`는 content/city-evidence.json (없으면 전부 '근거가 약한 것'으로 떨어진다). */
+    `ev`는 권역 근거를 합친 것 (없으면 전부 '근거가 약한 것'으로 떨어진다). */
 export function goodsOf(cityId, EV) {
   const city = CITIES.find((c) => c.id === cityId);
   const evGoods = EV?.cities?.[cityId]?.goods ?? {};
@@ -141,7 +141,7 @@ export function portRows(EV) {
     return {
       id: g.id,
       name: g.name,
-      region: g.region,
+      area: g.area, region: g.region,
       flag: g.flag,
       style: g.style,
       size: g.size,
