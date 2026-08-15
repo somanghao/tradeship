@@ -17,13 +17,28 @@ let offX = 0, offY = 0;
 /* 캔버스는 무대 전체를 차지하고, 400x225 게임 화면은 그 안에
    정수배로 확대해 중앙 배치한다(레터박스). UI 오버레이는 무대 전체를
    자유롭게 쓸 수 있어 좁은 창에서도 패널이 밀려나지 않는다. */
+/* 오른쪽에 오버레이 패널이 서는 씬에서, 그 폭만큼 그림을 좁힌다.
+   ★ 이것이 없으면 **지도 오른쪽 항구를 아예 누를 수 없다.** 지도는 무대 전체 폭에
+     그려지는데 `#map-side`(268px + 여백)가 그 위를 덮기 때문이다. 두 테스터가 서로 다른
+     바다에서 같은 것을 잡아 왔다 — 남아메리카의 헤시피·살바도르·일례우스, 아프리카의
+     라무·모가디슈. 더 나쁜 것은 **가려진 항구 자리를 누르면 패널의 다른 항구 줄이 눌려
+     엉뚱한 데로 출항한다**는 것이었다. 창이 1920px는 되어야 안 가려지니 사실상 전부 해당했다. */
+let insetR = 0;
+export function setInsetRight(px) {
+  const v = Math.max(0, Math.round(px));
+  if (v === insetR) return;
+  insetR = v;
+  fit();
+}
+
 function fit() {
   const stage = document.getElementById('stage');
   const w = stage.clientWidth, h = stage.clientHeight;
   canvas.width = w;
   canvas.height = h;
-  scale = Math.max(1, Math.floor(Math.min(w / VW, h / VH)));
-  offX = Math.round((w - VW * scale) / 2);
+  const usableW = Math.max(240, w - insetR);
+  scale = Math.max(1, Math.floor(Math.min(usableW / VW, h / VH)));
+  offX = Math.round((usableW - VW * scale) / 2);
   offY = Math.round((h - VH * scale) / 2);
   ctx.imageSmoothingEnabled = false;
   current?.resize?.();

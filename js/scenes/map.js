@@ -22,7 +22,7 @@ import {
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
-import { go, toLogical, canvas } from '../main.js';
+import { go, toLogical, canvas, setInsetRight } from '../main.js';
 
 let bg, hover = null, sailing = null, pendingArrival = null;
 let bgRegion = null;      // 지금 구워 둔 배경이 어느 권역 것인가
@@ -69,6 +69,8 @@ function startVoyage(toId) {
 
 export const mapScene = {
   enter() {
+    // 오른쪽 항로 패널이 지도를 덮지 않게 그 폭만큼 좁혀 그린다(268px + 여백 14px씩)
+    setInsetRight(296);
     syncBg();
     hover = null;
     sailing = null;
@@ -79,6 +81,7 @@ export const mapScene = {
     buildUI();
   },
   exit() {
+    setInsetRight(0);
     canvas.removeEventListener('mousemove', onMove);
     canvas.removeEventListener('click', onClick);
     canvas.style.cursor = 'default';
