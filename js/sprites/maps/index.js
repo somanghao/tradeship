@@ -64,6 +64,21 @@ export const CLIMATE = {
     shore: ['#f4e6bc', '#8ae0dc', '#4bb0ba', '#2f8496'],
     zones: null,
   },
+  // 카리브 — 산호초와 밝은 옥빛 바다, 섬마다 짙은 열대림
+  antilles: {
+    land: '#3f7e42', alt: ['#2e6234', '#519149', '#74a355'],
+    sea: ['#12798c', '#1b8fa2', '#0a3a4a'],
+    shore: ['#f6ecc4', '#96e8de', '#52bcc2', '#33909e'],
+    zones: null,
+  },
+  // 남아메리카 — 밀림과 안데스, 남쪽으로 갈수록 마른 팜파스
+  newworld: {
+    land: '#4a8040', alt: ['#356030', '#5e9449', '#8a9a52'],
+    zone: { forest: null, scrub: '#8a9a52', desert: '#c4a874' },
+    sea: ['#13566e', '#1c6a84', '#082836'],
+    shore: ['#ecdcb0', '#72cbd0', '#419eae', '#2b7890'],
+    zones: { scrubY: (x) => 150 + Math.sin(x * 0.022) * 14 },
+  },
   // 동아시아 — 온대림, 북쪽으로 갈수록 마른다
   temperate: {
     land: '#548049', alt: ['#3f6438', '#688f54', '#7e9a58'],
@@ -133,6 +148,24 @@ export const MAPS = {
       seed: 0x5EA5, lane: 9.5, bay: 11, isles: 26,
       openSea: [[0, 0, 400, 20], [0, 205, 400, 225]],
       landmass: [],
+    },
+  },
+  caribbean: {
+    climate: 'antilles',
+    auto: {
+      // 섬이 많은 바다다 — 회랑을 넓게 잡고 섬을 많이 흩어 군도로 보이게 한다
+      seed: 0xCA71, lane: 9.5, bay: 12, isles: 24,
+      openSea: [[0, 0, 400, 22], [330, 0, 400, 225]],
+      landmass: [],
+    },
+  },
+  southamerica: {
+    climate: 'newworld',
+    auto: {
+      seed: 0x5A44, lane: 8, bay: 12, isles: 12,
+      // 대륙 하나가 가운데를 차지하고 양쪽이 대양이다
+      openSea: [[0, 0, 24, 225], [376, 0, 400, 225], [0, 196, 400, 225]],
+      landmass: [[110, 30, 290, 180]],
     },
   },
   eastasia: {

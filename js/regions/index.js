@@ -72,6 +72,22 @@ import * as seaTrd from './seasia/npc-traders.js';
 import * as seaPir from './seasia/npc-pirates.js';
 import * as seaFig from './seasia/npc-figures.js';
 
+import * as carGeo from './caribbean/geo.js';
+import * as carTrade from './caribbean/trade.js';
+import * as carGoods from './caribbean/goods.js';
+import * as carShips from './caribbean/ships.js';
+import * as carTrd from './caribbean/npc-traders.js';
+import * as carPir from './caribbean/npc-pirates.js';
+import * as carFig from './caribbean/npc-figures.js';
+
+import * as samGeo from './southamerica/geo.js';
+import * as samTrade from './southamerica/trade.js';
+import * as samGoods from './southamerica/goods.js';
+import * as samShips from './southamerica/ships.js';
+import * as samTrd from './southamerica/npc-traders.js';
+import * as samPir from './southamerica/npc-pirates.js';
+import * as samFig from './southamerica/npc-figures.js';
+
 import * as easGeo from './eastasia/geo.js';
 import * as easTrade from './eastasia/trade.js';
 import * as easGoods from './eastasia/goods.js';
@@ -91,6 +107,18 @@ export const REGIONS = [
     blurb: '유럽과 아프리카와 아시아가 만나는 안쪽 바다. 이 게임이 시작되는 곳.',
     tone: 'inland',
     mod: { geo: medGeo, trade: medTrade, goods: medGoods, ships: medShips, traders: medTrd, pirates: medPir, figures: medFig },
+  },
+  {
+    id: 'caribbean', name: '카리브·누에바에스파냐', order: -1,
+    blurb: '서인도 함대가 은을 싣고 떠나는 바다. 지협 하나가 두 대양을 가른다.',
+    tone: 'antilles',
+    mod: { geo: carGeo, trade: carTrade, goods: carGoods, ships: carShips, traders: carTrd, pirates: carPir, figures: carFig },
+  },
+  {
+    id: 'southamerica', name: '남아메리카', order: 0,
+    blurb: '포토시의 은과 브라질의 설탕. 세계의 은이 여기서 나 태평양과 대서양으로 갈린다.',
+    tone: 'newworld',
+    mod: { geo: samGeo, trade: samTrade, goods: samGoods, ships: samShips, traders: samTrd, pirates: samPir, figures: samFig },
   },
   {
     id: 'atlantic', name: '대서양·북해', order: 1,
@@ -146,6 +174,26 @@ export const HOME_REGION = (REGIONS.find((r) => r.home) ?? REGIONS[0]).id;
    ★ 이 표가 세계의 뼈대다. 선 하나를 긋는 것이 권역 하나를 여는 것과 같다.
      값은 `content/ocean-lanes-evidence.json`에 근거를 적는다. */
 export const OCEAN_LANES = [
+  /* ── 대서양 횡단 ────────────────────────────────────────────
+     이 선들이 열리는 순간 세계 경제의 무게중심이 바뀐다. 포토시 은이 세비야로 올라오고,
+     그 은이 다시 지중해와 인도양을 거쳐 중국으로 빨려 들어간다. 마닐라 갤리온은
+     그 흐름의 **지름길**이다 — 아카풀코에서 곧장 태평양을 건넌다. */
+  { a: 'sevilla', b: 'havana', days: 34, risk: 9.5,
+    note: '서인도 함대(플로타)의 길. 카나리아에서 무역풍을 타고 서쪽으로, 돌아올 때는 걸프 스트림을 타고 북동으로 크게 돈다.' },
+  { a: 'funchal', b: 'santodomingo', days: 30, risk: 9.0,
+    note: '마데이라에서 무역풍을 타고 소앤틸리스로. 콜럼버스 이래의 표준 항로다.' },
+  { a: 'lisboa', b: 'salvador', days: 30, risk: 8.5,
+    note: '기니만 무풍대를 피하려 대서양 서쪽으로 크게 돌아 브라질에 닿는다(볼타 두 마르).' },
+  { a: 'luanda', b: 'salvador', days: 22, risk: 8.0,
+    note: '남대서양을 가로지른다. 남동 무역풍과 벵겔라 해류를 타면 아프리카에서 브라질 쪽이 순풍이다.' },
+  { a: 'havana', b: 'cartagena', days: 9, risk: 7.5,
+    note: '카리브 안쪽 길. 은과 에메랄드가 아바나로 모여 함대를 기다린다.' },
+  { a: 'portobelo', b: 'callao', days: 21, risk: 6.5, overland: true,
+    note: '파나마 지협을 노새로 넘어 태평양으로. 배가 아니라 짐이 넘어가는 길이고, 페루 은이 이리로 올라온다.' },
+  // 마닐라 갤리온 — 이 게임에서 가장 긴 항로
+  { a: 'acapulco', b: 'manila', days: 48, risk: 10.0, monsoon: true,
+    note: '태평양을 곧장 건넌다. 서행은 무역풍을 타 넉 달, 동행은 북위 40도까지 올라가 편서풍을 잡아야 해 훨씬 길고 괴혈병이 배를 비운다.' },
+
   // 지브롤터 — 지중해가 대양으로 나가는 유일한 문
   { a: 'genova', b: 'lisboa', days: 14, risk: 7.0,
     note: '지브롤터 해협을 지나 이베리아 서안을 돈다. 좁은 물목이라 사략선이 지킨다.' },

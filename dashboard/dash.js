@@ -9,6 +9,28 @@ import { state, marketDepth, tariffRate, tierNeeded, sellsShip, shipPriceAt, shi
 import { measure, statsOf, starvedCells, allCells } from './measure.mjs';
 /* 그리기 도구는 `shared.js`가 정본 — 해적 탭과 같은 것을 써야 한 화면으로 보인다 */
 import { $, fmt, el, heat, mono, svg, node, loadRegionEvidence } from './shared.js';
+import {
+  mountRegionBar, injectRegionBarStyle, onRegionChange,
+  currentRegion, regionName, filterByRegion, ALL,
+} from './region-filter.js';
+
+/* ── 권역 필터 ────────────────────────────────────────────────
+   세계가 일곱 바다로 갈리면서 도시별 시세 매트릭스가 127×60칸이 됐다 — 그리는 것은
+   되지만 읽을 수가 없다. 그래서 **보고 있는 권역만** 그린다.
+   품목도 함께 거른다: 그 바다에서 아무도 안 사고 안 파는 칸을 남겨 두면
+   표의 대부분이 빈칸이 되어 오히려 무엇이 거래되는지가 안 보인다. */
+const viewCities = () => filterByRegion(CITIES);
+
+function viewGoods() {
+  if (currentRegion() === ALL) return GOODS;
+  const live = new Set();
+  for (const c of viewCities()) {
+    for (const gid of Object.keys(c.supply ?? {})) live.add(gid);
+    for (const gid of Object.keys(c.demand ?? {})) live.add(gid);
+  }
+  // 하나도 없으면(아직 안 채운 권역) 전부 보여 준다 — 빈 화면보다 낫다
+  return live.size ? GOODS.filter((g) => live.has(g.id)) : GOODS;
+}
 
 /* 근거 데이터 — 수치가 왜 그 값인지. content/regions/<권역>-evidence.json이 정본이고
    `node tools/check-evidence.mjs`가 코드와의 불일치를 잡는다. 여기서는 읽기만 한다. */
@@ -152,21 +174,22 @@ function drawMatrix(M) {
   t.innerHTML = '';
   const head = el('tr');
   head.append(el('th', 'city corner', ''));
-  for (const g of GOODS) head.append(el('th', '', `${g.name}<br><span style="opacity:.55">${g.base}</span>`));
+  const MG = viewGoods(), MC = viewCities();
+  for (const g of MG) head.append(el('th', '', `${g.name}<br><span style="opacity:.55">${g.base}</span>`));
   t.append(head);
 
   // 모드별 스케일 기준
   let volMax = 1, pressMax = 1;
-  for (const c of CITIES) for (const g of GOODS) {
+  for (const c of MC) for (const g of MG) {
     const d = cellData(M, c.id, g.id);
     volMax = Math.max(volMax, Math.abs(d.net));
     pressMax = Math.max(pressMax, d.press);
   }
 
-  for (const c of CITIES) {
+  for (const c of MC) {
     const tr = el('tr');
     tr.append(el('th', 'city', `${c.name}<br><span style="opacity:.5;font-size:10px">size ${c.size} · 세 ${Math.round(tariffRate(c.id) * 100)}%</span>`));
-    for (const g of GOODS) {
+    for (const g of MG) {
       const d = cellData(M, c.id, g.id);
       const td = el('td', d.tag ? `tag-${d.tag}` : '');
       let main = '', sub = '', bg = 'transparent';
@@ -426,6 +449,14 @@ function drawCards(M) {
 /* ── 실행 ────────────────────────────────────────────────── */
 let M = null;
 
+/** 권역을 바꾸면 시뮬을 다시 돌릴 필요는 없다 — 세계는 하나이고 보는 창만 바뀐다.
+    매트릭스와 "부족한데 아무도 안 나르는 곳"만 다시 그린다. */
+function redrawRegionViews() {
+  if (!M) return;
+  drawMatrix(M);
+  drawStarve(M);
+}
+
 function run() {
   const n = +$('voy').value;
   $('stamp').textContent = '돌리는 중…';
@@ -460,6 +491,10 @@ for (const b of $('mode').querySelectorAll('button')) {
 
 /* 근거 데이터를 먼저 읽는다 — 없어도 대시보드는 돈다(근거 칸만 빈다).
    근거는 **권역마다 파일이 다르므로** shared.js의 로더가 모아서 준다. */
+injectRegionBarStyle();
+mountRegionBar(document.getElementById('e-regionbar'));
+onRegionChange(redrawRegionViews);
+
 loadRegionEvidence()
   .then((j) => { EV = j; })
   .catch(() => { EV = null; })

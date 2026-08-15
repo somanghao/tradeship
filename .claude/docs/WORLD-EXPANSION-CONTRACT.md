@@ -263,6 +263,8 @@ export const SHIPS = {
 | 권역 | id | 반드시 만들 관문 항구(id) | 성격 |
 |---|---|---|---|
 | 지중해 | `mediterranean` | (이미 있음: genova·barcelona·alexandria·beirut) | 안쪽 바다 |
+| 카리브·누에바에스파냐 | `caribbean` | **havana · santodomingo · cartagena · portobelo · acapulco** | 은 함대의 집결지 · 지협 |
+| 남아메리카 | `southamerica` | **salvador · callao** | 포토시 은 · 브라질 설탕 |
 | 대서양·북해 | `atlantic` | **lisboa · sevilla · funchal** | 이베리아·서유럽·한자·발트 |
 | 아프리카 | `africa` | **arguin · luanda · mocambique · mombasa** | 기니만 금·상아 / 스와힐리 해안 |
 | 중동·홍해 | `mideast` | **jeddah · aden · basra · hormuz** | 홍해·페르시아만·대상로 |

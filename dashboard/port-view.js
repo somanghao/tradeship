@@ -13,6 +13,10 @@
 import { portRows, goodsOf, realEstate, RANK } from './ports.mjs';
 import { CREW_WAGE } from '../js/state.js';
 import { $, fmt, pct, el, svg, node, withTip, mono, loadRegionEvidence } from './shared.js';
+import {
+  mountRegionBar, injectRegionBarStyle, onRegionChange,
+  currentRegion, regionName, filterByRegion, setRegion, ALL, regionList,
+} from './region-filter.js';
 
 let EV = null;    // 권역 근거를 합친 것 (shared.js: loadRegionEvidence)
 let AE = null;    // content/asset-evidence.json
@@ -53,11 +57,26 @@ Promise.all([
 /* ── 진입점 ──────────────────────────────────────────────── */
 export function runPorts() {
   loaded = true;
+  injectRegionBarStyle();
+  mountRegionBar($('p2-regionbar'));
+  /* 권역을 바꾸면 **선택한 항구도 그 바다 안으로 옮긴다.** 안 그러면 대서양을 보면서
+     상세에는 알렉산드리아가 떠 있는 화면이 된다 — 두 사실이 한 화면에서 어긋난다. */
+  onRegionChange(() => {
+    const inView = view().some((r) => r.id === sel);
+    if (!inView) sel = view()[0]?.id ?? null;
+    drawAll();
+  });
   drawAll();
 }
 
+/** 지금 권역 선택에 걸린 항구들. `rows`는 언제나 전 세계다 —
+    권역 일람이 "안 고른 바다"까지 보여줘야 하므로 원본을 남겨 둔다. */
+const view = () => filterByRegion(rows);
+
 function drawAll() {
   rows = portRows(EV);
+  if (!rows.some((r) => r.id === sel)) sel = view()[0]?.id ?? rows[0]?.id ?? null;
+  drawRegions();
   drawCards();
   drawList();
   drawDetail();
@@ -68,12 +87,13 @@ function drawAll() {
 
 /* ── 요약 카드 ───────────────────────────────────────────── */
 function drawCards() {
-  const items = rows.reduce((n, r) => n + r.goods.length, 0);
-  const solid = rows.reduce((n, r) => n + r.solid, 0);
-  const yards = rows.filter((r) => r.yard.buildable.length).length;
-  const prize = rows.filter((r) => r.yard.prizeYard).length;
+  const v = view();
+  const items = v.reduce((n, r) => n + r.goods.length, 0);
+  const solid = v.reduce((n, r) => n + r.solid, 0);
+  const yards = v.filter((r) => r.yard.buildable.length).length;
+  const prize = v.filter((r) => r.yard.prizeYard).length;
   const cards = [
-    ['항구', rows.length, ''],
+    ['항구', v.length, currentRegion() === ALL ? `${regionList().length}개 권역` : regionName(currentRegion())],
     ['교역 항목', items, '공급 + 수요'],
     ['근거가 확실한 항목', solid, `${pct(solid / items, 0)} — 출처가 달린 확인·바로잡음`],
     ['배를 지을 수 있는 항구', yards, `공업력 1 이상`],
@@ -122,18 +142,24 @@ function tariffBox(r) {
 /* ── 항구 일람 ───────────────────────────────────────────── */
 function drawList() {
   const t = el('table', 'list');
+  const showRegion = currentRegion() === ALL;
   t.innerHTML = `<thead><tr>
-    <th>항구</th><th>세력</th><th class="n">규모</th><th class="n">항로</th>
+    <th>항구</th>${showRegion ? '<th>권역</th>' : ''}<th>세력</th><th class="n">규모</th><th class="n">항로</th>
     <th class="n">입항세</th><th class="n">공업력</th><th class="n">교역품</th><th>근거</th>
   </tr></thead>`;
   const tb = el('tbody');
-  for (const r of rows) {
+  // 전 권역을 볼 때는 바다끼리 묶여 보이게 정렬한다 — 섞어 놓으면 목록이 그냥 긴 표가 된다
+  const list = showRegion
+    ? [...rows].sort((a, b) => (ORDER[a.region] ?? 9) - (ORDER[b.region] ?? 9))
+    : view();
+  for (const r of list) {
     const tr = el('tr');
     tr.style.cursor = 'pointer';
     if (r.id === sel) tr.style.background = '#2a2338';
     const ind = r.yard.industry;
     tr.innerHTML = `
       <td><b class="${r.id === sel ? 'y' : ''}">${r.name}</b> <span class="d">${r.area}</span></td>
+      ${showRegion ? `<td class="d">${regionName(r.region)}</td>` : ''}
       <td class="d">${FLAG_NAME[r.flag] ?? r.flag}</td>
       <td class="n">${'★'.repeat(r.size)}</td>
       <td class="n">${r.routes}</td>
@@ -147,6 +173,45 @@ function drawList() {
   }
   t.append(tb);
   $('p2-list').replaceChildren(t);
+}
+
+/** 권역 순서 — regionList()가 order로 정렬해 준다 */
+const ORDER = Object.fromEntries(regionList().map((r, i) => [r.id, i]));
+
+/* ── 권역 일람 ────────────────────────────────────────────────
+   일곱 바다를 한 표에 놓는다. 이 표가 답하는 것은 "어느 바다가 아직 비었나"와
+   "어느 바다가 근거를 안 채웠나"다 — 세계를 넓히는 동안 가장 자주 묻게 되는 둘이다.
+   그래서 **항구가 0곳인 권역도 지운다지 않고 그대로 둔다.** 없다는 사실이 정보다. */
+function drawRegions() {
+  const t = el('table', 'list');
+  t.innerHTML = `<thead><tr>
+    <th>권역</th><th class="n">항구</th><th class="n">교역 항목</th><th class="n">근거 확실</th>
+    <th class="n">조선 가능</th><th class="n">경매항</th><th class="n">평균 입항세</th><th>성격</th>
+  </tr></thead>`;
+  const tb = el('tbody');
+  for (const rg of regionList()) {
+    const list = rows.filter((r) => r.region === rg.id);
+    const items = list.reduce((n, r) => n + r.goods.length, 0);
+    const solid = list.reduce((n, r) => n + r.solid, 0);
+    const tr = el('tr');
+    tr.style.cursor = 'pointer';
+    if (currentRegion() === rg.id) tr.style.background = '#2a2338';
+    if (!list.length) tr.style.opacity = '.5';
+    const avgT = list.length ? list.reduce((s2, r) => s2 + r.tariff, 0) / list.length : 0;
+    tr.innerHTML = `
+      <td><b class="${currentRegion() === rg.id ? 'y' : ''}">${rg.name}</b></td>
+      <td class="n">${list.length || '<span class="d">—</span>'}</td>
+      <td class="n">${items || '<span class="d">—</span>'}</td>
+      <td class="n">${items ? `${solid} <span class="d">${pct(solid / items, 0)}</span>` : '<span class="d">—</span>'}</td>
+      <td class="n">${list.filter((r) => r.yard.buildable.length).length || '<span class="d">—</span>'}</td>
+      <td class="n">${list.filter((r) => r.yard.prizeYard).length || '<span class="d">—</span>'}</td>
+      <td class="n">${list.length ? pct(avgT, 1) : '<span class="d">—</span>'}</td>
+      <td class="d" style="font-size:11.5px">${rg.blurb}</td>`;
+    tr.onclick = () => setRegion(currentRegion() === rg.id ? ALL : rg.id);
+    tb.append(tr);
+  }
+  t.append(tb);
+  $('p2-regions').replaceChildren(t);
 }
 
 /** 확실 / 약함 비율을 한 칸에 — 어느 항구가 재조사 대상인지 표에서 바로 보이게 */

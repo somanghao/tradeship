@@ -182,6 +182,7 @@
   <div class="grp" data-tab="port">
     <button class="tab" data-tab="port">항구</button>
     <div class="subs">
+      <a href="#q-s-regions">권역 일람</a>
       <a href="#q-s-list">항구 일람</a>
       <a href="#q-s-detail">항구 상세</a>
       <a href="#q-s-industry">공업력</a>
@@ -252,6 +253,7 @@
     <span style="color:var(--dim);font-size:11px" id="stamp"></span>
   </div>
 
+  <div id="e-regionbar"></div>
   <div class="cards" id="cards"></div>
 
   <h2 id="e-flow">현금 흐름 <span class="note">주인공 자산과 NPC 상인 자산이 같은 시장에서 어떻게 갈리는가</span></h2>
@@ -425,7 +427,11 @@
     <b>근거의 신뢰도 순</b>으로 쌓는다(확실한 수요 → 확실한 산지 → 근거가 약한 것).
   </p>
 
+  <div id="p2-regionbar"></div>
   <div class="cards" id="p2-cards"></div>
+
+  <h2 id="q-s-regions">권역 일람 <span class="note">일곱 바다가 각각 어떤 상태인가 — 권역을 누르면 아래가 그 바다만 보여준다</span></h2>
+  <div class="panel" style="overflow:auto"><div id="p2-regions"></div></div>
 
   <h2 id="q-s-list">항구 일람 <span class="note">행을 누르면 아래 상세가 바뀐다 · 초록 막대는 근거가 확실한 항목의 비율</span></h2>
   <div class="panel" style="overflow:auto"><div id="p2-list"></div></div>
