@@ -23,20 +23,20 @@
 
 export const GOODS = [
   // 소목 — 붉은 염료를 내는 나무. 샴과 버마에서 배 밑짐으로 실어 나르던 부피 화물이다.
-  { id: 'sappanwood', name: '소목',     base: 80,  icon: 'wine',     bulk: 1 },
+  { id: 'sappanwood', name: '소목',     base: 80,  icon: 'sappanwood', bulk: 1 },
   // 주석 — 반도 서안(페락·케다)이 세계의 주석 산지였다. 청동과 화폐의 재료다.
-  { id: 'tin',        name: '주석',     base: 150, icon: 'weapon',   bulk: 1 },
+  { id: 'tin',        name: '주석',     base: 150, icon: 'tin',      bulk: 1 },
   // 백단향 — 티모르와 소순다 열도. 향과 불상을 깎는 나무라 중국·인도가 사들였다.
-  { id: 'sandalwood', name: '백단향',   base: 280, icon: 'ivory',    bulk: 1 },
+  { id: 'sandalwood', name: '백단향',   base: 280, icon: 'sandalwood', bulk: 1 },
   // 제비집 — 보르네오 석회동굴(고만통·니아)에서 긁어낸다. 중국이 값을 매기는 물건이다.
-  { id: 'birdnest',   name: '제비집',   base: 400, icon: 'ceramic',  bulk: 1 },
+  { id: 'birdnest',   name: '제비집',   base: 400, icon: 'birdnest', bulk: 1 },
   // 장뇌 — 수마트라 바루스산이 최상품. 아랍 상인을 보르네오까지 끌어들였고
   //        당대 기록은 "금보다 비쌌다"고 적는다.
-  { id: 'camphor',    name: '장뇌',     base: 470, icon: 'salt',     bulk: 1 },
+  { id: 'camphor',    name: '장뇌',     base: 470, icon: 'camphor',  bulk: 1 },
   // 침향 — 수지가 앉은 침향나무 속살. 회안에서 15냥에 산 것이 나가사키에서 600냥이 됐다.
-  { id: 'agarwood',   name: '침향',     base: 540, icon: 'oliveoil', bulk: 1 },
+  { id: 'agarwood',   name: '침향',     base: 540, icon: 'agarwood', bulk: 1 },
   // ★ 정향 — 말루쿠 다섯 섬 말고는 세상 어디에도 없었다.
-  { id: 'clove',      name: '정향',     base: 680, icon: 'spice',    bulk: 1 },
+  { id: 'clove',      name: '정향',     base: 680, icon: 'clove',    bulk: 1 },
   // ★ 육두구(+메이스) — 반다 제도. **세계 유일의 산지**이고 이 게임에서 가장 비싼 짐이다.
-  { id: 'nutmeg',     name: '육두구',   base: 760, icon: 'spice',    bulk: 1 },
+  { id: 'nutmeg',     name: '육두구',   base: 760, icon: 'nutmeg',   bulk: 1 },
 ];

@@ -34,9 +34,9 @@
            **무슬림 술탄국은 'ottoman'(초록), 상좌부 뭍 왕국(샴·버마)은 'hafsid'(흰 바탕)**,
            **포르투갈이 요새를 세운 암본만 'spain'**을 빌렸다. 화면에서 세 세력이
            갈라져 보이게 하는 것이 목적이다. 근거 JSON의 art.flagTodo 참조.
-    style — 'levant'(황토벽·미나레트)를 무슬림 항구에, 'latin'(테라코타 지붕·종탑)을
-           샴·버마와 포르투갈령 암본에 썼다. 야자 지붕과 다층 목조 모스크, 금박 쁘랑은
-           아직 화풍이 없다(styleTodo).
+    style — 'malay'(야자 이엉 고상가옥·다층 목조 므루·정글 구릉·대나무 부두)가 이 바다의 기본이고,
+           포르투갈이 요새를 세운 암본만 'colonial'이다. 금박 쁘랑과 체디의 샴·버마 화풍은
+           아직 없어 페구·아유타야도 malay를 쓴다(styleTodo).
     industry — 이 권역의 상한 3은 **자바 북안(투반·그레식)과 버마 페구**뿐이다.
            종(jong)을 짓던 곳이 거기이기 때문이다 — 믈라카는 세계 제일의 시장이었지만
            소금조차 실어다 먹던 중계항이라 큰 배를 짓는 곳이 아니었다.
@@ -47,50 +47,50 @@ export const CITIES = [
   // ── 뭍의 왕국: 버마·샴 ────────────────────────────────────
   // 페구는 버마 티크로 종(jong)을 지어 팔던 곳이다. 인도양 쪽 관문이라 아체와만 잇는다.
   // 아유타야는 강을 한참 거슬러 올라간 내륙 수도 — 왕실이 교역을 독점했다.
-  { id: 'pegu',        name: '페구',       area: '버마',         style: 'latin',  x: 40,  y: 32,  flag: 'hafsid',  seed: 6101, size: 2, industry: 3 },
-  { id: 'ayutthaya',   name: '아유타야',   area: '샴',           style: 'latin',  x: 104, y: 38,  flag: 'hafsid',  seed: 6102, size: 3, industry: 0 },
-  { id: 'patani',      name: '파타니',     area: '반도 동안',    style: 'levant', x: 126, y: 66,  flag: 'ottoman', seed: 6103, size: 2, industry: 2 },
+  { id: 'pegu',        name: '페구',       area: '버마',         style: 'malay',    x: 40,  y: 32,  flag: 'hafsid',  seed: 6101, size: 2, industry: 3 },
+  { id: 'ayutthaya',   name: '아유타야',   area: '샴',           style: 'malay',    x: 104, y: 38,  flag: 'hafsid',  seed: 6102, size: 3, industry: 0 },
+  { id: 'patani',      name: '파타니',     area: '반도 동안',    style: 'malay',    x: 126, y: 66,  flag: 'ottoman', seed: 6103, size: 2, industry: 2 },
 
   // ── 말라카 해협 — 세계의 목 ───────────────────────────────
   // 좁고 얕고 섬이 많아 **배가 반드시 뭍 가까이로 붙어야 지나간다.** 그 자리가
   // 오랑 라우트의 자리였다. 아체는 그 해협의 서쪽 문을 쥐고 포르투갈령 믈라카와
   // 평생 싸웠고, 후추를 홍해로 직송해 유럽의 향료 값을 흔들었다.
-  { id: 'aceh',        name: '아체',       area: '수마트라 북단', style: 'levant', x: 22,  y: 76,  flag: 'ottoman', seed: 6104, size: 3, industry: 2 },
-  { id: 'pasai',       name: '파세',       area: '수마트라 북안', style: 'levant', x: 38,  y: 95,  flag: 'ottoman', seed: 6105, size: 2, industry: 1 },
-  { id: 'perak',       name: '페락',       area: '반도 서안',    style: 'levant', x: 88,  y: 88,  flag: 'ottoman', seed: 6106, size: 1, industry: 1 },
+  { id: 'aceh',        name: '아체',       area: '수마트라 북단', style: 'malay',    x: 22,  y: 76,  flag: 'ottoman', seed: 6104, size: 3, industry: 2 },
+  { id: 'pasai',       name: '파세',       area: '수마트라 북안', style: 'malay',    x: 38,  y: 95,  flag: 'ottoman', seed: 6105, size: 2, industry: 1 },
+  { id: 'perak',       name: '페락',       area: '반도 서안',    style: 'malay',    x: 88,  y: 88,  flag: 'ottoman', seed: 6106, size: 1, industry: 1 },
   // ★ 관문 항구. `OCEAN_LANES`의 nagapattinam~melaka(인도)와 melaka~guangzhou(중국)가
   //   둘 다 여기 닿는다. 이 id를 바꾸면 두 대양이 끊긴다.
   //   믈라카 자체는 아무것도 나지 않는다 — 생선 절일 소금까지 실어다 썼다.
   //   그 성격을 지키려고 supply를 주석(tin) 하나로만 뒀다(몰타와 같은 처리).
-  { id: 'melaka',      name: '믈라카',     area: '말라카 해협',  style: 'levant', x: 106, y: 104, flag: 'ottoman', seed: 6107, size: 3, industry: 2 },
-  { id: 'johor',       name: '조호르',     area: '반도 남단',    style: 'levant', x: 124, y: 118, flag: 'ottoman', seed: 6108, size: 2, industry: 2, prizeYard: true },
+  { id: 'melaka',      name: '믈라카',     area: '말라카 해협',  style: 'malay',    x: 106, y: 104, flag: 'ottoman', seed: 6107, size: 3, industry: 2 },
+  { id: 'johor',       name: '조호르',     area: '반도 남단',    style: 'malay',    x: 124, y: 118, flag: 'ottoman', seed: 6108, size: 2, industry: 2, prizeYard: true },
 
   // ── 자바·순다 — 쌀과 배와 중개 ────────────────────────────
   // 자바는 향료를 **먹는 곳이 아니라 나르는 곳**이다. 말루쿠에서 정향을 실어다
   // 믈라카에 넘기고, 대신 쌀을 동쪽 섬으로 올려 보냈다. 그래서 여기에는
   // 정향 수요를 두지 않았다 — 중개자가 소비자가 되면 향료가 자바에서 끝나 버린다.
-  { id: 'banten',      name: '반텐',       area: '순다',         style: 'levant', x: 150, y: 170, flag: 'ottoman', seed: 6109, size: 3, industry: 2 },
-  { id: 'sundakelapa', name: '순다칼라파', area: '순다',         style: 'levant', x: 186, y: 178, flag: 'ottoman', seed: 6110, size: 2, industry: 1 },
-  { id: 'tuban',       name: '투반',       area: '자바 북안',    style: 'levant', x: 232, y: 170, flag: 'ottoman', seed: 6111, size: 2, industry: 3 },
-  { id: 'gresik',      name: '그레식',     area: '자바 북안',    style: 'levant', x: 252, y: 178, flag: 'ottoman', seed: 6112, size: 2, industry: 3 },
+  { id: 'banten',      name: '반텐',       area: '순다',         style: 'malay',    x: 150, y: 170, flag: 'ottoman', seed: 6109, size: 3, industry: 2 },
+  { id: 'sundakelapa', name: '순다칼라파', area: '순다',         style: 'malay',    x: 186, y: 178, flag: 'ottoman', seed: 6110, size: 2, industry: 1 },
+  { id: 'tuban',       name: '투반',       area: '자바 북안',    style: 'malay',    x: 232, y: 170, flag: 'ottoman', seed: 6111, size: 2, industry: 3 },
+  { id: 'gresik',      name: '그레식',     area: '자바 북안',    style: 'malay',    x: 252, y: 178, flag: 'ottoman', seed: 6112, size: 2, industry: 3 },
 
   // ── 보르네오·술라웨시 ─────────────────────────────────────
   // 브루나이는 장뇌와 동굴 제비집이 나가는 항구, 마카사르는 **누구에게나 열린 자유항**이다.
   // 마카사르가 이 바다에서 갖는 뜻은 향료를 대는 것이 아니라 **말루쿠에 쌀을 대는 것**이었다.
-  { id: 'brunei',      name: '브루나이',   area: '보르네오',     style: 'levant', x: 250, y: 96,  flag: 'ottoman', seed: 6113, size: 2, industry: 2 },
-  { id: 'makassar',    name: '마카사르',   area: '술라웨시',     style: 'levant', x: 300, y: 140, flag: 'ottoman', seed: 6114, size: 2, industry: 2 },
+  { id: 'brunei',      name: '브루나이',   area: '보르네오',     style: 'malay',    x: 250, y: 96,  flag: 'ottoman', seed: 6113, size: 2, industry: 2 },
+  { id: 'makassar',    name: '마카사르',   area: '술라웨시',     style: 'malay',    x: 300, y: 140, flag: 'ottoman', seed: 6114, size: 2, industry: 2 },
 
   // ── 향료제도(말루쿠) — 세계에서 여기서만 난다 ──────────────
   // 작고 멀고 값비싼 섬들이다. size 1 · industry 0~1이 그 성격이다.
   // 테르나테와 티도레는 마주 보는 두 화산섬이고 서로를 평생 쳤다. 반다는 육두구가 나는
   // **세계 유일의 곳**인데 인구가 3천이 못 됐고 쌀 한 톨 안 났다 — 몰타가 그렇듯,
   // 이 섬들은 먹을 것을 사들여야 산다. 그것이 이 바다에서 왕복이 성립하는 이유다.
-  { id: 'ternate',     name: '테르나테',   area: '말루쿠',       style: 'levant', x: 352, y: 62,  flag: 'ottoman', seed: 6115, size: 1, industry: 1 },
-  { id: 'tidore',      name: '티도레',     area: '말루쿠',       style: 'levant', x: 368, y: 78,  flag: 'ottoman', seed: 6116, size: 1, industry: 1 },
+  { id: 'ternate',     name: '테르나테',   area: '말루쿠',       style: 'malay',    x: 352, y: 62,  flag: 'ottoman', seed: 6115, size: 1, industry: 1 },
+  { id: 'tidore',      name: '티도레',     area: '말루쿠',       style: 'malay',    x: 368, y: 78,  flag: 'ottoman', seed: 6116, size: 1, industry: 1 },
   // 암본만 'spain'(포르투갈 대용) — 요새를 끼고 독점을 강요하던 항구다.
   // 마카사르의 자유항과 정면으로 대비시키려고 입항세도 이 권역 최고로 뒀다.
-  { id: 'ambon',       name: '암본',       area: '말루쿠',       style: 'latin',  x: 344, y: 126, flag: 'spain',   seed: 6117, size: 1, industry: 1 },
-  { id: 'banda',       name: '반다',       area: '반다 제도',    style: 'levant', x: 372, y: 150, flag: 'ottoman', seed: 6118, size: 1, industry: 0 },
+  { id: 'ambon',       name: '암본',       area: '말루쿠',       style: 'colonial', x: 344, y: 126, flag: 'spain',   seed: 6117, size: 1, industry: 1 },
+  { id: 'banda',       name: '반다',       area: '반다 제도',    style: 'malay',    x: 372, y: 150, flag: 'ottoman', seed: 6118, size: 1, industry: 0 },
 ];
 
 /* 항로 — 권역 안의 연결만 적는다. 다른 권역으로 나가는 선은 `js/regions/index.js: OCEAN_LANES`.

@@ -12,14 +12,15 @@
 // ★ hull은 `js/sprites/ship.js: HULLS`의 키여야 그림이 뜬다. **정크·아타케부네·판옥선의
 //   선형은 아직 없다.** 실루엣이 가장 가까운 것을 빌려 쓰고 무엇이 달라야 하는지는
 //   근거 JSON의 art.hullTodo에 적었다.
-// ★ `originFlag`를 전부 null로 둔 이유: FLAGS에 명·조선·일본 깃발이 없어 색만 비슷한
-//   것(venice·hafsid·genoa)을 빌려 썼는데, originFlag에 그대로 쓰면 **베네치아에서
-//   복선을, 튀니스에서 판옥선을 싸게 짓게 된다**(그 깃발을 단 항구는 요구등급 −1이다).
-//   남의 권역을 오염시키느니 그 혜택을 포기했다. 깃발이 생기면 art.flagTodo대로 채운다.
+// ★ `originFlag`는 이제 제 깃발이다 — 명=`ming` · 일본=`japan` · 조선=`joseon`.
+//   전에 전부 null이었던 것은 빌린 깃발(venice·hafsid·genoa)을 쓰면 **베네치아에서
+//   복선을, 튀니스에서 판옥선을 싸게 짓게 되기 때문**이었다(그 깃발을 단 항구는 요구등급 −1).
+//   ※ geo.js의 도시 깃발은 아직 빌린 값이라 지금은 어느 항구도 할인을 못 받는다.
+//     깃발 배선이 끝나면 광저우·나가사키·부산포에서 제 나라 배가 한 등급 싸진다.
 
 export const SHIPS = {
   sachuan: {
-    hull: 'hulk', name: '사선', origin: '명(강남)', originFlag: null, tier: 1, era: 'classic',
+    hull: 'hulk', name: '사선', origin: '명(강남)', originFlag: 'ming', tier: 1, era: 'classic',
     yards: ['ningbo', 'shuangyu', 'yuegang'],
     price: 1300,
     // 밑이 평평해 개펄에 얹혀도 넘어지지 않는다 — 강어귀와 모래톱이 많은 중국 연안에서
@@ -29,7 +30,7 @@ export const SHIPS = {
     desc: '밑이 평평한 연안 정크. 개펄에 얹혀도 넘어지지 않아 강어귀를 마음대로 드나든다. 외해로 나가면 옆으로 밀린다.',
   },
   sekibune: {
-    hull: 'galley', name: '세키부네', origin: '일본', originFlag: null, tier: 1, era: 'classic',
+    hull: 'galley', name: '세키부네', origin: '일본', originFlag: 'japan', tier: 1, era: 'classic',
     yards: ['hakata', 'hirado', 'bonotsu'],
     price: 2300,
     // 노가 주력이고 돛은 네모 한 장이라 맞바람에 거의 못 간다. 대신 좁은 물목에서 빠르고
@@ -39,7 +40,7 @@ export const SHIPS = {
     desc: '노로 가는 일본의 중형 군선. 좁은 물목에서 빠르고 배를 붙여 뛰어드는 싸움에 맞다. 맞바람에는 거의 못 간다.',
   },
   panokseon: {
-    hull: 'frigate', name: '판옥선', origin: '조선', originFlag: null, tier: 2, era: 'classic',
+    hull: 'frigate', name: '판옥선', origin: '조선', originFlag: 'joseon', tier: 2, era: 'classic',
     yards: ['busanpo'],
     price: 4000,
     // 1555년에 처음 지었다. 길이 스물몇~서른몇 미터에 한쪽 노가 여덟에서 열, 격군과
@@ -50,7 +51,7 @@ export const SHIPS = {
     desc: '두 층 갑판에 총통을 늘어세운 조선의 주력 군선. 쇠못 대신 나무못을 박아 물을 먹을수록 단단해진다.',
   },
   fuchuan: {
-    hull: 'carrack', name: '복선', origin: '명(복건)', originFlag: null, tier: 2, era: 'classic',
+    hull: 'carrack', name: '복선', origin: '명(복건)', originFlag: 'ming', tier: 2, era: 'classic',
     yards: ['quanzhou', 'fuzhou', 'guangzhou'],
     price: 10500,
     // 유럽인이 소마(soma)라 부르던 원양 정크다. 400~500톤급이 남중국해를 상시로 오갔고,
@@ -63,7 +64,7 @@ export const SHIPS = {
     desc: '남중국해를 오가던 원양 정크. 격벽으로 칸을 나눠 한 칸이 새도 뜨고, 이만한 짐을 이만큼 적은 사람으로 나른다.',
   },
   atakebune: {
-    hull: 'galleon', name: '아타케부네', origin: '일본', originFlag: null, tier: 3, era: 'classic', requires: 'sekibune',
+    hull: 'galleon', name: '아타케부네', origin: '일본', originFlag: 'japan', tier: 3, era: 'classic', requires: 'sekibune',
     yards: ['sakai', 'hakata'],
     price: 19500,
     // 세키부네를 키워 널판으로 통째로 싸 버린 배. 떠다니는 성이라 튼튼하고 무섭지만
@@ -74,7 +75,7 @@ export const SHIPS = {
     desc: '널판으로 통째로 싸 버린 일본의 떠다니는 성. 화살도 총알도 튕겨 내지만, 그 덩치를 노와 돛 한 장으로 민다.',
   },
   shuinsen: {
-    hull: 'indiaman', name: '주인선', origin: '일본', originFlag: null, tier: 3, era: 'modern', requires: 'fuchuan',
+    hull: 'indiaman', name: '주인선', origin: '일본', originFlag: 'japan', tier: 3, era: 'modern', requires: 'fuchuan',
     yards: ['nagasaki', 'sakai', 'naha'],
     price: 26000,
     // 막부의 붉은 도장(朱印狀)을 받은 배만 바다로 나갈 수 있었다. 1604~1635년에 350척이

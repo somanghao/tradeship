@@ -27,24 +27,24 @@
 export const GOODS = [
   // 말라게타 후추(멜레게타 · "천국의 낟알") — 인도 후추가 비쌌던 14~15세기 유럽이
   // 값싼 대용으로 사갔다. 후추 대용품이었으므로 향신료(×16.5)의 1/3로 잡는다.
-  { id: 'melegueta', name: '말라게타',   base: 110, icon: 'spice',    bulk: 1 },
+  { id: 'melegueta', name: '말라게타',   base: 110, icon: 'melegueta', bulk: 1 },
   // 야자유 — 기니 해안의 주식이자 등잔 기름. 산지에 흔해 지중해 올리브유(×2.6)보다 싸다.
-  { id: 'palmoil',   name: '야자유',     base: 40,  icon: 'oliveoil', bulk: 1 },
+  { id: 'palmoil',   name: '야자유',     base: 40,  icon: 'palmoil',  bulk: 1 },
   // 콜라 열매 — 서아프리카 내륙 교역의 축. 숲에서 나 사헬로 올라가는 각성제이고,
   // 상하기 쉬워 산지에서 멀어질수록 값이 뛴다. 곡물의 3.5배로 잡았다.
-  { id: 'kola',      name: '콜라 열매',  base: 70,  icon: 'grain',    bulk: 1 },
+  { id: 'kola',      name: '콜라 열매',  base: 70,  icon: 'kola',     bulk: 1 },
   // 구리 — 카탕가의 십자 주괴가 콩고 강을 타고 내려오고, 반대로 라인란트에서 부어 온
   // 놋쇠 마닐라(팔찌 모양 주괴)가 금과 바뀌었다. 가공 전 금속이라 무기(×8.25)보다 싸다.
-  { id: 'copper',    name: '구리',       base: 120, icon: 'weapon',   bulk: 1 },
+  { id: 'copper',    name: '구리',       base: 120, icon: 'copper',   bulk: 1 },
   // 아프리카 면포 — 카보베르데의 줄무늬 판노스, 베냉의 무명, 모가디슈의 토브 베나디르를
   // 한 칸으로 묶었다. 기니 해안에서는 이것이 사실상 화폐 단위였다.
   // 비단(×21)의 1/4 — 사치품이 아니라 **결제 수단**이었다는 것이 이 값의 뜻이다.
-  { id: 'panos',     name: '아프리카 면포', base: 100, icon: 'silk',  bulk: 1 },
+  { id: 'panos',     name: '아프리카 면포', base: 100, icon: 'panos', bulk: 1 },
   // 거북등껍질 — 매부리바다거북의 등딱지. 라무·잔지바르가 인도와 중국으로 내보내던
   // 세공 재료다. 모피(×8.75)와 비슷한 급의 사치 재료로 잡았다.
-  { id: 'tortoise',  name: '거북등껍질', base: 185, icon: 'ivory',    bulk: 1 },
+  { id: 'tortoise',  name: '거북등껍질', base: 185, icon: 'tortoise', bulk: 1 },
   // 용연향 — 향수의 보류제. 부피 대비 값이 이 권역에서 가장 높다.
   // 다만 금괴(×35)보다 낮게 잡았다. 산지 배율을 낮게 준 물건을 최고가로 두면
   // 잔지바르 한 항구가 화폐 발행소가 된다 — 돈은 어렵게 벌려야 한다.
-  { id: 'ambergris', name: '용연향',     base: 560, icon: 'salt',     bulk: 1 },
+  { id: 'ambergris', name: '용연향',     base: 560, icon: 'ambergris', bulk: 1 },
 ];

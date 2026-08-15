@@ -17,13 +17,15 @@
 //
 // ★ hull은 `js/sprites/ship.js: HULLS`의 키여야 그림이 뜨는데, 다우·아우트리거 선형은
 //   아직 없다. 크기가 가장 가까운 것을 빌려 쓰고 art.hullTodo에 무엇이 달라야 하는지 적었다.
-// ★ originFlag는 전부 null이다. FLAGS에 인도 세력의 깃발이 없어 아무거나 빌려 놓으면
-//   "지중해의 오스만 항구가 벵골 배를 싸게 짓는다" 같은 엉뚱한 할인이 붙는다.
-//   원산지 할인은 포기하고 `yards`(전통 조선지 값 인하)로만 표현했다 — art.flagTodo 참조.
+// ★ originFlag는 이제 제 깃발이다 — 실론=`kotte` · 말라바르=`zamorin` · 구자라트=`gujarat`
+//   · 벵골=`bengal`. 전에 전부 null이었던 것은 빌린 깃발을 쓰면 "지중해의 오스만 항구가
+//   벵골 배를 싸게 짓는다" 같은 엉뚱한 할인이 붙었기 때문이다.
+//   ※ geo.js의 도시 깃발이 아직 빌린 값(ottoman·venice·spain)이라 지금은 할인이 붙지 않는다.
+//     그때까지는 `yards`(전통 조선지 값 인하)가 원산지를 표현한다.
 
 export const SHIPS = {
   yathra: {
-    hull: 'caravel', name: '야트라 도니', origin: '실론', originFlag: null, tier: 1, era: 'classic',
+    hull: 'caravel', name: '야트라 도니', origin: '실론', originFlag: 'kotte', tier: 1, era: 'classic',
     yards: ['galle', 'colombo', 'jaffna'],
     price: 1150,
     // 아우트리거를 단 원양 무역선이다. 현외부재가 복원력을 대신해 주므로
@@ -33,7 +35,7 @@ export const SHIPS = {
     desc: '현외부재를 단 실론의 무역선. 사람을 적게 먹고 얕은 물을 탄다. 대신 포를 실을 자리가 없다.',
   },
   pattamar: {
-    hull: 'fluyt', name: '파타마르', origin: '말라바르·콘칸', originFlag: null, tier: 1, era: 'classic',
+    hull: 'fluyt', name: '파타마르', origin: '말라바르·콘칸', originFlag: 'zamorin', tier: 1, era: 'classic',
     yards: ['calicut', 'cochin', 'cannanore', 'quilon'],
     price: 2400,
     // 구자라트에서 실론까지 쌀을 나르던 연안 화물선. 라틴세일 두세 장에
@@ -43,7 +45,7 @@ export const SHIPS = {
     desc: '쌀과 무명을 싣고 해안을 오르내리는 연안선. 값에 비해 잘 싣지만 외해로 나가면 약하다.',
   },
   galbat: {
-    hull: 'galley', name: '갈베트', origin: '구자라트', originFlag: null, tier: 2, era: 'classic',
+    hull: 'galley', name: '갈베트', origin: '구자라트', originFlag: 'gujarat', tier: 2, era: 'classic',
     yards: ['diu', 'chaul', 'calicut'],
     price: 2900,
     // 노와 라틴세일을 함께 쓰는 무장 연안선. 마라카르와 구자라트 사략이 이 배로
@@ -53,7 +55,7 @@ export const SHIPS = {
     desc: '노를 저어 대형선에 달라붙는 무장 연안선. 바람이 죽어도 나아가지만 화물칸이 없다시피 하다.',
   },
   balam: {
-    hull: 'hulk', name: '발람', origin: '벵골', originFlag: null, tier: 2, era: 'classic',
+    hull: 'hulk', name: '발람', origin: '벵골', originFlag: 'bengal', tier: 2, era: 'classic',
     yards: ['chittagong', 'satgaon'],
     price: 3600,
     // 벵골은 목재가 흔해 배를 세계에서 가장 싸게 지었다(16~17세기 연 22만 톤 규모 추정).
@@ -63,7 +65,7 @@ export const SHIPS = {
     desc: '벵골 삼각주에서 통째로 찍어 내는 값싼 화물선. 느리고 물러도 이 값에 이만큼 싣는 배가 없다.',
   },
   kotia: {
-    hull: 'carrack', name: '코티아', origin: '쿠치·구자라트', originFlag: null, tier: 2, era: 'classic',
+    hull: 'carrack', name: '코티아', origin: '쿠치·구자라트', originFlag: 'gujarat', tier: 2, era: 'classic',
     yards: ['cambay', 'surat', 'diu'],
     price: 10400,
     // 티크를 코이어로 꿰맨 원양 다우. 계절풍을 타고 동아프리카까지 갔다.
@@ -73,7 +75,7 @@ export const SHIPS = {
     desc: '티크를 밧줄로 꿰맨 원양 다우. 계절풍을 타면 빠르지만 거스르면 아예 못 간다.',
   },
   ghanjah: {
-    hull: 'indiaman', name: '간자', origin: '쿠치·구자라트', originFlag: null, tier: 3, era: 'classic', requires: 'kotia',
+    hull: 'indiaman', name: '간자', origin: '쿠치·구자라트', originFlag: 'gujarat', tier: 3, era: 'classic', requires: 'kotia',
     yards: ['surat', 'goa', 'chittagong'],
     price: 13600,
     // 다우 계보의 끝. 포르투갈이 온 뒤 고물 누각과 조각 장식이 갈레온식으로 바뀐다.

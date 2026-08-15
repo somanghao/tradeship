@@ -2,10 +2,1540 @@
   "region": "southamerica",
   "regionName": "남아메리카",
   "_읽는이에게": "남아메리카 권역의 사료 근거. 코드 정본은 js/regions/southamerica/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
+  "_이_바다에_대하여": [
+    "★ 이 권역의 뼈대는 두 대양이 서로 만나지 않는다는 것이다. 대서양 쪽(브라질·라플라타)과 태평양 쪽(페루·칠레)은 geo.js: ROUTES에서 한 줄도 이어지지 않고, 태평양으로 들어가는 문은 원양 항로 portobelo~callao(파나마 지협 육로 환적) 하나뿐이다. 마젤란 해협은 이 시대에 사실상 통과 불가에 가까웠다 — 1599년의 한 선단은 해협을 빠져나오는 데 넉 달이 걸렸고, 1584년 스페인이 해협에 세운 도시는 그해 겨울 굶어 죽어 이름이 기아항으로 바뀌었다.",
+    "★ 포토시~투쿠만~부에노스아이레스의 은길(노새길)은 실재했지만 항로로 긋지 않았다. 그으면 두 대양이 뭍으로 이어져 위 단절이 통째로 사라지기 때문이다. 대신 그 길의 결과만 남겼다 — 부에노스아이레스가 은을 supply 0.64로 내놓는다. 은은 이미 내려와 있고, 다만 그 길을 배로 갈 수는 없다.",
+    "★★ 사람을 교역품으로 넣지 않았다. 포토시의 은은 미타 강제노동과 원주민 인구 붕괴 위에서 났고(해마다 1만 3천 명이 끌려왔으며 성인 남자 일곱에 하나꼴이었다. 17세기 말까지 상페루 원주민 인구의 절반 가까이가 사라졌다), 브라질의 설탕과 살바도르 항구는 대서양 노예무역 위에서 굴러갔다. 아프리카 권역이 같은 문제를 만나 내린 판단을 그대로 따른다 — 화물칸에 싣고 시세 차익을 노리는 대상으로 만들면 게임이 그것을 오락으로 다루게 된다. 그래서 그 역사는 도시 blurb와 이 근거 파일에 정직하게 적되, 사고파는 규칙은 만들지 않는다. ★ 다음 사람이 이 판단을 모르고 되돌리지 않도록 여기 한 줄로 남긴다."
+  ],
   "version": 1,
-  "cities": {},
-  "routes": {},
-  "goods": {},
-  "ships": {},
-  "openQuestions": []
+  "cities": {
+    "recife": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "이 항구는 포르투갈령인데 FLAGS에 포르투갈 깃발이 아직 없다. 아프리카 권역의 선례를 따라 가장 가까운 이베리아 깃발 spain을 빌렸다(1580~1640년 두 왕관이 한 사람 것이었던 기간을 근거로 삼는다). art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "1541년 두아르치 코엘류가 제당 기계를 들여온 뒤 베베리비·카피바리비 강가가 통째로 사탕수수밭이 됐고, 1600~1650년에 설탕이 브라질 수출의 95%였다. 이 시대 세계 최대 산지라는 것을 supply 폭의 맨 아래 0.44로 표현했다.",
+          "sources": [
+            {
+              "title": "Recife",
+              "url": "https://en.wikipedia.org/wiki/Recife"
+            },
+            {
+              "title": "Colonial Brazil",
+              "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+            }
+          ]
+        },
+        "brazilwood": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "붉은 나무는 왕실 독점품이라 왕실 대리인이 항구에서 사들여 리스본행 배에 실었다. 페르남부쿠는 산지가 아니라 그 적출 창구라 사는 쪽에 뒀다. 값 자체의 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Brazilwood",
+              "url": "https://en.wikipedia.org/wiki/Brazilwood"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다. 제당소가 몰린 부유한 항구라 값을 높게 뒀다.",
+          "sources": []
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "올리브도 이 위도에서는 되지 않아 기름은 통째로 이베리아에서 왔다. 포도주와 함께 오는 짝이라 같은 급의 수요로 뒀다.",
+          "sources": []
+        }
+      }
+    },
+    "salvador": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "이 항구는 포르투갈령인데 FLAGS에 포르투갈 깃발이 아직 없다. 아프리카 권역의 선례를 따라 가장 가까운 이베리아 깃발 spain을 빌렸다(1580~1640년 두 왕관이 한 사람 것이었던 기간을 근거로 삼는다). art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "1549년 브라질의 첫 수도로 세워졌고 만 안쪽 헤콩카부의 제당 지대가 이 항구를 먹였다. 헤시피 다음가는 산지라 0.02만 위에 뒀다.",
+          "sources": [
+            {
+              "title": "Salvador, Bahia",
+              "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+            },
+            {
+              "title": "Colonial Brazil",
+              "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "바이아 담배는 설탕에 이은 두 번째 기둥이었고 아프리카행 배가 그것을 싣고 나갔다. ★ tobacco는 카리브 권역이 세계에 처음 들여온 품목이라 여기서는 supply로만 적는다. 값의 직접 사료는 없다.",
+          "sources": [
+            {
+              "title": "Salvador, Bahia",
+              "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+            }
+          ]
+        },
+        "brazilwood": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "왕실 독점품인 붉은 나무가 남쪽 해안에서 올라와 이 항구에서 리스본행 배에 실렸다. 산지가 아니라 집산지라 사는 쪽에 뒀다.",
+          "sources": [
+            {
+              "title": "Brazilwood",
+              "url": "https://en.wikipedia.org/wiki/Brazilwood"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다. 리스본과 루안다에서 오는 배가 닿는 자리라 이 권역에서 가장 값이 붙는다.",
+          "sources": [
+            {
+              "title": "Salvador, Bahia",
+              "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 아메리카가 은과 바꾸던 대표 공산품이다. 세비야에서 오는 함대의 되짐이 이것이라 왕복이 성립한다.",
+          "sources": []
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "올리브도 이 위도에서는 되지 않아 기름은 통째로 이베리아에서 왔다. 포도주와 함께 오는 짝이라 같은 급의 수요로 뒀다.",
+          "sources": []
+        }
+      }
+    },
+    "ilheus": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "이 항구는 포르투갈령인데 FLAGS에 포르투갈 깃발이 아직 없다. 아프리카 권역의 선례를 따라 가장 가까운 이베리아 깃발 spain을 빌렸다(1580~1640년 두 왕관이 한 사람 것이었던 기간을 근거로 삼는다). art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "brazilwood": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "1500~1530년대 브라질의 첫 경제가 통째로 붉은 나무 채취였고 그 나무가 나라 이름이 됐다. 일례우스는 세습 카피타니아 중 일찍 시들어 제당이 약한 대신 배후 대서양림이 그대로 남았다 — 이 권역에서 붉은 나무가 가장 싼 자리로 삼은 근거다.",
+          "sources": [
+            {
+              "title": "Brazilwood",
+              "url": "https://en.wikipedia.org/wiki/Brazilwood"
+            },
+            {
+              "title": "Colonial Brazil",
+              "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "밀은 안데스 고지와 사막 해안에서 나지 않는다. 산 위 도시와 사막 항구가 곡물을 사는 것은 그래서다. 숲과 제당밖에 없는 작은 항구라 먹을 것은 죄다 배로 들어온다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "화기와 날붙이는 이 대륙에서 만들지 못해 전량 수입이었다. 변방일수록 값이 붙는다. 붉은 나무를 노린 프랑스 배가 늘 어른거리던 해안이다.",
+          "sources": [
+            {
+              "title": "Brazilwood",
+              "url": "https://en.wikipedia.org/wiki/Brazilwood"
+            }
+          ]
+        }
+      }
+    },
+    "riodejaneiro": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "이 항구는 포르투갈령인데 FLAGS에 포르투갈 깃발이 아직 없다. 아프리카 권역의 선례를 따라 가장 가까운 이베리아 깃발 spain을 빌렸다(1580~1640년 두 왕관이 한 사람 것이었던 기간을 근거로 삼는다). art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "1565년 창건 뒤 남부의 제당이 이 만으로 모였지만 헤콩카부·페르남부쿠만큼 깊지는 않았다. 이 항구의 값어치는 산지가 아니라 남쪽 물길의 길목이라 배율을 중간에 뒀다.",
+          "sources": [
+            {
+              "title": "Rio de Janeiro",
+              "url": "https://en.wikipedia.org/wiki/Rio_de_Janeiro"
+            }
+          ]
+        },
+        "brazilwood": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "1555년 빌가뇽의 프랑스 남극 식민이 과나바라 만에 선 이유의 하나가 붉은 나무였다 — 그 해안이 채취지였다는 뜻이다. 일례우스보다는 뒤라 조금 비싸게 뒀다.",
+          "sources": [
+            {
+              "title": "Brazilwood",
+              "url": "https://en.wikipedia.org/wiki/Brazilwood"
+            },
+            {
+              "title": "Rio de Janeiro",
+              "url": "https://en.wikipedia.org/wiki/Rio_de_Janeiro"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "연안 제당과 소금절임에 소금이 들어간다. 브라질 해안에는 큰 염전이 없어 이베리아와 사막 해안에서 실어 왔다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "쇠와 못은 배를 고치고 수레를 짜고 갱을 파는 데 다 들어가는데 아메리카에 제철이 없었다. 유럽에서 오는 배의 밑짐이 대개 쇠였다.",
+          "sources": []
+        }
+      }
+    },
+    "santos": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "이 항구는 포르투갈령인데 FLAGS에 포르투갈 깃발이 아직 없다. 아프리카 권역의 선례를 따라 가장 가까운 이베리아 깃발 spain을 빌렸다(1580~1640년 두 왕관이 한 사람 것이었던 기간을 근거로 삼는다). art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "상비센치에서 사탕수수가 처음 성공했고 브라질 첫 제당소(엔제뉴 두스 에라주스)가 이 언저리에 섰다. 다만 뒤이어 북동부가 규모에서 크게 앞질렀으므로 값은 브라질 산지 중 가장 위에 뒀다.",
+          "sources": [
+            {
+              "title": "Colonial Brazil",
+              "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+            }
+          ]
+        },
+        "timber": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "뭍 안쪽 고원으로 오르는 문이라 대서양림의 단단한 목재가 강을 타고 내려왔다. 이 권역 목재의 두 산지 중 하나이고, 값은 과야킬(0.44)보다 위에 뒀다.",
+          "sources": []
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "연안 제당과 소금절임에 소금이 들어간다. 브라질 해안에는 큰 염전이 없어 이베리아와 사막 해안에서 실어 왔다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "화기와 날붙이는 이 대륙에서 만들지 못해 전량 수입이었다. 변방일수록 값이 붙는다. 내륙 원정대가 여기서 출발했다.",
+          "sources": [
+            {
+              "title": "Colonial Brazil",
+              "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        }
+      }
+    },
+    "colonia": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "이 항구는 포르투갈령인데 FLAGS에 포르투갈 깃발이 아직 없다. 아프리카 권역의 선례를 따라 가장 가까운 이베리아 깃발 spain을 빌렸다(1580~1640년 두 왕관이 한 사람 것이었던 기간을 근거로 삼는다). art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "hide": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "\"밀무역과 반다오리엔탈의 소 사냥이 이 식민지 경제의 두 기둥이었다\"는 서술이 그대로 근거다. 부에노스아이레스보다 작은 창구라 0.06 위에 뒀다.",
+          "sources": [
+            {
+              "title": "Colonia del Sacramento",
+              "url": "https://en.wikipedia.org/wiki/Colonia_del_Sacramento"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.18,
+          "verdict": "gameplay",
+          "basis": "1680년 포르투갈이 부에노스아이레스 맞은편에 일부러 세운 밀무역 기지라 유럽 물건을 은과 바꾸는 것이 존재 이유였다. ★ 이 권역에서 은을 사 주는 유일한 항구이되 demand 폭의 맨 아래 1.18로 눌렀다 — 더 올리면 포토시~콜로니아 왕복만으로 경제가 닫혀 세계 일주 항로가 필요 없어진다.",
+          "sources": [
+            {
+              "title": "Colonia del Sacramento",
+              "url": "https://en.wikipedia.org/wiki/Colonia_del_Sacramento"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 아메리카가 은과 바꾸던 대표 공산품이다. 세비야에서 오는 함대의 되짐이 이것이라 왕복이 성립한다. 강 건너로 넘길 유럽 물건이 곧 이 도시의 재고였다.",
+          "sources": [
+            {
+              "title": "Colonia del Sacramento",
+              "url": "https://en.wikipedia.org/wiki/Colonia_del_Sacramento"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        }
+      }
+    },
+    "buenosaires": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "tariff": {
+        "value": 0.03,
+        "verdict": "gameplay",
+        "basis": "★ 반대 방향의 오버라이드다. 규모 2의 기본율 4.5%를 3%로 내렸다 — 스페인이 이 항구를 공식 무역에서 배제하자 관에서 눈감아 주는 밀무역이 자리를 잡았고, 그 성격은 세율을 내리는 쪽으로만 표현할 수 있다.",
+        "sources": [
+          {
+            "title": "History of Buenos Aires",
+            "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+          }
+        ]
+      },
+      "goods": {
+        "hide": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "팜파스에 풀어 놓은 소가 야생으로 불어나 가죽과 수지가 이 도시의 주된 수출이 됐다 — 잡아서 벗기기만 하면 되는 물건이라 재료값이 사실상 0이다. 세계에서 가장 싼 가죽이라는 뜻으로 supply 폭의 맨 아래 0.44를 줬다.",
+          "sources": [
+            {
+              "title": "History of Buenos Aires",
+              "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+            }
+          ]
+        },
+        "silver": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "gameplay",
+          "basis": "★ 스페인이 모든 짐을 리마·파나마 경유로 묶자 이 항구는 관이 눈감아 주는 밀무역으로 먹고살았고, 그 밀무역의 알맹이가 포토시 은이었다. 다만 geo.js에서 포토시~투쿠만 노새길을 일부러 안 그었으므로(그으면 두 대양이 뭍으로 이어져 이 권역의 단절이 사라진다), 그 길의 결과만 여기 남긴다 — 은값 사다리(포토시 0.44 → 아리카 0.54 → 카야오 0.60)의 맨 위가 0.64다.",
+          "sources": [
+            {
+              "title": "History of Buenos Aires",
+              "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 아메리카가 은과 바꾸던 대표 공산품이다. 세비야에서 오는 함대의 되짐이 이것이라 왕복이 성립한다. 밀무역선이 싣고 오는 것이 바로 이 유럽 공산품이었다.",
+          "sources": [
+            {
+              "title": "History of Buenos Aires",
+              "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        },
+        "quina": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "열병 약인 키나 껍질은 유럽으로 나가야 값이 되는 물건이고, 리마·파나마를 거치지 않는 유일한 출구가 이 항구였다. 태평양에서 나 대서양으로 빠지는 이 흐름을 수요로 표현했다.",
+          "sources": [
+            {
+              "title": "Cinchona",
+              "url": "https://en.wikipedia.org/wiki/Cinchona"
+            },
+            {
+              "title": "History of Buenos Aires",
+              "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+            }
+          ]
+        }
+      }
+    },
+    "tucuman": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "hide": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "1565년 세운 이 도시는 부에노스아이레스에서 포토시로 오르는 길 위에 있어 짐승을 먹이고 몰던 고장이다. 확보한 문헌이 식민기 경제를 자세히 다루지 않아 라플라타 가죽 산지 중 가장 비싼 자리로만 뒀다.",
+          "sources": [
+            {
+              "title": "San Miguel de Tucumán",
+              "url": "https://en.wikipedia.org/wiki/San_Miguel_de_Tucum%C3%A1n"
+            }
+          ]
+        },
+        "timber": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "은길의 수레와 달구지를 짜는 목재가 이 고장의 물건이었다는 것은 개연이고 직접 사료는 확보하지 못했다. 배가 못 들어가는 끝자리라 값이 헐한 쪽에 뒀다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "쇠와 못은 배를 고치고 수레를 짜고 갱을 파는 데 다 들어가는데 아메리카에 제철이 없었다. 유럽에서 오는 배의 밑짐이 대개 쇠였다. 수레바퀴 테와 편자가 여기서 나가는 짐의 절반이다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "화기와 날붙이는 이 대륙에서 만들지 못해 전량 수입이었다. 변방일수록 값이 붙는다.",
+          "sources": []
+        }
+      }
+    },
+    "asuncion": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "yerbamate": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "예수회가 미시오네스의 감축지에서 마테를 재배해 상품으로 만들었고, \"널리 퍼진 소비가 마테를 담배를 비롯한 다른 물건 위의 파라과이 제일 상품으로 만들었다\". 이 권역 유일한 산지라 폭의 맨 아래를 줬다.",
+          "sources": [
+            {
+              "title": "Yerba mate",
+              "url": "https://en.wikipedia.org/wiki/Yerba_mate"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "화기와 날붙이는 이 대륙에서 만들지 못해 전량 수입이었다. 변방일수록 값이 붙는다. 강을 한참 거슬러 올라야 닿는 변방이라 값이 더 붙는다.",
+          "sources": [
+            {
+              "title": "Asunción",
+              "url": "https://en.wikipedia.org/wiki/Asunci%C3%B3n"
+            }
+          ]
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "쇠와 못은 배를 고치고 수레를 짜고 갱을 파는 데 다 들어가는데 아메리카에 제철이 없었다. 유럽에서 오는 배의 밑짐이 대개 쇠였다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        }
+      }
+    },
+    "callao": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "부왕령의 관문이라 알모하리파스고(수출입세)를 피할 길이 없었고, 상·하페루와 라플라타의 짐이 전부 여기를 지났다. 사료의 실제 세율을 확보하지 못해 수도 세관이라는 성격만 드러날 7%로 잡았다.",
+        "sources": [
+          {
+            "title": "Callao",
+            "url": "https://en.wikipedia.org/wiki/Callao"
+          }
+        ]
+      },
+      "goods": {
+        "silver": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "confirmed",
+          "basis": "\"페루 은은 태평양 항구 카야오에서 실려 파나마 지협을 노새로 넘었다.\" 광산이 아니라 적출항이라 포토시(0.44)·아리카(0.54)보다 한 계단 위에 뒀다 — 환적할 때마다 은값이 붙는다는 것이 이 사다리의 뜻이다.",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            },
+            {
+              "title": "Callao",
+              "url": "https://en.wikipedia.org/wiki/Callao"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 아메리카가 은과 바꾸던 대표 공산품이다. 세비야에서 오는 함대의 되짐이 이것이라 왕복이 성립한다. 부왕령의 관문이라 유럽 물건이 가장 깊게 팔린다.",
+          "sources": [
+            {
+              "title": "Callao",
+              "url": "https://en.wikipedia.org/wiki/Callao"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "아말감 정련에 쓰는 수은은 우앙카벨리카 것만으로 모자라 알마덴에서도 실어 왔고, 그 수은이 뭍에 오르는 자리가 카야오였다. 산지(우앙카벨리카 0.46)와 최종 수요지(포토시 1.46) 사이의 중간 수요로 뒀다.",
+          "sources": [
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            }
+          ]
+        },
+        "quina": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "로하에서 벗긴 껍질이 유럽으로 가려면 리마를 거쳐 파나마로 올라가야 했다. 소비지가 아니라 환적 수요라 폭의 아래쪽에 뒀다.",
+          "sources": [
+            {
+              "title": "Cinchona",
+              "url": "https://en.wikipedia.org/wiki/Cinchona"
+            }
+          ]
+        }
+      }
+    },
+    "arica": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "silver": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "\"1545년부터 아리카는 세계 최대 은광 포토시의 은을 내보내는 주된 적출 중심이 됐다.\" 광산에서 노새로 한 번 내려온 자리라 포토시(0.44)의 바로 위 계단이다.",
+          "sources": [
+            {
+              "title": "Arica, Chile",
+              "url": "https://en.wikipedia.org/wiki/Arica,_Chile"
+            },
+            {
+              "title": "Potosí",
+              "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "밀은 안데스 고지와 사막 해안에서 나지 않는다. 산 위 도시와 사막 항구가 곡물을 사는 것은 그래서다. 아타카마 사막 한복판이라 먹을 것이 한 톨도 안 난다.",
+          "sources": [
+            {
+              "title": "Arica, Chile",
+              "url": "https://en.wikipedia.org/wiki/Arica,_Chile"
+            }
+          ]
+        },
+        "potato": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "사막 항구라 식량이 전량 밖에서 왔고, 고원에서 내려오는 노새가 은을 지고 내려온 만큼 되짐으로 말린 감자를 지고 올라갔다. 광산 배급 식량의 소비지 가운데 하나로 뒀다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        }
+      }
+    },
+    "paita": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "quina": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "probable",
+          "basis": "키나 껍질은 에콰도르 로하의 나무에서 벗겼고(1638년 기록), 페루 북서안의 이 항구가 그 안쪽 고장의 바다 쪽 문이었다. 과야킬(0.56)보다 곁가지 창구라 값을 조금 위에 뒀다 — 적출 경로를 밝힌 직접 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Cinchona",
+              "url": "https://en.wikipedia.org/wiki/Cinchona"
+            },
+            {
+              "title": "Paita",
+              "url": "https://en.wikipedia.org/wiki/Paita"
+            }
+          ]
+        },
+        "salt": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "비가 거의 오지 않는 사막 해안이라 천일염이 나는 것은 지리적 필연이다. 다만 이 항구의 염전을 특정한 사료는 확보하지 못했다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "밀은 안데스 고지와 사막 해안에서 나지 않는다. 산 위 도시와 사막 항구가 곡물을 사는 것은 그래서다. 사막 해안의 물 긷는 자리라 먹을 것이 안 난다.",
+          "sources": [
+            {
+              "title": "Paita",
+              "url": "https://en.wikipedia.org/wiki/Paita"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다. 마닐라에서 돌아온 배가 여기서 물과 술을 채웠다.",
+          "sources": [
+            {
+              "title": "Paita",
+              "url": "https://en.wikipedia.org/wiki/Paita"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "화기와 날붙이는 이 대륙에서 만들지 못해 전량 수입이었다. 변방일수록 값이 붙는다. 코르세어가 하도 들이닥쳐 관청을 안쪽 피우라로 옮긴 항구다.",
+          "sources": [
+            {
+              "title": "Paita",
+              "url": "https://en.wikipedia.org/wiki/Paita"
+            }
+          ]
+        }
+      }
+    },
+    "guayaquil": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "timber": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "\"식민기에 과야킬은 태평양의 주된 스페인 조선소였다.\" 조선소가 여기 선 이유가 강 상류의 목재라 이 권역에서 목재가 가장 싼 자리로 삼았다.",
+          "sources": [
+            {
+              "title": "Guayaquil",
+              "url": "https://en.wikipedia.org/wiki/Guayaquil"
+            }
+          ]
+        },
+        "quina": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "키나 나무는 로하(오늘의 에콰도르)에서 났고 과야킬이 그 지방의 바다 쪽 관문이다. 이 권역 키나의 주된 산지로 뒀으나 적출량을 밝힌 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Cinchona",
+              "url": "https://en.wikipedia.org/wiki/Cinchona"
+            },
+            {
+              "title": "Guayaquil",
+              "url": "https://en.wikipedia.org/wiki/Guayaquil"
+            }
+          ]
+        },
+        "cacao": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "과야킬 카카오는 식민기 태평양 교역의 큰 축이었다. ★ cacao는 카리브 권역이 세계에 처음 들여온 품목이라 여기서는 supply로만 적는다. 수량·값의 직접 사료는 확보하지 못했다.",
+          "sources": []
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "쇠와 못은 배를 고치고 수레를 짜고 갱을 파는 데 다 들어가는데 아메리카에 제철이 없었다. 유럽에서 오는 배의 밑짐이 대개 쇠였다. 배를 짓는 항구라 못·닻·쇠붙이 수요가 이 권역에서 가장 크다.",
+          "sources": [
+            {
+              "title": "Guayaquil",
+              "url": "https://en.wikipedia.org/wiki/Guayaquil"
+            }
+          ]
+        },
+        "hide": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "조선소는 가죽을 많이 먹는다 — 펌프 가죽, 밧줄 보호대, 물통 마개가 다 가죽이다. 라플라타 가죽이 이 권역 안에서 흘러갈 자리를 여기 뒀다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        }
+      }
+    },
+    "valparaiso": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "grain": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "칠레 중부는 이 대륙 태평양 쪽에서 밀이 되는 거의 유일한 땅이고, 그 밀이 리마로 올라가는 것이 이 항구의 존재 이유였다. 식민기 내내 \"집 몇 채와 성당 하나\"였다는 서술과 어긋나지 않는다 — 산지가 아니라 적출항이다.",
+          "sources": [
+            {
+              "title": "Valparaíso",
+              "url": "https://en.wikipedia.org/wiki/Valpara%C3%ADso"
+            }
+          ]
+        },
+        "wool": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "목축이 중부 칠레의 다른 기둥이라 양털과 수지가 함께 북으로 올라갔다. 다만 이 항구의 양모 적출을 특정한 사료는 확보하지 못했다.",
+          "sources": []
+        },
+        "yerbamate": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "마테 소비는 파라과이를 넘어 \"스페인 왕실의 다른 곳까지\" 퍼졌고 칠레가 그 남쪽 끝 시장이었다. 산지(아순시온 0.44)에서 대륙을 가로질러 오는 물건이라 값이 높다.",
+          "sources": [
+            {
+              "title": "Yerba mate",
+              "url": "https://en.wikipedia.org/wiki/Yerba_mate"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 아메리카가 은과 바꾸던 대표 공산품이다. 세비야에서 오는 함대의 되짐이 이것이라 왕복이 성립한다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "화기와 날붙이는 이 대륙에서 만들지 못해 전량 수입이었다. 변방일수록 값이 붙는다. 드레이크(1578)와 호킨스(1594)가 이 항구에서 배를 털었다.",
+          "sources": [
+            {
+              "title": "Valparaíso",
+              "url": "https://en.wikipedia.org/wiki/Valpara%C3%ADso"
+            }
+          ]
+        }
+      }
+    },
+    "potosi": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "tariff": {
+        "value": 0.09,
+        "verdict": "gameplay",
+        "basis": "왕실은 은에 왕의 5분의 1(퀸토 레알, 20%)을 물렸고 그 세는 실제로 수은 소비량으로 산정했다. 게임은 매각에만 물어 20%를 그대로 옮기면 이 도시가 통째로 죽으므로, 이 권역에서 가장 무겁다는 것만 드러날 만큼 9%로 내려 잡았다.",
+        "sources": [
+          {
+            "title": "Huancavelica",
+            "url": "https://en.wikipedia.org/wiki/Huancavelica"
+          },
+          {
+            "title": "Potosí",
+            "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+          }
+        ]
+      },
+      "goods": {
+        "silver": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "★★ 세로 리코 한 산이 \"16세기 후반 세계에서 캔 은의 60%\"를 냈고, 최전성기 광석의 은 함량이 40%에 이르렀다. 이 게임에서 은을 가장 싸게 사는 유일한 자리이며, 그 원가가 있어야 포토시→아카풀코→마닐라→광저우 항로가 성립한다. supply 폭의 맨 아래 0.44다.",
+          "sources": [
+            {
+              "title": "Potosí",
+              "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+            },
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "confirmed",
+          "basis": "\"수은은 페루와 상페루 포토시 광석에서 은을 뽑는 데 반드시 있어야 했다.\" 1554년의 파티오법과 1609년 포토시에서 고안된 통 아말감법이 다 수은을 먹는다. 수은이 없으면 은은 돌덩이라는 뜻으로 이 게임에서 가장 높은 demand 배율을 줬다.",
+          "sources": [
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            },
+            {
+              "title": "Potosí",
+              "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+            }
+          ]
+        },
+        "coca": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "confirmed",
+          "basis": "펠리페 2세는 코카를 안데스 사람들에게 없어서는 안 될 것으로 인정하는 칙령을 냈고, 스페인 쪽은 노동량과 굶주림을 견디게 하려 그 소비를 오히려 부추긴 것으로 본다. 12만 명이 사는 광산 도시라 이 권역에서 코카의 최대 소비지다.",
+          "sources": [
+            {
+              "title": "Coca",
+              "url": "https://en.wikipedia.org/wiki/Coca"
+            },
+            {
+              "title": "Potosí",
+              "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+            }
+          ]
+        },
+        "yerbamate": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "마테는 파라과이에서 스페인령 전역으로 퍼졌고 포토시는 그 시대 이 대륙에서 가장 큰 소비 시장이었다. 다만 포토시로 들어간 수량을 밝힌 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Yerba mate",
+              "url": "https://en.wikipedia.org/wiki/Yerba_mate"
+            }
+          ]
+        },
+        "hide": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "갱에서 광석을 지고 오르는 자루와 밧줄, 도르래 띠가 다 가죽이었다. 노동자가 45~135kg을 지고 사다리를 올랐다는 서술이 그 소모의 규모를 짐작하게 한다 — 다만 가죽 반입량의 직접 사료는 없다.",
+          "sources": [
+            {
+              "title": "Potosí",
+              "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+            }
+          ]
+        }
+      }
+    },
+    "huancavelica": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "mercury": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "\"수은의 대부분은 1571년부터 1790년까지 생산됐고 140만 플라스크가 넘는다.\" 왕실이 이 광산을 \"왕관에서 가장 큰 보석\"으로 부른 이유가 그것이다. 이 권역 안에서 산지와 수요(포토시 1.46)가 맞물리는 드문 짝이라 폭의 아래쪽을 줬다.",
+          "sources": [
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            }
+          ]
+        },
+        "potato": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "해발 4,000m 광산 마을이라 곡식이 안 되고, 얼렸다 말린 감자(추뇨)가 광산 배급 식량이었다. 다만 반입량을 밝힌 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            }
+          ]
+        },
+        "coca": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "갱에 들어가기 전 죽은 자를 위한 미사를 올렸다고 할 만큼 사망률이 높은 수은 광산이었다. 포토시와 같은 이유로 코카를 사들이는 자리다.",
+          "sources": [
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            },
+            {
+              "title": "Coca",
+              "url": "https://en.wikipedia.org/wiki/Coca"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "밀은 안데스 고지와 사막 해안에서 나지 않는다. 산 위 도시와 사막 항구가 곡물을 사는 것은 그래서다.",
+          "sources": []
+        }
+      }
+    },
+    "cusco": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "wool": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "probable",
+          "basis": "잉카의 옛 서울이자 부왕령 첫 주교좌였고 \"농업과 목축과 광업, 그리고 스페인과의 교역으로 매우 번성했다\". 안데스 목축과 오브라헤(직조 공방)의 원료가 양털이라 산지로 뒀다 — 다만 적출 규모의 사료는 없다.",
+          "sources": [
+            {
+              "title": "Cusco",
+              "url": "https://en.wikipedia.org/wiki/Cusco"
+            }
+          ]
+        },
+        "coca": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "쿠스코 동쪽 골짜기가 코카밭이고 그 잎이 광산으로 올라갔다. 융가스를 낀 라파스(0.44)보다는 뒤라 값을 조금 위에 뒀다.",
+          "sources": [
+            {
+              "title": "Coca",
+              "url": "https://en.wikipedia.org/wiki/Coca"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "밀은 안데스 고지와 사막 해안에서 나지 않는다. 산 위 도시와 사막 항구가 곡물을 사는 것은 그래서다. 해발 3,400m라 밀이 되지 않는다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다. 부왕령 첫 주교좌라 성찬용 수요가 따로 있었다.",
+          "sources": [
+            {
+              "title": "Cusco",
+              "url": "https://en.wikipedia.org/wiki/Cusco"
+            }
+          ]
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "쇠와 못은 배를 고치고 수레를 짜고 갱을 파는 데 다 들어가는데 아메리카에 제철이 없었다. 유럽에서 오는 배의 밑짐이 대개 쇠였다.",
+          "sources": []
+        }
+      }
+    },
+    "lapaz": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "스페인 부왕령의 항구라 spain이 맞는 값이다. 다만 부왕령 소속을 밝힌 1차 사료를 따로 확보하지 않아 개연으로 둔다.",
+        "sources": []
+      },
+      "goods": {
+        "coca": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "1548년 창건된 이 도시 바로 아래가 융가스 골짜기이고 거기가 코카밭이다. 산지에서 가장 가까운 시장이라 이 권역에서 코카가 가장 싼 자리로 삼았다.",
+          "sources": [
+            {
+              "title": "La Paz",
+              "url": "https://en.wikipedia.org/wiki/La_Paz"
+            },
+            {
+              "title": "Coca",
+              "url": "https://en.wikipedia.org/wiki/Coca"
+            }
+          ]
+        },
+        "potato": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "probable",
+          "basis": "알티플라노가 감자의 원산지이고, 얼렸다 말린 추뇨는 몇 해를 두어도 안 상해 광산으로 올라가는 배급 식량이 됐다. 이 권역 유일한 감자 산지로 뒀다 — 값의 직접 사료는 없다.",
+          "sources": []
+        },
+        "gold": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
+          "basis": "옛 이름 추키야푸가 \"금 밭\"이라는 뜻이고 \"그 고장 작은 강들에서 사금을 캔 것\"을 가리키는 것으로 본다. 광맥이 아니라 사금이라 산출이 얕으므로 supply 폭의 위쪽 0.70에 뒀다.",
+          "sources": [
+            {
+              "title": "La Paz",
+              "url": "https://en.wikipedia.org/wiki/La_Paz"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "밀은 안데스 고지와 사막 해안에서 나지 않는다. 산 위 도시와 사막 항구가 곡물을 사는 것은 그래서다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 아메리카가 은과 바꾸던 대표 공산품이다. 세비야에서 오는 함대의 되짐이 이것이라 왕복이 성립한다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다.",
+          "sources": []
+        }
+      }
+    }
+  },
+  "routes": {
+    "recife|salvador": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "브라질 북동안의 외해 구간. 붉은 나무가 왕실 독점품이라 그것을 실으려는 프랑스·네덜란드 배는 처음부터 밀무역선이거나 사략선이었고, 1630~54년에는 네덜란드가 이 해안을 통째로 차지했다. 지중해의 \"외해·깃발 적대\" 대역(6~8)의 중간에 놓았다.",
+      "sources": [
+        {
+          "title": "Brazilwood",
+          "url": "https://en.wikipedia.org/wiki/Brazilwood"
+        },
+        {
+          "title": "Recife",
+          "url": "https://en.wikipedia.org/wiki/Recife"
+        }
+      ]
+    },
+    "ilheus|salvador": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "만에서 만으로 넘어가는 짧은 연안이고 양단이 같은 깃발이라 지중해의 \"평범한 연안\"(4.0) 바로 위에 뒀다. 이 권역 대서양 쪽에서 가장 순한 구간이다.",
+      "sources": []
+    },
+    "ilheus|riodejaneiro": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "남으로 내려가는 긴 외해라 며칠 뭍이 안 보인다. 프랑스 배가 붉은 나무를 실으러 드나들던 바로 그 해안이라 헤시피~살바도르보다 조금 위에 뒀다.",
+      "sources": [
+        {
+          "title": "Brazilwood",
+          "url": "https://en.wikipedia.org/wiki/Brazilwood"
+        }
+      ]
+    },
+    "riodejaneiro|salvador": {
+      "risk": 8,
+      "verdict": "probable",
+      "basis": "일례우스를 건너뛰는 외해 지름길. 연안을 끼지 않고 곧장 지르는 길이라 같은 구간을 나눠 가는 것(4.5+7.0)보다 요율이 높다 — 짧아진 만큼 값을 문다.",
+      "sources": []
+    },
+    "riodejaneiro|santos": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "남부 연안. 브라질 해류를 타고 내려가는 짧은 구간이고 양단이 같은 깃발이라 평범한 연안 대역에 둔다.",
+      "sources": []
+    },
+    "colonia|santos": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "남대서양 외해를 지나 라플라타 어귀로 들어간다. 강어귀는 폭이 200km인데 수심이 얕아 진흙 여울에 걸리면 그것으로 끝이다 — 해적보다 뻘이 무서운 구간이라 사략 소굴 대역(9~11) 바로 아래에 뒀다.",
+      "sources": [
+        {
+          "title": "Colonia del Sacramento",
+          "url": "https://en.wikipedia.org/wiki/Colonia_del_Sacramento"
+        }
+      ]
+    },
+    "buenosaires|santos": {
+      "risk": 9,
+      "verdict": "probable",
+      "basis": "같은 길을 강어귀 더 깊이까지 밀고 들어간다. 이 권역 최고 요율이고 지중해의 바르셀로나~알제(9.0)와 같은 급이다 — 위험의 성격은 사략이 아니라 얕은 물이다.",
+      "sources": [
+        {
+          "title": "History of Buenos Aires",
+          "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+        }
+      ]
+    },
+    "buenosaires|colonia": {
+      "risk": 4,
+      "verdict": "probable",
+      "basis": "강 하나를 건너는 짧은 길인데 여울이 해마다 옮겨 다닌다. 밀무역선이 늘 오가던 물이라 지중해의 \"평범한 연안\"과 같은 값으로 뒀다.",
+      "sources": [
+        {
+          "title": "Colonia del Sacramento",
+          "url": "https://en.wikipedia.org/wiki/Colonia_del_Sacramento"
+        }
+      ]
+    },
+    "asuncion|buenosaires": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "파라나 강을 거슬러 오르는 뱃길이라 해적이 나오는 구간이 아니다. 1580년 후안 데 가라이가 아순시온에서 이 강을 타고 내려와 부에노스아이레스를 다시 세웠다.",
+      "sources": [
+        {
+          "title": "History of Buenos Aires",
+          "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+        },
+        {
+          "title": "Asunción",
+          "url": "https://en.wikipedia.org/wiki/Asunci%C3%B3n"
+        }
+      ]
+    },
+    "buenosaires|tucuman": {
+      "risk": null,
+      "verdict": "gameplay",
+      "basis": "노새길이라 해적이 없다. ★ 이 선은 은길(포토시행)의 첫 구간이지만 그 위로는 잇지 않았다 — 포토시까지 이으면 대서양과 태평양이 뭍으로 이어져 이 권역의 단절이 통째로 사라진다. 알고 끊어 둔 것이다.",
+      "sources": [
+        {
+          "title": "San Miguel de Tucumán",
+          "url": "https://en.wikipedia.org/wiki/San_Miguel_de_Tucum%C3%A1n"
+        }
+      ]
+    },
+    "guayaquil|paita": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "적도 부근의 연안 구간. 스페인이 독점한 바다라 지중해 기준이면 순한 축이지만, 훔볼트 해류를 거스르는 남행이 더뎌 평범한 연안보다 조금 위에 뒀다.",
+      "sources": [
+        {
+          "title": "Humboldt Current",
+          "url": "https://en.wikipedia.org/wiki/Humboldt_Current"
+        }
+      ]
+    },
+    "callao|paita": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "부왕령의 안뜰이다. 지협 하나로만 들어올 수 있는 바다라 1579년 드레이크가 나타나기 전까지 무장하지 않은 배가 다녔다 — 지중해의 \"평범한 연안\"과 나란히 둔 근거다.",
+      "sources": [
+        {
+          "title": "Callao",
+          "url": "https://en.wikipedia.org/wiki/Callao"
+        }
+      ]
+    },
+    "callao|guayaquil": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "파이타를 건너뛰는 외해 직항. 훔볼트 해류와 무역풍을 정면으로 받으며 남하해야 해 이 권역 태평양 쪽에서 가장 어려운 구간이다.",
+      "sources": [
+        {
+          "title": "Humboldt Current",
+          "url": "https://en.wikipedia.org/wiki/Humboldt_Current"
+        }
+      ]
+    },
+    "arica|callao": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "은을 실은 배가 다니는 구간이라 값이 붙는다. 드레이크·캐번디시·호킨스·샤프·댐피어가 차례로 아리카를 턴 것이 그 이유다.",
+      "sources": [
+        {
+          "title": "Arica, Chile",
+          "url": "https://en.wikipedia.org/wiki/Arica,_Chile"
+        }
+      ]
+    },
+    "arica|valparaiso": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "해류도 바람도 내내 북으로 가는 구간이라 남행이 유독 어렵다. 훔볼트 해류는 남위 45도에서 남위 4도까지 사철 북상하고 무역풍이 그것을 민다 — 이 권역 태평양 쪽 최고 요율의 근거다.",
+      "sources": [
+        {
+          "title": "Humboldt Current",
+          "url": "https://en.wikipedia.org/wiki/Humboldt_Current"
+        },
+        {
+          "title": "Valparaíso",
+          "url": "https://en.wikipedia.org/wiki/Valpara%C3%ADso"
+        }
+      ]
+    },
+    "callao|huancavelica": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "안데스를 오르는 노새길이라 해적 개념이 적용되지 않는다. 안전하다는 뜻은 아니다 — 해발 4,000m를 넘나드는 길에서 짐승과 사람이 숱하게 죽었지만 그것은 다른 층위의 사고다.",
+      "sources": [
+        {
+          "title": "Huancavelica",
+          "url": "https://en.wikipedia.org/wiki/Huancavelica"
+        }
+      ]
+    },
+    "cusco|huancavelica": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "같은 안데스 노새길이다. 산 위 도시끼리는 배가 다니지 않는다.",
+      "sources": []
+    },
+    "cusco|lapaz": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "같은 안데스 노새길. 라파스는 \"포토시·오루로에서 리마로 가는 상로가 만나는 자리\"에 세운 도시다.",
+      "sources": [
+        {
+          "title": "La Paz",
+          "url": "https://en.wikipedia.org/wiki/La_Paz"
+        }
+      ]
+    },
+    "lapaz|potosi": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "같은 안데스 노새길. 융가스의 코카와 알티플라노의 감자가 이 길로 광산에 올라갔다.",
+      "sources": [
+        {
+          "title": "La Paz",
+          "url": "https://en.wikipedia.org/wiki/La_Paz"
+        }
+      ]
+    },
+    "arica|potosi": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "★ 포토시 은이 바다로 나오는 문이다. \"1545년부터 아리카는 포토시의 은을 내보내는 주된 적출 중심이 됐다.\" 노새길이라 해적이 안 나오고, 대신 이 구간의 길이 자체가 은값에 얹힌다.",
+      "sources": [
+        {
+          "title": "Arica, Chile",
+          "url": "https://en.wikipedia.org/wiki/Arica,_Chile"
+        },
+        {
+          "title": "Potosí",
+          "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+        }
+      ]
+    }
+  },
+  "goods": {
+    "_읽는이에게": "base는 곡물 20닢 대비 사료 비율이다. 이 권역이 세계에 처음 들여오는 것은 다섯뿐이다 — 이 바다의 얼굴인 은(480·동아시아)·설탕(280·지중해)·수은(310·지중해), 그리고 소가죽(64)·담배(130)·카카오(150·이상 카리브)는 다른 권역이 먼저 정의했으므로 여기서는 trade.js의 배율로만 말한다. 새 다섯 종은 \"곡물의 몇 배였나\"를 밝힌 1차 가격표를 확보하지 못해 전부 probable이다 — 기존 눈금(올리브유 ×2.6 · 소방목 ×4 · 도자기 ×6.5 · 무기 ×8.25 · 상아 ×15 · 향신료 ×16.5 · 비단 ×21 · 은 ×24 · 금괴 ×35) 사이의 어느 칸에 놓이는지를 사료의 성격 서술로 정했다.",
+    "brazilwood": {
+      "base": 95,
+      "verdict": "probable",
+      "basis": "★ 이미 있는 소방목(sappanwood 80·×4)에 맞춰 잡았다 — 아시아에서 같은 붉은 염료를 내던 사촌 나무이고 둘 다 무게로 파는 통나무다. 파우 브라질 쪽이 염료가 진해 르네상스 유럽의 벨벳을 물들였고 왕실 독점품이었으므로 그보다 조금 위인 ×4.75로 뒀다. 실제 가격비를 밝힌 사료는 확보하지 못했다.",
+      "sources": [
+        {
+          "title": "Brazilwood",
+          "url": "https://en.wikipedia.org/wiki/Brazilwood"
+        }
+      ]
+    },
+    "yerbamate": {
+      "base": 72,
+      "verdict": "probable",
+      "basis": "\"널리 퍼진 소비가 마테를 담배를 비롯한 다른 물건 위의 파라과이 제일 상품으로 만들었다.\" 기호품이라 곡물보다 훨씬 비싸되 아시아 차(tea 100·×5)보다는 아래다 — 원거리 사치품이 아니라 이 대륙 안에서만 도는 물건이기 때문이다. ×3.6으로 뒀다.",
+      "sources": [
+        {
+          "title": "Yerba mate",
+          "url": "https://en.wikipedia.org/wiki/Yerba_mate"
+        }
+      ]
+    },
+    "quina": {
+      "base": 300,
+      "verdict": "probable",
+      "basis": "로하의 나무에서 벗긴 열병 약이다(1638년 기록, 1670년대에 유럽 약전에 오른다). 부피 대비 값이 극단적으로 높은 약재라 향신료(×16.5)와 나란한 ×15로 뒀다 — 상아와 같은 급이다. 값의 직접 사료는 확보하지 못했다.",
+      "sources": [
+        {
+          "title": "Cinchona",
+          "url": "https://en.wikipedia.org/wiki/Cinchona"
+        }
+      ]
+    },
+    "potato": {
+      "base": 26,
+      "verdict": "probable",
+      "basis": "★ 캐낸 감자가 아니라 **얼렸다 말린 감자(추뇨)**의 값이다. 그래야 4,000m 산 위 광산까지 노새로 올라가고 몇 해를 두어도 안 상한다. 그 가공분만큼 곡물(×1)보다 조금 위인 ×1.3에 뒀다 — 값싼 주식이라는 성격을 깨지 않는 선이다.",
+      "sources": []
+    },
+    "coca": {
+      "base": 90,
+      "verdict": "probable",
+      "basis": "펠리페 2세가 그 사용을 인정하는 칙령을 냈고 스페인 쪽은 노동을 짜내려 소비를 오히려 부추긴 것으로 본다. 식민지 페루 **안쪽** 교역에서 가장 큰 물건이었으므로 기호품 최상단인 ×4.5에 뒀다 — 마테(×3.6)보다 위, 도자기(×6.5)보다 아래다.",
+      "sources": [
+        {
+          "title": "Coca",
+          "url": "https://en.wikipedia.org/wiki/Coca"
+        }
+      ]
+    }
+  },
+  "ships": {
+    "_읽는이에게": "이 권역 배들의 15~17세기 제원(톤수·승조원·값)을 밝힌 사료를 거의 확보하지 못했다. 그래서 값과 수치는 지중해 사다리(코카 1,100/78칸 · 브리간틴 4,200/140칸 · 캐랙 9,800/240칸 · 갈레온 19,500/200칸)에 맞춘 것이고, 확보한 사료는 성격 서술뿐이다. 조선은 과야킬 한 곳에 몰아 두었다 — geo.js에서 industry 3인 유일한 도시다.",
+    "balsa": {
+      "price": 620,
+      "verdict": "probable",
+      "basis": "통나무 뗏목이라 재료값이 사실상 들지 않으므로 첫 배 밴드(1,100~1,400)보다 아래인 620에 뒀다. 화물 44칸으로 코카(78)의 절반을 조금 넘고, 포를 하나도 못 실어 사다리를 흔들지 않는다. 널판(과라)을 넣었다 빼며 방향을 잡는 항법은 유럽인이 이 대륙에서 처음 본 것인데, 그 배의 제원 사료는 확보하지 못했다.",
+      "sources": []
+    },
+    "caravelao": {
+      "price": 1300,
+      "verdict": "probable",
+      "basis": "★ 원래 이 자리는 파타체였는데 카리브 권역이 같은 이름의 배를 먼저 들여와 양보하고 브라질 쪽 토착 배로 갈아 끼웠다. 카라벨(1,400/90칸)을 줄인 배로 잡아 화물 84칸·포 5문에 발을 조금 얹었다. 카라벨랑이라는 배가 실재했다는 것 외의 제원 사료는 확보하지 못했다.",
+      "sources": []
+    },
+    "barcalonga": {
+      "price": 2300,
+      "verdict": "probable",
+      "basis": "흘수가 얕은 스페인 연안선. 라플라타 어귀가 폭 200km인데 수심이 얕아 큰 배가 진흙 여울에 걸린다 — 그 물에서 굴러가려면 이런 배라야 했다는 것이 이 배를 넣은 이유다. 지중해 브리간틴(4,200/140칸)보다 작고 싸게 두어 중형 밴드의 아래쪽에 놓았다.",
+      "sources": [
+        {
+          "title": "History of Buenos Aires",
+          "url": "https://en.wikipedia.org/wiki/History_of_Buenos_Aires"
+        }
+      ]
+    },
+    "sumaca": {
+      "price": 3600,
+      "verdict": "probable",
+      "basis": "\"리오데라플라타와 브라질 해안의 연안 무역에 매우 흔히 쓰였고 대양 횡단에도 상선·군함으로 쓰였다.\" 앞 돛대는 폴라크라, 뒷 돛대는 개프 세일만 다는 세로돛 위주라 적은 사람으로 굴러가는 것이 이 배의 정체성이다 — 화물 150 ÷ 최소승조원 9 = 16.7로 이 권역에서 가장 높고 플류트(18.9)에 가깝다. 톤수·승조원의 사료는 개별 사례(이타티 175톤·포 10문)뿐이다.",
+      "sources": [
+        {
+          "title": "Sumaca (es)",
+          "url": "https://es.wikipedia.org/wiki/Sumaca"
+        }
+      ]
+    },
+    "navio": {
+      "price": 21000,
+      "verdict": "probable",
+      "basis": "★ 대서양의 갈레온(19,500 · 200칸 · 포 24)과 성격을 갈랐다. 태평양은 지협 하나로만 들어올 수 있는 스페인의 호수라 여기 배는 싸울 일이 드물었으므로 포를 열둘로 덜고 화물칸을 250칸으로 키웠다 — \"안전한 바다에서는 배가 상선이 된다\"는 것이 이 값의 근거다. 과야킬이 태평양의 주된 스페인 조선소였다는 것 말고 제원 사료는 없다.",
+      "sources": [
+        {
+          "title": "Guayaquil",
+          "url": "https://en.wikipedia.org/wiki/Guayaquil"
+        }
+      ]
+    }
+  },
+  "art": {
+    "iconTodo": [
+      {
+        "good": "brazilwood",
+        "note": "브라질우드 — 껍질을 벗겨 붉은 심재가 드러난 통나무 두어 개. 지금은 fur(모피) 아이콘을 빌려 쓴다. 소방목(sappanwood)과 같은 그림을 쓰되 색을 더 붉게 가르면 좋겠다"
+      },
+      {
+        "good": "yerbamate",
+        "note": "예르바 마테 — 말린 잎을 채운 조롱박 잔과 금속 빨대(봄비야). 지금은 grain 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "quina",
+        "note": "키나 껍질 — 둥글게 말린 나무껍질 조각 다발. 지금은 spice 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "potato",
+        "note": "감자(추뇨) — 쭈글쭈글하게 마른 흰 덩이 여럿. 갓 캔 감자가 아니라 **얼렸다 말린** 것이라 회백색이고 작다. 지금은 grain 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "coca",
+        "note": "코카 잎 — 잎맥이 뚜렷한 타원 잎을 묶은 다발. 지금은 grain 아이콘을 빌려 쓴다"
+      }
+    ],
+    "hullTodo": [
+      {
+        "ship": "balsa",
+        "note": "발사 — 굵기가 다른 통나무 대여섯을 나란히 묶고 가운데에 돛대 하나. 선체가 없고 갑판이 곧 물 위다. 통나무 사이에 널판(과라)이 꽂혀 있는 것이 이 배의 표시다. 지금은 hulk 선체를 빌려 쓴다"
+      },
+      {
+        "ship": "caravelao",
+        "note": "카라벨랑 — 카라벨을 줄인 두 대박이. 라틴세일 위주라 rig 0.25로 뒀다. 지금은 caravel 선체를 그대로 쓴다(크기만 작게 그리면 된다)"
+      },
+      {
+        "ship": "barcalonga",
+        "note": "바르카 롱가 — 선체가 낮고 넓적하며 러그세일 두세 장. 흘수가 얕은 것이 그림에서도 보여야 한다. 지금은 brig 선체를 빌려 쓴다"
+      },
+      {
+        "ship": "sumaca",
+        "note": "수마카 — 두 대박이. 앞 돛대만 가로돛(폴라크라)이고 뒷 돛대는 개프 세일뿐이라 **뒤가 더 크고 세로돛**인 것이 표시다. 지금은 fluyt 선체를 빌려 쓴다"
+      },
+      {
+        "ship": "navio",
+        "note": "남해 나비오 — 갈레온인데 포문이 적고 선체가 두툼하다. 아메리카 목재로 지어 색이 붉은 기가 도는 것이 그림에서 갈리면 좋겠다. 지금은 galleon 선체를 그대로 쓴다"
+      }
+    ],
+    "flagTodo": [
+      {
+        "key": "portugal",
+        "note": "포르투갈 — 흰 바탕에 파란 방패 다섯(킨나스)과 성곽 테두리. 브라질 다섯 항구와 콜로니아가 이 깃발을 기다리고 있다. 지금은 spain을 빌려 쓴다"
+      }
+    ],
+    "styleTodo": [
+      {
+        "key": "andean",
+        "note": "안데스 — 흙벽돌(아도베) 벽과 붉은 기와, 잉카의 다듬은 돌담 위에 얹힌 스페인 성당. 나무가 거의 없고 하늘이 가깝다. 포토시·우앙카벨리카·쿠스코·라파스 넷이 이 화풍을 기다린다. 지금은 latin을 쓴다"
+      },
+      {
+        "key": "brazil",
+        "note": "브라질 — 회칠한 벽에 아줄레주 타일, 야자와 망그로브, 제당소의 굴뚝 연기. 지금은 latin을 쓴다"
+      }
+    ]
+  },
+  "openQuestions": [
+    "포토시 은의 연간 산출량을 무게로 밝힌 값을 확보하지 못했다(확보한 것은 \"16세기 후반 세계 은의 60%\"라는 몫과 누적 6만 톤뿐이다). 그 무게가 있으면 은값 사다리(포토시 0.44 → 아리카 0.54 → 카야오 0.60 → 부에노스아이레스 0.64)의 간격을 사료로 검산할 수 있다.",
+    "새 교역품 다섯 종 모두 \"곡물의 몇 배였나\"를 밝힌 1차 가격표를 확보하지 못해 base가 전부 probable이다. 특히 코카(90)와 예르바 마테(72)의 상대 순서는 성격 서술로만 정했다.",
+    "브라질 설탕의 연간 산출량과 제당소 수(페르남부쿠·바이아)의 숫자를 확보하지 못했다. 확보한 것은 \"1600~1650년 설탕이 브라질 수출의 95%\"라는 몫뿐이다.",
+    "★ tobacco(살바도르 supply 0.50)와 cacao(과야킬 supply 0.50)는 카리브 권역이 세계에 처음 들여온 품목이라 여기서는 supply로만 적었다. 카리브 쪽이 그 품목의 base를 고치면 이 두 배율도 함께 봐야 한다.",
+    "★ 소가죽(hide)은 처음에 이 권역에서 base 55로 정의했다가 카리브 권역이 먼저 들여온 것을 보고 물렸다(카리브 64). 라플라타가 세계에서 가장 싼 가죽 산지라는 것은 배율(부에노스아이레스 0.44)로만 말한다.",
+    "아리카·파이타의 염전과 발파라이소 양모 적출을 특정한 사료를 찾지 못해 두 supply가 probable이다.",
+    "투쿠만의 식민기 경제(노새·달구지·목화 직물, 포토시 시장 의존)를 다룬 사료를 확보하지 못했다 — 확보한 문헌은 독립기 이후에 치우쳐 있다.",
+    "키나 껍질은 1638년에 처음 기록되고 1670년대에 유럽 약전에 오른다. 이 프로젝트가 연도를 고정하지 않으므로 넣었지만, 다른 품목보다 확실히 늦은 물건이라는 것은 알고 둔다."
+  ]
 }

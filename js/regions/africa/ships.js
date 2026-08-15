@@ -26,7 +26,7 @@ export const SHIPS = {
     // 기니 해안의 대형 카누. 유럽 배가 파도를 못 넘어 정박한 채 짐을 부릴 때
     // 그 짐을 뭍으로 나른 것이 이 배다. 파도 위에서만큼은 어떤 유럽선보다 빨랐다.
     // 첫 배 밴드(1,100~1,400)보다 싸지만 화물칸이 3분의 1이라 사다리를 흔들지 않는다.
-    hull: 'galley', name: '대형 카누', origin: '기니 해안', originFlag: 'hafsid',
+    hull: 'galley', name: '대형 카누', origin: '기니 해안', originFlag: 'benin',
     tier: 1, era: 'classic', requires: null,
     yards: ['elmina', 'axim', 'gwato', 'luanda'],
     price: 780,
@@ -76,12 +76,12 @@ export const SHIPS = {
     // 큰 다우의 승조원이 서른 남짓이었다 — 화물 178을 최소 12명으로 나르는 것이
     // 이 배의 정체성이다(화물÷인원 14.8. 코카 13 · 플류트 18.9 사이).
     // 대신 포는 넷뿐이다. 이 바다에서 다우는 싸우는 배가 아니었다.
-    // ★ originFlag를 일부러 null로 뒀다. hafsid를 달면 요구 공업력이 1로 내려가는데,
-    //   그 깃발은 스와힐리 술탄국과 **베냉 왕국**이 함께 빌려 쓰는 임시 깃발이라
-    //   그웨이토(강어귀 카누 항구)에서 원양 다우가 나오는 우스운 일이 생긴다.
-    //   null로 두면 공업력 2인 큰 조선지(몸바사·라무·모잠비크)에서만 나온다 — 그게 맞다.
-    //   포르투갈·스와힐리 깃발이 생기면 이 줄을 'swahili'로 고치면 된다.
-    hull: 'carrack', name: '바갈라', origin: '잔지바르·오만', originFlag: null,
+    // ★ originFlag는 'swahili'다. 전에 null이었던 것은 hafsid를 달면 스와힐리 술탄국과
+    //   **베냉 왕국**이 그 깃발을 함께 빌려 쓰던 탓에 그웨이토(강어귀 카누 항구)에서
+    //   원양 다우가 나왔기 때문이다. 이제 베냉은 제 깃발(benin)이 있으니 그 걱정이 없다.
+    //   ※ geo.js의 스와힐리 도시 깃발이 아직 hafsid라 지금은 할인이 붙지 않는다 —
+    //     깃발 배선이 끝나면 몸바사·잔지바르·라무에서 요구 공업력이 1로 내려간다.
+    hull: 'carrack', name: '바갈라', origin: '잔지바르·오만', originFlag: 'swahili',
     tier: 2, era: 'classic', requires: 'sambuk',
     yards: ['mombasa', 'zanzibar', 'lamu', 'mocambique'],
     price: 5200,

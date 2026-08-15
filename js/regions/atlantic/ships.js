@@ -12,8 +12,9 @@
 //   그 갈림길이 게임에서는 코그·홀크 계보(값싸고 많이 싣는다)와
 //   나우·크라벨 계보(무겁고 파도를 견딘다)로 갈라진다.
 //
-// ★ 한자 배(코그·홀크·크라벨)의 originFlag는 **null**이다. 한자는 나라가 아니라
-//   도시 동맹이라 제 깃발이 없었다 — "제 나라 배는 짓기 쉽다" 할 나라가 없다.
+// ★ 한자 배(코그·홀크·크라벨)의 originFlag는 `hanse`다. 한자는 나라가 아니라 도시 동맹이라
+//   통일기가 없었지만, 배가 단 적백 깃발이 곧 "이 배는 한자 것"이라는 표시였다.
+//   ※ geo.js의 한자 도시 깃발이 아직 hospitaller라 지금은 할인이 붙지 않는다.
 //
 // ★ 플류트는 이미 지중해 파일에 수입선으로 있다. 여기 다시 정의하지 않는다.
 //   대신 그 조상인 홀크를 두어 계보가 보이게 했다(홀크는 플류트보다 한 칸당 값이 비싸다 —
@@ -31,7 +32,7 @@ export const SHIPS = {
     desc: '연안을 도는 작은 잡화선. 볼품은 없지만 값이 싸고 선원이 적게 든다.',
   },
   cog: {
-    hull: 'hulk', name: '코그', origin: '한자', originFlag: null, tier: 1, era: 'classic',
+    hull: 'hulk', name: '코그', origin: '한자', originFlag: 'hanse', tier: 1, era: 'classic',
     yards: ['lubeck', 'hamburg', 'danzig', 'kobenhavn'],
     price: 1300,
     // 브레멘 코그(1380)가 23.3×7.6m에 90~130톤. 화물 1칸=밀 2톤이라 84칸≈168톤으로
@@ -42,7 +43,7 @@ export const SHIPS = {
     desc: '한자의 밑천이 된 상선. 느리고 뭉툭하지만 파도를 견디고 짐을 잘 싣는다.',
   },
   holk: {
-    hull: 'fluyt', name: '홀크', origin: '한자', originFlag: null, tier: 2, era: 'classic', requires: 'cog',
+    hull: 'fluyt', name: '홀크', origin: '한자', originFlag: 'hanse', tier: 2, era: 'classic', requires: 'cog',
     yards: ['danzig', 'lubeck', 'amsterdam'],
     price: 3000,
     // 14세기에 코그를 밀어낸 후계선. 탈린 앞바다에서 나온 난파선이 24.5×9×4m다.
@@ -90,7 +91,7 @@ export const SHIPS = {
     desc: '인도 항로를 오가던 대형 상선. 짐을 많이 싣고 파도를 잘 견딘다.',
   },
   kraweel: {
-    hull: 'galleon', name: '대형 크라벨', origin: '단치히', originFlag: null, tier: 3, era: 'modern', requires: 'holk',
+    hull: 'galleon', name: '대형 크라벨', origin: '단치히', originFlag: 'hanse', tier: 3, era: 'modern', requires: 'holk',
     yards: ['danzig', 'lubeck', 'amsterdam'],
     price: 21000,
     // 한자가 남쪽에서 카벨 공법을 들여와 지은 대형선. 이 계보의 끝이 700톤짜리

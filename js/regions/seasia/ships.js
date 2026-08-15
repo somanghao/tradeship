@@ -14,13 +14,15 @@
 // ★ hull은 `js/sprites/ship.js: HULLS`의 키여야 그림이 뜬다. 종·프라우·란차랑·코라코라·
 //   발랑가이는 하나도 없어서 **가장 가까운 것을 빌렸고**, 무엇이 달라야 하는지를
 //   근거 JSON의 art.hullTodo에 적어 뒀다.
-// ★ originFlag를 전부 null로 뒀다. 이 권역 항구의 깃발이 거의 다 'ottoman'이라
-//   originFlag를 달면 **요구 공업력이 1씩 내려가 어느 항구에서나 종을 짓게 된다.**
-//   "종은 자바 북안과 페구에서만 짓는다"는 이 바다의 성격이라 industry로만 가른다.
+// ★ originFlag는 자바 배(프라우·종)가 `majapahit`, 말레이 배(란차랑)가 `malacca`다.
+//   전에 전부 null이었던 것은 이 권역 항구가 거의 다 'ottoman'을 빌려 써서
+//   **어느 항구에서나 종을 짓게 되기 때문**이었다. 깃발이 갈린 지금은 그 걱정이 없다.
+//   ※ geo.js 배선이 끝나야 실제로 할인이 붙는다. 말루쿠(코라코라)와 루손(발랑가이)은
+//     아직 제 깃발이 없어 null 그대로다.
 
 export const SHIPS = {
   perahu: {
-    hull: 'caravel', name: '프라우', origin: '말레이·자바', originFlag: null, tier: 1, era: 'classic', requires: null,
+    hull: 'caravel', name: '프라우', origin: '말레이·자바', originFlag: 'majapahit', tier: 1, era: 'classic', requires: null,
     yards: ['melaka', 'johor', 'banten', 'pasai'],
     price: 1300,
     hp: 66, crew: 12, crewMax: 20, crewMin: 6, cargo: 88, guns: 3, speed: 1.30,
@@ -52,7 +54,7 @@ export const SHIPS = {
   lancaran: {
     // 노와 탄자세일을 같이 쓰는 말레이의 주력선. 짐배로도 싸움배로도 썼다.
     // 사료의 승조원은 150~200명이고 화물은 150톤 안팎 — 사람을 많이 먹는 배다.
-    hull: 'galley', name: '란차랑', origin: '말레이·아체', originFlag: null, tier: 2, era: 'classic', requires: null,
+    hull: 'galley', name: '란차랑', origin: '말레이·아체', originFlag: 'malacca', tier: 2, era: 'classic', requires: null,
     yards: ['aceh', 'johor', 'patani'],
     price: 3400,
     hp: 130, crew: 70, crewMax: 130, crewMin: 45, cargo: 120, guns: 10, speed: 1.30,
@@ -65,7 +67,7 @@ export const SHIPS = {
     //   대신 느리고(0.92) 포문이 적다 — 싸움배가 아니라 **거대한 짐배**다.
     //   화물 300 ÷ 최소인원 36 = 8.3. 코카(13)보다 낮고 갤리(1.2)보다 훨씬 높다.
     //   큰 선체를 다루는 데 손이 많이 갔던 배라 이 자리가 맞다.
-    hull: 'indiaman', name: '종', origin: '자바', originFlag: null, tier: 3, era: 'classic', requires: 'perahu',
+    hull: 'indiaman', name: '종', origin: '자바', originFlag: 'majapahit', tier: 3, era: 'classic', requires: 'perahu',
     yards: ['tuban', 'gresik', 'pegu'],
     price: 24000,
     hp: 260, crew: 90, crewMax: 180, crewMin: 36, cargo: 300, guns: 16, speed: 0.92,

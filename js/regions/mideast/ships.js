@@ -54,7 +54,7 @@ export const SHIPS = {
     desc: '홍해에서 잔지바르까지 어디서나 보이는 이 바다의 일꾼. 적은 선원으로 제법 싣지만 포문이 셋뿐이라 싸움은 못 한다.',
   },
   dhangi: {
-    hull: 'brig', name: '당기', origin: '말라바르(인도 건조)', originFlag: null, tier: 2, era: 'classic',
+    hull: 'brig', name: '당기', origin: '말라바르(인도 건조)', originFlag: 'zamorin', tier: 2, era: 'classic',
     yards: ['muscat', 'bahrain'],
     price: 4400,
     // 인도 티크로 지어 아랍 선주가 사 가던 원양 다우. 아라비아에는 나무가 없어

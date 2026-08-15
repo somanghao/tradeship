@@ -26,7 +26,9 @@
            `sprites/ship.js: FLAGS`에는 아랍·페르시아 깃발이 아직 없다. 그래서
            **오스만 세력권은 'ottoman', 걸프·페르시아 쪽은 'hafsid'(흰 바탕)**를 빌려
            적어도 화면에서 두 세력이 갈라져 보이게 했다. 근거 JSON의 art.flagTodo 참조.
-    style — 'levant'(황토벽·미나레트)뿐이다. 아라비아·페르시아 화풍은 아직 없다(styleTodo).
+    style — 기본은 'levant'(황토벽·미나레트). 산호석으로 지은 홍해 세 항구(수아킨·마사와·지다)만
+           'swahili'(산호석 흰 벽·평지붕)로 갈랐다 — 실제로 같은 재료·같은 인상이다.
+           로샨 발코니의 아라비아, 청록 타일의 페르시아 화풍은 아직 없다(styleTodo).
     industry — 이 권역의 상한은 **2**다. 여기는 다우를 짓던 바다이지 갈레온을 짓던 바다가
            아니다. 게다가 아라비아에는 배를 지을 나무가 없어 티크를 인도에서 실어 왔다 —
            "최상급 배는 여기서 못 짓는다"가 이 바다의 성격이다. */
@@ -34,42 +36,42 @@ export const CITIES = [
   // ── 홍해 서안(아프리카 쪽) ─────────────────────────────────
   // 수아킨은 산호섬 위에 통째로 지어진 항구다. 산호 미로를 지나야 들어가는 자리라
   // 적이 못 들어오는 대신 큰 배도 못 들어온다. 마사와는 에티오피아 고원의 바깥문.
-  { id: 'suakin',   name: '수아킨',     area: '누비아',       style: 'levant', x: 44,  y: 104, flag: 'ottoman', seed: 4101, size: 2, industry: 1 },
-  { id: 'massawa',  name: '마사와',     area: '에리트레아',   style: 'levant', x: 58,  y: 152, flag: 'ottoman', seed: 4102, size: 1, industry: 1 },
+  { id: 'suakin',   name: '수아킨',     area: '누비아',       style: 'swahili', x: 44,  y: 104, flag: 'ottoman', seed: 4101, size: 2, industry: 1 },
+  { id: 'massawa',  name: '마사와',     area: '에리트레아',   style: 'swahili', x: 58,  y: 152, flag: 'ottoman', seed: 4102, size: 1, industry: 1 },
 
   // ── 홍해 동안(아라비아 쪽) ─────────────────────────────────
   // 얀부는 메디나의 외항, 지다는 메카의 외항이다. 홍해 북쪽은 일 년 내내 북풍이 불어
   // 큰 배가 거슬러 올라가지 못했다 — 그래서 **지다가 대형선 항행의 북쪽 한계**였고
   // 거기서 짐을 내려 작은 배나 낙타로 넘겼다. 이 사실이 이 권역의 뼈대다.
-  { id: 'yanbu',    name: '얀부',       area: '히자즈',       style: 'levant', x: 62,  y: 66,  flag: 'ottoman', seed: 4103, size: 1, industry: 1 },
-  { id: 'jeddah',   name: '지다',       area: '히자즈',       style: 'levant', x: 76,  y: 108, flag: 'ottoman', seed: 4104, size: 3, industry: 1 },
-  { id: 'mokha',    name: '모카',       area: '예멘',         style: 'levant', x: 86,  y: 168, flag: 'ottoman', seed: 4105, size: 2, industry: 1 },
+  { id: 'yanbu',    name: '얀부',       area: '히자즈',       style: 'levant',  x: 62,  y: 66,  flag: 'ottoman', seed: 4103, size: 1, industry: 1 },
+  { id: 'jeddah',   name: '지다',       area: '히자즈',       style: 'swahili', x: 76,  y: 108, flag: 'ottoman', seed: 4104, size: 3, industry: 1 },
+  { id: 'mokha',    name: '모카',       area: '예멘',         style: 'levant',  x: 86,  y: 168, flag: 'ottoman', seed: 4105, size: 2, industry: 1 },
 
   // ── 아덴만·하드라마우트 ────────────────────────────────────
   // 아덴은 홍해의 문지기다. 사화산 분화구 안에 앉은 항구라 뭍에서 치기 어렵고,
   // 인도양에서 올라온 배는 여기서 계절풍을 갈아탔다. 시흐르는 유향의 적출항.
-  { id: 'aden',     name: '아덴',       area: '예멘',         style: 'levant', x: 112, y: 186, flag: 'ottoman', seed: 4106, size: 3, industry: 2 },
-  { id: 'shihr',    name: '시흐르',     area: '하드라마우트', style: 'levant', x: 176, y: 190, flag: 'hafsid',  seed: 4107, size: 1, industry: 1 },
+  { id: 'aden',     name: '아덴',       area: '예멘',         style: 'levant',  x: 112, y: 186, flag: 'ottoman', seed: 4106, size: 3, industry: 2 },
+  { id: 'shihr',    name: '시흐르',     area: '하드라마우트', style: 'levant',  x: 176, y: 190, flag: 'hafsid',  seed: 4107, size: 1, industry: 1 },
 
   // ── 오만·페르시아만 ────────────────────────────────────────
   // 마스카트는 이 바다에서 배를 가장 잘 짓던 곳이다(수르의 조선소). 호르무즈는
   // 물 한 방울 안 나는 민둥섬인데도 해협에 앉았다는 이유만으로 왕국이 됐다 —
   // 먹을 것과 마실 물까지 전부 배로 실어 왔다.
-  { id: 'muscat',   name: '마스카트',   area: '오만',         style: 'levant', x: 292, y: 168, flag: 'hafsid',  seed: 4108, size: 2, industry: 2 },
-  { id: 'hormuz',   name: '호르무즈',   area: '해협',         style: 'levant', x: 322, y: 134, flag: 'hafsid',  seed: 4109, size: 3, industry: 2 },
-  { id: 'julfar',   name: '줄파르',     area: '오만 해안',    style: 'levant', x: 300, y: 118, flag: 'hafsid',  seed: 4110, size: 1, industry: 1 },
-  { id: 'bahrain',  name: '바레인',     area: '진주 어장',    style: 'levant', x: 276, y: 102, flag: 'hafsid',  seed: 4111, size: 2, industry: 1 },
-  { id: 'qatif',    name: '카티프',     area: '알하사',       style: 'levant', x: 252, y: 84,  flag: 'hafsid',  seed: 4112, size: 1, industry: 1 },
-  { id: 'basra',    name: '바스라',     area: '이라크',       style: 'levant', x: 238, y: 52,  flag: 'ottoman', seed: 4113, size: 3, industry: 2 },
+  { id: 'muscat',   name: '마스카트',   area: '오만',         style: 'levant',  x: 292, y: 168, flag: 'hafsid',  seed: 4108, size: 2, industry: 2 },
+  { id: 'hormuz',   name: '호르무즈',   area: '해협',         style: 'levant',  x: 322, y: 134, flag: 'hafsid',  seed: 4109, size: 3, industry: 2 },
+  { id: 'julfar',   name: '줄파르',     area: '오만 해안',    style: 'levant',  x: 300, y: 118, flag: 'hafsid',  seed: 4110, size: 1, industry: 1 },
+  { id: 'bahrain',  name: '바레인',     area: '진주 어장',    style: 'levant',  x: 276, y: 102, flag: 'hafsid',  seed: 4111, size: 2, industry: 1 },
+  { id: 'qatif',    name: '카티프',     area: '알하사',       style: 'levant',  x: 252, y: 84,  flag: 'hafsid',  seed: 4112, size: 1, industry: 1 },
+  { id: 'basra',    name: '바스라',     area: '이라크',       style: 'levant',  x: 238, y: 52,  flag: 'ottoman', seed: 4113, size: 3, industry: 2 },
 
   // ── 뭍의 시장(industry 0 · 배가 못 닿는다) ─────────────────
   // 항구가 아니라 **대상로의 시장**이다. 관문 항구 하나에서만 이어 막다른 주머니로 뒀다.
   // 여기까지 짐을 들고 들어가면 항구보다 좋은 값을 받지만, 되돌아 나와야 한다.
-  { id: 'cairo',    name: '카이로',     area: '이집트',       style: 'levant', x: 30,  y: 52,  flag: 'ottoman', seed: 4114, size: 3, industry: 0 },
-  { id: 'damascus', name: '다마스쿠스', area: '샴',           style: 'levant', x: 118, y: 44,  flag: 'ottoman', seed: 4115, size: 2, industry: 0 },
-  { id: 'aleppo',   name: '알레포',     area: '샴',           style: 'levant', x: 150, y: 30,  flag: 'ottoman', seed: 4116, size: 3, industry: 0 },
-  { id: 'baghdad',  name: '바그다드',   area: '이라크',       style: 'levant', x: 196, y: 40,  flag: 'ottoman', seed: 4117, size: 2, industry: 0 },
-  { id: 'isfahan',  name: '이스파한',   area: '이란고원',     style: 'levant', x: 300, y: 46,  flag: 'hafsid',  seed: 4118, size: 3, industry: 0 },
+  { id: 'cairo',    name: '카이로',     area: '이집트',       style: 'levant',  x: 30,  y: 52,  flag: 'ottoman', seed: 4114, size: 3, industry: 0 },
+  { id: 'damascus', name: '다마스쿠스', area: '샴',           style: 'levant',  x: 118, y: 44,  flag: 'ottoman', seed: 4115, size: 2, industry: 0 },
+  { id: 'aleppo',   name: '알레포',     area: '샴',           style: 'levant',  x: 150, y: 30,  flag: 'ottoman', seed: 4116, size: 3, industry: 0 },
+  { id: 'baghdad',  name: '바그다드',   area: '이라크',       style: 'levant',  x: 196, y: 40,  flag: 'ottoman', seed: 4117, size: 2, industry: 0 },
+  { id: 'isfahan',  name: '이스파한',   area: '이란고원',     style: 'levant',  x: 300, y: 46,  flag: 'hafsid',  seed: 4118, size: 3, industry: 0 },
 ];
 
 /* 항로 — 이 바다는 **한 줄로 이어진 갈고리**다. 홍해를 내려와 바브엘만데브에서 꺾고

@@ -29,26 +29,26 @@
 
 export const GOODS = [
   // 조개돈 — 몰디브에서는 주워 담고 벵골·서아프리카에서는 돈이었다. 무게당 값은 소금보다도 싸다.
-  { id: 'cowrie',    name: '카우리 조개', base: 34,  icon: 'salt',     bulk: 1 },
+  { id: 'cowrie',    name: '카우리 조개', base: 34,  icon: 'cowrie',   bulk: 1 },
   // 티크 — 목재 없는 페르시아만·홍해가 인도에서 사 갔다. 부피만 크고 값은 얕은 화물.
-  { id: 'teak',      name: '티크 목재',   base: 70,  icon: 'fur',      bulk: 1 },
+  { id: 'teak',      name: '티크 목재',   base: 70,  icon: 'teak',     bulk: 1 },
   // 초석 — 화약의 원료. 벵골·비하르가 유럽 화약고를 먹였다.
-  { id: 'saltpetre', name: '초석',        base: 110, icon: 'wine',     bulk: 1 },
+  { id: 'saltpetre', name: '초석',        base: 110, icon: 'saltpetre', bulk: 1 },
   // 생강 — 말린 뿌리라 부피가 크고 후추의 절반쯤 값이었다. 향신료 중 가장 서민적인 물건.
-  { id: 'ginger',    name: '생강',        base: 120, icon: 'spice',    bulk: 1 },
+  { id: 'ginger',    name: '생강',        base: 120, icon: 'ginger',   bulk: 1 },
   // 면포 — 캘리코·친츠·모슬린. 이 바다의 주인공.
-  { id: 'calico',    name: '면포',        base: 145, icon: 'silk',     bulk: 1 },
+  { id: 'calico',    name: '면포',        base: 145, icon: 'calico',   bulk: 1 },
   // 후추 — 말라바르에서만 났고 유럽이 대양으로 나선 이유가 이것이다.
-  { id: 'pepper',    name: '후추',        base: 230, icon: 'spice',    bulk: 1 },
+  { id: 'pepper',    name: '후추',        base: 230, icon: 'pepper',   bulk: 1 },
   // 인디고 — 짙푸른 염료 덩이. 유럽의 대청(woad) 산업이 수입 금지로 막으려 들 만큼 세었다.
-  { id: 'indigo',    name: '인디고',      base: 260, icon: 'oliveoil', bulk: 1 },
+  { id: 'indigo',    name: '인디고',      base: 260, icon: 'indigo',   bulk: 1 },
   // 계피 — 실론 것이 세계 최상품이었다. 후추보다 귀하고 정향보다 흔했다.
-  { id: 'cinnamon',  name: '계피',        base: 300, icon: 'spice',    bulk: 1 },
+  { id: 'cinnamon',  name: '계피',        base: 300, icon: 'cinnamon', bulk: 1 },
   // ★ 진주(pearl)는 여기 없다. 중동 권역이 페르시아만 진주로 먼저 정의했고(base 540),
   //   `index.js`는 먼저 읽은 권역의 것을 남긴다. 마나르 만도 세계적 채취장이지만
   //   같은 물건이면 같은 id를 쓰는 것이 규약이라, 이 권역은 **trade.js의 supply**로만 낸다
   //   (자프나 0.56 · 나가파티남 0.60). 같은 이유로 말(horse)·은(silver)도 정의하지 않고
   //   demand로만 받는다 — 인도는 그 둘을 만드는 곳이 아니라 빨아들이는 곳이었다.
   // 다이아몬드 — 이 시대 세계에서 나는 곳은 골콘다뿐이었다. 이 권역의 한몫.
-  { id: 'diamond',   name: '다이아몬드',  base: 780, icon: 'glass',    bulk: 1 },
+  { id: 'diamond',   name: '다이아몬드',  base: 780, icon: 'diamond',  bulk: 1 },
 ];
