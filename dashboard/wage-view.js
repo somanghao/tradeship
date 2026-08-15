@@ -33,7 +33,7 @@ const BADGE = {
 /** 근거 JSON은 사람이 읽는 문서와 같은 문법으로 쓴다 — **강조**만 살려서 옮긴다 */
 const md = (s = '') => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 
-/** 문장형 설명. shared.mjs의 .legend는 flex(색 견본 나열용)라
+/** 문장형 설명. shared.js의 .legend는 flex(색 견본 나열용)라
     문장을 넣으면 낱말마다 14px씩 벌어진다 — 그래서 문단용을 따로 둔다. */
 const para = (html) => el('p', 'legend para', html);
 

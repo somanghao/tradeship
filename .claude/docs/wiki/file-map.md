@@ -29,7 +29,7 @@
 | `content/route-evidence.json` | 항로 위험도의 **근거 정본** — 항로별 `{risk, verdict, basis, sources[]}`. `risk`는 당대 해상보험 요율(%) | 수치 정본은 `map/geo.js: ROUTE_RISK`, 검사는 `tools/check-routes.mjs` |
 | `tools/check-evidence.mjs` | 코드(`CITY_TRADE`·깃발) ↔ 근거 JSON 정합 검사 | **실패**: 값 불일치·유령항목·'확인됨'인데 무출처. **경고**: 미조사·짧은 basis — 근거가 없다고 실패시키면 콘텐츠를 못 늘린다 |
 | `tools/check-routes.mjs` | `ROUTE_RISK` ↔ `route-evidence.json` 정합 + **"확률이 실제로 갈렸는가"** 검사 | 배선이 끊겨 전 항로가 같은 확률이면 exit 1 |
-| `content/wage-evidence.json` | 부관·선원 보수의 **근거 정본** — 사료 앵커(배율)·발견·판정 | 수치 정본은 `data.js: OFFICER`·`state.js: CREW_WAGE`, 검사는 `tools/check-wages.mjs` |
+| `content/wage-evidence.json` | 부관·선원 보수의 **근거 정본** — 사료 앵커(배율)·발견·판정 | 수치 정본은 `data.js: OFFICER`·`data.js: CREW_WAGE`(튜닝 상수 절), 검사는 `tools/check-wages.mjs` |
 | `content/goods-evidence.json` | **교역품 물가**의 근거 — 밀·소금·기름·와인·후추 사료가, 화물 1칸의 실물 정의, **대조 2축의 정본** | 검사 `tools/check-prices.mjs` |
 | `content/asset-evidence.json` | **선박·부동산**의 근거 — 캐랙 건조비·갤리·집세·주택값 + "선원 연봉의 몇 배" 지표 | 부동산은 아직 게임 기능이 아니라 스케일 기준점 |
 | `content/upkeep-evidence.json` | **유지비·위험비용**의 근거 — 선체/무장 유지, 적하보험 요율, 화물 유인 | 임금을 내린 대신 압박을 옮긴 자리 |
