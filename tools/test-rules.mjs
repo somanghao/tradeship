@@ -285,6 +285,15 @@ resetGame();
   //   이 테스트는 "그렇게 두기로 한 결정"을 지키는 장치다 — 누가 고증을 이유로 되돌리면 여기서 걸린다.
   ok(CITY_BY_ID.rodos.flag === 'hospitaller',
      '로도스도 기사단령으로 둔다 — 연표를 지키려고 콘텐츠를 버리지 않는다(의도적 예외)');
-  ok(neighborsOf('malta').length === 2, `몰타는 해협 두 기슭과만 이어진다 (${neighborsOf('malta').map((i) => CITY_BY_ID[i].name).join(', ')})`);
+  /* ★ 지킬 것은 "이웃이 둘"이 아니라 **몰타를 거치지 않는 길이 살아 있다**는 것이다.
+     원래 이 테스트는 이웃 수를 셌는데, 지중해를 넓히며 메시나가 들어와 셋이 되자 걸렸다 —
+     메시나~몰타는 지리적으로 옳은 선이고 막을 이유가 없다. 진짜 위험은 다른 쪽이다:
+     팔레르모~튀니스 직항을 끊으면 해협 물동량이 **통째로** 몰타를 지나게 되어
+     곡물 흐름이 바뀌고, 몰타가 "들르는 선택지"가 아니라 관문이 된다.
+     몰타의 값어치는 항로가 아니라 나포선 경매(prizeYard)에 있다. */
+  ok(neighborsOf('palermo').includes('tunis'),
+     '몰타를 거치지 않는 해협 직항(팔레르모~튀니스)이 살아 있다 — 몰타는 관문이 아니라 선택지다');
+  ok(neighborsOf('malta').length <= 4,
+     `몰타는 해협 언저리에만 이어진다 (${neighborsOf('malta').map((i) => CITY_BY_ID[i].name).join(', ')})`);
   ok(CITY_BY_ID.malta.demand.grain > 1.4, '바위섬이라 곡물 수요가 가장 높다');
 }

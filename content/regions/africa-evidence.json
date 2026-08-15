@@ -2,10 +2,998 @@
   "region": "africa",
   "regionName": "아프리카",
   "_읽는이에게": "아프리카 권역의 사료 근거. 코드 정본은 js/regions/africa/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
+  "_노예무역에_대하여": "★ 다음 사람이 되돌리지 않도록 판단을 여기 남긴다. 이 시대 아프리카 해안 무역의 큰 축이 대서양 노예 무역이었다는 것은 역사적 사실이고, 아르갱·엘미나·상투메·루안다의 근거 서술에 그 사실을 그대로 적었다. 그러나 **사람을 GOODS에 올리지 않는다.** 화물칸에 싣고 시세 차익을 노리는 대상으로 만드는 순간 게임이 그것을 오락으로 다루게 되기 때문이다. 역사는 서술로 남기고 규칙은 만들지 않는다 — 이것은 고증의 누락이 아니라 의도한 설계다. 같은 취지가 js/regions/africa/goods.js 머리말에도 있다.",
   "version": 1,
-  "cities": {},
-  "routes": {},
-  "goods": {},
-  "ships": {},
-  "openQuestions": []
+
+  "cities": {
+    "arguin": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "포르투갈령이다. FLAGS에 포르투갈 깃발이 아직 없어 가장 가까운 이베리아 깃발을 빌렸다 — 1580~1640년 두 왕관이 한 사람 것이었던 기간을 명분으로 삼는다. art.flagTodo 참조.",
+        "sources": []
+      },
+      "goods": {
+        "salt": {
+          "side": "supply", "value": 0.52, "verdict": "probable",
+          "basis": "이 해안(아우릴·이질 일대)의 사하라 암염이 대상로의 남행 화물이었다. 팀북투 시장에서 소금이 금과 '거의 무게 대 무게'로 바뀌었다는 기록이 그 값어치를 말한다. 다만 아르갱 상관이 소금을 배로 실어 냈다는 직접 기록은 못 찾아 probable로 둔다.",
+          "sources": [
+            { "title": "Trans-Saharan trade", "url": "https://en.wikipedia.org/wiki/Trans-Saharan_trade" }
+          ]
+        },
+        "gold": {
+          "side": "supply", "value": 0.74, "verdict": "confirmed",
+          "basis": "1445년 엔히크가 세운 첫 해외 상관이고, 사하라 횡단 대상로가 대서양과 만나는 자리였다. 배율을 0.74로 높게 둔 것은 여기가 광산이 아니라 대상로의 **끝**이기 때문이다 — 낙타 등짐 값이 이미 얹혀 있다(운반비가 소금 값의 80%에 이르렀다는 기록이 있다).",
+          "sources": [
+            { "title": "Arguin", "url": "https://en.wikipedia.org/wiki/Arguin" },
+            { "title": "Trans-Saharan trade", "url": "https://en.wikipedia.org/wiki/Trans-Saharan_trade" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.34, "verdict": "probable",
+          "basis": "사하라 서쪽 끝의 모래섬이라 농사가 불가능하다. 상관 수비대와 상인의 식량을 전부 배로 들여왔다는 것은 지리에서 곧바로 따라온다. 수치 자체의 직접 근거는 없다.",
+          "sources": []
+        },
+        "kola": {
+          "side": "demand", "value": 1.30, "verdict": "probable",
+          "basis": "콜라는 기니 숲에서 나 사하라 남쪽 사헬로 올라가는 내륙 교역의 축이었다. 아르갱은 그 대상로가 바다와 만나는 자리이므로 콜라가 여기서 북으로 넘어갔을 개연성이 크다 — 다만 1600년 이전 콜라 교역의 문헌 근거는 확보하지 못했다.",
+          "sources": [
+            { "title": "Kola nut", "url": "https://en.wikipedia.org/wiki/Kola_nut" }
+          ]
+        },
+        "panos": {
+          "side": "demand", "value": 1.26, "verdict": "confirmed",
+          "basis": "포르투갈이 이 해안에서 금을 얻으려고 내놓은 것이 천·아마포·구슬·놋쇠 그릇이었다. 즉 면포는 이 상관에서 **화폐에 가까운 수입품**이었고, 그래서 산지(산티아구·모가디슈)와 반대 방향의 수요로 적었다.",
+          "sources": [
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+          ]
+        },
+        "melegueta": {
+          "side": "demand", "value": 1.22, "verdict": "probable",
+          "basis": "말라게타는 기니만에서 나 유럽으로도 가고 사하라를 넘어 북아프리카로도 올라갔다. 아르갱을 그 북행 통로의 바닷문으로 두었다 — 게임 안에서 이 품목이 죽지 않게 하려는 목적도 함께 있다.",
+          "sources": []
+        }
+      }
+    },
+
+    "santiago": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "포르투갈령 카보베르데다. 포르투갈 깃발이 FLAGS에 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조. 1462년 히베이라 그란지 정착 이후 줄곧 포르투갈 왕령이었다.",
+        "sources": [
+          { "title": "Cape Verde", "url": "https://en.wikipedia.org/wiki/Cape_Verde" }
+        ]
+      },
+      "goods": {
+        "panos": {
+          "side": "supply", "value": 0.50, "verdict": "probable",
+          "basis": "산티아구에서 짠 줄무늬 면포('판노스')가 기니 해안 교역의 결제 단위로 쓰였다는 것은 널리 알려진 사실이나, 확보한 개관 문헌은 이 섬이 '제조품·천'을 거래했다는 데까지만 적는다. 배율의 직접 근거는 없어 probable로 둔다.",
+          "sources": [
+            { "title": "Cape Verde", "url": "https://en.wikipedia.org/wiki/Cape_Verde" }
+          ]
+        },
+        "salt": {
+          "side": "supply", "value": 0.58, "verdict": "probable",
+          "basis": "카보베르데의 건조한 저지 섬들에는 자연 염전이 있었고 소금은 이 군도의 오랜 산물이다. 다만 15~16세기 수출 규모를 밝힌 사료는 확보하지 못해 아르갱(0.52)보다 약한 산지로 뒀다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand", "value": 1.32, "verdict": "probable",
+          "basis": "반건조 화산섬이라 곡물 자급이 되지 않았다. 열대 최초의 유럽 상설 정착지로 인구가 늘면서 식량은 계속 실어 와야 했다. 지리에서 따라오는 추정이다.",
+          "sources": [
+            { "title": "Cape Verde", "url": "https://en.wikipedia.org/wiki/Cape_Verde" }
+          ]
+        },
+        "wine": {
+          "side": "demand", "value": 1.26, "verdict": "gameplay",
+          "basis": "포르투갈 정착지이므로 와인 수요를 뒀다. 이 권역에서 와인 수요는 기독교 정착지(산티아구·상투메·루안다·모잠비크) 네 곳에만 있다 — 그 한 칸이 지도 위에서 두 세계를 가르는 장치다.",
+          "sources": []
+        },
+        "melegueta": {
+          "side": "demand", "value": 1.24, "verdict": "probable",
+          "basis": "기니 해안에서 모은 화물이 유럽행 배에 실리기 전 거쳐 가는 집산항이었다. 말라게타의 산지는 남쪽 기니만이므로 여기서는 사들이는 쪽이 된다. 집산 기능은 개연성이 크나 품목별 기록은 못 찾았다.",
+          "sources": []
+        },
+        "ceramic": {
+          "side": "demand", "value": 1.20, "verdict": "probable",
+          "basis": "섬에 가마가 없었고 생활 도기까지 본국에서 들어왔을 것으로 본다. 값을 1.20으로 얕게 둔 것은 이것이 사치 수요가 아니라 생필품 수요이기 때문이다. 직접 근거는 없다.",
+          "sources": []
+        }
+      }
+    },
+
+    "axim": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1515년 산투 안토니우 요새가 선 포르투갈령이다. 포르투갈 깃발이 없어 이베리아 깃발로 대신했다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+        ]
+      },
+      "tariff": null,
+      "goods": {
+        "gold": {
+          "side": "supply", "value": 0.52, "verdict": "confirmed",
+          "basis": "황금해안 서쪽 끝의 포르투갈 요새로 앙코브라 강이 아칸·덴키라 금을 실어 내리는 자리에 앉았다. 엘미나(0.46)보다 작은 항구라 배율을 조금 높게 뒀다 — 같은 금이라도 대형 상관보다 물량이 얕다는 뜻이다.",
+          "sources": [
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+          ]
+        },
+        "kola": {
+          "side": "supply", "value": 0.50, "verdict": "probable",
+          "basis": "콜라나무는 아칸 숲지대(오늘날 가나 서부)의 나무이고 아심의 배후가 정확히 그 숲이다. 다만 확보한 문헌은 콜라의 대규모 교역을 17세기 이후로 적으므로, 산지라는 사실까지만 근거로 삼고 probable로 내린다.",
+          "sources": [
+            { "title": "Kola nut", "url": "https://en.wikipedia.org/wiki/Kola_nut" }
+          ]
+        },
+        "copper": {
+          "side": "demand", "value": 1.30, "verdict": "confirmed",
+          "basis": "포르투갈이 이 해안에서 금을 사며 내놓은 물목에 '구리와 놋쇠 냄비·팬·팔찌'가 명시된다. 즉 구리는 황금해안에서 금과 바뀌는 대표 수입품이었다.",
+          "sources": [
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+          ]
+        },
+        "salt": {
+          "side": "demand", "value": 1.26, "verdict": "probable",
+          "basis": "숲지대는 암염이 나지 않아 소금이 내륙으로 올라가는 상품이었다. 아르갱 공급 0.52와 짝을 이루어 '사하라 소금이 금과 바뀐다'는 이야기를 게임 안에 항로로 놓은 것이다. 이 항구에 소금이 들어온 직접 기록은 없다.",
+          "sources": [
+            { "title": "Trans-Saharan trade", "url": "https://en.wikipedia.org/wiki/Trans-Saharan_trade" }
+          ]
+        }
+      }
+    },
+
+    "elmina": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1482년에 선 상 조르즈 다 미나는 포르투갈 왕실 요새다. 포르투갈 깃발이 FLAGS에 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Elmina Castle", "url": "https://en.wikipedia.org/wiki/Elmina_Castle" }
+        ]
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "gameplay",
+        "basis": "미나의 금은 전량 왕실 독점이었고 사무역은 중죄였다. 사료의 독점 강도를 그대로 옮기면 게임에서는 매각에만 물리는 구조라 이 항구가 통째로 죽는다 — 성격이 드러날 만큼(size 2 기본 4.5% → 7.5%)만 올렸다.",
+        "sources": [
+          { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+        ]
+      },
+      "goods": {
+        "gold": {
+          "side": "supply", "value": 0.46, "verdict": "confirmed",
+          "basis": "16세기 초 이 해안에서 해마다 금 680,000g(24,000온스)이 나갔고 그것이 당대 세계 금 공급의 10분의 1이었다. 세계에서 금이 가장 싼 자리라는 뜻이므로 supply 배율의 하한(0.44~0.78)에 가장 가깝게 뒀다 — 지중해 튀니스의 0.76과 대비된다.",
+          "sources": [
+            { "title": "Elmina Castle", "url": "https://en.wikipedia.org/wiki/Elmina_Castle" },
+            { "title": "Costa da Mina", "url": "https://en.wikipedia.org/wiki/Costa_da_Mina" }
+          ]
+        },
+        "kola": {
+          "side": "supply", "value": 0.54, "verdict": "probable",
+          "basis": "배후가 콜라가 나는 아칸 숲지대다. 아심(0.50)보다 조금 비싼 것은 여기가 숲에서 한 걸음 더 나온 큰 상관이기 때문이다. 1600년 이전 콜라 교역의 문헌 근거는 확보하지 못했다.",
+          "sources": []
+        },
+        "copper": {
+          "side": "demand", "value": 1.36, "verdict": "confirmed",
+          "basis": "포르투갈이 금을 얻으려 내놓은 물목에 구리·놋쇠 그릇과 팔찌가 명시된다. 라인란트에서 부어 온 놋쇠 마닐라가 이 해안 교역의 기본 단위였다 — 이 권역에서 구리 수요가 가장 깊은 자리다.",
+          "sources": [
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" },
+            { "title": "Kingdom of Benin", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Benin" }
+          ]
+        },
+        "panos": {
+          "side": "demand", "value": 1.28, "verdict": "confirmed",
+          "basis": "금과 바뀐 물목에 '천·아마포'가 있고, 특히 베냉~엘미나 항로가 면포와 구슬을 이 요새로 공급했다고 적힌다. 즉 이 항구에서 면포는 팔러 오는 물건이지 사 가는 물건이 아니었다.",
+          "sources": [
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+          ]
+        },
+        "salt": {
+          "side": "demand", "value": 1.26, "verdict": "probable",
+          "basis": "숲지대 배후로 올라가는 소금 수요를 아심과 같은 근거로 뒀다. 사하라 암염이 금과 거의 같은 무게로 바뀌었다는 팀북투 기록이 이 방향(소금이 남으로, 금이 북으로)의 근거다.",
+          "sources": [
+            { "title": "Trans-Saharan trade", "url": "https://en.wikipedia.org/wiki/Trans-Saharan_trade" }
+          ]
+        },
+        "glass": {
+          "side": "demand", "value": 1.22, "verdict": "confirmed",
+          "basis": "금과 바뀐 물목에 '구슬'이 명시된다. 게임에는 유리구슬 항목이 따로 없어 유리세공(glass) 칸으로 받았다 — 값을 1.22로 얕게 둔 것은 사치 유리가 아니라 교역용 구슬이기 때문이다.",
+          "sources": [
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+          ]
+        }
+      }
+    },
+
+    "gwato": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "베냉 왕국은 독립 아프리카 왕국이고 무슬림도 유럽도 아니다. FLAGS에 맞는 깃발이 전혀 없어 유럽이 아닌 깃발 중 가장 덜 어긋나는 것을 빌렸다 — art.flagTodo에 '베냉 오바의 깃발'을 적어 뒀다.",
+        "sources": []
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "gameplay",
+        "basis": "오바가 대외 교역을 독점해 왕의 사람을 거치지 않은 거래는 존재하지 않았다. 실제로는 관세라기보다 왕실 독점이었으므로 게임 규칙으로 옮기면서 size 2 기본율(4.5%)을 7.5%로 올려 그 성격만 드러냈다.",
+        "sources": [
+          { "title": "Kingdom of Benin", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Benin" }
+        ]
+      },
+      "goods": {
+        "melegueta": {
+          "side": "supply", "value": 0.48, "verdict": "confirmed",
+          "basis": "베냉이 유럽 상인에게 판 것이 상아·후추·야자유였다고 명시된다. 그 '후추'가 기니 해안의 말라게타 계열이므로 이 권역의 말라게타 산지 가운데 가장 싼 자리로 뒀다.",
+          "sources": [
+            { "title": "Kingdom of Benin", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Benin" }
+          ]
+        },
+        "ivory": {
+          "side": "supply", "value": 0.54, "verdict": "confirmed",
+          "basis": "베냉의 수출 물목에 상아가 명시된다. 다만 동안(킬와 0.48)보다 배율을 높게 둔 것은 서아프리카 상아가 오바의 독점을 거쳐 나왔기 때문이다 — 원가에 왕실 몫이 얹힌다.",
+          "sources": [
+            { "title": "Kingdom of Benin", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Benin" }
+          ]
+        },
+        "panos": {
+          "side": "supply", "value": 0.58, "verdict": "confirmed",
+          "basis": "베냉산 무명이 교역품이었고 뒤에는 후추·상아를 제치고 주력 수출품이 됐다. 실제로 포르투갈은 베냉에서 산 천을 엘미나로 실어 금과 바꿨다 — 게임에서도 gwato 공급 0.58 → elmina 수요 1.28의 짧은 항로로 그 구조가 살아 있다.",
+          "sources": [
+            { "title": "Kingdom of Benin", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Benin" },
+            { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
+          ]
+        },
+        "copper": {
+          "side": "demand", "value": 1.38, "verdict": "confirmed",
+          "basis": "1507년부터 포르투갈 상인이 라인란트 놋쇠 마닐라 팔찌를 베냉에 들여왔다. 베냉 청동판의 금속이 바로 그것이다 — 이 권역에서 구리 수요가 가장 깊은 자리로 둔 근거다.",
+          "sources": [
+            { "title": "Kingdom of Benin", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Benin" }
+          ]
+        },
+        "ceramic": {
+          "side": "demand", "value": 1.24, "verdict": "probable",
+          "basis": "유럽·지중해 도기가 궁정 사치품으로 들어왔을 것으로 본다. 확보한 문헌은 수입품으로 마닐라와 총만 특정하므로 직접 근거는 없고, 산호 구슬 같은 궁정 수입 사치품이 있었다는 정황까지가 근거다.",
+          "sources": []
+        }
+      }
+    },
+
+    "saotome": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1493년 알바루 카미냐가 왕실 하사지로 받아 정착시킨 포르투갈령이다. 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "São Tomé and Príncipe", "url": "https://en.wikipedia.org/wiki/S%C3%A3o_Tom%C3%A9_and_Pr%C3%ADncipe" }
+        ]
+      },
+      "goods": {
+        "palmoil": {
+          "side": "supply", "value": 0.50, "verdict": "probable",
+          "basis": "기름야자는 서아프리카 습지대의 자생 나무이고 이 적도 섬이 그 분포 한복판이다. 다만 확보한 문헌은 야자유의 상업적 교역을 19세기 이후로 다루므로, 산지라는 사실까지만 근거로 삼는다.",
+          "sources": [
+            { "title": "Palm oil", "url": "https://en.wikipedia.org/wiki/Palm_oil" }
+          ]
+        },
+        "melegueta": {
+          "side": "supply", "value": 0.56, "verdict": "probable",
+          "basis": "기니만 한복판의 섬이라 말라게타가 모이는 자리였을 개연성이 크다. 산지 배율을 그웨이토(0.48)보다 높게 둔 것은 이 섬이 재배지가 아니라 집산지에 가깝기 때문이다. 직접 근거는 없다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand", "value": 1.36, "verdict": "confirmed",
+          "basis": "1515년 물레방아 제당소가 들어선 뒤 섬이 통째로 사탕수수밭이 됐다(1595년 반란 때 불탄 것만 제당소 85곳 중 60곳). 밭에 먹을 것을 심지 않았으니 식량은 전부 배로 들어왔다 — 이 권역에서 곡물 수요가 가장 깊은 축에 든다.",
+          "sources": [
+            { "title": "São Tomé and Príncipe", "url": "https://en.wikipedia.org/wiki/S%C3%A3o_Tom%C3%A9_and_Pr%C3%ADncipe" }
+          ]
+        },
+        "wine": {
+          "side": "demand", "value": 1.30, "verdict": "gameplay",
+          "basis": "포르투갈 정착지라 와인 수요를 뒀다. 열대 섬이라 포도가 자라지 않으므로 전량 수입이다 — 이 권역에서 와인 수요는 기독교 정착지 네 곳에만 있고 그것이 지도 위 두 세계를 가르는 장치다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand", "value": 1.22, "verdict": "probable",
+          "basis": "1595년 아마도르의 대규모 반란으로 섬의 제당소 대부분이 불탔다는 사실이 이 섬의 치안 상태를 말해 준다. 무기 수요를 1.22로 얕게 둔 것은 상비군이 아니라 농장 경비 수준이었기 때문이다.",
+          "sources": [
+            { "title": "São Tomé and Príncipe", "url": "https://en.wikipedia.org/wiki/S%C3%A3o_Tom%C3%A9_and_Pr%C3%ADncipe" }
+          ]
+        }
+      }
+    },
+
+    "luanda": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1576년 1월 25일 파울루 디아스 지 노바이스가 세운 포르투갈 도시다. 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Luanda", "url": "https://en.wikipedia.org/wiki/Luanda" }
+        ]
+      },
+      "goods": {
+        "copper": {
+          "side": "supply", "value": 0.50, "verdict": "confirmed",
+          "basis": "콩고 왕국 교역의 대부분이 '야자포·구리·상아'였다고 적힌다. 내륙 카탕가의 구리가 강길로 내려와 이 항구에서 배에 실렸으므로 이 권역에서 구리가 가장 싼 자리로 뒀다.",
+          "sources": [
+            { "title": "Kingdom of Kongo", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Kongo" },
+            { "title": "Katanga Cross", "url": "https://en.wikipedia.org/wiki/Katanga_Cross" }
+          ]
+        },
+        "panos": {
+          "side": "demand", "value": 1.32, "verdict": "probable",
+          "basis": "콩고는 라피아 야자포(룸봉구·음푸수)를 화폐로 쓸 만큼 직물을 귀히 여겼고 그 수요가 수입 면포로도 이어졌다. 다만 게임의 아프리카 면포가 그 자리를 대신한 것이라 배율의 직접 근거는 없다.",
+          "sources": [
+            { "title": "Kingdom of Kongo", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Kongo" }
+          ]
+        },
+        "wine": {
+          "side": "demand", "value": 1.28, "verdict": "gameplay",
+          "basis": "포르투갈 정착지라 와인 수요를 뒀다. 1576년에 정착민 100가구와 군인 400명이 함께 들어왔다는 기록이 그 시장의 크기를 짐작하게 한다.",
+          "sources": [
+            { "title": "Luanda", "url": "https://en.wikipedia.org/wiki/Luanda" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.26, "verdict": "probable",
+          "basis": "정착 초기 수백 명 규모의 유럽인 공동체가 현지 농사에 기대지 못해 식량을 실어 왔을 것으로 본다. 다른 서안 항구보다 얕게(1.26) 둔 것은 배후 콩고가 농경 사회라 현지 조달이 일부 가능했기 때문이다.",
+          "sources": []
+        },
+        "ambergris": {
+          "side": "demand", "value": 1.24, "verdict": "gameplay",
+          "basis": "★ 고증이 아니라 설계다. 용연향은 동안(잔지바르·라무)에서만 나는데 수요까지 전부 동안에 두면 희망봉 서쪽에서는 죽은 칸이 된다. 유럽행 배가 실리는 마지막 항구를 그 출구로 삼았다 — 서안에서 용연향이 팔렸다는 직접 근거는 없다.",
+          "sources": []
+        }
+      }
+    },
+
+    "benguela": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1617년 마누엘 세르베이라 페레이라가 상 필리페 지 벵겔라로 세운 포르투갈 도시다. 게임이 연도를 고정하지 않으므로 함께 등장시켰고, 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다.",
+        "sources": [
+          { "title": "Benguela", "url": "https://en.wikipedia.org/wiki/Benguela" }
+        ]
+      },
+      "goods": {
+        "ivory": {
+          "side": "supply", "value": 0.50, "verdict": "probable",
+          "basis": "뭍은 나미브 사막 가장자리지만 배후 고원이 코끼리가 사는 사바나다. 서안에서 상아가 가장 싼 자리로 둔 것은 여기가 유럽 상관에서 가장 먼 끝이라 중간 상인이 적기 때문이다 — 물량 기록은 확보하지 못했다.",
+          "sources": []
+        },
+        "copper": {
+          "side": "supply", "value": 0.58, "verdict": "probable",
+          "basis": "내륙 구리가 루안다뿐 아니라 남쪽 해안으로도 흘러나왔을 것으로 본다. 배율을 루안다(0.50)보다 높게 둔 것은 여기가 구리 강길의 본선이 아니라 곁가지이기 때문이다.",
+          "sources": [
+            { "title": "Katanga Cross", "url": "https://en.wikipedia.org/wiki/Katanga_Cross" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.34, "verdict": "probable",
+          "basis": "나미브 사막 북쪽 가장자리라 농사가 어렵고, 앞바다 벵겔라 해류가 차가워 강수량이 적다. 식량을 실어 와야 하는 항구라는 것은 지리에서 곧바로 따라온다.",
+          "sources": [
+            { "title": "Benguela Current", "url": "https://en.wikipedia.org/wiki/Benguela_Current" }
+          ]
+        },
+        "palmoil": {
+          "side": "demand", "value": 1.26, "verdict": "probable",
+          "basis": "기름야자는 습한 서아프리카의 나무라 이 건조한 남쪽 해안에서는 자라지 않는다. 기름이 북쪽에서 내려오는 물건이 되므로 수요로 뒀다. 직접 기록은 없다.",
+          "sources": [
+            { "title": "Palm oil", "url": "https://en.wikipedia.org/wiki/Palm_oil" }
+          ]
+        },
+        "weapon": {
+          "side": "demand", "value": 1.24, "verdict": "probable",
+          "basis": "내륙 세력과 맞댄 변경 요새 도시라 화기 수요가 있었을 것으로 본다. 몸바사(1.36)보다 얕게 둔 것은 여기가 해상 공방의 무대가 아니었기 때문이다.",
+          "sources": []
+        }
+      }
+    },
+
+    "cabo": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "★ 임자가 없는 곳이다. 유럽인의 상설 정착은 1652년에야 생기고 그전까지는 코이코이의 땅이자 지나가는 배의 급수지였다. 깃발 없이 그릴 수 없어 정박하던 유럽 선단의 것으로 뒀다 — 알고 그렇게 둔 것이다.",
+        "sources": [
+          { "title": "Cape of Good Hope", "url": "https://en.wikipedia.org/wiki/Cape_of_Good_Hope" }
+        ]
+      },
+      "tariff": {
+        "value": 0.01,
+        "verdict": "gameplay",
+        "basis": "세관이 없다. 도시가 아니라 물을 긷는 자리였으므로 값을 물릴 사람이 없다. size 1 기본율(3%)보다 낮은 1%는 계약서가 권한 3~9% 밖이지만, '아무도 세를 걷지 않는 항구'를 표현할 다른 수단이 없어 의도적으로 내렸다.",
+        "sources": [
+          { "title": "Cape of Good Hope", "url": "https://en.wikipedia.org/wiki/Cape_of_Good_Hope" }
+        ]
+      },
+      "goods": {
+        "ivory": {
+          "side": "supply", "value": 0.64, "verdict": "probable",
+          "basis": "코이코이와의 물물교환에서 이따금 상아가 나왔을 것으로 본다. 배율을 0.64로 이 권역에서 가장 약하게 둔 것은 그것이 정기 교역이 아니라 우연히 성사되는 거래였기 때문이다. 직접 근거는 확보하지 못했다.",
+          "sources": []
+        },
+        "copper": {
+          "side": "demand", "value": 1.40, "verdict": "probable",
+          "basis": "코이코이가 지나가는 배에서 원한 것은 쇠와 구리였고 내놓은 것은 소와 양이었다는 것이 뒤의 네덜란드 기록에서 되풀이해 나온다. 이 권역에서 구리 수요를 가장 높게 둔 근거이나, 1652년 이전을 특정한 사료는 확보하지 못했다.",
+          "sources": [
+            { "title": "Cape of Good Hope", "url": "https://en.wikipedia.org/wiki/Cape_of_Good_Hope" }
+          ]
+        },
+        "weapon": {
+          "side": "demand", "value": 1.32, "verdict": "probable",
+          "basis": "쇠붙이 자체가 이 물물교환의 핵심이었다. 게임에 '철괴' 항목을 따로 만들지 않았으므로 쇠 수요를 무기 칸으로 받았다 — 무기를 팔았다는 뜻이 아니라 쇠가 여기서 가장 값나갔다는 뜻이다.",
+          "sources": []
+        },
+        "palmoil": {
+          "side": "demand", "value": 1.24, "verdict": "gameplay",
+          "basis": "희망봉을 도는 배가 기름과 등불 연료를 늘 아쉬워했다는 상식적 추정으로 둔 칸이다. 야자유가 서안에서만 나므로 이 기항지를 그 출구로 삼아 품목이 죽지 않게 했다 — 사료 근거는 없다.",
+          "sources": []
+        }
+      }
+    },
+
+    "sofala": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1505년 페루 드 아나이아가 상 카에타누 요새를 세운 뒤 포르투갈령이 됐다(동아프리카 두 번째 포르투갈 요새). 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Sofala", "url": "https://en.wikipedia.org/wiki/Sofala" }
+        ]
+      },
+      "goods": {
+        "gold": {
+          "side": "supply", "value": 0.48, "verdict": "confirmed",
+          "basis": "마니카를 거쳐 대짐바브웨 금광지대와 이어진 무에네무타파 금 교역의 으뜸 집산항이었다. 동안에서 금이 가장 싼 자리이며 엘미나(0.46)와 짝을 이루어 두 해안의 대칭을 만든다.",
+          "sources": [
+            { "title": "Sofala", "url": "https://en.wikipedia.org/wiki/Sofala" },
+            { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+          ]
+        },
+        "panos": {
+          "side": "demand", "value": 1.34, "verdict": "confirmed",
+          "basis": "이 항구가 한 일은 하나뿐이었다 — 인도 면포를 내륙으로 올려 보내고 금을 받는 것. 킬와 상인이 아라비아·인도·페르시아에서 들여온 천과 향신료를 내륙 농산물·금과 바꿨다고 적힌다.",
+          "sources": [
+            { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+          ]
+        },
+        "glass": {
+          "side": "demand", "value": 1.28, "verdict": "confirmed",
+          "basis": "스와힐리 해안의 수입 물목에 '유리·석재 구슬'이 명시되고, 그 구슬이 내륙 금과 바뀌는 대표 상품이었다. 게임에 구슬 항목이 없어 유리세공 칸으로 받았다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+          ]
+        }
+      }
+    },
+
+    "mocambique": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1507년 이후 포르투갈의 동아프리카 거점이자 인도 항로 선단의 정박지였다. 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Portuguese India Armadas", "url": "https://en.wikipedia.org/wiki/Portuguese_India_Armadas" }
+        ]
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "희망봉을 돈 인도 항로 선단이 모두 이 섬을 첫 기항지로 삼았다. 규모는 작아도 지나가는 배 전부가 세관을 통과하는 구조라 size 2 기본율(4.5%)을 7%로 올려 그 병목 성격을 드러냈다.",
+        "sources": [
+          { "title": "Portuguese India Armadas", "url": "https://en.wikipedia.org/wiki/Portuguese_India_Armadas" }
+        ]
+      },
+      "goods": {
+        "ivory": {
+          "side": "supply", "value": 0.60, "verdict": "probable",
+          "basis": "잠베지 내륙에서 나온 상아가 이 섬에 모여 인도로 넘어갔다. 배율을 킬와(0.48)보다 높게 둔 것은 여기가 산지가 아니라 포르투갈 세관을 낀 환적항이기 때문이다.",
+          "sources": [
+            { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.38, "verdict": "confirmed",
+          "basis": "희망봉을 돈 선단이 처음 닻을 내리고 겨울을 나는 자리였다. 반년짜리 항해 끝에 도착한 배들이 한꺼번에 보급을 요구하는 구조라 이 권역에서 곡물 수요가 가장 깊다 — 선원 사망이 좋은 해에도 3분의 1이었다는 기록이 그 궁핍을 말한다.",
+          "sources": [
+            { "title": "Portuguese India Armadas", "url": "https://en.wikipedia.org/wiki/Portuguese_India_Armadas" }
+          ]
+        },
+        "wine": {
+          "side": "demand", "value": 1.30, "verdict": "gameplay",
+          "basis": "포르투갈 주둔지라 와인 수요를 뒀다. 이 권역에서 와인 수요가 있는 네 곳은 모두 기독교 정착지이고, 그 대비가 지도에서 두 세계를 가른다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand", "value": 1.26, "verdict": "probable",
+          "basis": "인도 항로의 병참 기지이자 요새라 화약과 병기가 상시 필요했을 것으로 본다. 수치의 직접 근거는 없고, 몸바사(1.36)보다 얕게 둔 것은 여기가 공방의 표적이 아니라 후방이었기 때문이다.",
+          "sources": []
+        },
+        "tortoise": {
+          "side": "demand", "value": 1.20, "verdict": "probable",
+          "basis": "북쪽 스와힐리 항구에서 모인 거북등껍질이 유럽행 배에 실리기 전 여기서 값이 붙었을 것으로 본다. 게임 안에서 이 품목의 수요가 동안 북단(모가디슈)에만 몰리지 않게 하려는 목적도 함께 있다.",
+          "sources": []
+        }
+      }
+    },
+
+    "kilwa": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "킬와 술탄국은 독립 스와힐리 이슬람 도시국가였다. FLAGS에 스와힐리 깃발이 없어 유럽이 아닌 이슬람 깃발 중 가장 덜 어긋나는 마그레브 깃발을 빌렸다 — art.flagTodo에 적어 뒀다.",
+        "sources": [
+          { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+        ]
+      },
+      "goods": {
+        "ivory": {
+          "side": "supply", "value": 0.48, "verdict": "confirmed",
+          "basis": "킬와가 내륙의 금과 상아를 아라비아·페르시아·인도, 나아가 중국까지 실어 보냈다고 적힌다. **이 권역에서 상아가 가장 싼 자리**로 둔 것이 아프리카 권역의 값어치다 — 지중해 제노바가 상아를 1.28에 사들이던 것과 대비된다.",
+          "sources": [
+            { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+          ]
+        },
+        "gold": {
+          "side": "supply", "value": 0.54, "verdict": "confirmed",
+          "basis": "12세기 술탄 술라이만 하산이 소팔라를 빼앗아 금 수입을 독차지한 것이 이 도시국가의 밑천이었다. 1505년 알메이다에게 무너진 뒤로도 금이 지나가긴 했으므로, 소팔라(0.48)보다 한 단계 비싼 2차 집산지로 뒀다.",
+          "sources": [
+            { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+          ]
+        },
+        "panos": {
+          "side": "demand", "value": 1.34, "verdict": "confirmed",
+          "basis": "킬와 상인이 아라비아·인도·페르시아에서 천과 향신료 같은 제조품을 들여와 내륙 산물과 바꿨다고 적힌다. 면포가 이 도시에서 사들이는 물건이었다는 뜻이다.",
+          "sources": [
+            { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+          ]
+        },
+        "ceramic": {
+          "side": "demand", "value": 1.30, "verdict": "confirmed",
+          "basis": "스와힐리 해안의 수입 물목에 중국 자기와 도기가 명시되고, 킬와 유적에서 실제로 무더기로 나온다. 부잣집 벽에 자기 접시를 박아 넣는 것이 이 해안의 과시 방식이었다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+          ]
+        },
+        "silk": {
+          "side": "demand", "value": 1.22, "verdict": "confirmed",
+          "basis": "스와힐리 해안 수입 물목에 면포·비단·모직이 함께 적힌다. 값을 1.22로 얕게 둔 것은 비단이 이 해안의 주력 수입품이 아니라 상층의 사치품이었기 때문이다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+          ]
+        }
+      }
+    },
+
+    "zanzibar": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "웅구자의 술탄이 다스린 독립 스와힐리 도시였다. 포르투갈은 1503년경 조공만 받아 갔을 뿐 1591년까지도 요새와 수비대를 두지 않았으므로 포르투갈 깃발을 걸지 않았다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다.",
+        "sources": [
+          { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
+        ]
+      },
+      "goods": {
+        "ambergris": {
+          "side": "supply", "value": 0.54, "verdict": "confirmed",
+          "basis": "페르시아·인도·아랍 상인이 잔지바르에 와서 산 것이 '금·상아·용연향'이었다고 명시된다. 이 권역에서 용연향의 으뜸 산지로 둔 직접 근거다.",
+          "sources": [
+            { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
+          ]
+        },
+        "tortoise": {
+          "side": "supply", "value": 0.52, "verdict": "probable",
+          "basis": "매부리바다거북의 등딱지는 스와힐리 해안 전역의 오랜 수출품이고 라무 기록에 명시된다. 잔지바르를 특정한 기록은 못 찾았으나 같은 해역·같은 중개 구조이므로 산지로 뒀다.",
+          "sources": [
+            { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
+          ]
+        },
+        "weapon": {
+          "side": "demand", "value": 1.24, "verdict": "probable",
+          "basis": "요새도 수비대도 없던 섬이라 스스로를 지킬 것을 사들여야 했다. 다만 이 섬의 생존 전략이 무장이 아니라 중개와 조공이었으므로 수요를 1.24로 얕게 뒀다.",
+          "sources": [
+            { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.22, "verdict": "probable",
+          "basis": "9세기부터 뭍과 바다를 잇는 중개상의 섬이었지 농업 섬이 아니었다. 다만 이웃 펨바가 곡창이었다는 이야기가 있어 수요를 1.22로 가장 얕게 뒀다 — 펨바는 이 권역에 넣지 않았다(openQuestions 참조).",
+          "sources": [
+            { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
+          ]
+        }
+      }
+    },
+
+    "mombasa": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "1593년 포르투갈이 예수 요새를 세우기 전까지 독립 스와힐리 술탄국이었고, 이 게임은 연도를 고정하지 않으므로 저항하는 도시 쪽을 골랐다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Mombasa", "url": "https://en.wikipedia.org/wiki/Mombasa" }
+        ]
+      },
+      "goods": {
+        "ivory": {
+          "side": "supply", "value": 0.52, "verdict": "confirmed",
+          "basis": "몸바사의 주요 수출품이 '상아·기장·참깨·코코넛'이었다고 명시된다. 이 해안 최대의 항구답게 상아 배율이 킬와 다음으로 낮다.",
+          "sources": [
+            { "title": "Mombasa", "url": "https://en.wikipedia.org/wiki/Mombasa" }
+          ]
+        },
+        "palmoil": {
+          "side": "supply", "value": 0.58, "verdict": "corrected",
+          "basis": "사료가 말하는 것은 야자유가 아니라 **코코넛**이다(수출 물목에 명시). 게임에 코코넛 기름 항목을 따로 만들지 않고 야자유 칸으로 받았다 — 서안의 기름야자와 동안의 코코야자를 한 칸에 묶은 것이라 배율을 상투메(0.50)보다 높게 뒀다.",
+          "sources": [
+            { "title": "Mombasa", "url": "https://en.wikipedia.org/wiki/Mombasa" }
+          ]
+        },
+        "weapon": {
+          "side": "demand", "value": 1.36, "verdict": "confirmed",
+          "basis": "1500·1505·1528·1589년 네 차례 포르투갈에 약탈·파괴되고 그때마다 다시 선 도시다. 이 권역에서 무기 수요가 가장 높은 자리인 근거가 그 네 번의 연도다.",
+          "sources": [
+            { "title": "Mombasa", "url": "https://en.wikipedia.org/wiki/Mombasa" }
+          ]
+        },
+        "panos": {
+          "side": "demand", "value": 1.32, "verdict": "confirmed",
+          "basis": "스와힐리 해안의 수입 물목 첫머리에 면포가 온다. 인도까지 닿던 이 도시의 교역망이 실어 온 것이 바로 그 천이었다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" },
+            { "title": "Mombasa", "url": "https://en.wikipedia.org/wiki/Mombasa" }
+          ]
+        },
+        "ceramic": {
+          "side": "demand", "value": 1.22, "verdict": "confirmed",
+          "basis": "스와힐리 해안 수입 물목에 도기·자기가 명시된다. 킬와(1.30)보다 얕게 둔 것은 몸바사가 자기의 최종 소비지라기보다 중계 항구에 가까웠기 때문이다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+          ]
+        }
+      }
+    },
+
+    "malindi": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "1500년 포르투갈의 신속국이 됐으나 술탄이 계속 다스린 스와힐리 도시였으므로 포르투갈 깃발을 걸지 않았다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다 — art.flagTodo 참조.",
+        "sources": [
+          { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
+        ]
+      },
+      "tariff": {
+        "value": 0.03,
+        "verdict": "gameplay",
+        "basis": "★ 반대 방향의 오버라이드다. 말린디는 몸바사와의 경쟁 때문에 포르투갈과 손잡았고 1505년 킬와·몸바사 정복을 도왔다. 그 동맹의 대가를 게임에서는 **낮은 입항세**로 준다 — size 2 기본율 4.5%보다 낮은 3%다. 실제 면세 기록은 확보하지 못했다.",
+        "sources": [
+          { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
+        ]
+      },
+      "goods": {
+        "grain": {
+          "side": "supply", "value": 0.64, "verdict": "corrected",
+          "basis": "말린디의 번영이 상아·코뿔소 뿔뿐 아니라 '코코넛·오렌지·기장·쌀' 같은 농산물 수출에서 왔다고 명시된다. **이 권역에서 유일한 곡물 산지**이나 배율을 0.64로 약하게 둔 것은 설계다 — 이 바다가 먹을 것을 자급하면 유럽에서 곡물을 싣고 오는 항로가 통째로 죽는다.",
+          "sources": [
+            { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
+          ]
+        },
+        "tortoise": {
+          "side": "supply", "value": 0.56, "verdict": "probable",
+          "basis": "말린디의 수출품에 코뿔소 뿔이 명시되고, 이웃 라무의 물목에는 거북등껍질이 명시된다. 같은 해역의 같은 채취물이므로 산지로 뒀으나 말린디를 특정한 기록은 못 찾았다.",
+          "sources": [
+            { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" },
+            { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
+          ]
+        },
+        "copper": {
+          "side": "demand", "value": 1.30, "verdict": "probable",
+          "basis": "1498년 인구 5,000~10,000의 번성한 도시였고 금속은 이 해안이 늘 사들이던 물건이다. 서안 루안다·벵겔라의 구리가 희망봉을 넘어와 팔릴 자리를 여기 하나 열어 둔 것이기도 하다.",
+          "sources": [
+            { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
+          ]
+        },
+        "ceramic": {
+          "side": "demand", "value": 1.24, "verdict": "confirmed",
+          "basis": "스와힐리 해안 수입 물목에 도기·자기가 명시된다. 인구 5,000~10,000의 번성한 도시라 그 수요가 실재했다고 본다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" },
+            { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
+          ]
+        }
+      }
+    },
+
+    "lamu": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "1506년 포르투갈 봉쇄로 연 600메티칼의 조공을 물었으나 술탄이 계속 다스린 스와힐리 도시였고 1580년대에는 반란까지 이끌었다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다.",
+        "sources": [
+          { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
+        ]
+      },
+      "goods": {
+        "tortoise": {
+          "side": "supply", "value": 0.50, "verdict": "confirmed",
+          "basis": "라무의 전통 수출품이 '상아·맹그로브·거북등껍질·코뿔소 뿔'이었고 그것이 인도양을 건너 중동과 인도로 갔다고 명시된다. 이 권역에서 거북등껍질이 가장 싼 자리인 직접 근거다.",
+          "sources": [
+            { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
+          ]
+        },
+        "ivory": {
+          "side": "supply", "value": 0.56, "verdict": "confirmed",
+          "basis": "같은 수출 물목에 상아가 첫머리로 나온다. 배율을 킬와(0.48)·몸바사(0.52)보다 높게 둔 것은 라무가 내륙 상아길의 끝이 아니라 곁가지였기 때문이다.",
+          "sources": [
+            { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
+          ]
+        },
+        "ambergris": {
+          "side": "supply", "value": 0.60, "verdict": "probable",
+          "basis": "용연향은 이 해안 전역에서 주워 모으는 물건이었다(잔지바르 기록에 명시). 라무를 특정한 기록은 못 찾았고, 잔지바르(0.54)보다 배율을 높여 으뜸 산지를 하나로 유지했다.",
+          "sources": [
+            { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.30, "verdict": "probable",
+          "basis": "산호섬 군도라 경작지가 좁고 도시가 배와 목공·직조로 먹고살았다. 뭍에서 곡물을 들여왔을 것으로 보나 수치의 직접 근거는 없다.",
+          "sources": []
+        },
+        "ceramic": {
+          "side": "demand", "value": 1.24, "verdict": "confirmed",
+          "basis": "스와힐리 해안 수입 물목에 도기·자기가 명시된다. 라무 구시가의 벽감에 수입 도자기를 진열하는 관습이 지금까지 남아 있다는 것도 그 오랜 수요를 말한다.",
+          "sources": [
+            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+          ]
+        }
+      }
+    },
+
+    "mogadishu": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "소말리 술탄이 다스린 독립 도시이고 뒤에는 아주란 세력권에 들었다. 포르투갈이 끝내 차지하지 못한 항구라 유럽 깃발이 맞지 않고, 소말리 깃발이 FLAGS에 없어 마그레브 이슬람 깃발을 빌렸다.",
+        "sources": [
+          { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
+        ]
+      },
+      "goods": {
+        "panos": {
+          "side": "supply", "value": 0.48, "verdict": "confirmed",
+          "basis": "이븐 바투타가 이 도시를 '고급 직물로 유명하며 그것을 맘루크 이집트 등으로 수출한다'고 적었고, 그 천을 토브 베나디르(모가디슈 천)라 불렀다. **이 권역에서 유일하게 만든 것을 수출하는 항구**라 면포 배율이 가장 낮다.",
+          "sources": [
+            { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
+          ]
+        },
+        "grain": {
+          "side": "demand", "value": 1.36, "verdict": "probable",
+          "basis": "이븐 바투타가 '지극히 큰 도시'라 적을 만큼 인구가 많았고 배후는 반건조 지대다. 직조와 중개로 먹고사는 도시라 식량을 사들였을 것으로 보나 수치의 직접 근거는 없다.",
+          "sources": [
+            { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
+          ]
+        },
+        "ambergris": {
+          "side": "demand", "value": 1.30, "verdict": "probable",
+          "basis": "홍해와 인도로 넘어가는 사치품이 이 도시를 거쳤다. 남쪽 스와힐리 항구에서 모인 용연향이 여기서 값이 붙어 아라비아로 넘어갔을 것으로 본다 — 품목을 특정한 기록은 없다.",
+          "sources": [
+            { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
+          ]
+        },
+        "tortoise": {
+          "side": "demand", "value": 1.26, "verdict": "probable",
+          "basis": "위 용연향과 같은 근거 — 라무·잔지바르에서 모은 세공 재료가 아라비아·인도로 넘어가는 길목이었다. 거북등껍질을 특정한 기록은 확보하지 못했다.",
+          "sources": []
+        },
+        "gold": {
+          "side": "demand", "value": 1.24, "verdict": "confirmed",
+          "basis": "두아르트 바르보자(1517~18)가 이곳 상인들이 '금·상아·밀랍을 많이 실어 가 이문을 남긴다'고 적었고, 이 도시가 킬와 금 교역의 환승지였다는 서술도 함께 있다. ★ 이 한 칸이 엘미나(0.46)에서 산 금을 희망봉 너머로 실어 갈 이유를 만든다.",
+          "sources": [
+            { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
+          ]
+        }
+      }
+    }
+  },
+
+  "_항로_읽는이에게": "routes 절의 요율은 당대 해상보험 요율(%)이다. 지중해 앵커(2.0 내해 · 4.0 평범한 연안 · 6~8 외해·병목 · 9~11 무기항)를 그대로 쓰되 이 바다에는 변수가 둘 더 있다 — ① 사하라·나미브 해안은 며칠을 가도 물도 사람도 없어 난파가 곧 전멸이었다 ② 해류와 무역풍이 한 방향이라 남하는 쉽고 북상은 어렵다(요율은 방향을 못 나누므로 왕복 평균으로 얹었다). 이 권역 평균이 6.3%로 지중해(약 5.5%)보다 높은 것은 그 때문이며, 아프리카 권역에서 직접 요율이 적힌 사료는 하나도 확보하지 못했으므로 전부 앵커 적용이다. ★ routes 객체 안에는 주석 키를 두지 않는다 — check-routes.mjs가 유령 항로로 잡아 실패시킨다.",
+
+  "routes": {
+    "arguin|santiago": { "risk": 8.0, "verdict": "probable",
+      "basis": "뭍이 며칠씩 보이지 않는 대양 구간이고 카나리아 해류를 타고 남서로 흘러 나간다. 지중해 앵커의 '외해' 대역(6~8) 상단을 적용했다. 직접 요율은 없다.",
+      "sources": [] },
+    "arguin|elmina": { "risk": 9.0, "verdict": "probable",
+      "basis": "사하라 해안에서 기니만까지 무기항 최장 구간이다. 물도 사람도 없는 해안이라 좌초가 곧 전멸이고, 남하는 해류를 타지만 북상은 사실상 불가에 가까웠다. 지중해에서 사략 소굴 앞에 매기던 9.0을 여기서는 '뭍에 기댈 데가 없다'는 이유로 적용했다.",
+      "sources": [
+        { "title": "Benguela Current", "url": "https://en.wikipedia.org/wiki/Benguela_Current" }
+      ] },
+    "elmina|santiago": { "risk": 8.5, "verdict": "probable",
+      "basis": "기니 해안에서 대양의 섬으로 나가는 외해 구간이고 돌아오는 길이 늘 역풍·역류였다. 아르갱~엘미나(9.0) 바로 아래로 뒀다 — 카보베르데라는 기항지가 있다는 것이 유일한 차이다.",
+      "sources": [] },
+    "axim|santiago": { "risk": 8.0, "verdict": "probable",
+      "basis": "엘미나~산티아구와 같은 성격의 외해 구간이나 아심이 더 서쪽에 있어 대양 구간이 조금 짧다. 그 차이만큼 0.5 낮췄다.",
+      "sources": [] },
+    "axim|elmina": { "risk": 4.0, "verdict": "probable",
+      "basis": "같은 황금해안에 붙은 두 포르투갈 요새 사이의 짧은 연안이다. 양단 깃발이 같고 아군 해안이 늘 보이므로 지중해의 '평범한 연안' 앵커 4.0을 그대로 썼다 — 이 권역에서 가장 안전한 구간이다.",
+      "sources": [] },
+    "elmina|gwato": { "risk": 6.5, "verdict": "probable",
+      "basis": "기니만 무풍대(도드럼)의 초입이다. 바람이 죽으면 배가 며칠에서 몇 주씩 떠 있게 되고 그 사이 열병이 돈다. 외해 대역(6~8)의 하단을 적용했다.",
+      "sources": [
+        { "title": "Intertropical Convergence Zone", "url": "https://en.wikipedia.org/wiki/Intertropical_Convergence_Zone" }
+      ] },
+    "gwato|saotome": { "risk": 7.0, "verdict": "probable",
+      "basis": "적도 무풍대 한복판을 지난다. 확보한 문헌은 이 무풍 지대에서 배가 '며칠에서 몇 주' 발이 묶였고 무덥고 습한 기후에서 발이 묶이는 것은 곧 죽음일 수 있었다고 적는다.",
+      "sources": [
+        { "title": "Intertropical Convergence Zone", "url": "https://en.wikipedia.org/wiki/Intertropical_Convergence_Zone" }
+      ] },
+    "luanda|saotome": { "risk": 8.0, "verdict": "probable",
+      "basis": "무풍대를 지나 남하하는 구간인데 벵겔라 해류가 북상하므로 남행이 유독 더디다. 포르투갈이 볼타 두 마르(대양으로 크게 도는 항법)를 고안한 이유가 이 벽이었다.",
+      "sources": [
+        { "title": "Benguela Current", "url": "https://en.wikipedia.org/wiki/Benguela_Current" },
+        { "title": "Portuguese India Armadas", "url": "https://en.wikipedia.org/wiki/Portuguese_India_Armadas" }
+      ] },
+    "benguela|luanda": { "risk": 5.0, "verdict": "probable",
+      "basis": "같은 앙골라 해안의 연안 구간이고 벵겔라 해류를 타면 북행이 쉽다. 양단이 같은 깃발이므로 '평범한 연안'(4~5.5)의 상단을 적용했다 — 물이 없는 해안이라는 것이 0.5의 차이다.",
+      "sources": [] },
+    "benguela|cabo": { "risk": 9.5, "verdict": "confirmed",
+      "basis": "나미브 사막 해안이라 물도 사람도 없고 남서풍의 파도가 높다. 인도 항로에서 이 남단 일대는 실제로 가장 많은 배를 삼킨 구간이었다 — 코헨치스 곶 부근에서만 항해 선박의 약 30%가 전복·좌초했다는 기록이 있다. 원양 항로 희망봉 구간(11.0) 바로 아래로 뒀다.",
+      "sources": [
+        { "title": "Portuguese India Armadas", "url": "https://en.wikipedia.org/wiki/Portuguese_India_Armadas" },
+        { "title": "Cape of Good Hope", "url": "https://en.wikipedia.org/wiki/Cape_of_Good_Hope" }
+      ] },
+
+    "kilwa|sofala": { "risk": 5.5, "verdict": "probable",
+      "basis": "킬와가 12세기부터 소팔라의 금을 쥐고 있었으니 상시 운항하던 간선이다. 다만 모잠비크 해협 남쪽이라 바람이 사납고, 포르투갈이 온 뒤로는 양단의 임자가 갈렸다 — 연안 대역의 상단을 적용했다.",
+      "sources": [
+        { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
+      ] },
+    "mocambique|sofala": { "risk": 4.5, "verdict": "probable",
+      "basis": "두 포르투갈 요새 사이의 짧은 연안이고 아군 해안이 늘 보인다. 다만 모잠비크 해협은 얕은 모래톱이 많아 좌초가 잦았으므로 아심~엘미나(4.0)보다 0.5 높게 뒀다.",
+      "sources": [] },
+    "kilwa|mocambique": { "risk": 5.0, "verdict": "probable",
+      "basis": "해협을 따라 북상하는 연안 구간이고 동아프리카 연안류를 탄다. 양단 깃발이 갈린 것(포르투갈 요새 ↔ 스와힐리 도시)을 0.5만큼 얹었다.",
+      "sources": [] },
+    "kilwa|zanzibar": { "risk": 4.0, "verdict": "probable",
+      "basis": "스와힐리 해안 안쪽의 짧은 연안이고 양단 모두 이 해안의 도시다. 포르투갈이 오기 전부터 하루 이틀이면 오가던 물길이라 '평범한 연안' 앵커 4.0을 그대로 썼다.",
+      "sources": [] },
+    "kilwa|mombasa": { "risk": 6.0, "verdict": "probable",
+      "basis": "잔지바르를 건너뛰는 외해 지름길이다. 연안을 벗어나면 기댈 항구가 없고, 몸바사와 킬와가 경쟁 도시국가였다는 것도 값에 얹었다.",
+      "sources": [
+        { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+      ] },
+    "mombasa|zanzibar": { "risk": 4.0, "verdict": "probable",
+      "basis": "섬과 뭍 사이의 짧은 연안이다. 잔지바르 상인이 몸바사·말린디 상인의 중개상이었다는 구조 자체가 이 구간이 상시 안전했다는 뜻이다.",
+      "sources": [
+        { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
+      ] },
+    "malindi|mombasa": { "risk": 5.0, "verdict": "confirmed",
+      "basis": "★ 하루 거리인데도 값이 붙는 구간이다. 두 도시가 교역 패권을 놓고 거듭 반목했고, 결국 말린디가 포르투갈·세제주와 손잡고 몸바사를 쳤다. 거리가 아니라 **양단 깃발의 적대**가 요율을 만든 사례라 지중해의 팔레르모~튀니스와 같은 논리로 매겼다.",
+      "sources": [
+        { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
+      ] },
+    "lamu|malindi": { "risk": 4.5, "verdict": "probable",
+      "basis": "같은 케냐 해안의 연안 구간이고 둘 다 스와힐리 도시다. 다만 라무 군도의 얕은 수로와 모래톱을 지나야 하므로 앵커 4.0에 0.5를 얹었다.",
+      "sources": [] },
+    "lamu|mogadishu": { "risk": 7.5, "verdict": "probable",
+      "basis": "소말리 해안은 항구가 드물고 여름 소말리 해류가 맹렬히 북상한다. 되짚어 내려오는 것이 특히 어려웠으므로 외해 대역(6~8)의 상단을 적용했다. 직접 요율은 없다.",
+      "sources": [] }
+  },
+
+  "goods": {
+    "_읽는이에게": "base는 곡물 20닢 대비 사료 비율이다. 아프리카 권역의 새 품목 7종은 모두 '곡물의 몇 배였나'를 밝힌 1차 가격표를 확보하지 못해 probable로 둔다 — 기존 눈금(올리브유 ×2.6 · 도자기 ×6.5 · 무기 ×8.25 · 모피 ×8.75 · 상아 ×15 · 향신료 ×16.5 · 비단 ×21 · 금괴 ×35) 사이의 어느 칸에 놓이는지를 사료의 성격 서술로 정했다.",
+
+    "melegueta": { "base": 110, "verdict": "probable",
+      "basis": "말라게타는 인도산 후추가 비쌌던 14~15세기 유럽에서 **값싼 대용품**으로 팔렸다. 즉 향신료(곡물 ×16.5)보다 확실히 싸되 곡물보다는 훨씬 비싸야 한다. 향신료의 3분의 1인 ×5.5로 잡았다. 실제 가격비를 밝힌 사료는 확보하지 못했다.",
+      "sources": [] },
+    "palmoil": { "base": 40, "verdict": "probable",
+      "basis": "기름야자가 서아프리카 습지대의 자생 나무라 산지에서는 흔한 주식·등잔 기름이었다. 지중해 올리브유(×2.6)가 원거리 교역품이었던 데 비해 이쪽은 현지 산물이므로 ×2.0으로 그보다 낮게 잡았다.",
+      "sources": [
+        { "title": "Palm oil", "url": "https://en.wikipedia.org/wiki/Palm_oil" }
+      ] },
+    "kola": { "base": 70, "verdict": "probable",
+      "basis": "콜라는 숲에서 나 사헬로 올라가는 각성제이자 접대품이고 상하기 쉬워 산지에서 멀수록 값이 뛰었다. 확보한 문헌은 이 교역의 규모를 19세기 기록으로 다루므로 값의 직접 근거가 없다 — 사치품이 아니라 기호품이라는 성격만 보고 곡물의 3.5배로 잡았다.",
+      "sources": [
+        { "title": "Kola nut", "url": "https://en.wikipedia.org/wiki/Kola_nut" }
+      ] },
+    "copper": { "base": 120, "verdict": "probable",
+      "basis": "가공 전 금속이므로 완성된 무기(×8.25)보다 싸고, 이 해안에서는 금과 바뀔 만큼 값나갔으므로 곡물보다는 크게 비싸야 한다. 도자기(×6.5)와 나란한 ×6.0으로 잡았다. 카탕가 십자 주괴는 1kg짜리였다는 것이 단위의 감각을 준다(다만 그 기록은 19~20세기 것이다).",
+      "sources": [
+        { "title": "Katanga Cross", "url": "https://en.wikipedia.org/wiki/Katanga_Cross" }
+      ] },
+    "panos": { "base": 100, "verdict": "probable",
+      "basis": "카보베르데의 판노스·베냉의 무명·모가디슈의 토브 베나디르를 한 칸으로 묶었다. 이 천은 사치품이 아니라 기니 해안의 **결제 단위**였으므로 비단(×21)의 4분의 1인 ×5.0으로 잡았다 — 값이 뛰면 화폐 구실을 못 한다.",
+      "sources": [
+        { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" },
+        { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
+      ] },
+    "tortoise": { "base": 185, "verdict": "probable",
+      "basis": "매부리바다거북 등딱지는 인도와 중국으로 나가던 세공 재료다. 상아(×15)보다는 확실히 아래이고 모피(×8.75)와 비슷한 급의 사치 재료로 보아 ×9.25로 잡았다.",
+      "sources": [
+        { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
+      ] },
+    "ambergris": { "base": 560, "verdict": "probable",
+      "basis": "향수의 보류제로 부피 대비 값이 이 권역에서 가장 높다. 다만 금괴(×35)보다 **낮게** 잡은 것은 의도다 — 산지 배율을 0.54까지 낮게 준 물건을 최고가로 두면 잔지바르 한 항구가 화폐 발행소가 된다. 비단(×21)과 금괴 사이인 ×28로 뒀다.",
+      "sources": [
+        { "title": "Ambergris", "url": "https://en.wikipedia.org/wiki/Ambergris" }
+      ] }
+  },
+
+  "ships": {
+    "_읽는이에게": "다우·므템베·카누의 15~16세기 제원(톤수·길이·승조원)을 밝힌 사료를 하나도 확보하지 못했다. 그래서 값과 수치는 전부 지중해 사다리(코카 1,100/78칸 · 브리간틴 4,200/140칸 · 캐랙 9,800/240칸)에 맞춘 것이고, 확보한 사료는 '큰 다우는 승조원 서른 남짓, 작은 것은 열둘' 정도의 성격 서술뿐이다. 전부 probable이다.",
+
+    "canoa": { "price": 780, "verdict": "probable",
+      "basis": "통나무배라 재료값이 거의 들지 않으므로 첫 배 밴드(1,100~1,400)보다 싸게 뒀다. 대신 화물 34칸으로 코카(78)의 절반 아래라 사다리를 흔들지 않는다. 화물÷최소승조원이 2.4로 갤리(1.2) 쪽에 가까운 것이 노로 가는 배의 셈법이다.",
+      "sources": [] },
+    "sambuk": { "price": 1200, "verdict": "probable",
+      "basis": "작은 다우의 승조원이 열둘 안팎이었다는 서술에 맞춰 crew 12로 뒀고, 값과 화물(76칸)은 코카(1,100/78칸)와 나란히 놓아 '동안의 첫 배' 자리를 준다. rig 0.00이 코카(0.50)와 성격을 가른다.",
+      "sources": [
+        { "title": "Dhow", "url": "https://en.wikipedia.org/wiki/Dhow" }
+      ] },
+    "mtepe": { "price": 1450, "verdict": "probable",
+      "basis": "널을 나무못과 야자 노끈으로 꿰맨 배라 선체가 통째로 휜다 — 산호초에 얹혀도 부서지지 않지만 포탄은 못 견딘다. hp 58로 이 권역 최저인 근거가 그것이다. 포르투갈이 들어온 뒤 서양식 건조법에 밀려 끊긴 배이므로 era를 classic으로 뒀다.",
+      "sources": [
+        { "title": "Mtepe", "url": "https://en.wikipedia.org/wiki/Mtepe" }
+      ] },
+    "guineiro": { "price": 3400, "verdict": "probable",
+      "basis": "카라벨(1,400/90칸)을 기니 항로용으로 키우고 가로돛을 얹은 배로 잡아 브리간틴(4,200/140칸) 바로 아래에 뒀다. 얕은 강어귀에 들어갈 수 있다는 카라벨의 장점을 남기고 포를 여덟 문 물린 것이 이 배의 자리다. 특정 선종의 제원 사료는 없다.",
+      "sources": [] },
+    "baghla": { "price": 5200, "verdict": "probable",
+      "basis": "원양 다우이고 티크를 인도에서 실어 와 지었으므로 값이 붙는다. 큰 다우의 승조원이 서른 남짓이었다는 서술에 맞춰 crew 26·crewMin 12로 두었고, 그 결과 화물÷최소승조원이 14.8이 된다 — 코카(13)와 플류트(18.9) 사이로 '적은 사람이 많이 싣는 배'라는 다우의 성격이 수치에서 드러난다. 대신 포는 넷뿐이다.",
+      "sources": [
+        { "title": "Dhow", "url": "https://en.wikipedia.org/wiki/Dhow" }
+      ] }
+  },
+
+  "art": {
+    "iconTodo": [
+      { "good": "melegueta", "note": "말라게타 후추 — 붉은 꼬투리 안의 작은 갈색 낟알. 지금은 spice(향신료) 아이콘을 빌려 쓴다" },
+      { "good": "palmoil", "note": "야자유 — 붉은 주황빛 기름을 담은 박 그릇. 지금은 oliveoil 아이콘을 빌려 쓴다" },
+      { "good": "kola", "note": "콜라 열매 — 갈라진 붉은·흰 씨쪽 두세 알. 지금은 grain 아이콘을 빌려 쓴다" },
+      { "good": "copper", "note": "구리 — ★ 두 얼굴이 있다. 카탕가의 X자 십자 주괴(약 20cm·1kg)와 라인란트 놋쇠 마닐라(말굽 모양 팔찌). 십자 주괴 쪽이 이 권역다우니 그것을 권한다. 지금은 weapon 아이콘을 빌려 쓴다" },
+      { "good": "panos", "note": "아프리카 면포 — 좁은 폭으로 짜 이어 붙인 줄무늬 천 두루마리. 지금은 silk 아이콘을 빌려 쓴다" },
+      { "good": "tortoise", "note": "거북등껍질 — 매부리바다거북의 얼룩진 갑판 조각. 지금은 ivory 아이콘을 빌려 쓴다" },
+      { "good": "ambergris", "note": "용연향 — 잿빛 밀랍 덩어리. 지금은 salt(소금) 아이콘을 빌려 쓴다. 회백색 덩어리라는 점만 겹치므로 우선순위가 높다" }
+    ],
+    "hullTodo": [
+      { "ship": "canoa", "note": "기니 대형 카누 — 통나무를 파낸 단일 선체, 갑판도 돛도 없다. 양현에 노(패들)잡이가 스무 명 늘어선다. 지금은 galley 선체를 빌려 쓰는데 갤리의 뱃머리 충각이 어울리지 않는다" },
+      { "ship": "mtepe", "note": "므템베 — ★ 쇠못이 하나도 없다. 널을 야자 노끈으로 꿰맨 자국이 선체 바깥에 줄줄이 보여야 한다. 낙타 목처럼 앞으로 솟은 이물, 사각 돗자리 돛 한 장(rig 0.85의 근거). 지금은 hulk 선체" },
+      { "ship": "sambuk", "note": "삼북 — 뾰족한 이물이 위로 크게 휘고 고물이 각진 작은 다우. 세티세일(사다리꼴 라틴세일) 한 장. 지금은 caravel 선체" },
+      { "ship": "baghla", "note": "바갈라 — 원양 다우. 고물이 유럽 갈레온처럼 높고 조각이 화려하며 창이 나 있다. 돛은 세티세일 둘. 지금은 carrack 선체를 빌려 쓰는데 가로돛이 그려져 있어 rig 0.00과 어긋난다 — 우선순위가 가장 높다" },
+      { "ship": "guineiro", "note": "기니 무역선 — 카라벨라 헤돈다. 앞 두 돛대는 가로돛, 뒷돛대만 라틴세일이다. 흘수가 얕아 선체가 납작하다" }
+    ],
+    "flagTodo": [
+      { "key": "portugal", "note": "★ 가장 급하다. 이 권역의 유럽 항구 9곳이 전부 포르투갈인데 지금은 spain 깃발을 빌려 쓴다. 흰 바탕에 다섯 방패(퀴나스)를 십자로 놓고 붉은 성곽 테두리" },
+      { "key": "swahili", "note": "스와힐리 도시국가(킬와·잔지바르·몸바사·말린디·라무) — 지금은 hafsid를 빌려 쓴다. 실제로는 도시마다 달랐으므로 '해안 술탄국'을 아우르는 흰 초승달·붉은 바탕 정도의 총칭 깃발이면 족하다" },
+      { "key": "benin", "note": "베냉 왕국(그웨이토) — 무슬림도 유럽도 아닌데 hafsid를 빌려 쓰고 있어 가장 어긋난다. 오바의 문양(표범·산호)을 쓴 깃발" },
+      { "key": "somali", "note": "모가디슈 — 아주란·베나디르. swahili로 묶어도 되지만 이 도시는 성격이 뚜렷하므로 갈라도 좋다" },
+      { "key": "none", "note": "희망봉 — 임자가 없는 정박지다. '깃발 없음'을 그릴 수 있으면 spain을 걷어 낸다" }
+    ],
+    "styleTodo": [
+      { "key": "swahili", "note": "산호석을 깎아 쌓은 흰 벽·평지붕·좁고 긴 골목·조각한 나무 대문, 그 사이로 미나레트. 지금은 levant(마그레브 황토벽)를 빌려 쓴다 — 색이 너무 누렇다. 킬와·잔지바르·몸바사·말린디·라무·모가디슈·소팔라·그웨이토 8곳이 이 화풍을 기다린다" },
+      { "key": "guinea", "note": "기니 해안 — 붉은 흙벽과 야자 이엉 지붕, 바닷가에 부서지는 파도와 끌어올린 카누. 그웨이토가 이쪽이면 더 맞다" },
+      { "key": "fort", "note": "포르투갈 요새 항구(엘미나·아심·모잠비크·소팔라) — 도시가 아니라 성 하나다. 흰 회벽 능보와 그 아래 좁은 부두. 지금은 latin(이탈리아 테라코타 지붕)을 빌려 쓴다" },
+      { "key": "cape", "note": "희망봉 — 건물이 없다. 민둥한 탁상 산과 물통, 천막 몇 채, 몰고 온 소와 양. 이 권역에서 유일하게 '도시가 아닌 항구'다" }
+    ]
+  },
+
+  "openQuestions": [
+    "★ 노예를 교역품(GOODS)으로 만들지 않았다. 이 판단의 전문은 이 파일 맨 위 _노예무역에_대하여 절에 있다 — 되돌리기 전에 반드시 읽을 것. 역사는 아르갱·엘미나·상투메·루안다의 근거 서술과 blurb에 적었고, 사고파는 규칙만 만들지 않았다.",
+    "설탕을 이 권역의 goods로 만들지 않았다. 상투메가 설탕 섬인 것은 사료로 확실하지만(1515년 물레방아 제당소, 1595년에 85곳) 마데이라를 가진 대서양 권역이 정의할 품목이라 id를 채가지 않았다. 대서양이 sugar를 만들면 saotome의 supply에 얹으면 된다.",
+    "소코트라(유향·용혈수지)를 넣지 않았다. 지리적으로는 아프리카 뿔 앞이지만 홍해·아라비아 교역권이라 중동 권역이 가져갈 가능성이 커 겹치지 않게 뺐다. 중동이 안 가져가면 mogadishu 북쪽(대략 x 372, y 20)에 자리가 남아 있다.",
+    "펨바를 넣지 않았다. '몸바사의 곡창'이라는 이야기가 있으나 확보한 문헌에서 확인하지 못했고, 넣으면 이 권역에 곡물 산지가 둘이 되어 '유럽에서 먹을 것을 싣고 온다'는 이 바다의 성격이 흐려진다. 말린디 곡물 0.64 하나로 충분하다고 봤다.",
+    "철괴(iron bar)를 goods로 만들지 않았다. 유럽 봉철이 아프리카 해안의 주요 수입품이었던 것은 맞지만 게임에는 weapon 칸이 이미 그 자리를 하고 있어 구별이 안 된다 — 희망봉의 코이코이 수요(weapon 1.32)가 사실은 쇠붙이 수요다.",
+    "아프리카 권역에서 **당대 해상보험 요율이 직접 적힌 사료를 하나도 확보하지 못했다.** routes 절의 값은 전부 지중해 앵커를 성격(외해/무기항/깃발 적대)으로 옮긴 것이다. 포르투갈 인도 항로의 보험·손실 기록(1586~90년 무사 귀항 40% 미만, 선원 사망 3분의 1~2분의 1)이 그 대체 근거다.",
+    "말라게타·콜라·야자유의 **당대 가격비**(곡물의 몇 배)를 밝힌 1차 자료를 찾지 못했다. 특히 콜라는 확보한 문헌이 교역 규모를 19세기로 다뤄, 1600년 이전에 얼마나 큰 상품이었는지가 미해결이다.",
+    "다우·므템베·카누의 15~16세기 제원(톤수·길이·승조원)을 밝힌 사료가 없다. ships 절의 수치는 전부 지중해 사다리에 맞춘 것이고, 확보한 것은 '큰 다우는 승조원 서른 남짓'이라는 서술 하나뿐이다.",
+    "벵겔라(1617)와 루안다(1576)는 엘미나(1482)보다 한 세기 뒤에 생겼다. 연도를 고정하지 않는다는 지침에 따라 함께 뒀다 — 콘텐츠가 풍성한 쪽을 택한 것이지 몰라서가 아니다.",
+    "공용 파일에 넣었으면 하는 것: 희망봉(cabo)이 지금은 벵겔라의 막다른 가지다. 원양 항로 luanda~mocambique가 실제로 지나는 자리이므로, OCEAN_LANES를 손보는 사람이 있다면 그 26일 구간을 luanda~cabo(12일)와 cabo~mocambique(15일)로 쪼개는 것을 검토해 볼 만하다 — 다만 '길고 위험한 외길'이라는 성격이 옅어지므로 지금은 일부러 쪼개지 않았다."
+  ]
 }

@@ -2,10 +2,1610 @@
   "region": "mideast",
   "regionName": "중동·홍해",
   "_읽는이에게": "중동·홍해 권역의 사료 근거. 코드 정본은 js/regions/mideast/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
-  "version": 1,
-  "cities": {},
-  "routes": {},
-  "goods": {},
-  "ships": {},
-  "openQuestions": []
+  "version": 2,
+  "cities": {
+    "suakin": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "gold": {
+          "side": "supply",
+          "value": 0.74,
+          "verdict": "probable",
+          "basis": "누비아 사막의 사금이 낙타로 수아킨까지 내려와 배에 실렸다. 산지 자체가 아니라 적출항이라 금괴 공급값 중에서는 비싼 0.74로 뒀다."
+        },
+        "ivory": {
+          "side": "supply",
+          "value": 0.68,
+          "verdict": "probable",
+          "basis": "내륙에서 올라온 상아가 홍해로 나가는 문이었다. 마사와(0.62)보다 산지에서 멀어 0.68."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "순례선과 상선이 들르는 자리라 그릇류가 팔렸다. 자체 가마가 없어 전량 수입이고 규모가 작아 배율은 1.26."
+        },
+        "dates": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "산호섬 위의 도시라 밭이 없다. 홍해를 오르내리는 배가 대추야자를 부리는 자리라 1.22."
+        },
+        "glass": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "유리병·구슬은 홍해 무역의 오래된 품목이고 내륙 교역의 결제 수단이기도 했다. 1.24."
+        }
+      }
+    },
+    "massawa": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "ivory": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "에티오피아 고원과 그 남쪽에서 나온 상아가 마사와로 내려왔다. 이 권역에서 상아가 가장 싼 자리 0.62로 뒀다."
+        },
+        "grain": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "에티오피아 고원은 강수가 있어 곡물이 나고 마사와가 그 고원 물산이 홍해로 내려오는 문이었다. 바르보자는 제일라의 밀·수수·보리가 아덴으로 실려 갔다고 적어 아프리카 뿔이 아라비아의 곡창이었음을 보여 준다. 이집트만큼 대량은 아니라 카이로(0.50)보다 비싼 0.58.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "에티오피아 고원의 군주들이 화기를 절실히 원했고 그 통로가 마사와였다. 이 권역 무기 수요 최고값 1.32."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "고원의 군주와 교회가 사들이던 사치품이다. 내륙 수요가 항구를 통해 나오므로 1.26."
+        }
+      }
+    },
+    "yanbu": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "dates": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "메디나 오아시스의 대추야자가 얀부로 내려와 실렸다. 홍해 쪽에 대추야자 산지를 하나 둔 것은 걸프까지 안 가도 이 물건을 만질 수 있게 하려는 배치이기도 하다. 0.60."
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "메디나로 올라가는 히자즈의 부두다. 바르테마는 메디나가 \"아라비아 펠릭스와 카이로와 에티오피아에서\" 배로 먹을 것을 받았다고 적는다. 배후가 사막이라 곡물은 전량 수입이고, 규모가 작아 배율은 지다보다 낮은 1.30.",
+          "sources": [
+            {
+              "title": "Ludovico di Varthema, Travels (Hakluyt Soc. 1863, Badger 편)",
+              "url": "https://archive.org/details/travelsludovico00badggoog"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "히자즈는 올리브가 안 자란다. 순례객과 성지 수요로 기름은 늘 사들이는 물건이었고, 작은 항구라 배율은 완만한 1.22."
+        }
+      }
+    },
+    "jeddah": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "tariff": {
+        "value": 0.09,
+        "verdict": "gameplay",
+        "basis": "지다는 인도양에서 올라온 짐이 반드시 내려야 하는 항구였다 — 바르보자는 향신료가 \"메카의 항구 지다\"에서 아주 작은 배로 수에즈까지 가고 거기서 낙타로 카이로로 넘어갔다고 적는다. 맘루크·오스만은 그 길목에서 통과세를 걷어 성지 경영비를 댔다. ★ 다만 흔히 인용되는 \"지다 10%\"는 이번 조사에서 사료로 확인하지 못했으므로 값의 근거로 쓰지 않았다 — 9%는 사료율이 아니라 알렉산드리아(8.5%)보다 반 칸 높다는 **상대 위치**를 정한 게임 수치다. 게임의 입항세는 매각에만 물어 사료의 통과세를 그대로 옮기면 이 항구가 통째로 죽는다.",
+        "sources": [
+          {
+            "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+            "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+          }
+        ]
+      },
+      "goods": {
+        "spice": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "gameplay",
+          "basis": "★ 바르보자는 인도 향신료가 \"메카의 항구 지다\"로 가고 거기서 아주 작은 배로 수에즈까지, 다시 낙타로 카이로, 그 뒤 알렉산드리아에서 베네치아인이 샀다고 적는다 — 지다가 강제 환적점이었다는 뜻이다. 아덴보다 한 단계 위쪽이라 값이 그만큼 붙어(0.56 → 0.60) 알렉산드리아(0.62) 바로 아래에 뒀다. 두 권역의 값을 맞물리게 하려고 고른 수치라 판정은 gameplay다.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "★ 바르테마는 메카가 \"풀도 나무도 아무것도 나지 않는다\"고 적고 \"먹을 것의 상당 부분이 카이로에서, 곧 홍해를 통해 온다. 지다라는 항구가 있는데 그 도시에서 40마일 떨어져 있다\"고 이었다. 알부케르케 함대가 1513년에 나포한 배 넷도 \"지다와 메카로 갈 식량을 실은\" 배였다. 이 권역에서 곡물 수요가 가장 강한 축인 1.34.",
+          "sources": [
+            {
+              "title": "Ludovico di Varthema, Travels (Hakluyt Soc. 1863, Badger 편)",
+              "url": "https://archive.org/details/travelsludovico00badggoog"
+            },
+            {
+              "title": "The Commentaries of the Great Afonso Dalboquerque, vol. IV (Hakluyt Soc. 1884)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.76889"
+            }
+          ]
+        },
+        "rosewater": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
+          "basis": "★ 카바를 씻는 데 장미수를 썼고 성지 수요는 값을 따지지 않는 종류의 수요다. 바르보자는 장미수가 호르무즈·캄베이·캘리컷·말라카의 수입 목록에 오르는 원거리 상품이었음을 보여 준다 — 성지로 올라가는 물량도 그 흐름의 일부였다. 이 권역 장미수 최고값 1.32.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            }
+          ]
+        },
+        "incense": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "성지에서 태우는 향은 끊이지 않았고 순례 인파가 사 가는 물건이기도 했다. 산지에서 배로 올라와야 하므로 수요 배율 1.28. 성지 향 소비를 숫자로 적은 사료는 못 찾았다."
+        },
+        "dates": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "순례 인파의 주식이자 성지의 상비 식량이라 늘 사들였다. 히자즈 자체 물량으로는 모자랐으므로 수요 1.24."
+        }
+      }
+    },
+    "mokha": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "coffee": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "★ 이 시대에 커피가 나는 곳은 예멘 한 곳뿐이었고 모카는 그 유일한 적출항이다 (자바가 독점을 깨는 것은 1700년 무렵이다). 고원 → 바이트 알파키흐 시장 → 모카·후다이다로 내려오는 길이 정형이었고, 산지 도매는 밀의 16배쯤으로 이스탄불 소매(42배)의 절반도 안 됐다. 세계에서 가장 싼 산지 값 0.46을 여기에만 준다.",
+          "sources": [
+            {
+              "title": "Ota Keiko, \"Coffee as a Global Beverage before 1700\"",
+              "url": "https://hosei.ecats-library.jp/da/repository/00014525/j32-Ota.pdf"
+            },
+            {
+              "title": "Özmucur & Pamuk, Istanbul prices/wages 1469-1914 (GPIH 데이터셋)",
+              "url": "https://gpih.ucdavis.edu/files/Istanbul_1469-1914.xls"
+            },
+            {
+              "title": "S. Topik, \"The World Coffee Market in the 18th and 19th Centuries\" (GEHN WP 04/04)",
+              "url": "https://www.lse.ac.uk/Economic-History/Assets/Documents/Research/GEHN/GEHNWP04ST.pdf"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "예멘 고원은 커피에 밭을 내주었고 티하마 해안은 사막이다. 산지 특화의 뒷면이 식량 수입이라 곡물을 사들인다 — 산지 항구답게 배율은 완만한 1.26."
+        },
+        "dates": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "예멘 해안은 커피에 밭을 내주어 먹을 것을 사들였고 대추야자가 그 일부였다. 산지 항구답게 배율은 완만한 1.20."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "커피를 담고 마시는 그릇이 실제로 필요했고 자체 생산이 없다. 산지 항구라 구매력이 있어 1.24."
+        }
+      }
+    },
+    "aden": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "tariff": {
+        "value": 0.08,
+        "verdict": "gameplay",
+        "basis": "아덴 세관(al-furḍa)은 술탄국 재정의 기둥이었다 — 1411년 아덴 세입이 147만 디나르에 이르렀다는 기록이 있다. 라술 왕조 알나시르 때는 화물 가치의 절반까지 뜯었다고 전해지고, 그 결과 1426년에는 인도에서 온 배 마흔 척이 아덴을 버리고 지다로 갔다. 바르테마는 입항한 배에서 관리들이 돛대·돛·키·닻을 떼어 가 세를 낼 때까지 못 떠나게 했다고 적었다. 그 성격만 기본율(6%) 위 8%로 남기고 사료의 절대 세율은 옮기지 않았다.",
+        "sources": [
+          {
+            "title": "N. Sadek, The history and monuments of the Tahirid dynasty of the Yemen (Durham PhD)",
+            "url": "https://etheses.durham.ac.uk/id/eprint/5867/1/5867_3282-vol1.PDF"
+          },
+          {
+            "title": "Ludovico di Varthema, Travels (Hakluyt Soc. 1863, Badger 편)",
+            "url": "https://archive.org/details/travelsludovico00badggoog"
+          }
+        ]
+      },
+      "goods": {
+        "spice": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "gameplay",
+          "basis": "★ 이 권역 설계의 핵심. 아덴은 향신료 산지가 아니라 인도양에서 올라온 짐이 계절풍을 갈아타는 통과지다(바르보자·보자르 모두 인도 배가 아덴에서 철을 갈아탔다고 적는다). 그래서 값을 산지(인도양 권역)보다는 비싸게, 알렉산드리아(0.62)보다는 싸게 0.56으로 잡았다. 이 순서가 뒤집히면 유럽 상인이 홍해까지 올 이유가 사라져 세계 경제가 지중해로 쏠린다 — 고증이 아니라 두 권역의 값이 맞물리게 하려고 고른 수치다.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "P. Beaujard, \"The Geography of the Indian Ocean and Its Navigation\" (Cambridge UP 2019)",
+              "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/51FBAA962D1AE6BB7EBE364165AC7536/9781108424561int1_9-18.pdf/introduction_the_geography_of_the_indian_ocean_and_its_navigation.pdf"
+            }
+          ]
+        },
+        "coffee": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "고원에서 내려온 커피는 모카뿐 아니라 아덴에서도 실렸다. 산지 항구가 아니라 집산항이라 모카(0.46)보다 비싼 0.58로 두어 \"산지까지 내려가면 더 싸다\"를 남겼다.",
+          "sources": [
+            {
+              "title": "Ota Keiko, \"Coffee as a Global Beverage before 1700\"",
+              "url": "https://hosei.ecats-library.jp/da/repository/00014525/j32-Ota.pdf"
+            },
+            {
+              "title": "Özmucur & Pamuk, Istanbul prices/wages 1469-1914 (GPIH 데이터셋)",
+              "url": "https://gpih.ucdavis.edu/files/Istanbul_1469-1914.xls"
+            }
+          ]
+        },
+        "incense": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "하드라마우트 향은 아덴으로도 모여 인도양·홍해 양쪽으로 나갔다. 산지가 아니라 집산항이라 시흐르(0.48)보다 비싼 0.62.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "Mamluk Egypt 1250-1517 물가 데이터셋 (Ashtor 계열 · GPIH)",
+              "url": "https://gpih.ucdavis.edu/files/Egypt_1250-1517.xls"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "바르보자는 아덴 성 안에 \"물이 전혀 없어\" 멀리 산에서 관을 놓아 끌어왔다고 적고, 아덴 상인이 베르베라에서 \"많은 식량과 고기와 꿀과 밀랍\"을, 제일라에서 밀·수수·보리를 실어 왔다고 적는다. 세관으로 먹고사는 도시가 식량을 사들이는 구조가 실제였다. 규모가 커 1.28.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            }
+          ]
+        },
+        "dates": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "배후에 밭이 없는 항구라 주식류를 전부 사들인다. 걸프에서 올라오는 대추야자가 그 자리를 채웠다. 1.22.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "세관과 항구를 지켜야 하는 도시라 화기를 사들였다. 규모가 커 1.30."
+        }
+      }
+    },
+    "shihr": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "incense": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
+          "basis": "★ 유향나무가 자라는 땅은 도파르·하드라마우트·소코트라뿐이다. 1525년 포르투갈 캄베이 감정표에 \"Emcemço do fariaquy\"(파르타크 유향)가 따로 값이 매겨져 있는데, 파르타크는 바로 이 하드라마우트·마흐라 향 해안이다. 시흐르는 그 향의 적출항이라 세계에서 유향이 가장 싼 자리(0.48)를 여기에 줬다.",
+          "sources": [
+            {
+              "title": "Lembrança das cousas da Índia (1525), in Subsídios para a história da Índia portuguesa",
+              "url": "https://archive.org/download/b29351492/b29351492_djvu.txt"
+            },
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            }
+          ]
+        },
+        "horse": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "confirmed",
+          "basis": "★ 조사로 새로 넣은 항목이다. 바르보자는 \"에시시흐르의 말이 호르무즈에서 오는 말보다 훨씬 크고 좋아서 인도에서 500~600크루자두를 받는다\"고 적었다 — 호르무즈 말이 300~400크루자두였으니 시흐르 말이 최상품이었다는 뜻이다. 값은 걸프 산지(카티프 0.64 · 바스라 0.60)와 같은 0.60에 뒀다. 차이는 값이 아니라 지리에 뒀다 — 여기서 사면 아덴~마스카트의 가장 험한 구간(요율 8.0)을 지나 호르무즈까지 들고 가야 한다.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+              "url": "https://iranicaonline.org/articles/hormuz-ii/"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "하드라마우트는 향나무가 자라는 마른 언덕이지 밀밭이 아니다. 작은 항구인데도 자급이 전혀 안 되므로 배율은 오히려 높게 1.32로 뒀다."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "작은 항구지만 향 무역으로 돈이 도는 자리라 그릇을 사들였다. 1.24."
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "부족 세력이 다투는 해안이라 화기 수요가 있었다. 작은 항구라 1.26."
+        }
+      }
+    },
+    "muscat": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "dates": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "1525년 포르투갈 캄베이 감정표에 \"tâmaras de Masquate\"(마스카트 대추야자)가 따로 값이 매겨져 있다 — 오만 대추야자가 인도까지 이름을 달고 팔린 상품이었다는 뜻이다. 바스라·카티프보다는 물량이 적어 0.58.",
+          "sources": [
+            {
+              "title": "Lembrança das cousas da Índia (1525), in Subsídios para a história da Índia portuguesa",
+              "url": "https://archive.org/download/b29351492/b29351492_djvu.txt"
+            }
+          ]
+        },
+        "incense": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "probable",
+          "basis": "도파르의 향이 오만 해안을 따라 마스카트로 넘어와 실렸다. 산지에서 가장 먼 적출항이라 이 권역에서 가장 비싼 유향 자리 0.70에 뒀다."
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "오만 해안은 대추야자는 되어도 밀은 안 된다. 다만 배후 하자르 산지에 관개 농지가 조금 있어 완전한 불모지는 아니므로 수요를 1.24로 낮게 뒀다."
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "해안 요새와 다우 무장에 화기가 들어갔다. 자체 생산이 없어 사들이되 1.28."
+        },
+        "carpet": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "걸프 상인과 오만 유력자가 사들이던 사치품이다. 종착 시장이 아니라 수요는 완만한 1.22."
+        }
+      }
+    },
+    "hormuz": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국은 민둥섬이라 농지도 광산도 없고 세입이 사실상 통항세뿐이었다(11세기부터 해협을 지나는 모든 배에 정액을 물렸다). 니키틴은 1472년 무렵 이곳을 \"관세가 비싼\" 대시장이라 적었고, 테이셰이라는 세관이 \"늘 흐르는 은의 도랑\"이라며 포르투갈 왕에게 연 15만 파르다우를 냈다고 전한다. ★ 흔히 말하는 \"10%\"는 확인하지 못했다. 7.5%는 그 성격을 남기되 지다·아덴보다 낮게 둔 게임 수치다 — 이쪽은 강제 환적 구간이 아니라 선택 가능한 통로여서 세를 세게 물면 배가 그냥 안 들어온다.",
+        "sources": [
+          {
+            "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+            "url": "https://iranicaonline.org/articles/hormuz-ii/"
+          },
+          {
+            "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+            "url": "https://archive.org/details/travelsofpedrote09teix"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "probable",
+          "basis": "고원에서 내려온 생사가 바닷길로 갈아타는 자리다. 대상로 값이 이미 붙은 뒤라 0.66이고, 여기서 실린 비단은 인도로도 나갔다."
+        },
+        "carpet": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
+          "basis": "린스호턴이 호라산 융단을 호르무즈에서 보았다고 적어, 고원의 융단이 실제로 여기까지 내려와 배에 실렸음이 확인된다. 대상로 값이 이미 붙어 이 권역에서 가장 비싼 융단 공급처(0.70)가 된다 — 대신 여기서는 배에 실을 수 있다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Persian carpet",
+              "url": "https://en.wikipedia.org/wiki/Persian_carpet"
+            },
+            {
+              "title": "Wikipedia — Safavid Iran",
+              "url": "https://en.wikipedia.org/wiki/Safavid_Iran"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "confirmed",
+          "basis": "★ 이 권역에서 가장 확실하게 확인되는 수요다. 호르무즈 섬은 \"민물도 초목도 없고 견딜 수 없이 더워 모든 물자를 오만·페르시아 본토와 케슘 섬에서 들여와야 했다\"(Floor). 바르보자는 마실 물조차 테라다라는 작은 배로 본토에서 실어 왔다고 적고, 테이셰이라는 \"이 땅은 과실도 물도 식량도 내지 않는다\"고 적었다. 최고값 1.36을 여기 준다.",
+          "sources": [
+            {
+              "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+              "url": "https://iranicaonline.org/articles/hormuz-ii/"
+            },
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        },
+        "horse": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "★ 호르무즈의 정체가 이 항목이다. 바르보자는 \"해마다 말 천 마리, 때로는 이천 마리가 나갔고 인도에서 좋고 나쁜 것을 섞어 한 마리에 300~400크루자두\"였다고 적었다. 비자야나가라의 왕은 말 2만 마리를 400~600크루자두씩 주고 길렀고, 눈이스는 \"왕이 해마다 호르무즈에서 말 만 삼천 마리를 산다\"고 적었다. 인도로 나가는 문이라 수요 1.34.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+              "url": "https://iranicaonline.org/articles/hormuz-ii/"
+            },
+            {
+              "title": "R. Sewell, A Forgotten Empire (Vijayanagar) — Fernão Nuniz 연대기",
+              "url": "https://www.gutenberg.org/cache/epub/3310/pg3310.txt"
+            }
+          ]
+        },
+        "pearl": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "★ 호르무즈는 어장이 아니라 진주에 값이 매겨지던 시장이다 — 바르보자가 적은 대로 호르무즈 상인이 줄파르·바레인까지 가서 사다가 인도로 넘겼고 그것이 왕의 세입이 됐다. 그래서 supply가 아니라 demand 1.28이다.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+              "url": "https://iranicaonline.org/articles/hormuz-ii/"
+            }
+          ]
+        },
+        "dates": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
+          "basis": "★ 바르보자는 호르무즈의 말배가 인도로 갈 때 \"소금과 대추야자와 건포도와 유황을 많이\" 실었다고 적고, 테이셰이라는 바스라 대추야자가 호르무즈로 대량 실려 갔다고 적는다 — 곧 호르무즈는 대추야자를 사들여 다시 인도로 넘기는 자리였다. 재수출 창구라 수요는 완만한 1.22.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        }
+      }
+    },
+    "julfar": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "pearl": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "confirmed",
+          "basis": "바르보자는 줄파르에 \"씨알진주와 큰 진주의 아주 큰 어장이 있고, 호르무즈의 무어인이 여기 와서 사다가 인도로 가져가며, 그것이 호르무즈 왕에게 큰 세입이 된다\"고 적었다 — 줄파르가 어장이고 호르무즈가 그 시장이라는 이 권역의 구조가 한 문장에 들어 있다. 바레인(0.58)보다는 작은 어장이라 0.66.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+              "url": "https://iranicaonline.org/articles/hormuz-ii/"
+            },
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        },
+        "dates": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "갯가 마을 뒤편의 야자밭에서 나는 물량이라 규모가 작다. 0.62로 이 권역에서 가장 비싼 산지 자리에 뒀다."
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "진주 어장에 붙은 갯가 마을이라 밭이 없고, 여름이면 남자들이 통째로 바다에 나가 있어 농사지을 손도 없었다. 작은 마을이지만 자급이 0이라 1.30."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "줄파르 자리에서는 중국·이란 도자기가 대량으로 나온다 — 진주로 번 돈이 그릇으로 바뀌던 자리다. 작은 마을이라 1.22. 발굴 보고서를 직접 받아 보지는 못했다."
+        }
+      }
+    },
+    "bahrain": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "pearl": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "★ 테이셰이라(1590년대 호르무즈 거주)는 바레인 어장에서 테라다 약 200척이 조업했고 (바레인 100 · 줄파르 50 · 나킬루 50) \"이 섬의 진주와 씨알진주 연간 거래액이 알려진 것만 50만 두카트, 몰래 빠져나가는 10만은 빼고\"라고 적었다 — 호르무즈 세관의 한 해 수입(연 6만~12만 세라핌)을 몇 배나 넘는 액수다. 세계에서 진주가 가장 싼 자리 0.58을 여기에 준다.",
+          "sources": [
+            {
+              "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+            },
+            {
+              "title": "W. Floor, \"HORMUZ ii. Islamic Period\", Encyclopaedia Iranica",
+              "url": "https://iranicaonline.org/articles/hormuz-ii/"
+            },
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "단물이 솟는 섬이라 야자와 채소는 되지만 인구를 먹일 곡물은 안 된다. 어장 배들의 근거지라 사람이 몰려 곡물이 늘 모자랐다. 1.32."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "어장으로 돈이 도는 섬이라 사치 그릇 수요가 있었다. 자체 가마가 없어 1.26."
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "어장을 지키려 다투던 섬이라 무장 수요가 실재했다. 1.24로 완만하게."
+        }
+      }
+    },
+    "qatif": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "horse": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "probable",
+          "basis": "네지드 사막의 부족들이 기른 아라비아 말이 알하사를 거쳐 걸프 해안으로 내려왔고 카티프가 그 적출항의 하나였다. 사막에서 바로 내려오는 자리라 0.64. 카티프를 콕 집은 사료는 못 찾아 probable이다."
+        },
+        "dates": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "알하사 오아시스는 아라비아 최대의 야자밭이다. 바스라 다음가는 산지로 보아 0.52."
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "알하사 오아시스가 배후에 있어 대추야자는 넉넉하지만 곡물은 별개다. 오아시스가 있는 만큼 절박함은 덜해 1.28로 뒀다."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "오아시스 도시의 소비 수요다. 자체 생산이 없어 사들이되 규모가 작아 1.22."
+        },
+        "glass": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "오아시스 도시의 사치 수요다. 자체 생산이 없어 전량 수입이라 1.24."
+        }
+      }
+    },
+    "basra": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "dates": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "★ 르 스트레인지는 바스라의 야자숲이 \"백 걸음 앞이 안 보일 만큼 빽빽\"했고 그 열매가 \"인도와 중국까지 수출될 만큼 좋았다\"고 전한다. 테이셰이라(1604)는 바스라 대추야자가 \"해마다 대량으로 바그다드와 페르시아의 여러 항구와 호르무즈로 실려 나가는 주식\"이라 적었다. 세계에서 가장 싼 산지 값 0.44를 여기에 준다.",
+          "sources": [
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            },
+            {
+              "title": "G. Le Strange, The Lands of the Eastern Caliphate",
+              "url": "https://archive.org/download/landsofeasternca00lest/landsofeasternca00lest_djvu.txt"
+            }
+          ]
+        },
+        "horse": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "두 강 유역은 말을 모으기 좋은 자리였고 바스라에서 배에 실려 인도로 갔다. 집산 규모가 커 카티프(0.64)보다 싼 0.60으로 뒀다."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "인도·중국 자기가 강길을 타고 바그다드로 올라가는 길목이다. 통과 수요가 얹혀 1.28."
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "두 강 유역은 대추야자 기름은 되어도 올리브는 안 된다. 지중해에서 대상로를 타고 내려오는 값비싼 수입 유지라 1.24로 사들인다."
+        },
+        "glass": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "강길로 바그다드까지 올라가는 통과 수요가 얹혀 걸프 안에서 가장 높은 1.26."
+        },
+        "rosewater": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "confirmed",
+          "basis": "르 스트레인지가 정리한 바스라의 상시 수출품 목록은 \"대추야자, 헤나 염료, 생사, 그리고 장미수와 제비꽃 정유\"다 — 즉 바스라는 페르시아 장미수가 모여 다시 나가는 자리였다. 산지가 아니라 재유통 시장이라 값이 붙는 쪽(demand 1.20)으로 뒀다.",
+          "sources": [
+            {
+              "title": "G. Le Strange, The Lands of the Eastern Caliphate",
+              "url": "https://archive.org/download/landsofeasternca00lest/landsofeasternca00lest_djvu.txt"
+            }
+          ]
+        }
+      }
+    },
+    "cairo": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "tariff": {
+        "value": 0.08,
+        "verdict": "gameplay",
+        "basis": "홍해에서 낙타로 넘어온 짐이 알렉산드리아로 나가기 전 마지막으로 값이 매겨지는 자리다. 바르스바이의 1429년 조치 뒤 술탄이 향신료를 세로 걷어 직접 알렉산드리아에 팔았고, 그래서 \"카이로에서 50디나르인 향신료를 알렉산드리아에서는 130디나르에 사야 했다\". 피셸은 카리미 상인의 세가 아이다브·쿠사이르·투르·수에즈에서 걷히고 이집트 땅에서 또 걷혔다고 정리하면서도 \"사료가 너무 빈약해 실제 세율은 알 수 없다\"고 적는다 — 그래서 8%는 성격만 옮긴 게임 수치다.",
+        "sources": [
+          {
+            "title": "\"Memlûkler Devrinde Kârimî Tüccarları\" (2004), DergiPark",
+            "url": "https://dergipark.org.tr/tr/download/article-file/782489"
+          },
+          {
+            "title": "W. Fischel, \"The Spice Trade in Mamluk Egypt\"",
+            "url": "https://medpopculture.voices.wooster.edu/wp-content/uploads/sites/140/2018/01/fischel_spice-trade-in-mamluk-egypt.pdf"
+          }
+        ]
+      },
+      "goods": {
+        "grain": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "나일 범람원은 고대부터 곡창이었고 이집트 밀이 홍해 항구와 성지를 먹였다. 알부케르케 원정 기록의 편자는 케나~쿠사이르 길로 \"이집트에서 아라비아로 곡물이 대량 수출됐다\"고 적는다. 이 권역에서 곡물이 실제로 나는 곳은 여기와 마사와뿐이라 산지 값 0.50으로 뒀다.",
+          "sources": [
+            {
+              "title": "The Commentaries of the Great Afonso Dalboquerque, vol. IV (Hakluyt Soc. 1884)",
+              "url": "https://archive.org/details/in.ernet.dli.2015.76889"
+            }
+          ]
+        },
+        "coffee": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "★ 카이로는 커피가 이슬람 세계로 퍼져 나간 관문이다. 16세기 첫 십 년에 알아즈하르의 예멘 유학생을 통해 들어왔고 곧 커피 가게가 자리 잡았다. 이 권역에서 커피를 가장 후하게 사 주는 자리(1.34)로 뒀다.",
+          "sources": [
+            {
+              "title": "Ota Keiko, \"Coffee as a Global Beverage before 1700\"",
+              "url": "https://hosei.ecats-library.jp/da/repository/00014525/j32-Ota.pdf"
+            },
+            {
+              "title": "Özmucur & Pamuk, Istanbul prices/wages 1469-1914 (GPIH 데이터셋)",
+              "url": "https://gpih.ucdavis.edu/files/Istanbul_1469-1914.xls"
+            }
+          ]
+        },
+        "incense": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "맘루크 이집트 물가 자료에 향(incense)이 1345~1510년까지 연속으로 잡혀 있다 — 즉 이집트는 향을 상시 대량으로 사들이는 시장이었다. 교회·모스크 수요에 유럽행 물량이 겹쳐 이 권역 유향 수요 중 가장 높은 1.30을 줬다.",
+          "sources": [
+            {
+              "title": "Mamluk Egypt 1250-1517 물가 데이터셋 (Ashtor 계열 · GPIH)",
+              "url": "https://gpih.ucdavis.edu/files/Egypt_1250-1517.xls"
+            }
+          ]
+        },
+        "horse": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "맘루크는 기병으로 서는 나라라 군마를 끊임없이 사들였다. 이집트에서는 좋은 군마가 나지 않아 아라비아·시리아에서 들여왔다. 호르무즈보다는 약한 1.28. 매입 규모의 사료는 못 찾았다."
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
+          "basis": "홍해에서 낙타로 넘어온 향신료가 나일에서 다시 값이 매겨졌다. 바르스바이의 1429년 조치 뒤로는 술탄이 지다에서 온 배의 향신료를 세로 걷어 직접 알렉산드리아로 넘겼고, 그 결과 \"카이로에서 50디나르인 향신료를 알렉산드리아에서는 130디나르에 사야 했다\"고 전한다. 카이로가 알렉산드리아보다 싼 중간 시장이었다는 뜻이라 수요 배율을 완만한 1.22로 뒀다.",
+          "sources": [
+            {
+              "title": "\"Memlûkler Devrinde Kârimî Tüccarları\" (2004), DergiPark",
+              "url": "https://dergipark.org.tr/tr/download/article-file/782489"
+            },
+            {
+              "title": "W. Fischel, \"The Spice Trade in Mamluk Egypt\"",
+              "url": "https://medpopculture.voices.wooster.edu/wp-content/uploads/sites/140/2018/01/fischel_spice-trade-in-mamluk-egypt.pdf"
+            }
+          ]
+        }
+      }
+    },
+    "damascus": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "rosewater": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "장미수의 이름난 산지다. 다마스크 장미라는 이름 자체가 이 도시에서 왔고 증류 향수 기술이 이 지역에서 발달했다. 산지 값 0.56. 다마스쿠스 자체의 생산 규모를 적은 사료는 못 찾아 판정을 내렸다."
+        },
+        "weapon": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "confirmed",
+          "basis": "★ 다마스쿠스 강철은 이 도시의 이름을 딴 물건이다. 이 권역에서 무기가 나는 유일한 곳이라 산지 값 0.64를 줬다 — 화약 무기가 아니라 날붙이 쪽이지만 게임의 weapon 한 칸으로 묶었다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Damascus steel",
+              "url": "https://en.wikipedia.org/wiki/Damascus_steel"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "시리아 언덕은 지중해 기후라 올리브밭이 이어진다. 샴 지방의 기름은 이 권역에서 유일하게 대량으로 나는 유지라 산지 값 0.54를 줬다. 당대 시세표는 확보하지 못했다."
+        },
+        "coffee": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "다마스쿠스·알레포에 커피가 들어온 것은 1540년 무렵으로 전해진다. 하지 대상의 출발지라 예멘 커피가 일찍 닿았다. 카이로 다음가는 소비지로 보아 1.30.",
+          "sources": [
+            {
+              "title": "Ota Keiko, \"Coffee as a Global Beverage before 1700\"",
+              "url": "https://hosei.ecats-library.jp/da/repository/00014525/j32-Ota.pdf"
+            },
+            {
+              "title": "Özmucur & Pamuk, Istanbul prices/wages 1469-1914 (GPIH 데이터셋)",
+              "url": "https://gpih.ucdavis.edu/files/Istanbul_1469-1914.xls"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "샴의 도기는 있었으나 궁정·부유층이 쓰던 청화 자기는 수입품이었다. 1.24."
+        },
+        "glass": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "샴은 유리 공예의 오랜 전통이 있었으나 이 시기 최고급 유리는 베네치아 것이었고 그것을 사들였다. 자체 생산이 있어 배율은 낮은 1.22."
+        }
+      }
+    },
+    "aleppo": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "★ 이 항목이 알레포의 정체다. 이란 길란·시르반의 생사가 낙타로 알레포까지 와서 유럽 상관에 팔렸고, 오스만령 알레포는 그 무역으로 거대한 창구가 됐다 — 테이셰이라는 알레포 세관이 전쟁 통에도 연 20만 세퀸을 냈다고 적는다. 이 권역에서 비단이 가장 싼 자리(0.58)로 두어 \"유럽 상인이 여기까지 올라온 이유\"를 값으로 남겼다.",
+          "sources": [
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "알레포 배후 언덕도 올리브 산지다. 다만 알레포는 산지라기보다 집산지에 가까워 다마스쿠스(0.54)보다 비싼 0.58로 두어 두 도시의 성격을 갈랐다."
+        },
+        "carpet": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
+          "basis": "유럽으로 나가는 융단의 창구였다. 이 시기 유럽 회화에 페르시아·아나톨리아 융단이 자주 그려지는데 그 물건이 이 길로 갔다. 이 권역 융단 수요 최고값 1.32.",
+          "sources": [
+            {
+              "title": "Wikipedia — Persian carpet",
+              "url": "https://en.wikipedia.org/wiki/Persian_carpet"
+            },
+            {
+              "title": "Wikipedia — Safavid Iran",
+              "url": "https://en.wikipedia.org/wiki/Safavid_Iran"
+            }
+          ]
+        },
+        "coffee": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "유럽 상관이 있는 도시라 커피가 소비되는 동시에 유럽으로 나가는 창구이기도 했다. 종착 소비지 카이로보다 한 칸 낮은 1.28.",
+          "sources": [
+            {
+              "title": "Ota Keiko, \"Coffee as a Global Beverage before 1700\"",
+              "url": "https://hosei.ecats-library.jp/da/repository/00014525/j32-Ota.pdf"
+            },
+            {
+              "title": "Özmucur & Pamuk, Istanbul prices/wages 1469-1914 (GPIH 데이터셋)",
+              "url": "https://gpih.ucdavis.edu/files/Istanbul_1469-1914.xls"
+            }
+          ]
+        },
+        "pearl": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "유럽 상인이 아시아 물건을 사던 자리라 진주도 여기서 팔렸다. 다만 궁정 수요만큼은 아니라 1.26."
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "바스라에서 올라온 인도 물건이 유럽 상관에 팔리던 자리다. 홍해 노선과 경쟁하는 또 하나의 종착지라 카이로보다 조금 높은 1.24로 뒀다."
+        }
+      }
+    },
+    "baghdad": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "이 도시는 오스만(또는 그 직전의 맘루크·라술) 세력권이다. FLAGS에 아랍·맘루크 깃발이 없어 가장 가까운 오스만 깃발을 빌렸다 — 연도를 고정하지 않는 프로젝트라 맘루크기와 오스만기를 가르지 않고 하나로 뭉쳤다. 무엇을 그려야 하는지는 art.flagTodo에 적었다."
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
+          "basis": "바그다드는 강길과 시리아행 대상로가 만나는 자리라 세관이 셋이나 있었고 다리 통행세까지 있었다(테이셰이라). 이란 생사가 알레포로 가는 길에 여기서 값이 한 번 붙으므로 산지가 아닌 통과지 값 0.70을 줬다 — 이 권역에서 가장 비싼 비단 자리다.",
+          "sources": [
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        },
+        "carpet": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "probable",
+          "basis": "고원에서 내려온 융단이 대상로를 타고 지나가는 시장이다. 산지가 아니라 통과지라 0.66."
+        },
+        "coffee": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "대상로가 지나는 도시라 커피가 흘러들었으나 카이로·이스탄불만 한 시장은 아니었다. 이 권역 커피 수요 중 가장 낮은 1.26."
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "강길과 대상로가 만나는 중간 시장이라 짐이 여기서 한 번 값이 붙고 다시 떠난다. 종착지가 아니므로 알레포(1.24)보다 낮은 1.22."
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "강길로 올라온 자기가 팔리던 시장이다. 종착지가 아니라 통과 시장이라 1.24."
+        }
+      }
+    },
+    "isfahan": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "호르무즈 왕국·오만 아랍·사파비 페르시아는 오스만이 아니다. 그런데 FLAGS에 그 깃발이 없어 흰 바탕의 hafsid를 빌려, 적어도 화면에서 오스만 세력권과 갈라 보이게 했다. 고증이 아니라 두 세력을 구분하려는 선택이다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "carpet": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "★ 샤 아바스의 이스파한 왕실 공방(카르하나)은 궁정용을 짜고 **남은 것을 유럽과 인도에 내다 팔아 그 이익을 국고에 넣었다**. 타브리즈·카샨·케르만·야즈드가 함께 이름났고 테이셰이라는 야즈드를 으뜸, 케르만을 다음, 호라산을 그다음으로 꼽았다. 세계에서 융단이 가장 싼 산지 값 0.46을 여기에 준다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Persian carpet",
+              "url": "https://en.wikipedia.org/wiki/Persian_carpet"
+            },
+            {
+              "title": "Wikipedia — Safavid Iran",
+              "url": "https://en.wikipedia.org/wiki/Safavid_Iran"
+            },
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            }
+          ]
+        },
+        "rosewater": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "★ 르 스트레인지는 파르스 지방이 예부터 장미수로 이름났고, 이븐 하우칼이 그것이 \"인도와 중국과 호라산, 마그리브, 시리아, 이집트 등 온 세상으로\" 수출됐다고 적었음을 전한다. 이란 고원이 세계 장미수의 산지였다는 뜻이라 이 권역에서 가장 싼 0.50으로 뒀다.",
+          "sources": [
+            {
+              "title": "G. Le Strange, The Lands of the Eastern Caliphate",
+              "url": "https://archive.org/download/landsofeasternca00lest/landsofeasternca00lest_djvu.txt"
+            }
+          ]
+        },
+        "silk": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "사파비 왕실이 생사 수출을 사실상 쥐고 있었고 이스파한이 그 중심이었다. 다만 여기는 궁정 소비도 커서 알레포(0.58)보다 비싼 0.62로 두어 \"산지인데도 왕실이 값을 쥔\" 성격을 냈다."
+        },
+        "pearl": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "사파비 궁정은 진주를 가장 후하게 사 주는 소비지였다. 바다에서 가장 먼 데다 왕실 수요라 이 권역 최고값 1.30. 궁정 매입가 사료는 확보하지 못했다."
+        },
+        "coffee": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "사파비 수도의 커피하우스(카흐베하네)는 이야기꾼과 시인이 모이던 자리로 이름났다. 바다에서 먼 만큼 값이 붙어 1.28."
+        },
+        "gold": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "사파비 궁정은 금을 빨아들이는 소비지였고, 이란은 은은 나도 금은 부족해 수입에 기댔다. 바다에서 먼 만큼 값이 붙어 1.24."
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "고원의 수도라 바다에서 가장 먼 소비지다. 궁정과 도시 수요가 있으나 종착 시장이 아니라 최종 소비라 1.22로 완만하게 뒀다."
+        }
+      }
+    }
+  },
+  "routes": {
+    "jeddah|yanbu": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "지다 위쪽 홍해는 위험이 아니라 **느림**이 문제였다. 보자르가 정리한 대로 북홍해는 일 년 내내 북북서풍이 불고 11~4월에는 해류까지 북상해, 알부케르케 함대가 1513년에 \"여울 때문에 해협에서는 갈지자로 거슬러 올라갈 수 없다\"며 카마란에 두 달을 묶여 있었다. 그 느림은 게임에서 요율이 아니라 CURRENTS(얀부에서 내려오는 방향으로 push 0.10)로 표현했고, 요율은 짧은 연안 뜀뛰기에 산호 몫만 얹어 4.5로 뒀다.",
+      "sources": [
+        {
+          "title": "P. Beaujard, \"The Geography of the Indian Ocean and Its Navigation\" (Cambridge UP 2019)",
+          "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/51FBAA962D1AE6BB7EBE364165AC7536/9781108424561int1_9-18.pdf/introduction_the_geography_of_the_indian_ocean_and_its_navigation.pdf"
+        },
+        {
+          "title": "The Commentaries of the Great Afonso Dalboquerque, vol. IV (Hakluyt Soc. 1884)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.76889"
+        }
+      ]
+    },
+    "jeddah|suakin": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "홍해를 가로질러 아프리카 쪽 기슭으로 건너간다. 수아킨은 산호 미로 안에 들어앉은 항구라 입출항 자체가 까다로웠고, 건너는 동안 양쪽 뭍이 다 멀어진다. 홍해 전체가 약 2,000km의 산호초로 덮여 있다는 점을 감안해 연안 항로(4.0)보다 한 칸 반 높은 5.5로 뒀다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Red Sea (산호초 약 2,000km)",
+          "url": "https://en.wikipedia.org/wiki/Red_Sea"
+        }
+      ]
+    },
+    "jeddah|mokha": {
+      "risk": 6,
+      "verdict": "confirmed",
+      "basis": "★ 사료가 직접 짚는 구간이다. 바르테마(1503~04)는 \"이 바다는 해가 질 때까지만 항해한다. 밤에는 다닐 수 없기 때문\"이라며 그 이유를 \"섬과 바위가 많아 누군가 늘 돛대 꼭대기에 올라가 뱃길을 봐야 하는데 밤에는 그럴 수 없다\"고 적고, 위험 구간을 **카마란 섬 북쪽**으로 특정했다. 게다가 보자르는 북위 18~20도에 무풍대가 있어 \"북쪽으로 가는 항해는 쉽지 않았고 해상 교통은 대개 그 무풍대에서 멈췄다\"고 정리한다. 이 두 가지가 다 걸리는 유일한 구간이라 알렉산드리아 편도와 같은 6.0을 매겼다.",
+      "sources": [
+        {
+          "title": "Ludovico di Varthema, Travels (Hakluyt Soc. 1863, Badger 편)",
+          "url": "https://archive.org/details/travelsludovico00badggoog"
+        },
+        {
+          "title": "P. Beaujard, \"The Geography of the Indian Ocean and Its Navigation\" (Cambridge UP 2019)",
+          "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/51FBAA962D1AE6BB7EBE364165AC7536/9781108424561int1_9-18.pdf/introduction_the_geography_of_the_indian_ocean_and_its_navigation.pdf"
+        }
+      ]
+    },
+    "massawa|suakin": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "홍해 아프리카 기슭을 따라가는 구간이다. 뭍이 늘 가깝고 카마란 남쪽이라 바르테마가 \"그 뒤로는 안전하게 갈 수 있다\"고 적은 쪽에 든다. 그래도 산호 여울이 촘촘해 좌초가 잦았으므로 5.0.",
+      "sources": [
+        {
+          "title": "Ludovico di Varthema, Travels (Hakluyt Soc. 1863, Badger 편)",
+          "url": "https://archive.org/details/travelsludovico00badggoog"
+        }
+      ]
+    },
+    "massawa|mokha": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "달라크 열도의 얕은 물과 남홍해의 여울을 지난다. 카마란 남쪽이라 항해 자체는 수월한 편이지만 물골이 좁고, 아프리카 쪽 기슭에는 배를 터는 무리도 있었다. 산호 구간 평균인 5.5.",
+      "sources": [
+        {
+          "title": "Ludovico di Varthema, Travels (Hakluyt Soc. 1863, Badger 편)",
+          "url": "https://archive.org/details/travelsludovico00badggoog"
+        }
+      ]
+    },
+    "aden|mokha": {
+      "risk": 7,
+      "verdict": "confirmed",
+      "basis": "★ 바브엘만데브 — 홍해가 대양으로 나가는 유일한 문이다. 동쪽 물목(바브 이스칸데르)은 폭 5.4km에 수심 29m뿐이다. 바르보자는 \"여기서 배들이 도선사를 태워 지다까지 안내받는데, 그 도선사들은 오직 그 일을 위해 이 섬에 산다\"고 적었고, 알부케르케 기록은 그 삯이 **30크루자두**였다고 전한다 — 도선사를 사야 지나갈 수 있는 물목이었다는 뜻이다. 병목·외해대 위쪽인 7.0을 매겼다.",
+      "sources": [
+        {
+          "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+        },
+        {
+          "title": "The Commentaries of the Great Afonso Dalboquerque, vol. IV (Hakluyt Soc. 1884)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.76889"
+        },
+        {
+          "title": "Wikipedia — Bab-el-Mandeb",
+          "url": "https://en.wikipedia.org/wiki/Bab-el-Mandeb"
+        }
+      ]
+    },
+    "aden|shihr": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "아덴만 바깥은 이미 대양이다. 소코트라·소말리 기슭 앞은 예부터 배를 터는 자들이 있다고 전해지는 물목이고, 계절풍이 바뀌는 철에는 표류가 잦았다. 외해 6.5.",
+      "sources": []
+    },
+    "muscat|shihr": {
+      "risk": 8,
+      "verdict": "probable",
+      "basis": "이 권역에서 가장 험한 구간이다. 남아라비아 해안은 항구가 드물고 라스알하드를 도는 동안 뭍이 사흘씩 안 보인다. 보자르는 남서 계절풍이 절정일 때 남아라비아 해안에서는 \"항해도 정박도 어려웠다\"고 적는다. 지중해의 외해 상한(8.0)을 그대로 썼다.",
+      "sources": [
+        {
+          "title": "P. Beaujard, \"The Geography of the Indian Ocean and Its Navigation\" (Cambridge UP 2019)",
+          "url": "https://www.cambridge.org/core/services/aop-cambridge-core/content/view/51FBAA962D1AE6BB7EBE364165AC7536/9781108424561int1_9-18.pdf/introduction_the_geography_of_the_indian_ocean_and_its_navigation.pdf"
+        }
+      ]
+    },
+    "hormuz|muscat": {
+      "risk": 6.5,
+      "verdict": "confirmed",
+      "basis": "호르무즈 해협 — 페르시아만으로 드는 유일한 문이라 모든 배가 여기를 지난다. 테이셰이라는 케슘과 페르시아 본토 사이가 \"가장 넓은 데가 3레구아, 좁은 데는 반 레구아도 안 되고\" 케슘의 항구들이 \"대개 아주 얕다\"고 적었으며, 조류가 세어 끊임없이 닻을 내려야 했다고 전한다. 병목이라 6.5로, 바브엘만데브(7.0)보다 반 칸 낮게 뒀다 — 이쪽이 양안 모두 아군 해안이기 때문이다.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        }
+      ]
+    },
+    "hormuz|julfar": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "만 안쪽으로 들어서면 물이 얕아진다. 산호 뱅크와 사주가 늘어서 있으나 뭍이 늘 가깝다. 다만 이 시대에도 작은 배로 하는 노략질은 있었다 — 테이셰이라는 1604년에 \"그 바다에서 한시도 없는 법이 없는 해적의 테라다\"를 보았고 상선들이 포르투갈 푸스타의 호송을 붙였다고 적는다. 5.0.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        }
+      ]
+    },
+    "bahrain|julfar": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "진주 어장의 모래톱 지대다. 얕은 뱅크가 자리를 옮겨 도선사 없이는 못 다녔고, 여름이면 어장 배 수백 척이 같은 물에 떠 있었다. 테이셰이라가 적은 \"노우타키·니첼로\"라는 두 부류의 도적 때문에 키시 섬이 사람이 비었다는 대목도 이 물이다. 5.5.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        }
+      ]
+    },
+    "bahrain|qatif": {
+      "risk": 3.5,
+      "verdict": "probable",
+      "basis": "아라비아 쪽 기슭을 따라가는 짧고 얕은 구간. 뭍이 눈앞이고 한 세력권 안이라 이 권역에서 가장 안전하다. 지중해의 내해 하한(2.0~3.5)에 걸치는 3.5.",
+      "sources": []
+    },
+    "bahrain|basra": {
+      "risk": 6,
+      "verdict": "confirmed",
+      "basis": "★ 테이셰이라가 몸으로 겪은 구간이다. 호르무즈에서 바스라로 거슬러 올라가느라 **35일**을 허비하고 식량이 떨어져 되돌아섰는데, 같은 80레구아를 내려오는 데는 **나흘**이 걸렸다. 두 번째 시도에서는 카르그에서 태운 도선사가 얕은 물골에 배를 처박을 뻔했다. 샤말(북서풍)과 얕은 사주가 겹치는 구간이라 6.0. 그 방향성은 요율이 아니라 CURRENTS(바스라에서 내려오는 쪽으로 push)로도 함께 표현했다.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        }
+      ]
+    },
+    "basra|qatif": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "만 머리의 얕은 갯벌 지대다. 물길이 좁고 사주가 옮겨 다녀 좌초가 잦지만 뭍은 늘 가깝다. 5.0.",
+      "sources": []
+    },
+    "cairo|jeddah": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "배가 다니는 길이 아니라 짐이 넘는 길이다. 바르보자는 인도 향신료가 지다에서 \"아주 작은 배\"로 수에즈까지 가고 거기서 낙타에 실려 카이로로, 다시 알렉산드리아로 갔다고 적는다. 해적 개념이 성립하지 않아 null로 뒀다 — 이 길의 위험은 베두인 통행세와 노상강도이지 배를 터는 자가 아니다.",
+      "sources": [
+        {
+          "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+        }
+      ]
+    },
+    "damascus|yanbu": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "시리아 하지 대상로(다르브 알하지 앗샤미)다. 해마다 순례 행렬이 오가며 짐도 같이 움직였다. 뱃길이 아니므로 해상 요율이 성립하지 않아 null이다 — 위험은 사막의 부족과 물이지 해적이 아니다.",
+      "sources": []
+    },
+    "aleppo|damascus": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "샴 지방 안쪽의 짧은 대상로다. 도시와 도시 사이라 관헌의 손이 닿고 뱃길이 아니므로 null이다. 이 구간의 위험은 통행세와 흉년이지 배를 터는 자가 아니다.",
+      "sources": []
+    },
+    "aleppo|baghdad": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "★ 테이셰이라가 1604~05년에 직접 걸은 길이다. 낙타 150마리·나귀 95마리·말 12마리의 대상에 삯꾼 넷이 밤새 불을 피우고 \"도둑과 사자\"를 지켰고, 실제로 1605년 2월 9일에 도적의 습격을 받아 아랍 상인 둘이 창에 찔렸다. 부족장 대리인이 \"화물에 세를 매기는\" 통에 발이 묶이기도 했다. 뱃길이 아니므로 null이고, 이 길의 위험은 통행세와 노상 습격이다.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        }
+      ]
+    },
+    "baghdad|basra": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "티그리스·유프라테스를 오르내리는 강길이다. 테이셰이라는 물이 불었을 때 바스라에서 바그다드까지 35~50일, 물이 빠지면 그 두 배가 걸렸고 어떤 선단은 석 달이 걸렸다고 적는다 — 그래서 그는 배를 버리고 사막 대상을 택했다. 바다가 아니라 강이므로 해적 요율이 성립하지 않아 null이다.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        }
+      ]
+    },
+    "hormuz|isfahan": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "해협에서 라르를 지나 이란고원으로 올라가는 대상로다. 뱃길이 아니므로 null이다. 이 길의 위험은 산길의 도적과 고갯길의 눈이지 바다의 해적이 아니다.",
+      "sources": []
+    }
+  },
+  "goods": {
+    "dates": {
+      "base": 34,
+      "verdict": "probable",
+      "basis": "대추야자와 밀을 같은 단위로 놓은 시세표를 끝내 못 찾았다. 대신 1525년 포르투갈 캄베이 감정표에서 마스카트 대추야자가 한 마웅에 8페데아, 말린 것 10, 메카산 20인데 같은 표의 생강이 15, 철이 12.5다 — 곧 대추야자는 생강의 절반쯤이고, 캘리컷에서 생강이 쌀의 2~4.5배였으므로 수입 시장 기준 곡물의 1~2.5배가 된다. 그 안쪽인 1.7배로 잡았다. 직접 대조가 아니라 사슬 추론이라 probable이다.",
+      "sources": [
+        {
+          "title": "Lembrança das cousas da Índia (1525), in Subsídios para a história da Índia portuguesa",
+          "url": "https://archive.org/download/b29351492/b29351492_djvu.txt"
+        }
+      ]
+    },
+    "incense": {
+      "base": 170,
+      "verdict": "corrected",
+      "basis": "★ 조사로 값을 내린 항목이다(처음 250 → 170). 유향은 로마 시대에는 밀의 100~200배였지만(플리니우스: 최상품 1파운드 6데나리우스) 그 값의 대부분은 낙타 대상 비용이었고, 바닷길이 열린 대항해시대에는 이미 값이 내려 있었다. 바르보자의 캘리컷 시세표에서 최상품 유향은 파라졸라당 5파남으로 **후추의 절반**이었고, 1525년 캄베이 감정표에서 파르타크 유향은 목록에서 가장 싼 향료였다. 맘루크 이집트에서는 1345년에 밀의 16~21배였다. 게임의 향신료(16.5배)의 절반쯤인 8.5배로 잡았다 — 다만 이 한 칸에는 유향의 2.5~3배로 팔리던 몰약도 섞여 있다고 보아 정확히 절반보다는 조금 위에 뒀다.",
+      "sources": [
+        {
+          "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+        },
+        {
+          "title": "Lembrança das cousas da Índia (1525), in Subsídios para a história da Índia portuguesa",
+          "url": "https://archive.org/download/b29351492/b29351492_djvu.txt"
+        },
+        {
+          "title": "Mamluk Egypt 1250-1517 물가 데이터셋 (Ashtor 계열 · GPIH)",
+          "url": "https://gpih.ucdavis.edu/files/Egypt_1250-1517.xls"
+        },
+        {
+          "title": "Pliny, Natural History Bk XII (Bostock–Riley)",
+          "url": "https://archive.org/download/naturalhistoryof03plin/naturalhistoryof03plin_djvu.txt"
+        }
+      ]
+    },
+    "rosewater": {
+      "base": 230,
+      "verdict": "probable",
+      "basis": "1525년 캄베이 감정표에서 장미수는 한 마웅에 150페데아로, 같은 표의 생강(15)의 열 배, 상아(마웅 환산 200)의 0.75배였다. 게임의 상아가 곡물의 15배이므로 그 비율을 그대로 얹으면 11.25배가 되어 11.5배로 잡았다. ★ 같은 문헌 안에서 장미수 한 바르 값이 3,000페데아로도 적혀 있어 절대 수준에 10배의 모호함이 있다 — 다만 비교 대상이 같은 단위라 **순위와 배율**은 흔들리지 않는다. 그래서 probable이다.",
+      "sources": [
+        {
+          "title": "Lembrança das cousas da Índia (1525), in Subsídios para a história da Índia portuguesa",
+          "url": "https://archive.org/download/b29351492/b29351492_djvu.txt"
+        },
+        {
+          "title": "G. Le Strange, The Lands of the Eastern Caliphate",
+          "url": "https://archive.org/download/landsofeasternca00lest/landsofeasternca00lest_djvu.txt"
+        }
+      ]
+    },
+    "carpet": {
+      "base": 210,
+      "verdict": "probable",
+      "basis": "15~16세기 융단 값은 어느 자료에서도 못 찾았다(그 문제를 풀어 줄 1602년 무라토비치의 카샨 융단 구매 청구서는 디지털화가 안 돼 있다). 대신 확보한 것은 런던 1685~88년의 페르시아 융단 시세로, 한 장에 7~15파운드·최고급은 두 장에 100파운드다. 같은 시기 옥스퍼드 밀값(톤당 약 9.2파운드)으로 환산하면 융단 한 장이 밀 1~1.5톤, 최고급은 5~7톤이 되고, 무게(3×2m 모직 융단 15~20kg)로 고치면 곡물의 60배·최고급 300배다. 생사가 사료로 곡물의 300배인데 게임에서 21배이므로, 그 사다리에 맞추면 융단은 비단의 1/5에서 같은 값 사이가 된다 — 그 가운데인 절반(10.5배)에 뒀다. ★ 시세가 우리 시대보다 백 년 뒤인 데다 융단 무게가 추정이라 probable이다.",
+      "sources": [
+        {
+          "title": "\"CARPETS ix. Safavid Period\", Encyclopaedia Iranica",
+          "url": "https://www.iranicaonline.org/articles/carpets-ix/"
+        },
+        {
+          "title": "IISH Prices & Wages — Oxford wheat 1618-45 (wheatoxford.xls)",
+          "url": "https://datasets.iisg.amsterdam/dataset.xhtml?persistentId=hdl:10622/VY7UY3"
+        }
+      ]
+    },
+    "coffee": {
+      "base": 280,
+      "verdict": "confirmed",
+      "basis": "★ 이 권역에서 근거가 가장 단단한 기준가다. 이스탄불 물가 자료에서 커피와 밀이 함께 잡히는 40년치의 **중앙값 비율이 밀의 42배**였고(17세기 관측은 24~41배), 커피 1kg이 이스탄불 미숙련 일당 5~6일치였다. 산지 쪽은 곰브룬 1656년과 바이트 알파키흐 1710년 기록이 둘 다 은 7.4~7.8g/kg으로 모여 밀의 16배쯤이 된다. 소비지 42배와 산지 16배 사이의 중간값에 기존 사다리의 압축(후추 사료 30배 → 게임 16.5배)을 먹여 14배로 놓았다 — 향신료 바로 아래다. ★ 다만 커피는 바르보자(1516)와 1525년 포르투갈 감정표 어디에도 안 나온다. 국제 교역품이 되는 것은 16세기 중엽부터라, 이 게임이 연도를 고정하지 않는 덕에 들어올 수 있는 품목이다.",
+      "sources": [
+        {
+          "title": "Özmucur & Pamuk, Istanbul prices/wages 1469-1914 (GPIH 데이터셋)",
+          "url": "https://gpih.ucdavis.edu/files/Istanbul_1469-1914.xls"
+        },
+        {
+          "title": "Ota Keiko, \"Coffee as a Global Beverage before 1700\"",
+          "url": "https://hosei.ecats-library.jp/da/repository/00014525/j32-Ota.pdf"
+        },
+        {
+          "title": "S. Topik, \"The World Coffee Market in the 18th and 19th Centuries\" (GEHN WP 04/04)",
+          "url": "https://www.lse.ac.uk/Economic-History/Assets/Documents/Research/GEHN/GEHNWP04ST.pdf"
+        }
+      ]
+    },
+    "horse": {
+      "base": 480,
+      "verdict": "corrected",
+      "basis": "★ 조사로 값을 크게 올린 항목이다(처음 350 → 480). 눈으로 본 상인 둘이 같은 이야기를 한다. 바르보자(1518년경): 호르무즈에서 \"해마다 천 마리, 때로는 이천 마리\"가 실려 나가 인도에서 한 마리에 300~400크루자두에 팔렸고, 비자야나가라 왕은 말 2만 마리를 400~600크루자두씩 주고 길렀다. 직접 말을 팔던 페르낭 눈이스(1535년경): 왕이 \"해마다 호르무즈에서 말 만 삼천 마리\"를 샀고, 고아를 나가는 아라비아 말에는 마리당 금 파르다우 42의 수출세가 붙었다. 인도 밀값(톤당 12루피)으로 환산하면 말 한 마리가 밀 50~160톤이고, 말과 먹이·물이 차지하는 배의 공간을 감안해도 그 자리를 곡물로 채웠을 때의 **30~100배**가 된다. 게임 사다리에서는 비단(21) 위·진주(29) 아래인 24배에 뒀다 — 사료대로 압축 없이 두면 금괴를 넘어서기 때문이다.",
+      "sources": [
+        {
+          "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+        },
+        {
+          "title": "R. Sewell, A Forgotten Empire (Vijayanagar) — Fernão Nuniz·Domingo Paes 연대기",
+          "url": "https://www.gutenberg.org/cache/epub/3310/pg3310.txt"
+        },
+        {
+          "title": "Abu al-Fazl, Āʾīn-i Akbarī (Blochmann 역) — 물가·말 등급표",
+          "url": "https://archive.org/details/india.history.resource.117529"
+        }
+      ]
+    },
+    "pearl": {
+      "base": 580,
+      "verdict": "probable",
+      "basis": "★ 진주는 무게로 값을 매기는 물건이 아니라는 것이 이번 조사의 결론이다 — 아크바르의 아인이 진주를 16등급으로 나누는데 1등급은 한 알에 270루피, 16등급은 4분의 1루피이고, 황실 보고의 20g짜리는 한 알에 6만 루피다. 반대편 끝에서 가르시아 다 오르타는 구멍을 못 뚫는 씨알진주가 \"한 온스에 1벤텡도 안 된다\"고 적는데 그것도 곡물의 500배다. 규모는 테이셰이라가 준다 — 바레인 어장 하나의 연간 거래액이 50만 두카트로, 호르무즈 세관의 한 해 수입(6만~12만 세라핌)을 몇 배나 넘는다. 화물 한 칸을 '섞인 등급 한 상자'로 보아 금괴(35배) 아래·말(24배) 위인 29배에 뒀다. 무게당 단가로 환산할 수 없는 물건이라 판정은 probable로 남긴다.",
+      "sources": [
+        {
+          "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+          "url": "https://archive.org/details/travelsofpedrote09teix"
+        },
+        {
+          "title": "Duarte Barbosa, The Book of Duarte Barbosa (Hakluyt Soc. 1918)",
+          "url": "https://archive.org/details/in.ernet.dli.2015.505019"
+        },
+        {
+          "title": "Abu al-Fazl, Āʾīn-i Akbarī (Blochmann 역) — 물가·말 등급표",
+          "url": "https://archive.org/details/india.history.resource.117529"
+        },
+        {
+          "title": "Garcia da Orta, Colloquies on the Simples and Drugs of India (Markham 역)",
+          "url": "https://archive.org/details/colloquiesonsimp00orta"
+        }
+      ]
+    }
+  },
+  "ships": {
+    "jalba": {
+      "price": 1050,
+      "verdict": "probable",
+      "basis": "잘바(포르투갈 기록의 gelba)는 15~16세기 홍해에서 실제로 쓰이던 작은 꿰맨 배다. 당대 선가 사료는 없어 값은 지중해 코카(1,100닢)를 기준선으로 삼아 '더 싸고 더 작고 더 약한 배' 자리에 놓았다. 화물 72칸 ÷ 최소선원 7 = 10.3으로, 사료가 전하는 원양 다우의 승조원당 화물 8~12톤 밴드 안에 든다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Dhow",
+          "url": "https://en.wikipedia.org/wiki/Dhow"
+        },
+        {
+          "title": "Encyclopedia.com — Dhow",
+          "url": "https://www.encyclopedia.com/history/asia-and-africa/middle-eastern-history/dhow"
+        }
+      ]
+    },
+    "zaruq": {
+      "price": 2200,
+      "verdict": "probable",
+      "basis": "자루크는 붐·바단과 함께 유럽 접촉 이전의 '양끝 뾰족한' 옛 선형에 속하고, 이란 쪽 조사에서는 노로 젓는 배로 분류된다 — 그래서 rig 0.00에 속력을 이 권역 최고로 주고 화물/최소선원을 5.1로 낮춰 '짐배가 아닌 배'로 만들었다. 값은 중형 밴드 하한(2,100)에 맞췄고 당대 선가 사료는 없다.",
+      "sources": [
+        {
+          "title": "WIT Transactions Vol.79 — A survey on the features of the existing motorized wooden dhows",
+          "url": "https://www.witpress.com/Secure/elibrary/papers/MH05/MH05008FU.pdf"
+        },
+        {
+          "title": "Wikipedia — Dhow",
+          "url": "https://en.wikipedia.org/wiki/Dhow"
+        }
+      ]
+    },
+    "sanbuq": {
+      "price": 2900,
+      "verdict": "confirmed",
+      "basis": "삼부크는 이 권역에서 이름이 가장 오래 이어진 배다 — 이븐 바투타가 1330년대 모가디슈에서 sanbūq을 적었고 포르투갈인은 16세기 초에 zambuco라 불렀다. 즉 15~16세기 배경에 확실히 존재하던 선종이다. 값은 사료가 아니라 지중해 사다리에 맞춘 것이고(코카 1,100 ~ 브리간틴 4,200 사이), 화물 118 ÷ 최소선원 11 = 10.7로 다우 밴드를 지킨다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Sambuk",
+          "url": "https://en.wikipedia.org/wiki/Sambuk"
+        },
+        {
+          "title": "Wikipedia — Dhow",
+          "url": "https://en.wikipedia.org/wiki/Dhow"
+        }
+      ]
+    },
+    "dhangi": {
+      "price": 4400,
+      "verdict": "confirmed",
+      "basis": "아라비아 반도에는 배를 지을 나무가 없어 티크·로즈우드를 인도에서 실어 와야 했고(보스머는 '인도 아대륙과 아프리카에는 좋은 조선재가 많았지만 아라비아 반도는 티크·로즈우드·아프젤리아를 수입해야 했다'고 적는다), 오만·하드라미 선주는 아예 말라바르(베이푸르)와 콘칸·구자라트 조선소에 배를 주문했다 — 당기/코티아가 그 배다. 값은 사료가 아니라 지중해 사다리(브리간틴 4,200) 옆자리로 잡았다.",
+      "sources": [
+        {
+          "title": "T. Vosmer, \"Sewn Boats\", in Shipwrecked: Tang Treasures and Monsoon Winds (Smithsonian)",
+          "url": "https://asia.si.edu/wp-content/uploads/2023/06/shipwrecked-08-vosmer.pdf"
+        },
+        {
+          "title": "Wikipedia — Beypore",
+          "url": "https://en.wikipedia.org/wiki/Beypore"
+        },
+        {
+          "title": "Wikipedia — Sur, Oman",
+          "url": "https://en.wikipedia.org/wiki/Sur,_Oman"
+        }
+      ]
+    },
+    "baghlah": {
+      "price": 10200,
+      "verdict": "corrected",
+      "basis": "★ 조사로 바로잡은 항목. 바갈라의 표지인 '각진 선미 + 아치형 선미 창 다섯'은 16~17세기 포르투갈 배를 보고 배운 것이라 1500년의 바갈라는 시대착오다. 그래서 이 권역의 다른 배와 달리 era를 'modern'으로 두고 당기를 몰아 봐야 열리게(requires) 계보를 만들었다 — 유럽 배가 들어온 뒤에 나온 배라는 사실을 해금 조건으로 옮긴 것이다. 톤수는 사료가 평균 275톤·범위 150~400톤을 전하고, 게임의 '화물 1칸 ≈ 밀 2톤' 환산으로 210칸(420톤)은 그 상한 언저리다. 값은 지중해 캐랙(9,800) 옆자리.",
+      "sources": [
+        {
+          "title": "Wikipedia — Baghlah",
+          "url": "https://en.wikipedia.org/wiki/Baghlah"
+        },
+        {
+          "title": "Archaeology Magazine — The Durable Dhow",
+          "url": "https://archive.archaeology.org/9705/abstracts/dhow.html"
+        },
+        {
+          "title": "Encyclopedia.com — Dhow",
+          "url": "https://www.encyclopedia.com/history/asia-and-africa/middle-eastern-history/dhow"
+        }
+      ]
+    }
+  },
+  "art": {
+    "iconTodo": [
+      {
+        "good": "horse",
+        "note": "★ 가장 급하다 — 말. 지금은 상아(ivory) 아이콘을 빌려 써서 그림과 물건이 아예 다르다. 굴레 씌운 아라비아 말의 옆모습, 또는 말 머리."
+      },
+      {
+        "good": "pearl",
+        "note": "진주 — 반쯤 열린 조개와 그 안의 알, 또는 실에 꿴 진주 두름. 지금은 유리세공(glass) 아이콘을 빌려 쓴다."
+      },
+      {
+        "good": "coffee",
+        "note": "커피 — 마대에서 쏟아진 볶은 원두. 지금은 향신료(spice) 자루를 빌려 써서 향신료와 구별이 안 된다."
+      },
+      {
+        "good": "incense",
+        "note": "유향 — 유향나무에서 굳은 젖빛 수지 덩이와 향로. 지금은 소금(salt) 자루를 빌려 쓴다."
+      },
+      {
+        "good": "carpet",
+        "note": "융단 — 말아 세운 페르시아 융단(문양이 보이게). 지금은 비단(silk) 두루마리를 빌려 쓴다."
+      },
+      {
+        "good": "rosewater",
+        "note": "장미수 — 목이 긴 유리병과 장미 한 송이. 지금은 와인(wine) 아이콘을 빌려 쓴다."
+      },
+      {
+        "good": "dates",
+        "note": "대추야자 — 야자 잎에 달린 열매 송이 또는 열매를 눌러 담은 항아리. 지금은 올리브유(oliveoil) 암포라를 빌려 쓴다."
+      }
+    ],
+    "hullTodo": [
+      {
+        "ship": "jalba",
+        "note": "잘바 — 꿰맨 선체가 이 배의 전부다. 못이 한 개도 없고 판자 이음매마다 야자 노끈이 드러나며, 배 밖은 역청이 아니라 생선 기름을 먹여 번들거린다(마르코 폴로가 호르무즈에서 본 그대로다). 마스트 하나에 세티돛 한 장. 지금은 카라벨 선체를 빌려 쓴다."
+      },
+      {
+        "ship": "zaruq",
+        "note": "자루크 — 양끝이 똑같이 뾰족한 더블엔더다(선미판이 없다). 낮고 길며 노와 삼각돛을 함께 쓴다. 지금 갤리 선체를 빌려 쓰는데 **충각(ram)이 달려 나오는 것이 잘못**이다 — 다우에는 충각이 없다."
+      },
+      {
+        "ship": "sanbuq",
+        "note": "삼부크 — 뱃머리 밑으로 용골이 치솟는 날카로운 선수, 각진 높은 선미. 돛대 하나나 둘에 세티돛. 이 권역의 표준 선형이므로 새로 그린다면 이것부터다."
+      },
+      {
+        "ship": "dhangi",
+        "note": "당기(코티아) — 인도 티크로 지은 원양 다우. 크게 앞으로 기운 주 돛대에 거대한 세티돛 한 장, 뒤에 작은 미즌. 지금 브리간틴 선체를 빌려 써서 사각돛이 뜨는데 세티돛으로 바꿔야 한다."
+      },
+      {
+        "ship": "baghlah",
+        "note": "바갈라 — 각진 높은 선미에 아치형 선미 창이 다섯, 그 위로 조각 장식. 포르투갈 배에서 온 형태라 캐랙 선체를 빌린 것이 아주 틀리지는 않지만, 돛은 세티 두 장이어야 하고 이물이 훨씬 날렵해야 한다."
+      }
+    ],
+    "flagTodo": [
+      {
+        "key": "mamluk",
+        "note": "맘루크 술탄국 — 노란 바탕(맘루크의 색). 지금은 오스만 깃발로 뭉쳐 뒀다."
+      },
+      {
+        "key": "hormuz",
+        "note": "호르무즈 왕국 — 해협에 앉은 아랍계 왕국. 지금 hafsid(흰 바탕)를 빌려 쓴다."
+      },
+      {
+        "key": "oman",
+        "note": "오만 아랍 — 붉은 바탕. 마스카트·줄파르·시흐르가 이 깃발이어야 한다."
+      },
+      {
+        "key": "safavid",
+        "note": "사파비 페르시아 — 초록 바탕에 해와 사자. 이스파한이 이 깃발이어야 한다. 지금 hafsid를 빌려 쓴다."
+      }
+    ],
+    "styleTodo": [
+      {
+        "key": "arabian",
+        "note": "홍해·아라비아 항구 — 산호석(수아킨·지다)으로 쌓은 벽에 나무 격자 발코니(로샨)가 층층이 튀어나오고, 지붕은 평지붕에 바람탑이 선다. 지금은 levant 화풍을 그대로 쓴다."
+      },
+      {
+        "key": "persian",
+        "note": "이란고원 도시(이스파한) — 청록 타일 돔과 뾰족한 이완 아치, 넓은 광장. levant의 황토벽과는 색부터 다르다."
+      },
+      {
+        "key": "caravan",
+        "note": "뭍의 시장(알레포·다마스쿠스·바그다드) — 항구가 없는 도시라 부두 대신 성문 앞 대상 숙소(카라반사라이)와 낙타 대열이 보여야 한다."
+      }
+    ]
+  },
+  "openQuestions": [
+    "융단(carpet)의 기준가가 이 권역에서 사료 근거가 가장 약하다. 15~16세기 융단 값은 어디에도 없고, 그 문제를 풀 1602년 무라토비치의 카샨 융단 청구서는 Mańkowski(1936)에만 실려 디지털화가 안 돼 있다. 지금 값은 백 년 뒤 런던 시세를 끌어다 쓴 것이다.",
+    "진주는 무게로 값을 매길 수 없는 물건이다 — 아인이 나누는 16등급의 위아래가 백만 배 넘게 벌어진다. 그래서 base 580은 '섞인 등급 한 상자'라는 모형이지 어떤 사료의 단가가 아니다.",
+    "말(horse)은 사료대로면 곡물의 30~100배라 금괴(35배)를 넘어선다. 게임 사다리를 지키려고 24배로 눌렀다 — 즉 이 항목은 사료가 게임보다 후한 쪽이라, 밸런스를 이유로 값을 더 올리자는 제안이 나오면 근거는 있다.",
+    "지다·아덴·호르무즈의 실제 관세율(흔히 '10%'로 인용된다)을 사료로 확인하지 못했다. 게임 값은 성격만 옮긴 gameplay 판정이므로, 사료가 확보되면 basis만 갱신하면 된다 — 값은 그대로 둘 것. 매각에만 물리는 과세라 사료율을 그대로 쓸 수 없다.",
+    "홍해·페르시아만의 당대 해상보험 요율을 하나도 찾지 못했다. 이 권역의 요율은 전부 지중해 앵커(내해 2 · 연안 4 · 병목 6~8)를 산호초·수심·병목·조류라는 물리 조건으로 옮긴 것이다. 다만 '어디가 더 위험했나'의 순서는 바르테마·알부케르케·바르보자·테이셰이라의 1차 기록으로 뒷받침된다.",
+    "페르시아만 해적의 연대를 갈라 두었다 — 이름난 카와심 해적은 1778년 이후의 일이고(첫 보고 1778~80년, 격화 1797년) 이 시대에 그것을 옮기면 250년을 당기는 셈이다. 대신 테이셰이라가 1604년에 적은 소형선 노략질(terrada)과 포르투갈 푸스타 호송은 시대에 맞아 걸프 안쪽 요율의 근거로 썼다.",
+    "삼부크·자루크의 톤수·승조원 수치는 어떤 자료에서도 확정하지 못했다. 확보가 필요한 두 문헌은 Agius, Classic Ships of Islam 과 Bowen, 'The Dhow Sailor', American Neptune 11(3), 1951이다.",
+    "커피는 바르보자(1516)와 1525년 포르투갈 감정표 어디에도 안 나온다 — 국제 교역품이 되는 것은 16세기 중엽부터다. 연도를 고정하지 않는 프로젝트라 넣었지만, 세계 첫날부터 커피가 도는 것이 어색하면 등장 시점을 두는 장치가 필요할 수 있다.",
+    "카이로를 지중해가 아니라 이 권역에 뒀다 — 나일 대상로가 홍해 체계의 일부라고 보았기 때문이다. 알렉산드리아(지중해)와 지다(여기)를 잇는 원양 항로가 이미 있으므로 물길은 이어지지만, 두 도시가 다른 권역에 있는 것이 통합 시점에 어색하면 조정이 필요하다.",
+    "이 권역이 세계에 내놓는 교역품 일곱 종은 content/goods-evidence.json의 gameTargets.goodsRatioToGrain에 아직 없다 — 그 파일은 공용이라 권역 담당자가 못 고친다. 통합자가 dates 1.7 · incense 8.5 · carpet 10.5 · rosewater 11.5 · coffee 14.0 · horse 24.0 · pearl 29.0을 넣어야 check-prices.mjs가 통과한다.",
+    "조사 중에 기존 값의 문제 하나를 발견했다 — 1566년 페르시아 시세표에서 생사는 쌀의 288배, 밀 기준 300~500배인데 게임의 비단은 곡물의 21배다. 사료 대비 14분의 1이라 기존 12종 중에서도 비단이 유독 눌려 있다. 우리 권역 파일이 아니라 손대지 않았고, 이 권역의 새 품목은 (사료가 아니라) 그 눌린 사다리에 맞춰 놓았다는 점만 적어 둔다.",
+    "★ 통합자가 봐야 할 것 — 지금 세계에서 generic `spice`를 가장 싸게 내놓는 곳이 아덴(0.56)이다. 인도양·동남아 권역이 후추·정향을 각자 새 id로 정의하고 generic spice는 demand만 뒀기 때문인데, 그러면 '통과지가 산지보다 싸다'는 뒤집힌 그림이 된다. 인도양 권역이 spice supply를 0.50 이하로 두면 의도한 순서(산지 < 아덴 0.56 < 지다 0.60 < 알렉산드리아 0.62)가 완성된다.",
+    "구리(copper)는 이 권역 품목으로 넣지 않았다 — 조사 결과 대항해시대의 구리는 걸프에서 나가는 물건이 아니라 유럽·일본에서 인도양으로 들어오는 물건이었다(포르투갈 왕실이 1495~1521년에 안트베르펜에서 산 구리가 5,200톤이고 대부분 인도행이었다). 이미 아프리카 권역이 copper를 정의해 두었으므로 중복도 아니다."
+  ]
 }

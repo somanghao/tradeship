@@ -487,9 +487,16 @@ export function tavernCrews(cityId = state.at, day = state.day) {
     if (hash(cityId, 'tav', i, cyc) < TAVERN.emptyOdds) continue;   // 빈 자리
 
     let trait = pickTrait(hash(cityId, 'tavtrait', i, cyc));
-    // 거친 항구에서 애송이가 걸리면 한 번 더 굴린다. 확률표를 따로 두지 않고
-    // 재굴림으로 기울이는 이유는 도시를 늘려도 표를 손볼 필요가 없기 때문이다.
-    if (roughPort && trait === 'green') trait = pickTrait(hash(cityId, 'tavtrait2', i, cyc));
+    /* 거친 항구에서 물러 보이는 자가 걸리면 다시 굴린다 — 그리고 **거친 쪽으로 기울여** 굴린다.
+       ★ 원래는 애송이일 때 그냥 한 번 더 굴렸는데, 그 재굴림이 아무 기질이나 뽑으므로
+         기대값이 거의 안 움직였다. 도시가 열여섯일 때는 우연히 통과했고,
+         전 세계로 넓혀 나포항이 열 곳이 되자 20% 대 21%로 **차이가 사라진 것이 드러났다**.
+         표본이 작을 때 통과한 테스트가 규칙의 부재를 가려 준 셈이다.
+       확률표를 따로 두지 않고 재굴림으로 기울이는 이유는 그대로다 — 도시를 늘려도 표를 안 고친다. */
+    if (roughPort && (trait === 'green' || trait === 'drunk')) {
+      const r2 = hash(cityId, 'tavtrait2', i, cyc);
+      trait = r2 < 0.34 ? 'rough' : r2 < 0.52 ? 'corsair' : pickTrait(r2);
+    }
     const T = CREW_TRAITS[trait];
 
     const rn = hash(cityId, 'tavn', i, cyc);

@@ -1,11 +1,1966 @@
 {
   "region": "atlantic",
   "regionName": "대서양·북해",
-  "_읽는이에게": "대서양·북해 권역의 사료 근거. 코드 정본은 js/regions/atlantic/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
-  "version": 1,
-  "cities": {},
-  "routes": {},
-  "goods": {},
-  "ships": {},
-  "openQuestions": []
+  "_읽는이에게": "대서양·북해 권역의 사료 근거. 코드 정본은 js/regions/atlantic/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다.",
+  "version": 2,
+  "regionCaveats": [
+    "이 권역의 요율표는 지중해와 **다른 장부**에서 왔다. 지중해가 16세기 제노바 인수업자의 값이라면 여기는 1438년 런던 보로메이 은행(런던~브뤼헤 5.86%)과 1560년대 안트베르펜 중개인 장부(1,471건·중앙값 7.00%)다. 두 표의 절대값을 견주지 말고 각자 안의 순서로 읽어야 한다.",
+    "안트베르펜 장부는 지중해 항로가 대서양 대비 48% 비쌌다고 적는다. 그러나 게임의 지중해 표는 이미 2~9%로 매겨져 있으므로, 여기서 그 배율을 그대로 적용하면 세계가 뒤집힌다. 대신 이 권역의 평균(5.7%)을 지중해 평균보다 조금만 위에 두어 '외해가 많은 바다'라는 것만 남겼다.",
+    "새 교역품 열 종의 base는 전부 `content/goods-evidence.json`의 압축 규칙(사료 비율의 절반쯤)을 따랐다. 방향은 사료, 폭은 게임이다.",
+    "깃발과 화풍은 전부 빌려 쓴 것이다. FLAGS에 포르투갈·한자·덴마크·스웨덴·러시아가 없고 STYLES에 북방 화풍이 없다 — art.flagTodo·art.styleTodo가 그 목록이다."
+  ],
+  "cities": {
+    "lisboa": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "FLAGS에 포르투갈 깃발이 없다. 흰 바탕 그리스도 기사단 붉은 십자를 낼 키가 없어 이베리아 전체를 'spain'으로 묶었다 — art.flagTodo에 'portugal'을 올려 두었다."
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "마데이라 설탕은 안트베르펜으로 직송되는 몫이 컸으나 왕실 항구인 리스본도 집산지였다. 산지(푼샬 0.44)보다 비싸게 두어 중계임을 드러냈다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "salt": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "한자가 소금을 \"뤼네부르크에서 얻거나 프랑스·포르투갈에서 실어 왔다\"고 적는다. 세투발 염전이 그 포르투갈 소금이다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "카스티야·포르투갈은 양모를 팔고 옷감을 사들이는 쪽이었다. 잉글랜드·플랑드르 모직이 이베리아 항구의 상시 수입품이다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "포르투갈은 제 밀로 제 백성을 못 먹여 곡물을 상시 수입했다. 발트 곡물이 나중에 스페인·이탈리아까지 갔다는 한자 기록과 이어진다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "tar": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "대양으로 나갈 배를 여기서 꾸리므로 선구 자재(타르·피치)가 늘 모자랐다. 발트 타르가 그것을 메웠다.",
+          "sources": []
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "돛과 선원 옷에 들어가는 아마포는 플랑드르·브르타뉴에서 사 왔다. 원양 항해 준비 물자의 일부다.",
+          "sources": []
+        },
+        "clove": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "gameplay",
+          "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
+          "sources": []
+        }
+      }
+    },
+    "sevilla": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "FLAGS에 포르투갈 깃발이 없다. 흰 바탕 그리스도 기사단 붉은 십자를 낼 키가 없어 이베리아 전체를 'spain'으로 묶었다 — art.flagTodo에 'portugal'을 올려 두었다."
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "probable",
+        "basis": "카사 데 콘트라타시온이 대서양 무역을 등록·감독했고 알모하리파스고(관세)가 얹혔다. 규모 3의 기본율 6%보다 무겁게 두어 \"허가받아야 나가는 항구\"를 드러냈다. 사료의 정률은 확인하지 못했다.",
+        "sources": []
+      },
+      "goods": {
+        "oliveoil": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "안달루시아 올리브는 고대부터의 지리적 특성이고 과달키비르 배후가 그 산지다. 직접 사료는 확보하지 못했다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "헤레스·안달루시아 포도주는 잉글랜드행 수출품이었다. 브리스틀 배의 운임 장부가 안달루시아 와인 25실링/tun을 적는다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "이베리아는 양모를 팔고 완제 모직을 사들이는 쪽이었다. 이 권역 모직 수요 중 높은 축에 둔다.",
+          "sources": []
+        },
+        "timber": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "한자가 발트 곡물과 목재를 \"잉글랜드·저지대, 나중에는 스페인과 이탈리아까지\" 실어 갔다고 적는다. 이베리아는 제 숲을 다 베어 쓴 뒤였다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "플랑드르·브르타뉴 아마포가 이베리아로 들어와 돛과 옷이 되고 다시 대양 항로로 실려 나갔다. 이베리아에는 아마 산지가 없어 옷감은 언제나 북쪽에서 왔다.",
+          "sources": []
+        },
+        "amber": {
+          "side": "demand",
+          "value": 1.18,
+          "verdict": "probable",
+          "basis": "발트 호박은 묵주로 깎여 가톨릭 유럽 전역에 팔렸다. 직접 사료는 확보하지 못해 개연성으로만 둔다.",
+          "sources": []
+        }
+      }
+    },
+    "bilbao": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "FLAGS에 포르투갈 깃발이 없다. 흰 바탕 그리스도 기사단 붉은 십자를 낼 키가 없어 이베리아 전체를 'spain'으로 묶었다 — art.flagTodo에 'portugal'을 올려 두었다."
+      },
+      "goods": {
+        "iron": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "probable",
+          "basis": "비스카야 철광과 참나무가 한자리에 있어 바스크가 유럽에 철을 대던 산지였다. 위키 항목이 없어 직접 사료는 확보하지 못했다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "카스티야 양모가 여기서 플랑드르로 건너가고 완제 모직이 도로 들어왔다 — 양모를 팔고 옷감을 사는 구조다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "산이 바다까지 내려앉은 비스카야는 밀을 심을 땅이 모자라 브르타뉴와 발트에서 곡물을 사들였다. 철과 배는 여기서 나되 먹을 것은 나지 않는다.",
+          "sources": []
+        },
+        "tar": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "이베리아 조선의 본산이라 선구 자재가 늘 모자랐다. 발트 타르가 대서양을 내려와 여기서 팔렸다.",
+          "sources": []
+        }
+      }
+    },
+    "funchal": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "FLAGS에 포르투갈 깃발이 없다. 흰 바탕 그리스도 기사단 붉은 십자를 낼 키가 없어 이베리아 전체를 'spain'으로 묶었다 — art.flagTodo에 'portugal'을 올려 두었다."
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "1455년에 이미 6,000아로바를 넘겼고 1490년대에 키프로스를 제쳐 유럽 최대 산지가 됐다. 이 권역 최저 배율은 \"여기가 원산지\"라는 뜻이다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "wine": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "probable",
+          "basis": "같은 비탈에서 말바지아 포도가 났다. 다만 마데이라 와인의 명성은 후대의 것이라 산지 배율을 깊게 내리지 않았다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "사탕수수가 경작지를 다 먹어 밀을 심을 땅이 남지 않았다. 정착 초기에 밀을 내보내던 섬이 설탕 붐 뒤에 수입지로 뒤집힌다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "섬에 직물업이 없어 옷감은 전부 실어 왔다. 이탈리아·바스크·플랑드르 상인이 드나든 항구다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "제당소의 연장과 물레방아 쇠붙이가 전부 밖에서 왔다. 섬에 광산이 없다.",
+          "sources": []
+        }
+      }
+    },
+    "bordeaux": {
+      "flag": {
+        "value": "france",
+        "verdict": "probable",
+        "basis": "프랑스 대서양안이라 FLAGS의 'france'를 그대로 쓴다 — 이 권역에서 빌려 쓰지 않은 몇 안 되는 깃발이다."
+      },
+      "goods": {
+        "wine": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
+          "basis": "1539~43년 브리스틀 배의 운임 장부가 보르도 와인 20실링/tun을 적는다 — 해마다 되풀이된 정기 항해였다는 뜻이다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "와인을 싣고 온 잉글랜드 배가 되돌아갈 때 빈 배로 오지 않았다. 서부 모직이 그 뱃짐이다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "stockfish": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "사순절의 가톨릭 프랑스는 말린 생선을 대량으로 먹었다. 노르웨이·아이슬란드 건대구가 그 자리를 채웠다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "가론 강 배후의 밭을 포도가 다 차지해 곡물은 상류와 바다 양쪽에서 들어왔다. 단일 작물로 돈을 벌면 먹을 것을 사 와야 한다는 구조가 여기 그대로 있다.",
+          "sources": []
+        }
+      }
+    },
+    "larochelle": {
+      "flag": {
+        "value": "france",
+        "verdict": "probable",
+        "basis": "프랑스 대서양안이라 FLAGS의 'france'를 그대로 쓴다 — 이 권역에서 빌려 쓰지 않은 몇 안 되는 깃발이다."
+      },
+      "goods": {
+        "salt": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "한자가 소금을 \"프랑스와 포르투갈에서 실어 왔다\"고 적는다. 부르뇌프만 천일염이 그 프랑스 소금이고, 청어 염장의 밑감이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "오니·생통주의 포도주가 소금과 함께 같은 배에 실려 나갔다. 소금을 실으러 내려온 한자·잉글랜드 배가 남는 자리를 와인으로 채웠으므로 두 물건이 늘 붙어 다녔다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "소금을 실으러 대서양을 내려온 한자·잉글랜드 배가 빈 배로 오지 않았다. 그 뱃짐이 모직이라 소금 항구가 곧 모직 시장이 됐다.",
+          "sources": []
+        },
+        "timber": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "염전과 갯벌뿐인 지대라 소금을 담을 통재도 배를 고칠 목재도 밖에서 들여왔다. 발트 목재가 소금과 맞바뀌는 자리다.",
+          "sources": []
+        },
+        "stockfish": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "사순절에 고기를 끊는 가톨릭 프랑스에서 말린 생선은 계절 식량이 아니라 상시 식량이었다. 보르도와 같은 이유로 이 항구도 건대구를 사들인다.",
+          "sources": []
+        }
+      }
+    },
+    "bristol": {
+      "flag": {
+        "value": "england",
+        "verdict": "probable",
+        "basis": "잉글랜드라 FLAGS의 'england'를 그대로 쓴다 — 빌려 쓰지 않은 깃발이다."
+      },
+      "goods": {
+        "woolcloth": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "서부 지방(코츠월드·서머싯)의 브로드클로스가 이 항구의 주력 수출품이었다. 16세기 중반 브리스틀 해운 연구가 그 무역을 다룬다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "stockfish": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "브리스틀 배는 15세기부터 아이슬란드 어장을 다녔고 나중에 뉴펀들랜드까지 갔다. 직접 수치는 확보하지 못했다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "보르도 와인의 최대 수입항이다. 브리스틀 배가 보르도 20실링·안달루시아 25실링의 운임으로 와인을 실어 왔다는 장부가 남아 있다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "tar": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "배를 짓고 고치는 항구라 타르·피치가 늘 필요했다. 1610~20년에 함대 42척 중 44척을 잃은 기록이 있을 만큼 배를 자주 갈아 댔다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "이 시기 설탕은 향신료와 같은 값에 팔리는 약에 가까운 사치품이라 살 사람이 있는 큰 항구에서만 값이 섰다. 브리스틀은 대서양을 다니는 배가 모이는 그런 항구였다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        }
+      }
+    },
+    "london": {
+      "flag": {
+        "value": "england",
+        "verdict": "probable",
+        "basis": "잉글랜드라 FLAGS의 'england'를 그대로 쓴다 — 빌려 쓰지 않은 깃발이다."
+      },
+      "goods": {
+        "woolcloth": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "한자의 스틸야드가 \"직물, 특히 브로드클로스\"를 다뤘다고 적는다. 15세기부터 잉글랜드는 원모가 아니라 완제 모직을 내보냈고 그것을 한자가 발트로 실어 갔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "가스코뉴 와인 함대의 목적지 중 하나였다. 보르도 운임 장부가 그 정기성을 보여 준다.",
+          "sources": [
+            {
+              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "잉글랜드는 향신료의 최종 소비지다. 리스본에서 풀린 후추가 안트베르펜을 거쳐 템스로 들어왔고, 산지가 아니라 사 먹는 쪽이라 값이 붙는다.",
+          "sources": []
+        },
+        "timber": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "한자가 발트 곡물과 목재를 잉글랜드로 실어 갔다고 적는다. 잉글랜드는 배 지을 큰 나무가 이미 모자랐다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "stockfish": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "베르겐의 건대구가 한자를 통해 잉글랜드로 들어왔다. 사순절 수요는 잉글랜드도 다르지 않았다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        }
+      }
+    },
+    "brugge": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "저지대는 이 시기 합스부르크령이었으므로 'spain'을 그대로 쓴다. 부르고뉴 십자·홀란트 사자 깃발은 아직 FLAGS에 없다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "woolcloth": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "브뤼헤 콘토어가 동방의 원자재를 받고 \"직물, 특히 브로드클로스와 서방의 공산품\"을 내보냈다고 적는다. 플랑드르 직물업이 중세 유럽 최대의 제조업이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "linen": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "플랑드르는 모직만이 아니라 아마포도 크게 짰다. 직접 수치는 확보하지 못했다.",
+          "sources": []
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "한자 콘토어가 앉은 서방 시장이라 지중해와 동방에서 온 물건이 여기서 값을 받고 북유럽 전역으로 갈렸다. 브뤼헤가 환어음의 도시였던 것도 그래서다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "amber": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "발트 호박이 묵주로 깎여 서방 시장에서 팔렸다. 브뤼헤 호박 묵주 길드는 직접 사료를 확보하지 못했다.",
+          "sources": []
+        },
+        "wax": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "러시아·리투아니아 밀랍이 교회 초가 되어 서방에서 소비됐다. 노브고로드 수출품 목록에 꿀이 들어 있다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        }
+      }
+    },
+    "antwerpen": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "저지대는 이 시기 합스부르크령이었으므로 'spain'을 그대로 쓴다. 부르고뉴 십자·홀란트 사자 깃발은 아직 FLAGS에 없다 — art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.04,
+        "verdict": "gameplay",
+        "basis": "누구에게나 열려 있다는 것이 이 도시의 전부였고 그래서 브뤼헤를 제치고 세계 시장이 됐다. 규모 3의 기본율(6%)보다 **낮춰야** 그 성격이 읽힌다 — 관세로 도시를 설명하는 드문 반대 방향의 예다.",
+        "sources": []
+      },
+      "goods": {
+        "linen": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "브라반트·플랑드르 아마포가 스헬더를 통해 나갔다. 직접 수치는 확보하지 못했다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "잉글랜드의 미완성 모직을 여기서 염색·전모해 되팔았다. 산지가 아니라 마무리 공정이라 배율을 브뤼헤·런던보다 얕게 뒀다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "포르투갈 왕실이 후추를 안트베르펜에서 풀었다. 이 권역에서 향신료 값이 가장 높은 자리다.",
+          "sources": []
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "1480년에 이미 안트베르펜 배 일흔 척이 마데이라 설탕 무역에 매여 있었고 정제·재분배가 여기 몰려 있었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "wax": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "교회용 밀랍초의 최종 소비 시장이었다. 1406년 잉글랜드 밀랍초가 파운드당 6.5펜스로 곡물 무게값의 마흔 배쯤이다.",
+          "sources": [
+            {
+              "title": "UC Davis, Medieval Money and Prices",
+              "url": "https://medieval.ucdavis.edu/120D/Money.html"
+            }
+          ]
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "오스문드 철이 단치히를 거쳐 서방으로 갔고 저지대의 금속 가공업이 그것을 먹었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Osmond process",
+              "url": "https://en.wikipedia.org/wiki/Osmond_process"
+            }
+          ]
+        },
+        "clove": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "gameplay",
+          "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
+          "sources": []
+        },
+        "nutmeg": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "gameplay",
+          "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
+          "sources": []
+        }
+      }
+    },
+    "amsterdam": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "저지대는 이 시기 합스부르크령이었으므로 'spain'을 그대로 쓴다. 부르고뉴 십자·홀란트 사자 깃발은 아직 FLAGS에 없다 — art.flagTodo 참조."
+      },
+      "goods": {
+        "herring": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "probable",
+          "basis": "15세기 초 스카니아의 청어가 갑자기 사라지자 어장이 북해로 옮겨 갔고, 배 위에서 바로 절이는 네덜란드식 어업이 그 자리를 차지했다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "청어를 절이려면 소금이 있어야 한다. 이베리아·부르뇌프에서 소금을 실어 오는 항해가 이 도시 경제의 다른 절반이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "북방은 포도가 익지 않아 와인이 전량 수입품이었다. 라인 와인은 강으로, 가스코뉴·이베리아 와인은 배로 들어왔고 그 값을 도시가 고스란히 물었다.",
+          "sources": []
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "마데이라 설탕이 저지대에서 정제돼 북유럽 전역으로 갈렸다. 1480년에 안트베르펜 배 일흔 척이 이 무역에 매여 있었으니 이웃 홀란트도 그 물길 위에 있었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        },
+        "timber": {
+          "side": "demand",
+          "value": 1.18,
+          "verdict": "probable",
+          "basis": "배를 짓는 도시라 발트 목재가 상시 필요했다. 한자가 목재를 저지대로 실어 갔다고 적는다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        }
+      }
+    },
+    "bergen": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "단네브로(붉은 바탕 흰 십자)와 색이 정확히 같은 것이 FLAGS의 'hospitaller'뿐이라 빌려 썼다. 덴마크·노르웨이 깃발은 art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "브뤼겐의 한자 상관이 1350년경부터 노르웨이 무역을 통째로 쥐었고, 콘토어는 제 금고·법정·인장을 가진 자치체라 외지 상인을 시장에서 밀어냈다. 게임에는 '배제' 규칙이 없어 그 힘을 세율로 옮겼다.",
+        "sources": [
+          {
+            "title": "Wikipedia, Bryggen",
+            "url": "https://en.wikipedia.org/wiki/Bryggen"
+          },
+          {
+            "title": "Wikipedia, Hanseatic League",
+            "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+          }
+        ]
+      },
+      "goods": {
+        "stockfish": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "브뤼겐 창고가 \"북노르웨이의 건대구와 유럽의 곡물\"을 쌓아 두는 곳이었다고 적는다. 이 도시는 건대구 하나로 살았다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Bryggen",
+              "url": "https://en.wikipedia.org/wiki/Bryggen"
+            },
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "timber": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "probable",
+          "basis": "노르웨이 목재는 실재하는 수출품이나 이 시기 베르겐의 주력은 아니었다. 배율을 얕게 두어 곁가지로 남겼다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "confirmed",
+          "basis": "\"건대구를 곡물과 바꾸었고, 한자가 들여온 곡물 덕에 노르웨이 북쪽까지 정착이 가능해졌다\"는 서술이 이 도시의 종속을 그대로 보여 준다. 이 권역 최고 수요 배율이다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            },
+            {
+              "title": "Wikipedia, Bryggen",
+              "url": "https://en.wikipedia.org/wiki/Bryggen"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "브뤼겐 콘토어가 노르웨이에 판 것이 곡물과 옷감이다. 노르웨이에 직물업이 없어 입을 것을 통째로 사야 했고, 그것이 한자에 매인 또 하나의 고리였다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "북위 60도에서는 포도가 익지 않는다. 와인은 한자 상인이 실어 오는 물건이었고, 건대구를 판 값의 일부가 곧바로 그 값으로 나갔다.",
+          "sources": []
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.18,
+          "verdict": "probable",
+          "basis": "돛과 속옷에 쓸 아마포도 밖에서 왔다. 어선을 띄우는 도시인데 돛감을 제 손으로 못 짜는 것이 이 항구가 한자를 벗어나지 못한 이유 중 하나다.",
+          "sources": []
+        }
+      }
+    },
+    "hamburg": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+      },
+      "goods": {
+        "grain": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "엘베 배후 평야의 곡물이 강을 타고 내려왔다. 단치히만큼 싸지 않게 두어 위계를 남겼다.",
+          "sources": []
+        },
+        "herring": {
+          "side": "supply",
+          "value": 0.68,
+          "verdict": "probable",
+          "basis": "북해 청어를 절여 내보냈으나 스카니아·북해 어업의 중심은 아니었다. 그래서 배율을 얕게 뒀다.",
+          "sources": []
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "청어를 절이는 데 쓸 소금은 뤼네부르크 암염 아니면 프랑스·포르투갈의 천일염이었다. 엘베 어귀에는 염전이 없어 어느 쪽이든 사 와야 했다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "라인과 프랑스 와인이 강과 바다로 들어오는 소비지였다. 이 도시가 내놓는 술은 맥주였고 와인은 언제나 사 오는 물건이었다.",
+          "sources": []
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "설탕은 아직 향신료와 같은 값에 팔리던 사치품이라 살 사람이 있는 큰 항구에서만 값이 섰다. 엘베를 거슬러 올라가는 내륙 시장이 그 수요를 받쳤다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Madeira",
+              "url": "https://en.wikipedia.org/wiki/Madeira"
+            }
+          ]
+        }
+      }
+    },
+    "lubeck": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "동맹의 수도였다. 콘토어 체제는 \"제 금고·법정·입법·인장을 가진 사설 법인\"이었고 외지 상인은 정해진 구역 밖으로 나갈 수 없었다. 그 배제를 게임에서는 세율로만 드러낼 수 있다.",
+        "sources": [
+          {
+            "title": "Wikipedia, Hanseatic League",
+            "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+          }
+        ]
+      },
+      "goods": {
+        "salt": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "\"소금은 뤼네부르크에서 얻거나 프랑스·포르투갈에서 실어 와 중부 유럽에 팔거나, 스카니아로 가져가 청어를 절이거나, 러시아로 내보냈다.\" 이 한 문장이 뤼베크의 권력이다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "herring": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "뤼베크 상인이 스카니아 시장에 소금과 통을 대고 절임 인부까지 데려갔다. 좋은 해에는 청어 30만 통이 나갔고 덴마크 왕 수입의 3분의 1이 여기서 나왔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            },
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "서방 모직이 동쪽으로 흘러가는 길목이다. 콘토어가 사고파는 물건의 한 축이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "북방은 포도가 익지 않아 와인이 전량 수입품이었다. 동맹의 수도라 소비가 컸고, 그래서 이 권역에서 와인 수요가 가장 높은 축에 든다.",
+          "sources": []
+        },
+        "amber": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "발트 호박이 서방으로 팔려 나가는 중계 시장이었다. 직접 사료는 확보하지 못했다.",
+          "sources": []
+        },
+        "wax": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "러시아 밀랍이 노브고로드에서 나 레발을 거쳐 여기서 값을 받고 서방 교회로 갔다. 동맹의 수도는 물건이 나는 곳이 아니라 값이 정해지는 곳이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        }
+      }
+    },
+    "kobenhavn": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "단네브로(붉은 바탕 흰 십자)와 색이 정확히 같은 것이 FLAGS의 'hospitaller'뿐이라 빌려 썼다. 덴마크·노르웨이 깃발은 art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.06,
+        "verdict": "gameplay",
+        "basis": "1429년 포메라니아의 에리크가 외레순 통행세를 물리기 시작했고, 1567년에 화물가의 1~2% 정률로 바뀌어 수입이 세 배가 됐다. 게임은 관세를 매각에만 물기 때문에 1~2%를 그대로 옮기면 아무 성격도 안 남는다 — 기본율(4.5%)보다 한 단계 위로만 올렸다.",
+        "sources": [
+          {
+            "title": "Wikipedia, Sound Dues",
+            "url": "https://en.wikipedia.org/wiki/Sound_Dues"
+          }
+        ]
+      },
+      "goods": {
+        "herring": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "스카니아 시장이 8월 24일부터 10월 9일까지 외레순 가장 좁은 목에서 열렸다. 좋은 해에는 청어 30만 통이 나갔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            }
+          ]
+        },
+        "grain": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "probable",
+          "basis": "셸란·스코네의 곡물이 실려 나갔으나 비스와 곡물에 비할 양은 아니었다. 그래서 배율을 얕게 뒀다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "북방 도시가 스스로 못 만드는 물건의 첫째가 옷감이다. 서방 모직이 발트로 들어오는 길목이라 값이 붙되, 안쪽 시장(노브고로드 1.36)만큼 오르지는 않는다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "북방은 포도가 익지 않아 와인이 전량 수입품이었다. 이 도시가 내놓을 술이 없으니 값은 실어 온 사람이 부르는 대로였다.",
+          "sources": []
+        },
+        "iron": {
+          "side": "demand",
+          "value": 1.18,
+          "verdict": "probable",
+          "basis": "스웨덴 오스문드 철이 해협을 지나 서방으로 갔고 그 길목에 앉은 도시라 통과하는 물건에 값이 붙었다. 셸란에는 철광이 없다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Osmond process",
+              "url": "https://en.wikipedia.org/wiki/Osmond_process"
+            }
+          ]
+        }
+      }
+    },
+    "danzig": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+      },
+      "tariff": {
+        "value": 0.065,
+        "verdict": "gameplay",
+        "basis": "한자 최대 도시였고 곡물이 나가는 문이었다. 콘토어·동맹 도시가 외지 상인을 정해진 구역에 묶어 두었다는 것을 세율로 옮겼다. 뤼베크보다 반 단계 낮춰 수도와 항구의 격을 갈랐다.",
+        "sources": [
+          {
+            "title": "Wikipedia, Hanseatic League",
+            "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+          }
+        ]
+      },
+      "goods": {
+        "grain": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "단치히는 곡물 무역의 지배로 \"한자 최대 도시\"가 됐다. 비스와 강이 폴란드의 호밀을 통째로 실어 내렸고 그 밀이 서유럽을 먹였다 — 이 권역 최저 배율이다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "timber": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
+          "basis": "단치히·리가·레발이 \"곡물과 목재를 잉글랜드·저지대, 나중에는 스페인과 이탈리아까지 내보냈다\"고 적는다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "amber": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "튜턴 기사단령의 호박이 여기서 깎여 팔렸다는 것은 널리 알려졌으나 이번 조사에서 직접 사료를 확보하지 못했다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "서방 모직이 발트로 들어오는 최대 시장이다. 스틸야드가 실어 온 물건이 여기서 풀렸다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "뤼네부르크 암염과 대서양 천일염이 이 항구에서 곡물·목재와 맞바뀌었다. 폴란드 내륙에는 소금이 있었으나 발트 연안의 절임용 소금은 배로 들어왔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "북방은 포도가 익지 않아 와인이 전량 수입품이었다. 이 도시가 내놓을 술이 없으니 값은 실어 온 사람이 부르는 대로였다.",
+          "sources": []
+        }
+      }
+    },
+    "stockholm": {
+      "flag": {
+        "value": "france",
+        "verdict": "gameplay",
+        "basis": "스웨덴의 파란 바탕 금빛 십자와 색이 같은 것이 FLAGS의 'france'(파란 바탕 금빛 문장)라 빌려 썼다. art.flagTodo에 'sweden'을 올려 두었다."
+      },
+      "goods": {
+        "iron": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "오스문드 철은 스웨덴(라프휘탄 등)에서 나 단치히를 거쳐 잉글랜드까지 갔고, 단치히·뤼베크 배후의 해머밀이 그것을 봉철로 바꿨다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Osmond process",
+              "url": "https://en.wikipedia.org/wiki/Osmond_process"
+            }
+          ]
+        },
+        "tar": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "침엽수림을 구워 낸 타르는 스카니아 시장의 거래 품목에도 들어 있다. 스웨덴·핀란드가 주산지였다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "소금이 안 나는 북방이라 뤼네부르크 암염과 대서양 천일염을 사들였다. 생선과 고기를 겨울까지 두려면 소금이 있어야 했으므로 수요가 꾸준했다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "북방 도시가 스스로 못 만드는 물건의 첫째가 옷감이다. 서방 모직이 발트로 들어오는 길목이라 값이 붙되, 안쪽 시장(노브고로드 1.36)만큼 오르지는 않는다.",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "북방은 포도가 익지 않아 와인이 전량 수입품이었다. 이 도시가 내놓을 술이 없으니 값은 실어 온 사람이 부르는 대로였다.",
+          "sources": []
+        }
+      }
+    },
+    "riga": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+      },
+      "goods": {
+        "timber": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "리가가 단치히·레발과 함께 곡물과 목재를 서방으로 내보냈다고 적는다. 다우가바 강이 상류의 숲을 실어 내렸다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "linen": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "아마(flax)는 노브고로드 수출품 목록에 들어 있고 리보니아·리투아니아가 그 산지였다. 게임의 '아마포'는 원료 아마까지 아우른다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "tar": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "수지(타르)가 노브고로드 수출품 목록에 있고 리가는 그 강길의 끝이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "소금이 안 나는 발트 동안이라 서쪽에서 통째로 실어 왔다. 뤼베크 소금이 러시아로 나가는 길이 이 항구를 지난다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "herring": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "절인 청어는 발트 전역의 사순절 식량이자 겨울 식량이었다. 다우가바 상류의 내륙 사람들까지 이 항구를 거쳐 먹었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "서방 모직이 동쪽으로 흘러오는 물길의 끝자락이다. 상류의 내륙 시장까지 옷감을 다시 밀어 넣어야 하므로 항구 자체의 수요도 얕지 않다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        }
+      }
+    },
+    "reval": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+      },
+      "goods": {
+        "wax": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "노브고로드 물건이 레발을 거쳐 배에 올랐다. 사료가 적은 수출품 목록에는 꿀이 있고 밀랍은 같은 숲 경제의 산물이라 개연성으로 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "fur": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "confirmed",
+          "basis": "노브고로드의 모피가 발트 상인의 주된 물건이었고 레발이 그 관문이었다. 산지(노브고로드 0.46)보다 비싸게 두어 중계임을 드러냈다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "뤼베크 소금이 \"러시아로 내보내졌다\"고 사료가 적는다. 레발이 그 길목이고, 소금이 안 나는 내륙으로 들어가기 직전에 마지막으로 값이 오르는 자리다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "콘토어가 동쪽으로 판 물건의 첫째가 옷감이다. 노브고로드로 들어가기 직전의 관문이라 안쪽 시장 다음으로 값이 높다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "herring": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "절인 청어는 발트 동안의 상시 식량이었고, 여기서 다시 볼호프 강을 거슬러 러시아 안쪽까지 들어갔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            }
+          ]
+        }
+      }
+    },
+    "novgorod": {
+      "flag": {
+        "value": "venice",
+        "verdict": "gameplay",
+        "basis": "루시의 붉은 바탕 금빛 문장에 FLAGS에서 가장 가까운 것이 'venice'다. 노브고로드 깃발은 art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "한자의 페터호프는 제 금고·법정·인장을 가진 자치 상관이었고, 외지 상인은 정해진 구역 밖에서 러시아 시장에 닿을 수 없었다. 게임에는 '거래 금지'가 없어 그 배제를 세율로 옮겼다.",
+        "sources": [
+          {
+            "title": "Wikipedia, Hanseatic League",
+            "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+          }
+        ]
+      },
+      "goods": {
+        "fur": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "노브고로드의 수출품이 \"모피·목재·수지(타르)·아마·꿀·밀·호밀\"이었고 이 도시가 발트 상인에게 러시아의 으뜸 시장이었다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "wax": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "probable",
+          "basis": "목록에 꿀이 있으니 밀랍도 같은 숲에서 났다고 보는 것이 자연스럽다. 다만 사료가 밀랍을 직접 적지 않아 개연성으로 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "confirmed",
+          "basis": "콘토어들이 동방의 원자재를 받고 \"직물, 특히 브로드클로스\"를 내주었다. 안쪽 시장이라 이 권역 최고 수요 배율이다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "뤼베크 소금이 러시아로 내보내졌다고 적는다. 소금이 안 나는 내륙이라 값이 가장 비싸다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Hanseatic League",
+              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+            }
+          ]
+        },
+        "herring": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "절인 청어가 소금과 같은 배를 타고 강을 거슬러 안쪽까지 들어갔다. 내륙 시장이라 바닷물고기 값이 해안보다 붙는다.",
+          "sources": [
+            {
+              "title": "Wikipedia, Scania Market",
+              "url": "https://en.wikipedia.org/wiki/Scania_Market"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "routes": {
+    "lisboa|sevilla": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "앵커는 둘이다 — 1438년 런던~브뤼헤 브로드클로스 5.86%(보로메이 은행)와 1560년대 안트베르펜 중개인 장부 1,471건의 중앙값 7.00%. 상 비센치 곶을 도는 외해 구간이고 바르바리 코르세어가 알가르베·안달루시아 해안을 덮쳤다. 안트베르펜 중앙값 바로 아래에 둔다.",
+      "sources": [
+        {
+          "title": "Journal of Economic History, Marketing and Pricing Risk in Marine Insurance in Sixteenth-Century Antwerp",
+          "url": "https://www.cambridge.org/core/journals/journal-of-economic-history/article/marketing-and-pricing-risk-in-marine-insurance-in-sixteenthcentury-antwerp/048D793EB3C9EA9781DA2412736973BC"
+        },
+        {
+          "title": "A. B. Leonard, The Pricing Revolution in Marine Insurance (PDF)",
+          "url": "https://www.histproj.org/completed/LEONARD_Marine%20insurance%20pricing%20revolution.pdf"
+        }
+      ]
+    },
+    "bilbao|lisboa": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "피니스테레 곶을 도는 구간이다. 서풍이 배를 뭍으로 몰아붙이는 lee shore이고 포르투갈 해류가 남쪽으로 흘러 북상이 특히 어려웠다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Volta do mar",
+          "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
+        },
+        {
+          "title": "Marine Insight, Why the Bay of Biscay is Dangerous for Ships",
+          "url": "https://www.marineinsight.com/life-at-sea/why-the-bay-of-biscay-is-dangerous-for-ships/"
+        }
+      ]
+    },
+    "funchal|sevilla": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "며칠씩 뭍이 안 보이는 외해다. 카나리아 해류를 타고 내려가기는 쉬우나 연안을 거슬러 돌아올 수 없어 크게 우회해야 했다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Volta do mar",
+          "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
+        }
+      ]
+    },
+    "bilbao|larochelle": {
+      "risk": 9.0,
+      "verdict": "confirmed",
+      "basis": "비스케이만 횡단 — 이 바다에서 가장 악명 높은 물이다. 대륙붕단에서 수심이 30마일 남짓 사이에 4,000m급에서 200m 아래로 급히 얕아져 장주기 너울이 서고 부서지며, 브레스트 이남에는 전천후 피난항이 없어 만 전체가 lee shore다.",
+      "sources": [
+        {
+          "title": "Marine Insight, Why the Bay of Biscay is Dangerous for Ships",
+          "url": "https://www.marineinsight.com/life-at-sea/why-the-bay-of-biscay-is-dangerous-for-ships/"
+        }
+      ]
+    },
+    "bilbao|bordeaux": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "비스케이만 남동 모서리를 가로지른다. 횡단보다는 짧으나 같은 만이라 피난할 곳이 없다는 사정은 다르지 않다.",
+      "sources": [
+        {
+          "title": "Marine Insight, Why the Bay of Biscay is Dangerous for Ships",
+          "url": "https://www.marineinsight.com/life-at-sea/why-the-bay-of-biscay-is-dangerous-for-ships/"
+        }
+      ]
+    },
+    "bordeaux|larochelle": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "뭍을 끼고 도는 짧은 연안 항해다. 같은 프랑스 해안이라 깃발도 적대하지 않는다. 이 바다에서 가장 평범한 구간의 값으로 둔다.",
+      "sources": []
+    },
+    "bordeaux|bristol": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "비스케이만을 북상해 켈트해로 들어가는 와인 함대의 길이다. 만을 벗어나는 구간이라 요율을 횡단(9.0)보다 낮추되 연안(4.5)보다 훨씬 높게 뒀다.",
+      "sources": [
+        {
+          "title": "Marine Insight, Why the Bay of Biscay is Dangerous for Ships",
+          "url": "https://www.marineinsight.com/life-at-sea/why-the-bay-of-biscay-is-dangerous-for-ships/"
+        },
+        {
+          "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+          "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+        }
+      ]
+    },
+    "larochelle|london": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "우에상을 돌아 해협으로 들어간다. 브르타뉴·노르망디 항구의 나포면허선이 이 어귀에서 먹고살았다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Dunkirkers",
+          "url": "https://en.wikipedia.org/wiki/Dunkirkers"
+        }
+      ]
+    },
+    "bristol|london": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "랜즈엔드를 도는 연안 항해다. 15세기 파우이 같은 항구가 면허를 받고 지나는 배를 털었다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Dunkirkers",
+          "url": "https://en.wikipedia.org/wiki/Dunkirkers"
+        }
+      ]
+    },
+    "brugge|london": {
+      "risk": 5.9,
+      "verdict": "confirmed",
+      "basis": "1438년 보로메이 은행 런던지점이 에식스 브로드클로스의 브뤼헤행을 5.86%에 인수했다 — 북해 단거리 항로의 현존 최초급 실측 요율이고, 이 권역 요율표 전체의 앵커다.",
+      "sources": [
+        {
+          "title": "A. B. Leonard, The Pricing Revolution in Marine Insurance (PDF)",
+          "url": "https://www.histproj.org/completed/LEONARD_Marine%20insurance%20pricing%20revolution.pdf"
+        }
+      ]
+    },
+    "antwerpen|london": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "브뤼헤행(5.86%)보다 스헬더 하구를 더 거슬러 올라가는 만큼만 얹었다. 같은 해협의 같은 성격이다.",
+      "sources": [
+        {
+          "title": "A. B. Leonard, The Pricing Revolution in Marine Insurance (PDF)",
+          "url": "https://www.histproj.org/completed/LEONARD_Marine%20insurance%20pricing%20revolution.pdf"
+        }
+      ]
+    },
+    "hamburg|london": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "북해 남부를 가로지른다. 브뤼헤·안트베르펜행보다 뭍에서 멀어지는 시간이 길다.",
+      "sources": [
+        {
+          "title": "A. B. Leonard, The Pricing Revolution in Marine Insurance (PDF)",
+          "url": "https://www.histproj.org/completed/LEONARD_Marine%20insurance%20pricing%20revolution.pdf"
+        },
+        {
+          "title": "Journal of Economic History, Marketing and Pricing Risk in Marine Insurance in Sixteenth-Century Antwerp",
+          "url": "https://www.cambridge.org/core/journals/journal-of-economic-history/article/marketing-and-pricing-risk-in-marine-insurance-in-sixteenthcentury-antwerp/048D793EB3C9EA9781DA2412736973BC"
+        }
+      ]
+    },
+    "bergen|bristol": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "북해를 비스듬히 종단해 노르웨이 해로 들어가는 구간이다. 며칠씩 뭍이 안 보이고 겨울 돌풍이 상시였다. 안트베르펜 장부가 1월 요율을 7월 대비 28% 높게 매긴 것이 이런 물이다.",
+      "sources": [
+        {
+          "title": "Journal of Economic History, Marketing and Pricing Risk in Marine Insurance in Sixteenth-Century Antwerp",
+          "url": "https://www.cambridge.org/core/journals/journal-of-economic-history/article/marketing-and-pricing-risk-in-marine-insurance-in-sixteenthcentury-antwerp/048D793EB3C9EA9781DA2412736973BC"
+        }
+      ]
+    },
+    "amsterdam|bergen": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "북해를 남북으로 종단한다. 브리스틀행(8.5)보다 짧고 유틀란트·노르웨이 연안을 더 오래 끼고 가므로 반 단계 낮췄다. 그래도 뭍이 안 보이는 날이 있다.",
+      "sources": [
+        {
+          "title": "Journal of Economic History, Marketing and Pricing Risk in Marine Insurance in Sixteenth-Century Antwerp",
+          "url": "https://www.cambridge.org/core/journals/journal-of-economic-history/article/marketing-and-pricing-risk-in-marine-insurance-in-sixteenthcentury-antwerp/048D793EB3C9EA9781DA2412736973BC"
+        }
+      ]
+    },
+    "amsterdam|hamburg": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "프리슬란트 연안이다. 뭍은 늘 가깝지만 모래톱과 조수 차가 커서 좌초가 잦았다.",
+      "sources": []
+    },
+    "antwerpen|brugge": {
+      "risk": 2.5,
+      "verdict": "probable",
+      "basis": "스헬더와 즈윈을 잇는 사실상 내수로다. 같은 영주의 땅 사이라 깃발도 적대하지 않는다 — 이 권역에서 가장 안전한 구간이다.",
+      "sources": []
+    },
+    "amsterdam|antwerpen": {
+      "risk": 3.0,
+      "verdict": "probable",
+      "basis": "젤란트의 섬과 모래톱 사이를 지나는 사실상의 내해 항해다. 뭍이 늘 양쪽에 있고 같은 합스부르크령이라 깃발도 적대하지 않는다.",
+      "sources": []
+    },
+    "bergen|kobenhavn": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "스카게라크를 건너 유틀란트를 도는 구간이다. 북해와 발트가 만나는 자리라 물살이 세다.",
+      "sources": []
+    },
+    "hamburg|lubeck": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "배가 아니라 짐이 넘어가는 길이다 — 홀슈타인 지협을 가로지르는 슈테크니츠 운하·육로. 이 지름길이 있었기에 한자가 유틀란트를 도는 뱃길을 통째로 건너뛰었다. 바다가 아니므로 해적이 안 나온다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "kobenhavn|lubeck": {
+      "risk": 3.5,
+      "verdict": "probable",
+      "basis": "발트 서부의 내해다. 양쪽 다 한자·덴마크의 앞바다라 지켜지는 물이었다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "danzig|lubeck": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "한자의 간선이다. 동맹이 제 앞바다를 지켰으나 14세기 말 비탈리엔브뤼더(식량형제단) 같은 해적이 실재했다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "danzig|kobenhavn": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "발트 남안을 따라가는 곡물 항로다. 뤼베크~단치히와 같은 성격으로 뒀다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "kobenhavn|stockholm": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "외레순을 지나 스웨덴 동안을 따라 올라간다. 군도가 촘촘해 뭍이 늘 가깝고 양쪽 다 지켜지는 물이라 발트 평균 수준으로 뒀다.",
+      "sources": []
+    },
+    "danzig|stockholm": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "발트를 비스듬히 가로질러 북상한다. 남안을 따라가는 항로(4.0)보다 뭍에서 멀어지는 시간이 길어 반 단계 얹었다.",
+      "sources": []
+    },
+    "reval|stockholm": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "핀란드만 어귀를 건넌다. 발트 안에서는 뭍이 가장 오래 안 보이는 구간이다.",
+      "sources": []
+    },
+    "danzig|riga": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "발트 동남안을 따라 올라간다. 곡물과 목재가 오가는 한자의 안쪽 물길이다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "reval|riga": {
+      "risk": 3.5,
+      "verdict": "probable",
+      "basis": "리보니아 연안이다. 같은 한자 도시 사이라 뭍이 늘 가깝고 깃발도 같다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "novgorod|reval": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "나르바에서 페이푸스 호수를 지나 볼호프 강을 거슬러 오르는 내륙길이다. 노브고로드는 강가의 내륙 도시이므로 배가 다니는 바다가 아니고 해적이 안 나온다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    }
+  },
+  "goods": {
+    "timber": {
+      "base": 28,
+      "verdict": "probable",
+      "basis": "무게당 값이 곡물의 두 배를 크게 넘지 않는 부피 화물이다. 한자가 발트 목재를 잉글랜드·저지대·이베리아까지 실어 간 것은 값이 비싸서가 아니라 서유럽에 큰 나무가 없어서였다. 곡물 20의 바로 위에 두어 '부피로 버는 물건'의 표본으로 삼았다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "herring": {
+      "base": 40,
+      "verdict": "probable",
+      "basis": "1382년 잉글랜드 도매가 절인 청어 5~10마리에 1펜스다. 통(약 1,000마리)으로 환산하면 밀 1~3쿼터 값이라 무게당 밀의 2.5~5배가 나온다. 이 프로젝트의 압축 규칙(사료 비율의 절반쯤)을 적용해 곡물의 2.0배로 뒀다.",
+      "sources": [
+        {
+          "title": "UC Davis, Medieval Money and Prices",
+          "url": "https://medieval.ucdavis.edu/120D/Money.html"
+        }
+      ]
+    },
+    "tar": {
+      "base": 44,
+      "verdict": "probable",
+      "basis": "배를 짓고 밧줄을 먹이는 데 반드시 있어야 했으나 통에 담아 대량으로 나른 부피 화물이다. 직접 가격 사료를 확보하지 못해 청어와 소금(48) 사이에 앉혔다.",
+      "sources": []
+    },
+    "stockfish": {
+      "base": 58,
+      "verdict": "probable",
+      "basis": "말리는 데 시간이 들고 부피 대비 열량이 높아 절인 청어보다 값이 붙었다. 한자가 곡물과 맞바꾼 물건이라 곡물 대비 배율이 이 정도는 돼야 그 교환이 성립한다. 정확한 사료 비율은 확보하지 못했다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        },
+        {
+          "title": "Wikipedia, Bryggen",
+          "url": "https://en.wikipedia.org/wiki/Bryggen"
+        }
+      ]
+    },
+    "iron": {
+      "base": 78,
+      "verdict": "probable",
+      "basis": "1350년경 잉글랜드에서 쟁기 보습 하나가 5펜스다. 무게당 밀의 예닐곱 배쯤이라 압축해 3.9배로 뒀다. 완제 무기(165)의 절반이 안 되게 두어 재료와 물건 사이가 벌어지게 했다.",
+      "sources": [
+        {
+          "title": "UC Davis, Medieval Money and Prices",
+          "url": "https://medieval.ucdavis.edu/120D/Money.html"
+        },
+        {
+          "title": "Wikipedia, Osmond process",
+          "url": "https://en.wikipedia.org/wiki/Osmond_process"
+        }
+      ]
+    },
+    "linen": {
+      "base": 145,
+      "verdict": "probable",
+      "basis": "모직보다 싸고 흔한 옷감이다. 직접 사료 비율을 확보하지 못해 모직물(210)의 7할, 도자기(130)의 바로 위에 앉혔다.",
+      "sources": []
+    },
+    "woolcloth": {
+      "base": 210,
+      "verdict": "gameplay",
+      "basis": "사료 비율을 그대로 쓰면 이 물건이 비단을 넘는다 — 1380년 최상급 모직이 야드당 5실링, 1479~82년 토니·러셋이 6실링이고, 브로드클로스 한 필(약 30kg)이 밀 1,400kg 값이라 무게당 마흔 배가 넘는다. 그러나 그것은 소매 완제품 값이고 대량 교역품으로는 그렇게 벌지 못했다. 비단(420)을 넘지 않는 선에서 유리세공(190) 위에 앉혀 10.5배로 압축했다.",
+      "sources": [
+        {
+          "title": "UC Davis, Medieval Money and Prices",
+          "url": "https://medieval.ucdavis.edu/120D/Money.html"
+        },
+        {
+          "title": "John Munro, Medieval Textile Prices (Univ. of Toronto)",
+          "url": "https://www.economics.utoronto.ca/munro5/MedClothPrices.htm"
+        }
+      ]
+    },
+    "wax": {
+      "base": 260,
+      "verdict": "gameplay",
+      "basis": "1406~07년 잉글랜드 밀랍초가 파운드당 6.5펜스로 무게당 밀의 마흔 배쯤이다. 그대로 옮기면 비단과 나란히 서므로 압축해 13배로 뒀다. 러시아·리투아니아 숲에서 나 유럽 교회의 초가 된 물건이라 값이 높은 것 자체는 고증이다.",
+      "sources": [
+        {
+          "title": "UC Davis, Medieval Money and Prices",
+          "url": "https://medieval.ucdavis.edu/120D/Money.html"
+        },
+        {
+          "title": "Wikipedia, Hanseatic League",
+          "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+        }
+      ]
+    },
+    "sugar": {
+      "base": 280,
+      "verdict": "gameplay",
+      "basis": "14세기 잉글랜드에서 설탕이 향신료와 같은 값(파운드당 1~3실링)에 팔렸다 — 무게당 밀의 백 배가 넘는다. 다만 마데이라가 대량 생산에 들어가면서 값이 크게 떨어지는 중이었으므로 그 하락을 반영해 14배로 압축했다. 향신료(330)보다 아래에 두어 '싸지고 있는 사치품'의 자리를 줬다.",
+      "sources": [
+        {
+          "title": "UC Davis, Medieval Money and Prices",
+          "url": "https://medieval.ucdavis.edu/120D/Money.html"
+        },
+        {
+          "title": "Wikipedia, Madeira",
+          "url": "https://en.wikipedia.org/wiki/Madeira"
+        }
+      ]
+    },
+    "amber": {
+      "base": 360,
+      "verdict": "probable",
+      "basis": "튜턴 기사단이 채취를 독점하고 묵주로 깎아 유럽 전역에 판 보석성 물건이다. 이번 조사에서 당대 가격 사료를 찾지 못했다 — 향신료(330)와 비단(420) 사이라는 자리만 정하고 판정을 개연성으로 내렸다.",
+      "sources": []
+    }
+  },
+  "ships": {
+    "crayer": {
+      "price": 900,
+      "verdict": "probable",
+      "basis": "\"항해 성능이 아니라 선창 용적만 보고 지은 소형 단돛대 상선\"이라는 정성 서술만 확보했고 톤수 사료는 못 찾았다. 동급인 호이(25~80톤)·밸린저(40~60톤)를 참고해 52칸(≈104톤)으로 잡고, 낡은 바사(320)와 코카(1,100) 사이를 메우는 값으로 뒀다.",
+      "sources": []
+    },
+    "cog": {
+      "price": 1300,
+      "verdict": "confirmed",
+      "basis": "브레멘 코그(1380·연륜연대 확정)가 23.27×7.62m에 90~130톤이다. 화물 1칸=밀 2톤이라 84칸≈168톤으로 사료의 큰 쪽에 맞췄고, 선원은 코그의 경험칙 '적재 10톤당 1명'을 그대로 옮겨 16명으로 뒀다. 값은 지중해 코카(1,100·78칸)의 사다리에 맞춘 것이다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Bremen cog",
+          "url": "https://en.wikipedia.org/wiki/Bremen_cog"
+        },
+        {
+          "title": "Wikipedia, Cog (ship)",
+          "url": "https://en.wikipedia.org/wiki/Cog_(ship)"
+        }
+      ]
+    },
+    "holk": {
+      "price": 3000,
+      "verdict": "confirmed",
+      "basis": "14세기에 코그를 밀어낸 후계선이다. 탈린 앞바다 난파선이 24.5×9×4m이고, 선수재·선미재 없이 외판을 통짜로 휘어 붙인 선체라 같은 길이에 더 실었다 — 그것이 코그(84칸)에서 155칸으로 뛰는 근거다. 한 칸당 값(19.4닢)을 플류트(15.3닢)보다 비싸게 둔 것은 플류트가 홀크를 밀어낸 이유가 바로 그 차이이기 때문이다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hulk (medieval ship type)",
+          "url": "https://en.wikipedia.org/wiki/Hulk_(medieval_ship_type)"
+        }
+      ]
+    },
+    "redonda": {
+      "price": 1500,
+      "verdict": "confirmed",
+      "basis": "카라벨라 레돈다는 후기형이 150~180 tonéis로 82칸(≈164톤)이 그 범위에 든다. 라틴 3장에 선수 사각돛 1장을 얹은 배라 사각돛 비율이 4분의 1 — rig 0.28이 거기서 나왔다. 값은 지중해 카라벨(1,400)보다 조금 위에 둬 '외해로 나갈 수 있는 카라벨'의 값을 매겼다.",
+      "sources": [
+        {
+          "title": "EVE — Encyclopaedia of Portuguese Expansion, Caravel",
+          "url": "https://eve.fcsh.unl.pt/en/themes-and-facts/caravel"
+        }
+      ]
+    },
+    "whaler": {
+      "price": 7400,
+      "verdict": "confirmed",
+      "basis": "1565년 래브라도 레드베이에서 침몰한 산 후안이 본보기다 — 파사이아 건조, 길이 약 22m, 200~250톤, 고래기름 1,000배럴 적재. 130칸(≈260톤)이 그 범위다. 화물톤÷최소선원 5.0은 엘리자베스기 조선가 매슈 베이커가 적은 상선 정상치 5:1과 같다 — 코그(12)의 절반도 안 되는 이 숫자가 이 배의 정체성이다.",
+      "sources": [
+        {
+          "title": "Parks Canada, Basque Vessels of Red Bay",
+          "url": "https://parks.canada.ca/lhn-nhs/nl/redbay/culture/unesco/unesco5"
+        },
+        {
+          "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
+          "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+        }
+      ]
+    },
+    "nau": {
+      "price": 11000,
+      "verdict": "confirmed",
+      "basis": "16세기 표준 나우가 500~600톤이라 260칸(≈520톤)이 그 한복판이다. 600톤급이 대포 스무 문쯤 달았다는 것에 맞춰 16문을 얹었고, 사각 둘에 후미 라틴 하나라는 돛 구성이 rig 0.67이다. 값은 지중해 캐랙(9,800·240칸)의 한 칸당 값과 나란히 맞췄다.",
+      "sources": [
+        {
+          "title": "EVE — Encyclopaedia of Portuguese Expansion, Carrack",
+          "url": "https://eve.fcsh.unl.pt/en/themes-and-facts/carrack-ship"
+        }
+      ]
+    },
+    "kraweel": {
+      "price": 21000,
+      "verdict": "probable",
+      "basis": "한자가 남쪽에서 카벨 공법을 들여와 지은 대형선 계보다. 그 끝이 700톤짜리 뤼베크의 예수호(1544)이고 240칸(≈480톤)은 그보다 한 급 아래다. 다만 단치히 대선의 제원과 값은 직접 사료를 확보하지 못해 판정을 개연성으로 내렸다 — 값은 지중해 갈레온(19,500)의 사다리에 맞춘 것이다.",
+      "sources": [
+        {
+          "title": "Wikipedia, Hulk (medieval ship type)",
+          "url": "https://en.wikipedia.org/wiki/Hulk_(medieval_ship_type)"
+        },
+        {
+          "title": "Royal Museums Greenwich, Shipbuilding 800–1800",
+          "url": "https://www.rmg.co.uk/stories/maritime-history/shipbuilding-800-1800"
+        }
+      ]
+    }
+  },
+  "art": {
+    "iconTodo": [
+      {
+        "good": "timber",
+        "note": "목재 — 껍질 붙은 통나무 두어 개를 묶은 다발이나 널빤지 더미. 지금은 ivory(상아) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "herring",
+        "note": "청어 — 소금에 절여 통에 채운 은빛 생선. 지금은 salt 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "tar",
+        "note": "타르 — 검은 역청이 흘러내리는 나무통. 지금은 oliveoil 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "stockfish",
+        "note": "건대구 — 막대처럼 뻣뻣하게 마른 대구를 줄로 묶은 다발. 지금은 grain 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "iron",
+        "note": "철 — 봉철 몇 자루를 겹쳐 묶은 꾸러미. 지금은 weapon 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "linen",
+        "note": "아마포 — 표백한 흰 천을 감은 두루마리. 모직물과 구별되게 더 밝고 얇아 보여야 한다. 지금은 silk 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "woolcloth",
+        "note": "모직물 — 도톰한 나사를 접어 갠 필감에 검인 납봉인이 달린 모습. 이 권역의 주력 상품이라 아이콘이 가장 급하다. 지금은 silk 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "wax",
+        "note": "밀랍 — 누런 밀랍 덩이나 굵은 교회초 묶음. 지금은 oliveoil 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "sugar",
+        "note": "설탕 — 원뿔형 설탕빵(sugarloaf)을 종이에 싼 모습. 지금은 salt 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "amber",
+        "note": "호박 — 속이 비치는 꿀빛 알을 꿴 묵주. 지금은 glass 아이콘을 빌려 쓴다"
+      }
+    ],
+    "hullTodo": [
+      {
+        "ship": "cog",
+        "note": "코그 — 돛대 하나에 사각돛 한 장, 곧은 선수·선미재에 뭉툭한 상자형 선체, 우현 쿼터러더가 아니라 중앙타. 옆구리는 판자를 겹쳐 붙인 클링커라 선측에 계단 같은 그림자가 생겨야 한다. 지금은 hulk(사각+라틴 2돛대) 스프라이트를 빌려 쓴다"
+      },
+      {
+        "ship": "crayer",
+        "note": "크라이어 — 코그보다 더 작고 낮은 단돛대 연안선. 지금은 hulk 스프라이트를 빌려 쓴다"
+      },
+      {
+        "ship": "holk",
+        "note": "홀크 — 선수재·선미재가 없이 외판이 이물에서 고물까지 통째로 휘어 올라가 바나나처럼 보이는 선체. 지금은 fluyt 스프라이트를 빌려 쓴다"
+      },
+      {
+        "ship": "whaler",
+        "note": "고래잡이 나오 — 갑판에 기름 끓이는 가마와 빈 통이 쌓이고 현측에 차루파(7인승 보트)가 여럿 걸린 모습이면 한눈에 구별된다. 지금은 carrack 스프라이트를 빌려 쓴다"
+      },
+      {
+        "ship": "kraweel",
+        "note": "대형 크라벨 — 한자가 남쪽 카벨 공법으로 지은 거선. 갈레온보다 선미루가 각지고 투박해야 북방 배로 읽힌다. 지금은 galleon 스프라이트를 빌려 쓴다"
+      }
+    ],
+    "flagTodo": [
+      {
+        "key": "portugal",
+        "note": "포르투갈 — 흰 바탕에 그리스도 기사단의 붉은 십자(돛에 그린 그 문양). 지금은 'spain'을 빌려 써서 이베리아 여덟 항구가 전부 같은 깃발이다"
+      },
+      {
+        "key": "hanse",
+        "note": "한자 — 붉은 바탕에 흰 문장. 나라가 아니라 도시 동맹이라 통일 깃발이 없었으므로 도시별 문장(뤼베크의 쌍두수리, 함부르크의 성문, 단치히의 두 십자와 왕관)을 쓰는 편이 옳다. 지금은 색이 같은 'hospitaller'를 빌려 쓴다"
+      },
+      {
+        "key": "denmark",
+        "note": "덴마크·노르웨이 — 단네브로(붉은 바탕 흰 십자). 지금은 'hospitaller'를 빌려 쓴다"
+      },
+      {
+        "key": "sweden",
+        "note": "스웨덴 — 파란 바탕 금빛 십자. 지금은 색이 같은 'france'를 빌려 쓴다"
+      },
+      {
+        "key": "burgundy",
+        "note": "부르고뉴·합스부르크 네덜란드 — 흰 바탕에 붉은 옹이십자(성 안드레아 십자). 지금은 'spain'을 빌려 쓴다"
+      },
+      {
+        "key": "novgorod",
+        "note": "노브고로드 — 루시의 붉은 바탕 금빛 문장. 지금은 'venice'를 빌려 쓴다"
+      }
+    ],
+    "styleTodo": [
+      {
+        "key": "hanseatic",
+        "note": "한자 — 붉은 벽돌 고딕, 계단 박공(Treppengiebel), 부두에 늘어선 창고와 도르래 달린 박공. 뤼베크·단치히·리가·레발이 전부 이 화풍이다. 지금은 latin(테라코타 지붕·종탑)을 빌려 쓴다"
+      },
+      {
+        "key": "nordic",
+        "note": "북방 — 베르겐 브뤼겐 같은 목조 부두 건물, 가파른 널지붕, 회색 하늘. 지금은 latin을 빌려 쓴다"
+      },
+      {
+        "key": "lowlands",
+        "note": "저지대 — 벽돌 계단 박공에 종루와 풍차, 운하. 브뤼헤·안트베르펜·암스테르담. 지금은 latin을 빌려 쓴다"
+      },
+      {
+        "key": "atlanticiberia",
+        "note": "대서양 이베리아 — 마누엘 양식의 흰 회벽과 아줄레주, 강어귀 요새(벨렝 탑). latin과 비슷하되 더 밝고 바다에 면한 요새가 있어야 한다"
+      }
+    ]
+  },
+  "openQuestions": [
+    "★ 발트의 겨울 폐쇄를 규칙으로 옮기지 못했다. 15세기 한자법은 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 항해를 허용했고 그 밖의 계절은 위험이 아니라 **통행 불가**였다. 지금은 ROUTE_RISK에 담을 수 없어 요율로만 두었다 — 항로에 계절 창(window)을 주는 규칙이 생기면 발트 열 개 항로에 11/11~2/22 폐쇄를 걸어야 한다. 근거: Wikipedia, Navigation season.",
+    "보험 요율이 계절과 전황에 크게 흔들렸다는 것도 못 담았다. 안트베르펜 장부는 1월이 7월보다 28% 비싸고, 1550년대 영·불 전쟁기에는 특정 항로가 1~4%p 올랐다고 적는다. 지금 표는 '평시 평균'이다.",
+    "카스티야 양모(원모)를 교역품으로 두지 않았다. 빌바오~브뤼헤의 양모 무역이 이 바다의 큰 축인데, 모직물과 양모를 갈라 두면 화면에서 구별이 안 되어 모직물 하나로 뭉쳤다. 빌바오의 성격은 supply(철) + demand(모직물)로만 남았다.",
+    "호박의 당대 가격 사료를 찾지 못했다. base 360은 향신료와 비단 사이라는 자리만 정한 값이라 사료가 나오면 바뀔 수 있다.",
+    "빌바오 철·브리스틀 건대구·단치히 호박은 널리 알려진 사실인데도 이번 조사에서 직접 인용할 URL을 확보하지 못해 판정을 개연성으로 내렸다. 웹 검색 예산이 소진된 상태에서 조사를 마쳤다.",
+    "공용 파일에 넣어야 할 것: content/goods-evidence.json의 gameTargets.goodsRatioToGrain에 이 권역 열 품목의 목표 비율(timber 1.4 · herring 2.0 · tar 2.2 · stockfish 2.9 · iron 3.9 · linen 7.25 · woolcloth 10.5 · wax 13.0 · sugar 14.0 · amber 18.0)을 넣어야 tools/check-prices.mjs가 통과한다. 권역 담당자는 공용 파일을 고치지 않으므로 여기에 적어 넘긴다.",
+    "공용 파일에 넣어야 할 것: content/asset-evidence.json의 선박가 목록에도 이 권역 일곱 선종을 넣어야 check-prices.mjs의 자산 대조가 완전해진다."
+  ]
 }

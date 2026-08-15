@@ -1,11 +1,2207 @@
 {
   "region": "eastasia",
   "regionName": "동아시아",
-  "_읽는이에게": "동아시아 권역의 사료 근거. 코드 정본은 js/regions/eastasia/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
-  "version": 1,
-  "cities": {},
-  "routes": {},
-  "goods": {},
-  "ships": {},
-  "openQuestions": []
+  "_읽는이에게": "동아시아 권역의 사료 근거. 코드 정본은 js/regions/eastasia/ 아래이고, 값을 고치면 이 파일도 같은 작업에서 고친다 — node tools/check-evidence.mjs·check-routes.mjs가 어긋나면 실패시킨다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이다. ★ 이 바다에는 당대 해상보험 요율이 없어 항로 판정이 전부 probable이다(openQuestions 참조).",
+  "version": 2,
+  "cities": {
+    "guangzhou": {
+      "flag": {
+        "value": "venice",
+        "verdict": "gameplay",
+        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "gameplay",
+        "basis": "시박사(市舶司) 셋 중 남해 담당이 광저우였고 태감이 관세를 걷었다. 사료의 세율 자체는 확보하지 못했고, 게임은 매각에만 세를 물어 그대로 옮길 수도 없다 — 규모 3의 기본율 6%에서 '관이 지키는 문'이라는 성격이 드러날 만큼만 올렸다.",
+        "sources": [
+          {
+            "title": "Haijin — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Haijin"
+          },
+          {
+            "title": "Portuguese Macao — World History Encyclopedia",
+            "url": "https://www.worldhistory.org/Portuguese_Macao/"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "1600년경 상인 각서(Boxer 부록 B)가 백생사 1담을 광저우·마카오에서 은 80냥에 사 나가사키에서 140~150냥에 판다고 적는다. 이 바다에서 생사가 가장 싼 쪽이 여기다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "高瀬弘一郎「マカオ=長崎間貿易の総取引高・生糸取引量・生糸価格」社会経済史学 48-1 (1982)",
+              "url": "https://www.jstage.jst.go.jp/article/sehs/48/1/48_KJ00002435729/_article/-char/ja/"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "해마다 정월과 유월에 서던 비단 시장에서 유럽 상인이 생사와 함께 명 자기를 사 갔다는 기술은 얻었으나, 낱개 시세는 어느 자료에서도 확인하지 못했다(원 자료는 Volker 1954로 온라인에 없다).",
+          "sources": [
+            {
+              "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+            }
+          ]
+        },
+        "musk": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "광저우 시장에서 유럽 상인이 생사·자기·사향·금을 사 갔다는 목록은 얻었지만 사향의 시세는 못 찾았다. 무게당 최고가 약재의 하나라는 통설에 기대어 비단 바로 위에 두었다.",
+          "sources": [
+            {
+              "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "confirmed",
+          "basis": "1600년경 상인 각서의 금은비가가 광저우 1:5.4~7.0, 나가사키 1:7.8~8.3, 스페인 1:12.5~14다. 같은 은이 중국에서 유럽의 두 배 값이었다는 뜻이고, 그래서 세계의 은이 여기로 빨려 들어왔다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Flynn & Giráldez, Arbitrage, China, and World Trade in the Early Modern Period (PDF)",
+              "url": "https://pure.uva.nl/ws/files/3372227/4439_UBA003000263_006.pdf"
+            }
+          ]
+        },
+        "sulfur": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "명은 화약 원료가 모자라 일본과 류큐에서 유황을 사들였다. 류큐는 1425년 상파지가 2만 근을 진공했고 1425~1588년 진공 유황 총량이 400만 근으로 추정된다 — 사는 쪽이 명이다.",
+          "sources": [
+            {
+              "title": "琉球の硫黄と進貢貿易 — 琉球沖縄歴史アーカイブ",
+              "url": "https://ryuoki-archive.jp/en/d_columns_en/2288/"
+            },
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "ivory": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "광동은 상아 조각의 본산이고 시박사 남해 담당으로 동남아·인도의 상아가 여기로 들었다. 다만 이 시기 상아 수입량이나 시세를 직접 말하는 자료는 찾지 못했다.",
+          "sources": []
+        }
+      }
+    },
+    "macau": {
+      "flag": {
+        "value": "england",
+        "verdict": "gameplay",
+        "basis": "포르투갈 깃발이 FLAGS에 없어 흰 바탕에 푸른 마크인 것을 빌렸다 — 포르투갈 왕기가 흰 바탕에 푸른 방패라 색은 맞는다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.06,
+        "verdict": "gameplay",
+        "basis": "명이 1557년 정주를 허락하고 향산현에 해마다 은 500냥의 지대를 받았으며(1582년 문서화, 1863년까지 납부) 그 위에 포르투갈 왕실 관세가 얹혔다. 두 겹의 세를 규모 2의 기본율 4.5% 위에 얹어 표현했다.",
+        "sources": [
+          {
+            "title": "History of Macau — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/History_of_Macau"
+          },
+          {
+            "title": "Portuguese Macao — World History Encyclopedia",
+            "url": "https://www.worldhistory.org/Portuguese_Macao/"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
+          "basis": "광저우 시장에서 사 온 생사를 되파는 중계항이라 산지(광저우 0.50)보다 값이 붙는다. 1600년경 각서의 광저우 매입가 80냥에 마카오까지의 운임과 상관 몫이 얹힌 값이다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+            }
+          ]
+        },
+        "gold": {
+          "side": "supply",
+          "value": 0.72,
+          "verdict": "confirmed",
+          "basis": "★ 이 바다에서 가장 반직관적인 값이다. 명의 금은비가가 1:5.4~7로 유럽(1:12.5~14)의 절반이라 **중국에서는 금이 쌌다**. Boxer는 포르투갈 상인이 '은과 금의 환전상 노릇으로 두둑이 벌었다'고 적는다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Flynn & Giráldez, Arbitrage, China, and World Trade in the Early Modern Period (PDF)",
+              "url": "https://pure.uva.nl/ws/files/3372227/4439_UBA003000263_006.pdf"
+            },
+            {
+              "title": "金銀比価 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E9%87%91%E9%8A%80%E6%AF%94%E4%BE%A1"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "마카오는 일본 은을 받아 광저우 시장으로 넘기는 중간 손이었다. 1636년 한 해에만 일본에서 은 235만 냥이 들어왔다는 기록이 있다.",
+          "sources": [
+            {
+              "title": "Entering the Golden Age — macaudata.mo",
+              "url": "https://www.macaudata.mo/macaubook/ebook007/html/00401.htm"
+            },
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            }
+          ]
+        },
+        "lacquer": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "유럽 주문을 받아 만든 남만칠기(마키에)가 나가사키에서 인도·유럽으로 나갔고 마카오가 그 환적점이었다. 다만 마카오 칠기 거래의 수량·시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Nanban trade — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Nanban_trade"
+            }
+          ]
+        },
+        "musk": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "광저우 시장에서 유럽 상인이 사 간 목록(생사·자기·사향·금)이 그대로 마카오를 거쳐 인도·유럽으로 나갔다. 사향의 시세는 어느 자료에서도 찾지 못해 개연으로 내린다.",
+          "sources": [
+            {
+              "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "명이 포르투갈에서 불랑기포(佛郎機砲)를 받아들여 연안 방어에 썼고, 뒤에는 마카오의 보카로 주포소가 일본 구리로 청동포를 부어 명에 팔았다(1620~30년대 계약이 항해당 구리 1,200담이었다).",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            }
+          ]
+        }
+      }
+    },
+    "yuegang": {
+      "flag": {
+        "value": "venice",
+        "verdict": "gameplay",
+        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.085,
+        "verdict": "gameplay",
+        "basis": "1567년 융경개관 뒤 인선(引)을 끊고 수향(선폭당 톤세, 서양선 1.6장 이상 은 5냥 + 1척마다 5전)·육향(종가세)·가증향을 물렸다. 특히 마닐라에서 **은만 싣고** 돌아온 배에는 가증향 150냥(1590년 120냥)을 따로 물렸다 — 이 권역에서 가장 무거운 문턱으로 둔 근거가 이 한 줄이다.",
+        "sources": [
+          {
+            "title": "東西洋考 卷七 — 維基文庫",
+            "url": "https://zh.wikisource.org/wiki/%E6%9D%B1%E8%A5%BF%E6%B4%8B%E8%80%83/%E5%8D%B7%E4%B8%83"
+          },
+          {
+            "title": "隆庆开海：明朝海外贸易政策的重大变革 — 人民论坛网",
+            "url": "https://www.rmlt.com.cn/2018/1108/532616.shtml"
+          },
+          {
+            "title": "The 'Southern Treasury' Archives: Yuegang's Trade Prototype — ChinaRoots",
+            "url": "https://chinaroots.org/en/posts/yuegang-southern-treasury-archives/"
+          }
+        ]
+      },
+      "goods": {
+        "tea": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "gameplay",
+          "basis": "복건은 무이차의 배후지이고 월항이 그 출구다. 다만 차는 16세기에는 바닷길 교역품이 아니었다(유럽 첫 수입이 1607년 마카오다) — 알고 넣은 것이라 gameplay다.",
+          "sources": [
+            {
+              "title": "History of Tea — ITO EN",
+              "url": "https://www.itoen-global.com/allabout_greentea/history_of_tea/"
+            },
+            {
+              "title": "茶马(차마무역) — 维基百科",
+              "url": "https://zh.wikipedia.org/wiki/%E8%8C%B6%E9%A9%AC"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "장주요(漳州窯)와 덕화요 자기가 월항에서 마닐라·동남아로 실려 나갔다. 1573년 첫 갈레온 두 척이 비단 712필과 자기 22,300점을 실었다는 기록이 그 물량의 규모를 말한다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Manila galleon — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "confirmed",
+          "basis": "이 권역에서 은 수요가 가장 강한 자리다. 명이 마닐라발 귀항선에 '은만 싣고 왔다'는 이유로 가증향을 따로 물렸다는 사실 자체가, 여기로 들어오는 것이 물건이 아니라 은이었다는 증거다.",
+          "sources": [
+            {
+              "title": "東西洋考 卷七 — 維基文庫",
+              "url": "https://zh.wikisource.org/wiki/%E6%9D%B1%E8%A5%BF%E6%B4%8B%E8%80%83/%E5%8D%B7%E4%B8%83"
+            },
+            {
+              "title": "隆庆开海：明朝海外贸易政策的重大变革 — 人民论坛网",
+              "url": "https://www.rmlt.com.cn/2018/1108/532616.shtml"
+            },
+            {
+              "title": "The 'Southern Treasury' Archives: Yuegang's Trade Prototype — ChinaRoots",
+              "url": "https://chinaroots.org/en/posts/yuegang-southern-treasury-archives/"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "월항의 육향 예시가 후추 값 은 1냥에 세 2분이다 — 후추가 들어오는 항구였다는 뜻이다. 인선의 목적지도 동양(필리핀·몰루카)과 서양(인도차이나·말라카·수마트라)으로 갈려 있었다.",
+          "sources": [
+            {
+              "title": "東西洋考 卷七 — 維基文庫",
+              "url": "https://zh.wikisource.org/wiki/%E6%9D%B1%E8%A5%BF%E6%B4%8B%E8%80%83/%E5%8D%B7%E4%B8%83"
+            },
+            {
+              "title": "Yuegang — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Yuegang"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
+          "basis": "철·유황·구리·무기는 인선을 받은 배도 실을 수 없는 금수품이었다. 금지된 물건이 값이 붙는다는 것이 밀무역 항구의 기본 이치다.",
+          "sources": [
+            {
+              "title": "Yuegang — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Yuegang"
+            }
+          ]
+        }
+      }
+    },
+    "quanzhou": {
+      "flag": {
+        "value": "venice",
+        "verdict": "gameplay",
+        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "goods": {
+        "ceramic": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "덕화요 백자의 출구가 취안저우였다. 항구는 쇠했어도 배후 가마는 남아 자기가 이 바다에서 가장 싼 축이다. 낱개 시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Quanzhou — Britannica",
+              "url": "https://www.britannica.com/place/Quanzhou"
+            }
+          ]
+        },
+        "silk": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "probable",
+          "basis": "복건은 생사 산지가 아니라 강남 생사를 실어 내보내는 자리라 닝보(0.48)보다 값이 붙는다. 이 상대 순서는 개연이지 사료로 직접 확인한 값이 아니다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "복건은 산이 많고 배후 평야가 좁아 곡물을 늘 밖에서 들여왔다 — 복건 사람이 바다로 나간 이유의 하나다. 다만 이 시기 취안저우의 곡물 수급 수치는 못 찾았다.",
+          "sources": []
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
+          "basis": "명은 동전(영락통보)을 찍을 구리가 늘 모자라 일본에서 사들였다. 감합무역의 일본 수출품 첫머리가 구리이고 명의 수출품 첫머리가 동전이라는 것이 그 구조다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "동남아 후추·소목이 복건 항구로 들어와 내륙으로 풀렸다. 취안저우 몫의 수치는 따로 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Yuegang — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Yuegang"
+            }
+          ]
+        }
+      }
+    },
+    "fuzhou": {
+      "flag": {
+        "value": "venice",
+        "verdict": "gameplay",
+        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "goods": {
+        "tea": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "gameplay",
+          "basis": "무이산 차가 민강을 타고 푸저우로 내려온다. 다만 16세기에 차가 바닷길로 나가지 않았다는 것은 확인된 사실이라(유럽 첫 수입 1607년) 판정을 gameplay로 둔다.",
+          "sources": [
+            {
+              "title": "History of Tea — ITO EN",
+              "url": "https://www.itoen-global.com/allabout_greentea/history_of_tea/"
+            }
+          ]
+        },
+        "silk": {
+          "side": "supply",
+          "value": 0.68,
+          "verdict": "probable",
+          "basis": "복건 연안 항구의 생사는 강남에서 실려 온 것이라 산지보다 비싸다. 취안저우와 나란한 값으로 두었고 사료로 직접 확인한 시세는 아니다.",
+          "sources": []
+        },
+        "sulfur": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
+          "basis": "1472년 유원역(柔遠驛)을 세워 류큐 진공선을 받은 곳이 푸저우다. 류큐 진공품의 핵심이 말과 유황이었으니, 유황이 배에서 내려 팔리는 자리가 여기다.",
+          "sources": [
+            {
+              "title": "Rouyuan Station in Fuzhou — CGTN",
+              "url": "https://news.cgtn.com/news/2025-11-19/Rouyuan-Station-in-Fuzhou-A-historic-witness-to-China-Ryukyu-ties-1Iqzew5J24o/p.html"
+            },
+            {
+              "title": "琉球の硫黄と進貢貿易 — 琉球沖縄歴史アーカイブ",
+              "url": "https://ryuoki-archive.jp/en/d_columns_en/2288/"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
+          "basis": "류큐가 시암·말라카·자바에서 실어 온 후추·소목이 진공선에 얹혀 푸저우로 들어왔다. 1390년 진공 기록에 후추 1,000근·소목 600근이 보인다.",
+          "sources": [
+            {
+              "title": "琉球の硫黄と進貢貿易 — 琉球沖縄歴史アーカイブ",
+              "url": "https://ryuoki-archive.jp/en/d_columns_en/2288/"
+            },
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            }
+          ]
+        },
+        "ivory": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
+          "basis": "역대보안(歷代寶案)이 적는 류큐 중계품 목록에 인도산 상아가 들어 있고, 그 배가 닿는 곳이 푸저우였다.",
+          "sources": [
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            },
+            {
+              "title": "Ryukyu Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+            }
+          ]
+        }
+      }
+    },
+    "ningbo": {
+      "flag": {
+        "value": "venice",
+        "verdict": "gameplay",
+        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "감합 대조를 태감이 맡았고 그 자리에 뒷돈이 붙었다 — 1523년 닝보의 난이 바로 송소경이 태감 뇌은을 매수해 호소카와 사절단을 먼저 검사하게 한 데서 터졌다. 세율 자체는 사료에 없으므로 그 '문턱'을 규모 3 기본율 6% 위에 얹어 표현했다.",
+        "sources": [
+          {
+            "title": "Ningbo incident — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Ningbo_incident"
+          },
+          {
+            "title": "日明貿易 — ウィキペディア",
+            "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
+          "basis": "배후가 강남이라 호주(湖州) 생사의 집산지다. 1600년경 각서의 중국 쪽 매입가 은 80냥/담이 이 계열의 값이고, 이 바다에서 생사가 가장 싼 자리로 둔 근거다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "高瀬弘一郎「マカオ=長崎間貿易の総取引高・生糸取引量・生糸価格」社会経済史学 48-1 (1982)",
+              "url": "https://www.jstage.jst.go.jp/article/sehs/48/1/48_KJ00002435729/_article/-char/ja/"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "강남 자기가 모이는 항구이나 가마가 여기 있는 것은 아니라 덕화·장주(0.50~0.52)보다 값이 붙는다. 상대 순서만 개연이고 시세는 확인하지 못했다.",
+          "sources": []
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "confirmed",
+          "basis": "감합 무역의 일본 담당 시박사가 닝보였다. 일본에서 오는 배가 싣고 오는 것이 은이었고, 명의 은 수요가 세계의 은을 끌어당겼다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            },
+            {
+              "title": "Flynn & Giráldez, Arbitrage, China, and World Trade in the Early Modern Period (PDF)",
+              "url": "https://pure.uva.nl/ws/files/3372227/4439_UBA003000263_006.pdf"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "감합무역 일본 수출품의 첫머리가 유황과 구리다. 명이 동전을 찍을 구리가 모자랐기 때문이고, 1453년 명 시가가 생홍동 1근 = 은 6분이었다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "ginseng": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "조선 인삼은 명에 대한 조공·교역품의 대표였고 약재의 으뜸으로 쳤다. 다만 15~16세기의 시세를 말하는 자료는 찾지 못했다(도는 '인삼 1근 = 은 1근'은 청대 것이다).",
+          "sources": []
+        }
+      }
+    },
+    "shuangyu": {
+      "flag": {
+        "value": "pirate",
+        "verdict": "gameplay",
+        "basis": "나라가 없는 항구다. 1524~1548년 명·일본·포르투갈 상인이 뒤섞인 무허가 시장이었고 어느 깃발도 걸리지 않았으므로 검은 깃발로 둔다."
+      },
+      "tariff": {
+        "value": 0.015,
+        "verdict": "gameplay",
+        "basis": "세를 물릴 관청이 없다. 밀무역 섬이라는 성격을 규칙으로 옮길 다른 자리가 없어 입항세를 규모 1의 기본율 3%의 절반으로 내렸다 — 위험(요율 9.5~10%)을 감수한 대가를 여기서 돌려준다.",
+        "sources": [
+          {
+            "title": "Shuangyu — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Shuangyu"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "1548년 파괴 뒤에도 정해 망루가 하루에 쌍서로 향하는 배 1,290척을 세었다는 기록이 이 섬의 물동량을 말한다. 새어 나온 생사가 모이는 곳이라 산지(0.48)보다는 비싸다.",
+          "sources": [
+            {
+              "title": "Shuangyu — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Shuangyu"
+            }
+          ]
+        },
+        "silver": {
+          "side": "supply",
+          "value": 0.74,
+          "verdict": "gameplay",
+          "basis": "일본 은이 여기서 풀렸다. 다만 산지값으로 내놓으면 이 섬 하나가 경제를 삼키므로 거의 중립가에 붙여 두었다 — 몰타를 다룬 방식과 같다. 섬의 성격은 값이 아니라 prizeYard로 준다.",
+          "sources": [
+            {
+              "title": "Shuangyu — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Shuangyu"
+            },
+            {
+              "title": "Wang Zhi (pirate) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "probable",
+          "basis": "육횡도의 작은 섬이라 자급이 안 된다. 1548년 노당이 마을을 헐고 항구를 돌로 메워 못 쓰게 만들 수 있었던 것도 이 섬이 물과 곡식을 밖에서 받았기 때문이다.",
+          "sources": [
+            {
+              "title": "Shuangyu — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Shuangyu"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "왕직이 다룬 물건 목록에 초석·유황·구리 동전과 함께 화승총이 있다. 명이 금한 물건이 여기서만 팔렸다.",
+          "sources": [
+            {
+              "title": "Wang Zhi (pirate) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+            },
+            {
+              "title": "Yuegang — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Yuegang"
+            }
+          ]
+        },
+        "sulfur": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "유황은 명의 금수품이자 왕직의 취급품이었다. 금지된 물건이 밀무역 섬에서 값이 붙는다.",
+          "sources": [
+            {
+              "title": "Wang Zhi (pirate) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+            }
+          ]
+        }
+      }
+    },
+    "mapo": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "조선의 깃발이 FLAGS에 없다. 흰 바탕에 검은 마크인 것을 빌렸다 — 흰옷과 먹빛이라는 조선의 인상과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "goods": {
+        "ginseng": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "probable",
+          "basis": "인삼은 조선의 대표 수출품이자 명·일본 양쪽이 약재의 으뜸으로 친 물건이다. 도성 시장이 그 원가에 가장 가깝다고 보았으나, 15~16세기의 쌀·은 대비 시세는 확보하지 못했다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "삼남의 세곡을 실은 조운선이 남해와 서해를 돌아 한강으로 올라와 경강(마포·서강·용산)에 부렸고, 강가에 경창이 늘어서 있었다. 곡물이 가장 싼 자리가 여기다.",
+          "sources": [
+            {
+              "title": "경강(京江) — 우리역사넷",
+              "url": "https://contents.history.go.kr/mobile/km/view.do?levelId=km_003_0030_0030_0010"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "왜관 무역에서 조선이 사들인 물건의 첫머리가 구리다. 상품 구리 2.5근이 면포 1필과 맞바꿔지는 관정 시세가 있었다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "조선은 사무역을 원칙적으로 금해 바깥 비단이 귀했다. 다만 도성 비단값을 직접 말하는 자료는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "경강(京江) — 우리역사넷",
+              "url": "https://contents.history.go.kr/mobile/km/view.do?levelId=km_003_0030_0030_0010"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
+          "basis": "후추·소목·명반은 왜관을 통해 들어오던 동남아 재수출품이다. 조선이 자체로 얻을 길이 없었으므로 도성까지 올라가면 값이 붙는다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        }
+      }
+    },
+    "busanpo": {
+      "flag": {
+        "value": "hafsid",
+        "verdict": "gameplay",
+        "basis": "조선의 깃발이 FLAGS에 없다. 흰 바탕에 검은 마크인 것을 빌렸다 — 흰옷과 먹빛이라는 조선의 인상과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.06,
+        "verdict": "gameplay",
+        "basis": "왜관 무역은 자유 시장이 아니라 관이 품목과 값을 정하고 세를 물리는 공무역이었다. 1443년 계해약조가 쓰시마 소씨의 세견선을 연 50척으로 묶고 세사미두 200석을 주기로 한 것이 그 성격이다. 그 통제를 규모 2의 기본율 4.5% 위에 얹어 표현했다.",
+        "sources": [
+          {
+            "title": "계해약조 — 위키백과",
+            "url": "https://ko.wikipedia.org/wiki/%EA%B3%84%ED%95%B4%EC%95%BD%EC%A1%B0"
+          },
+          {
+            "title": "왜관 — 위키백과",
+            "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+          }
+        ]
+      },
+      "goods": {
+        "ginseng": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "왜관으로 나가는 조선 수출품 목록에 인삼이 있다. 도성(0.46)보다는 값이 붙는 자리로 두었고, 시세 자체는 사료로 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        },
+        "fur": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "corrected",
+          "basis": "처음에는 조선 사기를 산지로 두려 했으나 사료가 더 분명한 쪽으로 바꿨다 — 1429년 조선은 금·은·표피·동전·모시·베를 왜인에게 파는 것을 **금했다**. 금지 목록이야말로 그 물건에 수요가 있었다는 증거다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "구리는 왜관 무역에서 조선이 사들인 물건의 첫머리다. 상품 구리 2.5근 = 면포 1필(하품은 4~5근)이라는 관정 시세가 남아 있다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        },
+        "sulfur": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "유황과 납도 왜관을 통해 들어왔다. 조선은 화약 원료를 자급하지 못해 일본에 기댔다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
+          "basis": "소목·호초(후추)·명반은 쓰시마와 규슈 상인이 동남아에서 실어 와 왜관에 넘기던 재수출품이다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        }
+      }
+    },
+    "hakata": {
+      "flag": {
+        "value": "genoa",
+        "verdict": "gameplay",
+        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+      },
+      "goods": {
+        "sulfur": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "confirmed",
+          "basis": "감합무역에서 일본이 명에 판 물건의 첫머리가 유황과 구리다. 견명선이 짐을 싣고 떠나던 항구가 하카타이고, 오우치씨가 하카타를 통해 감합선을 굴렸다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            },
+            {
+              "title": "Hakata-ku, Fukuoka — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Hakata-ku,_Fukuoka"
+            }
+          ]
+        },
+        "copper": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
+          "basis": "일본은 이 시기 세계 최대의 구리 산지였고, 감합무역의 대표 수출품이었다. 하카타 상인 가미야 주테이가 이와미 은광을 연 것도 이 항구의 자본이다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            },
+            {
+              "title": "Iwami Ginzan Silver Mine — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Iwami_Ginzan_Silver_Mine"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "confirmed",
+          "basis": "감합무역에서 일본이 사들인 물건의 첫머리가 생사와 견직물이다. 1600년경 각서가 중국 80냥/담 → 나가사키 140~150냥이라 적는다 — 일본이 비싸게 사는 쪽이다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            },
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "감합무역 수입품 목록에 도자기가 있다. 일본은 임진왜란 전까지 자기를 굽지 못해 전량 사들였다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "ginseng": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "조선 약재가 왜관을 거쳐 규슈로 들어왔다. 하카타는 조선 무역의 오랜 창구였으나 인삼 거래의 수량·시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Hakata-ku, Fukuoka — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Hakata-ku,_Fukuoka"
+            }
+          ]
+        }
+      }
+    },
+    "hirado": {
+      "flag": {
+        "value": "genoa",
+        "verdict": "gameplay",
+        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+      },
+      "goods": {
+        "silver": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "왕직이 마쓰우라 다카노부 밑에서 히라도에 앉아 배 수백 척과 일꾼 2천을 부렸고, 그가 다룬 물건에 은과 초석·구리 동전이 있었다. 이와미 은이 규슈 서안으로 흘러 여기서 배에 올랐다.",
+          "sources": [
+            {
+              "title": "Wang Zhi (pirate) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+            },
+            {
+              "title": "Hirado, Nagasaki — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Hirado,_Nagasaki"
+            },
+            {
+              "title": "Iwami Ginzan Silver Mine — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Iwami_Ginzan_Silver_Mine"
+            }
+          ]
+        },
+        "sulfur": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "confirmed",
+          "basis": "왕직의 취급품 목록에 유황이 있다. 규슈 각지의 유황이 이 항구로 모여 명 연안으로 건너갔다.",
+          "sources": [
+            {
+              "title": "Wang Zhi (pirate) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "confirmed",
+          "basis": "왕직이 명에서 실어 온 것이 생사와 무명이었다. 명 연안에서 사서 규슈에서 파는 것이 이 항구의 장사였다.",
+          "sources": [
+            {
+              "title": "Wang Zhi (pirate) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+            },
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            }
+          ]
+        },
+        "deerhide": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "사슴·상어·가오리 가죽은 일본의 **수입품**이었다(주로 시암과 대만에서 왔다). 갑주와 칼집에 쓰였다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Tonio Andrade, How Taiwan Became Chinese, ch.7 — 사슴 가죽",
+              "url": "http://www.gutenberg-e.org/andrade/andrade07.html"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
+          "basis": "일본이 자기를 굽기 전이라 명 자기는 전량 수입품이었다. 감합무역 수입 목록에 그대로 있다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        }
+      }
+    },
+    "nagasaki": {
+      "flag": {
+        "value": "genoa",
+        "verdict": "gameplay",
+        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.055,
+        "verdict": "gameplay",
+        "basis": "1571년 오무라 스미타다가 포르투갈 배를 **유치하려고** 연 항구다. 영주가 입항선에 부담을 걸되 배를 쫓지 않을 만큼만 걸었다는 성격을 규모 3의 기본율 6%보다 낮게 두어 표현했다. 세율 자체는 사료로 확인하지 못했다.",
+        "sources": [
+          {
+            "title": "Nagasaki — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Nagasaki"
+          }
+        ]
+      },
+      "goods": {
+        "silver": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "이 바다에서 은이 가장 싼 자리다. 1637년 한 철에만 갈리엇 여섯 척이 은 2,600상자(상자당 1,000냥 ≈ 37.5kg, 도합 약 97톤)를 싣고 나갔다. 일본 산출량의 절반 이상이 수출됐다는 것이 동시대의 기록이다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Iwami Ginzan Silver Mine — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Iwami_Ginzan_Silver_Mine"
+            },
+            {
+              "title": "Nanban trade — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Nanban_trade"
+            }
+          ]
+        },
+        "lacquer": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "남만칠기(마키에)는 유럽 주문을 받아 만들어 이 항구에서 실려 나간 공예품이다. 감합무역에서도 칠기는 일본의 수출품이었다.",
+          "sources": [
+            {
+              "title": "Nanban trade — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Nanban_trade"
+            },
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "confirmed",
+          "basis": "이 권역에서 생사 수요가 가장 강한 자리다. 1600년경 각서: 백생사 1담을 광저우 80냥에 사 나가사키 140~150냥에 판다(총이익 +75~88%). 다카세의 집계도 16세기 나가사키 값을 담당 150냥 안팎으로 잡는다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "高瀬弘一郎「マカオ=長崎間貿易の総取引高・生糸取引量・生糸価格」社会経済史学 48-1 (1982)",
+              "url": "https://www.jstage.jst.go.jp/article/sehs/48/1/48_KJ00002435729/_article/-char/ja/"
+            }
+          ]
+        },
+        "gold": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "★ 금이 일본으로 들어갔다. Boxer는 '금은 상당량을 산출하면서도 1580~1614년경에는 수출품이 아니라 **수입품**이었다'고 적고, 광저우 1:5.4~7 대 나가사키 1:7.8~8.3의 격차를 포르투갈 상인이 먹었다고 쓴다. 히데요시의 조선 출병이 금 수요를 더 밀어 올렸다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Flynn & Giráldez, Arbitrage, China, and World Trade in the Early Modern Period (PDF)",
+              "url": "https://pure.uva.nl/ws/files/3372227/4439_UBA003000263_006.pdf"
+            }
+          ]
+        },
+        "deerhide": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "사슴 가죽은 일본의 수입품이었다. 대만에서만 1638년에 151,400장이 나갔고 그 뒤로도 해마다 5만~8만 장이 실렸다.",
+          "sources": [
+            {
+              "title": "Dutch Formosa — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Dutch_Formosa"
+            },
+            {
+              "title": "Tonio Andrade, How Taiwan Became Chinese, ch.7 — 사슴 가죽",
+              "url": "http://www.gutenberg-e.org/andrade/andrade07.html"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "일본이 자기를 굽기 전이라 명·조선 자기는 전량 수입품이었다. 감합무역 수입 목록에 도자기가 그대로 있고, 히데요시의 조선 출병을 '도자기 전쟁'이라 부르는 것도 이 갈증 때문이다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        }
+      }
+    },
+    "bonotsu": {
+      "flag": {
+        "value": "genoa",
+        "verdict": "gameplay",
+        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+      },
+      "goods": {
+        "sulfur": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "이 바다에서 유황이 가장 싼 자리다. 사쓰마 앞바다의 유황도(硫黄島) 계열 산지가 배후이고, 유황은 일본·류큐가 명에 파는 대표 물건이었다. 보노쓰는 무비지(武備志)가 하카타쓰·아노쓰와 함께 일본 삼진(三津)으로 꼽은 항구다.",
+          "sources": [
+            {
+              "title": "坊津 — ウィキペディア (武備志의 日本三津)",
+              "url": "https://ja.wikipedia.org/wiki/%E5%9D%8A%E6%B4%A5"
+            },
+            {
+              "title": "琉球の硫黄と進貢貿易 — 琉球沖縄歴史アーカイブ",
+              "url": "https://ryuoki-archive.jp/en/d_columns_en/2288/"
+            },
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "silver": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "시마즈령의 대명·대류큐 창구였고 뒤에는 사쓰마 번의 밀무역 기지로 불렸다. 은이 여기서도 실렸다고 보았으나 수량·시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "坊津 — ウィキペディア (武備志의 日本三津)",
+              "url": "https://ja.wikipedia.org/wiki/%E5%9D%8A%E6%B4%A5"
+            }
+          ]
+        },
+        "copper": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "confirmed",
+          "basis": "구리는 감합무역 일본 수출품의 첫머리다. 견명선이 기항하던 항구라 여기서도 실린다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            },
+            {
+              "title": "坊津 — ウィキペディア (武備志의 日本三津)",
+              "url": "https://ja.wikipedia.org/wiki/%E5%9D%8A%E6%B4%A5"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "confirmed",
+          "basis": "감합무역에서 일본이 사들인 첫 물건이 생사다. 규슈 남단이라 나가사키·히라도보다 조금 얕게 두었다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "류큐가 시암·말라카에서 실어 온 후추·소목이 사쓰마로 들어왔다. 1609년 시마즈가 류큐를 친 동기의 하나가 그 중계 이익이다.",
+          "sources": [
+            {
+              "title": "Invasion of Ryukyu (1609) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Invasion_of_Ryukyu"
+            },
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
+          "basis": "자기는 일본이 굽지 못해 전량 사들이던 물건이고 감합무역 수입 목록에 그대로 있다. 규슈 남단의 작은 항구라 나가사키·히라도보다 얕게 둔다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            }
+          ]
+        }
+      }
+    },
+    "sakai": {
+      "flag": {
+        "value": "genoa",
+        "verdict": "gameplay",
+        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+      },
+      "goods": {
+        "weapon": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
+          "basis": "1543년 다네가시마에 화승총이 들어온 뒤 사카이가 그 생산 중심지가 됐다. 1530년대에 이미 인구 4만의 자치 도시였고 회합중(會合衆)이 다스렸다.",
+          "sources": [
+            {
+              "title": "Sakai, Osaka — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Sakai,_Osaka"
+            }
+          ]
+        },
+        "lacquer": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "사카이는 기나이 공예품의 출구였고 칠기·병풍이 감합무역 수출품이었다. 다만 사카이 몫의 수량은 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "日明貿易 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+            },
+            {
+              "title": "Sakai, Osaka — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Sakai,_Osaka"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "confirmed",
+          "basis": "사카이 상인이 명 생사의 최대 수입상이었고 1604년 이토왓푸(糸割符) 조합에서 가장 큰 몫을 가져갔다. 이 바다에서 생사가 가장 비싼 축이 여기다.",
+          "sources": [
+            {
+              "title": "Sakai, Osaka — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Sakai,_Osaka"
+            },
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            }
+          ]
+        },
+        "fur": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "조선이 1429년에 왜인에게 파는 것을 금한 목록에 표피가 있다. 그 금지의 반대쪽에 무장들의 사치 수요가 있었다고 보았으나, 일본 쪽 시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "왜관 — 위키백과",
+              "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+            }
+          ]
+        },
+        "tea": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "다도의 본산이 사카이다 — 센노 리큐가 사카이 상인이었다. 당물(唐物) 다구와 명 차에 값을 아끼지 않던 시장이라는 뜻이지만, 명 차의 대일 수출량·시세를 말하는 자료는 없다.",
+          "sources": [
+            {
+              "title": "Sakai, Osaka — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Sakai,_Osaka"
+            }
+          ]
+        },
+        "gold": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
+          "basis": "Boxer는 히데요시의 조선 출병이 16세기 마지막 20년 동안 일본의 금 수요를 크게 밀어 올렸다고 적는다. 랠프 피치는 일본으로 들어간 금을 연 20만 크루자두로 잡았다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            }
+          ]
+        }
+      }
+    },
+    "naha": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "류큐 왕국의 깃발이 FLAGS에 없다. 붉은 바탕에 흰 마크인 것을 빌렸다 — 좌삼파문(左三巴紋)이 붉은 바탕에 흰 무늬로 그려지던 것과 어긋나지 않는다. art.flagTodo 참조."
+      },
+      "tariff": {
+        "value": 0.035,
+        "verdict": "gameplay",
+        "basis": "★ 규모별 기본율보다 **낮게** 둔 유일한 정규 항구다. 제 산물이 거의 없는데도 부유했던 왕국이라(만국진량의 종, 1458) 문턱이 낮았다고 보는 것이 자연스럽다. 세율 자체는 사료에 없고, 규칙으로 표현할 자리가 여기뿐이라 게임 판정으로 남긴다.",
+        "sources": [
+          {
+            "title": "万国津梁の鐘 — ウィキペディア",
+            "url": "https://ja.wikipedia.org/wiki/%E4%B8%87%E5%9B%BD%E6%B4%A5%E6%A2%81%E3%81%AE%E9%90%98"
+          },
+          {
+            "title": "Ryukyu Kingdom — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+          }
+        ]
+      },
+      "goods": {
+        "sulfur": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "류큐 진공품의 핵심이 말과 유황이었다. 1376년 명 사신 이호가 말 40필과 유황 5,000근을 사 갔고 1425년 상파지가 2만 근을 바쳤으며, 1425~1588년 진공 유황이 400만 근으로 추정된다 — 거의 전량이 유황조도에서 났다.",
+          "sources": [
+            {
+              "title": "琉球の硫黄と進貢貿易 — 琉球沖縄歴史アーカイブ",
+              "url": "https://ryuoki-archive.jp/en/d_columns_en/2288/"
+            },
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            }
+          ]
+        },
+        "lacquer": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "confirmed",
+          "basis": "역대보안이 적는 류큐의 반출품에 일본산 칠기·부채·병풍이 있다. 제가 만든 것이 아니라 실어 나른 것이라 나가사키·사카이보다 값이 붙는다.",
+          "sources": [
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            },
+            {
+              "title": "Ryukyu Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "명이 류큐에 준 것이 생사·견직물·자기·동전이다. 사서 넘기는 항구라 수요가 넓다.",
+          "sources": [
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            },
+            {
+              "title": "Ryukyu Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+            }
+          ]
+        },
+        "tea": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "gameplay",
+          "basis": "중계무역의 왕국이라 명 물산이면 무엇이든 사서 넘겼다고 보았다. 다만 차가 16세기 바닷길 교역품이 아니었다는 것은 확인된 사실이라 gameplay다.",
+          "sources": [
+            {
+              "title": "History of Tea — ITO EN",
+              "url": "https://www.itoen-global.com/allabout_greentea/history_of_tea/"
+            },
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "역대보안의 반출품 목록 첫머리가 일본 은이다. 사서 명으로 넘기는 자리라 수요를 두었으나 류큐 안의 은 시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "歴代宝案 — ウィキペディア",
+              "url": "https://ja.wikipedia.org/wiki/%E6%AD%B4%E4%BB%A3%E5%AE%9D%E6%A1%88"
+            }
+          ]
+        }
+      }
+    },
+    "keelung": {
+      "flag": {
+        "value": "pirate",
+        "verdict": "gameplay",
+        "basis": "1626년 스페인이 들어오기 전까지 어느 나라의 항구도 아니었다. 명·일본 밀무역선이 해금을 피해 만나던 자리라 검은 깃발로 둔다."
+      },
+      "tariff": {
+        "value": 0.015,
+        "verdict": "gameplay",
+        "basis": "세를 물릴 관청이 없다. 쌍서와 같은 처리로 규모 1 기본율 3%의 절반으로 내렸다 — 흑수구(요율 10.5%)를 건넌 대가를 여기서 돌려준다.",
+        "sources": [
+          {
+            "title": "Tonio Andrade, How Taiwan Became Chinese, ch.4 — Gutenberg-e (1593년 대만행 인선 10장)",
+            "url": "http://www.gutenberg-e.org/andrade/andrade04.html"
+          }
+        ]
+      },
+      "goods": {
+        "sulfur": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "안드라드가 인용한 명 기록에 1593년부터 해마다 대만행 인선 열 장을 끊었는데 다섯 장이 계롱, 다섯 장이 담수였고, 북부 대만으로 간 정크가 싣고 돌아온 것은 **무엇보다 유황**이었다고 적혀 있다.",
+          "sources": [
+            {
+              "title": "Tonio Andrade, How Taiwan Became Chinese, ch.4 — Gutenberg-e (1593년 대만행 인선 10장)",
+              "url": "http://www.gutenberg-e.org/andrade/andrade04.html"
+            }
+          ]
+        },
+        "deerhide": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "gameplay",
+          "basis": "진제의 동번기(1603)가 중국인이 사슴 고기·가죽·뿔을 받아 갔다고 적는다. 다만 사슴 가죽의 본산은 남서부(타요완)이고 북부 대만은 유황·사금 항구였다 — 이 권역에 대만 항구가 하나뿐이라 합친 것이라 gameplay로 남긴다.",
+          "sources": [
+            {
+              "title": "Chen Di (陳第) 東番記 — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Chen_Di"
+            },
+            {
+              "title": "Tonio Andrade, How Taiwan Became Chinese, ch.7 — 사슴 가죽",
+              "url": "http://www.gutenberg-e.org/andrade/andrade07.html"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "밀무역선이 만나는 자리일 뿐 배후 농경지가 없다. 동번기가 적는 교환품에 소금이 들어 있는 것도 같은 이치다.",
+          "sources": [
+            {
+              "title": "Chen Di (陳第) 東番記 — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Chen_Di"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "동번기: 중국인이 마노 구슬·자기·피륙·소금·놋쇠를 주고 사슴 고기와 가죽과 뿔을 받았다. 원주민이 받은 것의 절반이 금속이다.",
+          "sources": [
+            {
+              "title": "Chen Di (陳第) 東番記 — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Chen_Di"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
+          "basis": "같은 동번기의 교환품 목록에 자기가 있다. 대만에서 나온 명대 자기 파편이 그 기록을 뒷받침한다.",
+          "sources": [
+            {
+              "title": "Chen Di (陳第) 東番記 — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Chen_Di"
+            }
+          ]
+        }
+      }
+    },
+    "manila": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "1571년 레가스피가 수도로 삼은 뒤 스페인령이다. 깃발 키가 그대로 있어 빌릴 필요가 없었다."
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
+        "basis": "스페인의 알모하리파스고(almojarifazgo) 관세가 걸렸고 갈레온 무역의 세수가 식민지 재정 자체였다. 1593년 칙령이 해마다 배 두 척으로 왕래를 묶은 것도 같은 통제의 일부다. 세율 자체는 확보하지 못해 규모 3 기본율 6% 위에 성격만 얹었다.",
+        "sources": [
+          {
+            "title": "Manila galleon — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+          }
+        ]
+      },
+      "goods": {
+        "silver": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
+          "basis": "아카풀코에서 오는 갈레온이 부린 아메리카 은이다. 1600년경 해마다 40톤, 1630년경에는 100톤이 여기를 거쳐 중국으로 갔고, 1571~1815년 통틀어 연 50~70톤이 태평양을 건넜다.",
+          "sources": [
+            {
+              "title": "Manila galleon — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            },
+            {
+              "title": "The Nao of China and the Global Silver Trade — Wessex Mint",
+              "url": "https://thewessexmint.com/en-us/blogs/academy-articles/the-nao-of-china-and-the-global-silver-trade-of-the-16th-18th-centuries"
+            },
+            {
+              "title": "Global silver trade from the 16th to 19th centuries — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Global_silver_trade_from_the_16th_to_19th_centuries"
+            }
+          ]
+        },
+        "deerhide": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "confirmed",
+          "basis": "사슴·상어·가오리 가죽은 일본의 수입품이었고 '주로 시암에서' 왔다는 것이 Boxer의 주석이다. 주인선의 목적지 상위가 코친차이나·시암·루손이라 마닐라가 그 환적점이 된다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Red seal ships (朱印船) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            }
+          ]
+        },
+        "spice": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
+          "basis": "월항 인선의 '동양(東洋)' 목적지가 필리핀·몰루카·칼리만탄이다. 몰루카 향료가 마닐라를 거쳐 복건으로 흘렀다.",
+          "sources": [
+            {
+              "title": "Yuegang — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Yuegang"
+            },
+            {
+              "title": "東西洋考 卷七 — 維基文庫",
+              "url": "https://zh.wikisource.org/wiki/%E6%9D%B1%E8%A5%BF%E6%B4%8B%E8%80%83/%E5%8D%B7%E4%B8%83"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "confirmed",
+          "basis": "1573년 첫 갈레온 두 척이 중국 비단 712필과 자기 22,300점을 실었다. Boxer는 마닐라를 '중국과 멕시코 사이에서 비단과 은이 바뀌는 중간역'이라 부른다. 1600년경 복건 정크 40~50척이 해마다 들어왔다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Manila galleon — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "confirmed",
+          "basis": "같은 1573년 화물에 자기 22,300점이 있다. 아카풀코행 화물의 부피를 채운 것이 자기였다.",
+          "sources": [
+            {
+              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+              "url": "https://archive.org/details/dli.ernet.448023"
+            },
+            {
+              "title": "Manila galleon — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "lacquer": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "남만칠기가 갈레온에 실려 누에바에스파냐로 건너갔다. 다만 마닐라에서의 수량·시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Nanban trade — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Nanban_trade"
+            }
+          ]
+        },
+        "musk": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "광저우 시장에서 유럽 상인이 사향을 사 갔다는 목록에 기대어 그 종착지의 하나로 두었다. 시세는 못 찾았다.",
+          "sources": [
+            {
+              "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+            }
+          ]
+        }
+      }
+    },
+    "cebu": {
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
+        "basis": "1565년 4월 15일 레가스피가 상륙해 세운 스페인의 첫 정착지다(빌라 데 산 미겔, 뒤에 시우다드 델 산티시모 놈브레 데 헤수스). 1565년 7월 3일 세부 조약으로 라자 투파스가 복속했다.",
+        "sources": [
+          {
+            "title": "Cebu City — Wikipedia",
+            "url": "https://en.wikipedia.org/wiki/Cebu_City"
+          }
+        ]
+      },
+      "goods": {
+        "gold": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "probable",
+          "basis": "스페인이 이 섬들에서 찾던 것이 사금이었고 세부 라자국은 그 이전부터 마닐라와 뱃길로 이어져 있었다. 다만 세부 금의 산출량·시세를 말하는 자료는 찾지 못했다.",
+          "sources": [
+            {
+              "title": "Cebu City — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Cebu_City"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "1225년 중국 기록이 세부로 보이는 나라를 적을 만큼 오래된 중국 무역의 종점이다. 자기는 그 교역의 대표 수입품이었으나 세부 몫의 수치는 없다.",
+          "sources": [
+            {
+              "title": "Cebu City — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Cebu_City"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "1567년까지 멕시코에서 병사 2,100명이 들어온 전방 기지였다. 무기 수요는 개연이고 사료로 확인한 값은 아니다.",
+          "sources": [
+            {
+              "title": "Cebu City — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Cebu_City"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "스페인 정착지라 미사용 포도주부터 병사들의 술까지 전부 배로 실어 와야 했다. 이 섬에서 나지 않는 물건이라는 사실만이 근거이고 수량·시세는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Cebu City — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Cebu_City"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "routes": {
+    "guangzhou|macau": {
+      "risk": 3.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 주강 어귀의 안쪽 물길이고 양끝이 다 명의 관할이라 이 권역에서 가장 낮게 두었다. 마카오 배가 광저우 시장에 몇 주씩 들어가 앉을 수 있었다는 것 자체가 이 구간이 관리되던 물길이라는 뜻이다.",
+      "sources": [
+        {
+          "title": "History of Macau — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/History_of_Macau"
+        },
+        {
+          "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+        }
+      ]
+    },
+    "guangzhou|yuegang": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 1540~1567년 가정왜구가 명 연안을 통째로 쓸었다. 광동은 절강·복건보다 피해가 얕았으므로 연안 구간 중 가장 낮게 두었다.",
+      "sources": [
+        {
+          "title": "Jiajing wokou raids — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Jiajing_wokou_raids"
+        },
+        {
+          "title": "Enemy of the Ming — Jia Jing Da Wo Kou — Great Ming Military (明史 「真倭十之三 從倭者十之七」 원문·번역)",
+          "url": "https://greatmingmilitary.blogspot.com/2016/06/enemy-of-ming-wokou-p1.html"
+        }
+      ]
+    },
+    "quanzhou|yuegang": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 복건 연안. 1560년대 초 월항에만 원양선 200척이 모였다는 기록이 있을 만큼 배가 몰렸고, 그만큼 노리는 쪽도 몰렸다.",
+      "sources": [
+        {
+          "title": "Yuegang — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Yuegang"
+        },
+        {
+          "title": "Jiajing wokou raids — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Jiajing_wokou_raids"
+        }
+      ]
+    },
+    "fuzhou|quanzhou": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 같은 복건 연안이라 취안저우~월항과 같은 값으로 둔다.",
+      "sources": [
+        {
+          "title": "Jiajing wokou raids — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Jiajing_wokou_raids"
+        }
+      ]
+    },
+    "fuzhou|ningbo": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 북으로 갈수록 왜구 피해가 컸다. 1555년 예순~일흔 명짜리 한 무리가 상우에 올라 절강·안휘·강소를 가로질러 스무 고을을 치고 난징 성벽까지 닿았다 — 그 무대가 이 구간의 배후다.",
+      "sources": [
+        {
+          "title": "Jiajing wokou raids — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Jiajing_wokou_raids"
+        },
+        {
+          "title": "Enemy of the Ming — Jia Jing Da Wo Kou — Great Ming Military (明史 「真倭十之三 從倭者十之七」 원문·번역)",
+          "url": "https://greatmingmilitary.blogspot.com/2016/06/enemy-of-ming-wokou-p1.html"
+        }
+      ]
+    },
+    "ningbo|shuangyu": {
+      "risk": 9.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 밀무역 섬으로 들어가는 마지막 다리. 관군과 밀수선이 같은 물목에 있다. 1548년 주환이 여기서 배 27척을 가라앉히고 항구를 돌로 메웠다.",
+      "sources": [
+        {
+          "title": "Shuangyu — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Shuangyu"
+        },
+        {
+          "title": "Jiajing wokou raids — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Jiajing_wokou_raids"
+        }
+      ]
+    },
+    "keelung|yuegang": {
+      "risk": 10.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 흑수구(黑水溝) — 대만 해협이다. 검고 깊은 물과 사나운 조류 때문에 붙은 이름이고 '열이 건너 여섯이 죽고 셋이 남고 하나가 돌아온다'는 말이 따라다녔다(청대 이민 속담이라 과장이 섞였다). 이 권역 최고 요율.",
+      "sources": [
+        {
+          "title": "Navigating the Black Ditch: Risks in the Taiwan Strait — CIMSEC",
+          "url": "https://cimsec.org/navigating-black-ditch-risks-taiwan-strait/"
+        },
+        {
+          "title": "Tonio Andrade, How Taiwan Became Chinese, ch.4 — Gutenberg-e (1593년 대만행 인선 10장)",
+          "url": "http://www.gutenberg-e.org/andrade/andrade04.html"
+        }
+      ]
+    },
+    "keelung|naha": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 쿠로시오를 비스듬히 가로지르는 외해 구간이라 뭍이 며칠씩 안 보인다. 대만 동안에서 류큐로 올라가는 물길이 2~4노트로 흐른다.",
+      "sources": [
+        {
+          "title": "Kuroshio — Britannica",
+          "url": "https://www.britannica.com/place/Kuroshio"
+        }
+      ]
+    },
+    "keelung|manila": {
+      "risk": 9.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 바시 해협. 쿠로시오가 갈라져 나오는 자리이고 7~9월 태풍철에 배가 사라지는 구간이다.",
+      "sources": [
+        {
+          "title": "Kuroshio — Britannica",
+          "url": "https://www.britannica.com/place/Kuroshio"
+        },
+        {
+          "title": "How Monsoons Shaped Chinese Maritime Culture — Ocean Relic Studio",
+          "url": "https://oceanrelicstudio.com/blogs/maritime-library/monsoon-winds-chinese-maritime-culture"
+        }
+      ]
+    },
+    "fuzhou|naha": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 진공선의 길이다. 명이 유원역까지 세워 맞은 조공 항로라 같은 외해라도 낮게 둔다 — 관이 아는 배는 관이 지킨다.",
+      "sources": [
+        {
+          "title": "Rouyuan Station in Fuzhou — CGTN",
+          "url": "https://news.cgtn.com/news/2025-11-19/Rouyuan-Station-in-Fuzhou-A-historic-witness-to-China-Ryukyu-ties-1Iqzew5J24o/p.html"
+        },
+        {
+          "title": "Ryukyu Kingdom — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+        }
+      ]
+    },
+    "bonotsu|naha": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 류큐에서 사쓰마로 올라가는 쿠로시오 구간. 1609년 시마즈가 배 100척에 3천을 태우고 이 길로 내려와 류큐를 쳤다.",
+      "sources": [
+        {
+          "title": "Invasion of Ryukyu (1609) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Invasion_of_Ryukyu"
+        },
+        {
+          "title": "Kuroshio — Britannica",
+          "url": "https://www.britannica.com/place/Kuroshio"
+        }
+      ]
+    },
+    "busanpo|mapo": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 삼남의 세곡을 실은 조운선이 남해와 서해를 돌아 한강으로 올라가던 관선 항로다. 연안을 끼고 도는 데다 관이 관리하던 물길이라 낮다.",
+      "sources": [
+        {
+          "title": "경강(京江) — 우리역사넷",
+          "url": "https://contents.history.go.kr/mobile/km/view.do?levelId=km_003_0030_0030_0010"
+        }
+      ]
+    },
+    "busanpo|hakata": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 대한해협 — 왜관선의 길이자 삼도(쓰시마·이키·마쓰우라) 왜구의 앞마당이다. 1510년 삼포왜란 때 배 100척에 4~5천이 몰려와 272명을 죽이고 796채를 태웠고, 1419년에는 조선이 배 227척에 1만 7,285명을 태워 쓰시마를 쳤다.",
+      "sources": [
+        {
+          "title": "삼포왜란 — 위키백과",
+          "url": "https://ko.wikipedia.org/wiki/%EC%82%BC%ED%8F%AC%EC%99%9C%EB%9E%80"
+        },
+        {
+          "title": "応永の外寇(1419) — ウィキペディア",
+          "url": "https://ja.wikipedia.org/wiki/%E5%BF%9C%E6%B0%B8%E3%81%AE%E5%A4%96%E5%AF%87"
+        }
+      ]
+    },
+    "hakata|hirado": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 규슈 북서안. 짧고 뭍이 늘 보인다. 지중해의 평범한 연안 항로에 해당한다.",
+      "sources": [
+        {
+          "title": "Hirado, Nagasaki — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Hirado,_Nagasaki"
+        }
+      ]
+    },
+    "hirado|nagasaki": {
+      "risk": 3.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 히젠 안쪽 물길이라 이 권역에서 두 번째로 낮다. 1561년 후쿠다만 사건 뒤 포르투갈 배가 히라도에서 나가사키로 옮겨 앉은 것도 이 짧은 거리 덕이다.",
+      "sources": [
+        {
+          "title": "Hirado, Nagasaki — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Hirado,_Nagasaki"
+        },
+        {
+          "title": "Nagasaki — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Nagasaki"
+        }
+      ]
+    },
+    "bonotsu|nagasaki": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 규슈 서남안. 사쓰마 앞바다는 시마즈의 관할이라 관리되던 물길이다.",
+      "sources": [
+        {
+          "title": "坊津 — ウィキペディア (武備志의 日本三津)",
+          "url": "https://ja.wikipedia.org/wiki/%E5%9D%8A%E6%B4%A5"
+        }
+      ]
+    },
+    "hakata|sakai": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 세토내해. 내해지만 해적이 없지 않았다 — 길목마다 수군이 통행세를 받았다. 그래서 '내해 2~3.5'가 아니라 '평범한 연안 4~5.5'의 위쪽에 둔다.",
+      "sources": [
+        {
+          "title": "Sakai, Osaka — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Sakai,_Osaka"
+        }
+      ]
+    },
+    "hakata|ningbo": {
+      "risk": 9.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 감합선의 길. 합법인데도 동중국해를 사흘 넘게 건너고 그 바다가 왜구의 주 무대다. 1401~1549년에 열아홉 번밖에 못 다녔다는 것이 이 구간의 값을 말한다.",
+      "sources": [
+        {
+          "title": "日明貿易 — ウィキペディア",
+          "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+        },
+        {
+          "title": "Jiajing wokou raids — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Jiajing_wokou_raids"
+        }
+      ]
+    },
+    "hirado|shuangyu": {
+      "risk": 10.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 왕직의 축이다. 양쪽 다 불법이라 관군과 해적을 동시에 피해야 한다 — 1567년 융경개관 뒤에도 일본행은 금지였고 걸리면 왜구 부역으로 다스렸다.",
+      "sources": [
+        {
+          "title": "Wang Zhi (pirate) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Wang_Zhi_(pirate)"
+        },
+        {
+          "title": "Yuegang — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Yuegang"
+        },
+        {
+          "title": "Shuangyu — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Shuangyu"
+        }
+      ]
+    },
+    "macau|nagasaki": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 포르투갈 정기선(나우 두 트라투)의 길. 같은 외해라도 무장이 두텁고 왕실이 항해권을 경매에 부칠 만큼 조직된 항로라 밀무역 축보다 낮게 둔다. 1540년대 400~600톤이던 배가 1600년경에는 1,200~1,600톤이 됐다.",
+      "sources": [
+        {
+          "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+        },
+        {
+          "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+          "url": "https://archive.org/details/dli.ernet.448023"
+        }
+      ]
+    },
+    "macau|manila": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 남중국해를 비스듬히 건넌다. 1630년대 마카오→마닐라 화물이 해마다 150만 페소였을 만큼 물동량이 컸다.",
+      "sources": [
+        {
+          "title": "Entering the Golden Age — macaudata.mo",
+          "url": "https://www.macaudata.mo/macaubook/ebook007/html/00401.htm"
+        }
+      ]
+    },
+    "cebu|manila": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "이 바다에는 유럽식 해상보험이 없어 당대 요율표가 존재하지 않는다(조사에서 하나도 나오지 않았다). 지중해 앵커(내해 2~3.5 · 평범한 연안 4~5.5 · 외해·적대 6~8 · 사략 소굴 9~11)를 자로 삼고 사료가 정성적으로 말하는 위험을 얹었다. 군도 안쪽의 연안 항로. 스페인 관할 안이지만 섬 사이 물목이 많다.",
+      "sources": [
+        {
+          "title": "Cebu City — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Cebu_City"
+        }
+      ]
+    }
+  },
+  "goods": {
+    "sulfur": {
+      "base": 64,
+      "verdict": "confirmed",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). 1453년 명이 다시 매긴 시가가 유황 1근 = 은 5분, 곧 1담(약 60kg) 5냥 ≈ 쌀 10석이다. 무게로는 곡물의 약 13배지만 대량으로 실리는 벌크 화물이라 3.2배까지 눌렀다. 같은 해 일본 화물의 최대 품목이 유황 364,400근이었다는 것이 이 물건의 성격이다.",
+      "sources": [
+        {
+          "title": "日明貿易 — ウィキペディア",
+          "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+        },
+        {
+          "title": "琉球の硫黄と進貢貿易 — 琉球沖縄歴史アーカイブ",
+          "url": "https://ryuoki-archive.jp/en/d_columns_en/2288/"
+        }
+      ]
+    },
+    "tea": {
+      "base": 100,
+      "verdict": "gameplay",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). ★ 알고 넣었다. 차는 16세기에는 바닷길 교역품이 아니었다 — 유럽으로 처음 실린 것이 1607년 마카오(VOC)이고 1610년에 암스테르담에 닿는다. 그래도 넣은 것은 이 바다의 성격이 차 없이 서지 않기 때문이고, 뭍에서는 차마무역이 국가 규모로 굴러갔기 때문이다(사천 관정 시세: 상등마 1필 = 차 120근, 중등 70근, 망아지 50근). 명의 국내 차 시세는 은 단위로 끝내 확인하지 못해 곡물의 5배로 낮게 잡았다.",
+      "sources": [
+        {
+          "title": "History of Tea — ITO EN",
+          "url": "https://www.itoen-global.com/allabout_greentea/history_of_tea/"
+        },
+        {
+          "title": "茶马(차마무역) — 维基百科",
+          "url": "https://zh.wikipedia.org/wiki/%E8%8C%B6%E9%A9%AC"
+        }
+      ]
+    },
+    "deerhide": {
+      "base": 120,
+      "verdict": "probable",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). 값이 아니라 물량으로 잡았다. 대만에서만 1638년에 151,400장이 일본으로 나갔고 그 뒤로도 해마다 5만~8만 장이 실렸다. 사치 모피(곡물의 8.75배)가 아니라 갑주·칼집에 쓰는 실용 가죽이라 그 아래(6배)에 둔다. 무게·낱장 시세는 확인하지 못했다.",
+      "sources": [
+        {
+          "title": "Dutch Formosa — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Dutch_Formosa"
+        },
+        {
+          "title": "Tonio Andrade, How Taiwan Became Chinese, ch.7 — 사슴 가죽",
+          "url": "http://www.gutenberg-e.org/andrade/andrade07.html"
+        }
+      ]
+    },
+    "lacquer": {
+      "base": 170,
+      "verdict": "probable",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). 1453년 명의 관정가는 칠기 1개 = 0.8관(쌀 0.8석)이지만, 같은 해에 도검을 10관에서 1관으로 후려친 값이라 시장가가 아니라 **바닥값**으로 읽어야 한다. 그래서 관정가를 그대로 쓰지 않고, 유럽 주문을 받아 만들던 공예 사치품이라는 위치로 잡아 유리세공(9.5배)과 무기(8.25배) 사이인 8.5배에 두었다.",
+      "sources": [
+        {
+          "title": "日明貿易 — ウィキペディア",
+          "url": "https://ja.wikipedia.org/wiki/%E6%97%A5%E6%98%8E%E8%B2%BF%E6%98%93"
+        },
+        {
+          "title": "Nanban trade — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Nanban_trade"
+        }
+      ]
+    },
+    "ginseng": {
+      "base": 360,
+      "verdict": "probable",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). ★ 15~16세기의 쌀·은 대비 시세를 끝내 찾지 못했다. 흔히 도는 '인삼 1근 = 은 1근'과 '쌀 열여섯 가마'는 출처가 청대 자료이거나 위키 서술이라 이 시대에 쓸 수 없다. 조선이 내놓을 수 있는 가장 값비싼 물건이었고 명·일본 양쪽이 약재의 으뜸으로 쳤다는 정성적 사실만으로 향신료(16.5배)와 비단(21배) 사이인 18배에 두고 판정을 내렸다.",
+      "sources": [
+        {
+          "title": "왜관 — 위키백과",
+          "url": "https://ko.wikipedia.org/wiki/%EC%99%9C%EA%B4%80"
+        }
+      ]
+    },
+    "musk": {
+      "base": 440,
+      "verdict": "probable",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). 광저우 시장에서 유럽 상인이 생사·자기·금과 나란히 사향을 사 갔다는 목록은 얻었으나 시세는 어느 자료에서도 못 찾았다. 무게당 값이 가장 높은 축의 약재였다는 통설에 기대어 비단(21배) 바로 위인 22배에만 두었다 — 근거가 약할수록 튀지 않게 놓는다.",
+      "sources": [
+        {
+          "title": "Japan voyage (나우 두 트라투) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+        }
+      ]
+    },
+    "silver": {
+      "base": 480,
+      "verdict": "confirmed",
+      "basis": "환산 축은 명의 쌀값이다 — 만력 연간 쌀 1석 ≈ 은 0.5냥(은 1냥으로 쌀 두 석)이고, 곡물 20닢이 1배다. 이 프로젝트는 사료 비율을 절반쯤만 반영한다(소금이 4.3→2.4로 눌린 것이 선례다). ★ 이 바다의 심장이다. 1600년경 상인 각서(Boxer 부록 B)의 실거래 금은비가가 광저우 1:5.4~7.0, 나가사키 1:7.8~8.3, 스페인 1:12.5~14다 — 같은 은이 중국에서 유럽의 두 배 값이었고 그래서 세계의 은이 여기로 빨려 왔다. ★ 자료 계열이 갈린다는 것도 적어 둔다: 일본어권 개설서는 일본 비가를 덴쇼(1573~92) 1:10, 게이초(1596~1615) 1:12로, 중국을 1:9로 적는다. 상인 각서는 회고적 평균이 아니라 실제 매매가라 게임은 그쪽을 따랐다. 두 계열 모두 '중국이 가장 낮고 유럽이 가장 높다'는 방향은 같다. 금괴(35배)와 비단(21배) 사이인 24배에 둔 근거: 유럽 비가 1:12에서 화물 한 칸의 은이 금 칸보다 아홉 곱절쯤 무겁다고 보면 칸당 값이 금의 3분의 2가 된다. 덧붙여 은의 곡물 구매력은 시대에 따라 크게 흔들린다 — 만력 연간 은 1냥이 쌀 두 석인데 1639년 기근에는 한 석, 1640년 이후에는 3~5냥에 한 석이 됐다. 게임은 16세기 값을 쓴다.",
+      "sources": [
+        {
+          "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+          "url": "https://archive.org/details/dli.ernet.448023"
+        },
+        {
+          "title": "Flynn & Giráldez, Arbitrage, China, and World Trade in the Early Modern Period (PDF)",
+          "url": "https://pure.uva.nl/ws/files/3372227/4439_UBA003000263_006.pdf"
+        },
+        {
+          "title": "金銀比価 — ウィキペディア",
+          "url": "https://ja.wikipedia.org/wiki/%E9%87%91%E9%8A%80%E6%AF%94%E4%BE%A1"
+        },
+        {
+          "title": "Global silver trade from the 16th to 19th centuries — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Global_silver_trade_from_the_16th_to_19th_centuries"
+        }
+      ]
+    }
+  },
+  "ships": {
+    "sachuan": {
+      "price": 1300,
+      "verdict": "probable",
+      "basis": "밑이 평평한 강남 연안 정크. 용골이 없어 개펄에 얹혀도 안 넘어지지만 외해에서 옆으로 밀린다는 것이 이 배의 정체성이다. 지중해 첫 배 사다리(1,100~1,400닢 / 78~90칸)에 맞춰 1,300닢 80칸으로 뒀다. 제원을 직접 말하는 사료는 확보하지 못해 개연으로 내린다.",
+      "sources": []
+    },
+    "sekibune": {
+      "price": 2300,
+      "verdict": "probable",
+      "basis": "노가 주력이고 돛은 네모 한 장이라 맞바람에 거의 못 간다. 중형 사다리(2,100~4,200닢)의 아래쪽에 두었다. 화물칸 60은 노잡이가 배 안을 차지하는 군선이라 갤리(58칸)와 나란히 잡은 값이고, 제원 사료는 확보하지 못했다.",
+      "sources": []
+    },
+    "panokseon": {
+      "price": 4000,
+      "verdict": "confirmed",
+      "basis": "1555년에 처음 지었다. 길이 21~36.6m, 너비 9.1~12.2m, 한쪽 노 8~10개, 전투원 125명에 격군·수부 50~60명, 총통 26문 이상. 쇠못이 아니라 참나무 나무못을 박아 물을 먹을수록 조여지는 소나무 배다. 화물칸 90은 그 배수량(약 140톤)이 아니라 군선치고는 짐을 실을 수 있다는 성격으로 잡았고, 값은 중형 사다리 위쪽(4,000닢)에 뒀다.",
+      "sources": [
+        {
+          "title": "Panokseon — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Panokseon"
+        },
+        {
+          "title": "Turtle ship — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Turtle_ship"
+        }
+      ]
+    },
+    "fuchuan": {
+      "price": 10500,
+      "verdict": "confirmed",
+      "basis": "유럽인이 소마(soma)라 부르던 원양 정크가 400~500톤급이고, 1613~1640년에만도 해마다 60~80척이 일본에 닿았다. 화물칸 235(≈470톤)는 그 톤수 그대로다. 값은 대형 상선 사다리(9,800~14,000닢)에 맞췄다. 격벽 선체와 정크세일은 이 배의 정체성이라 rig를 0.15로 낮게 뒀다. crewMin 14는 칸/선원 16.8을 만드는데, 이는 유럽 화물선의 정점인 플류트(18.9)에 맞먹는다 — 정크가 사람을 적게 먹었다는 통설을 숫자로 옮긴 것이고, 승조원 수를 직접 말하는 사료는 확보하지 못했다.",
+      "sources": [
+        {
+          "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
+          "url": "https://archive.org/details/dli.ernet.448023"
+        }
+      ]
+    },
+    "atakebune": {
+      "price": 19500,
+      "verdict": "probable",
+      "basis": "세키부네를 키워 널판으로 통째로 싼 일본의 부동 요새. 1578년 구키 요시타카의 철갑선이 이 계열이다. 최상급 사다리의 바닥(19,500닢)에 두고 화물칸을 그 밴드 최저(150)로 잡았다 — 짐배가 아니라 싸움배라는 뜻이다. 제원 사료는 확보하지 못했다.",
+      "sources": []
+    },
+    "shuinsen": {
+      "price": 26000,
+      "verdict": "confirmed",
+      "basis": "1604~1635년에 350척이 넘게 나갔고 배는 500~750톤, 평균 승선 236명, 대포 6~8문이었다. 화물칸 300(≈600톤)과 crewMax 236과 guns 8이 그 수치 그대로다. 정크 선체에 유럽식 고물을 얹은 혼혈선이라 rig를 한가운데(0.45)에 뒀다. 값은 최상급 사다리 안(26,000닢)이고 지중해 아르고시와 같은 자리다.",
+      "sources": [
+        {
+          "title": "Red seal ships (朱印船) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+        }
+      ]
+    }
+  },
+  "art": {
+    "iconTodo": [
+      {
+        "good": "silver",
+        "note": "은 — 지금은 금괴(gold) 아이콘을 빌린다. 같은 덩이 모양에 **은백색**이면 된다. 이 바다의 주역이라 금괴와 한눈에 갈려야 한다"
+      },
+      {
+        "good": "sulfur",
+        "note": "유황 — 지금은 소금(salt) 아이콘. 노란 결정 덩어리·가마니. 화약 냄새가 나는 물건이라는 것이 읽히면 좋다"
+      },
+      {
+        "good": "tea",
+        "note": "차 — 지금은 향신료(spice) 아이콘. 둥근 덩이차(團茶) 또는 찻잎 자루"
+      },
+      {
+        "good": "deerhide",
+        "note": "녹비 — 지금은 모피(fur) 아이콘. 털 있는 모피가 아니라 **무두질한 사슴 가죽을 개어 쌓은 더미**여야 구별된다"
+      },
+      {
+        "good": "lacquer",
+        "note": "칠기 — 지금은 도자기(ceramic) 아이콘. 검붉은 옻칠 그릇에 금박(마키에) 한 줄"
+      },
+      {
+        "good": "ginseng",
+        "note": "인삼 — 지금은 향신료(spice) 아이콘. 뿌리가 갈라진 흰 약재를 종이에 싼 다발"
+      },
+      {
+        "good": "musk",
+        "note": "사향 — 지금은 유리세공(glass) 아이콘. 사향노루의 향낭 또는 작은 향합. 아주 작고 귀해 보여야 한다"
+      }
+    ],
+    "hullTodo": [
+      {
+        "ship": "fuchuan",
+        "note": "복선(福船) — 지금은 캐랙(carrack) 선형을 빌린다. 정크의 핵심은 셋이다: ① 선수가 뾰족하지 않고 **네모로 잘린 판(transom bow)** ② 고물이 높고 네모난 누각 ③ **대나무 살을 가로로 넣은 부채꼴 정크세일 3장**. 선체 안은 격벽으로 칸이 나뉘어 있다(그림에는 안 보이지만 파손 표현에 쓸 수 있다)"
+      },
+      {
+        "ship": "sachuan",
+        "note": "사선(沙船) — 지금은 벌크(hulk). 용골이 없어 **밑이 평평하고** 배가 낮다. 돛대 두 개에 정크세일. 개펄에 얹힌 모습이 이 배의 초상이다"
+      },
+      {
+        "ship": "shuinsen",
+        "note": "주인선(朱印船) — 지금은 인디아맨. **혼혈선**이라는 것이 요점이다: 정크 선체에 유럽식 고물 누각(선미루), 앞돛대는 유럽식 네모돛·주돛대는 정크세일. 고물에 붉은 도장 문양의 기를 단다"
+      },
+      {
+        "ship": "atakebune",
+        "note": "아타케부네(安宅船) — 지금은 갈레온. 배 전체를 **널판 상자로 싸고** 총안(銃眼)을 뚫었다. 돛은 네모 한 장, 아래에 노. 갑판 위에 기와 얹은 망루가 선다. 1578년 구키 요시타카의 철갑선이면 널판에 쇠판을 덧댄다"
+      },
+      {
+        "ship": "sekibune",
+        "note": "세키부네(關船) — 지금은 갤리. 아타케부네를 반으로 줄인 모양. 뱃머리가 뾰족하고 낮고 길다. 노가 많고 네모돛 한 장"
+      },
+      {
+        "ship": "panokseon",
+        "note": "판옥선(板屋船) — 지금은 프리깃. **두 층 갑판**이 핵심이다: 아래층에 격군이 노를 젓고 위층 갑판에 전투원이 선다. 밑이 평평하고, 사각 돛 두 장에 한쪽 노 8~10개, 뱃전에 총통 포문이 늘어선다"
+      }
+    ],
+    "flagTodo": [
+      {
+        "key": "ming",
+        "note": "명 — 지금은 venice(붉은 바탕·금색)를 빌렸다. 주(朱)를 국성으로 삼은 왕조라 붉은 바탕은 맞고, 마크는 금색 용이나 '明' 자가 어울린다"
+      },
+      {
+        "key": "joseon",
+        "note": "조선 — 지금은 hafsid(흰 바탕·검은색). 흰 바탕에 먹빛 마크가 인상에 맞는다"
+      },
+      {
+        "key": "japan",
+        "note": "일본 — 지금은 genoa(흰 바탕·붉은색)를 빌렸는데 색만으로는 이미 일장(日章)이다. 마크를 붉은 원으로 바꾸면 그대로 완성된다"
+      },
+      {
+        "key": "ryukyu",
+        "note": "류큐 — 지금은 hospitaller(붉은 바탕·흰색). 좌삼파문(左三巴紋) 세 갈래 소용돌이를 흰색으로 넣으면 된다"
+      },
+      {
+        "key": "portugal",
+        "note": "포르투갈(마카오) — 지금은 england(흰 바탕·푸른색). 흰 바탕에 푸른 방패 다섯과 성곽 테두리"
+      },
+      {
+        "key": "_ships",
+        "note": "★ 깃발이 생기면 js/regions/eastasia/ships.js의 originFlag를 채운다. 지금은 전부 null인데, 빌린 깃발을 originFlag에 쓰면 **베네치아에서 복선을, 튀니스에서 판옥선을 싸게 짓게 되기 때문**이다(그 깃발을 단 항구는 요구등급 −1). 명=복선·사선, 일본=세키부네·아타케부네·주인선, 조선=판옥선"
+      }
+    ],
+    "styleTodo": [
+      {
+        "key": "minnan",
+        "note": "민남(복건·광동) — 지금은 latin(테라코타 지붕)을 빌린다. 실제로도 **붉은 벽돌·붉은 기와**이고 용마루 양끝이 제비꼬리처럼 치솟는다(燕尾脊). 마조(媽祖) 사당이 부두마다 선다"
+      },
+      {
+        "key": "jiangnan",
+        "note": "강남·조선·일본 — 지금은 hellenic(흰 벽·푸른 지붕). 회청색 기와와 흰 회벽이라 색은 가깝지만 지붕이 돔이 아니라 **처마가 길게 뻗은 기와지붕**이어야 한다. 탑은 돔이 아니라 층탑(層塔)이다"
+      },
+      {
+        "key": "formosa",
+        "note": "대만 — 지금은 levant(황토벽). 성곽 도시가 아니라 **대나무 울과 초가**, 부두라기보다 모래톱에 배를 대는 만이다. 사슴 가죽을 널어 말리는 시렁이 있으면 이 항구가 설명된다"
+      },
+      {
+        "key": "hispanic",
+        "note": "마닐라·세부 — 지금은 latin. 인트라무로스의 **석조 성벽**과 성당 종탑, 그 밖에 파리안(중국인 거리)의 목조 가옥이 붙는다"
+      }
+    ]
+  },
+  "openQuestions": [
+    "★ 이 바다에는 당대 해상보험 요율이 존재하지 않는다. 명·일본·조선의 해상무역은 유럽식 보험을 쓰지 않았고(위험은 동업 지분·친족망·선주 자본이 나눠 졌다) 조사에서도 요율표는 하나도 나오지 않았다. 그래서 routes의 판정이 전부 probable이다 — 나중에 나가사키의 봉차금(respondentia, 연리 25~35%) 같은 자료로 상대 순서를 검증할 여지는 있다.",
+    "조선 면포의 대일 유출량은 장부급 자료가 있는데(1450년 1만 필 → 1476년 37,421 → 1523년 10만 필) 이 권역은 면포를 교역품으로 만들지 않았다 — 인도양 권역이 면포 id를 쓸 가능성이 커서 비켜 두었다. 통합자가 조율하면 조선·일본 축이 훨씬 두꺼워진다.",
+    "인삼·사향·자기의 15~16세기 낱개 시세를 끝내 찾지 못했다. 자기는 원 자료(Volker, Porcelain and the Dutch East India Company, Brill 1954)가 온라인에 없고, 인삼은 조선왕조실록 원문 검색이 필요하다.",
+    "★ 제도를 인물로 옮길 자리를 비워 두었다. 감합을 대조하는 시박사 태감(닝보), 인선을 끊어 주는 독향관(월항), 왜관의 훈도(부산포), 구메무라의 통사(나하) — 지금은 이 제도를 입항세로만 표현했다. 인물 담당자가 오면 TARIFF_OVERRIDE의 근거가 그대로 그 사람들의 대사가 된다.",
+    "차의 판정이 gameplay다. 16세기에 차는 바닷길로 나가지 않았다(유럽 첫 수입 1607년). 연도를 고정하지 않는다는 최상위 지침에 기대어 넣었으나, 세계 전체가 15~16세기로 더 조여지면 가장 먼저 다시 볼 품목이다.",
+    "쌍서(1548년 파괴)와 계롱(1626년 스페인 점령)이 동시에 살아 있는 지도다. 로도스와 몰타를 함께 둔 것과 같은 처리이고, 둘 다 '나라 없는 항구'라는 이 바다의 성격을 나눠 진다.",
+    "월항의 인선 발급 수는 자료가 엇갈린다 — 1567년 50장에서 1575년 100장, 1589년 88장(동양 44 + 서양 44), 다른 자료는 같은 해 88→137장. 세수(1567년 3천 냥 → 1594년 2만 9천 냥)는 두 자료가 일치한다.",
+    "일본 은이 '세계 산출의 3분의 1'이라는 수치는 널리 인용되지만 포토시 혼자 1590년경 세계의 60%를 냈다는 서술과 충돌한다. 동시대의 체감을 말하는 상한값으로 읽어야 한다."
+  ]
 }

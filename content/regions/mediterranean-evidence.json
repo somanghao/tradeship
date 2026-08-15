@@ -77,6 +77,20 @@
           "verdict": "gameplay",
           "basis": "올리브유는 지중해 전역 생산이라 원거리 교역품이 아니었다(북유럽 비누·모직 가공용 수출이 있었을 뿐). 그러나 게임에는 산지가 4곳인데 수요가 0이면 품목이 죽는다. 베네치아의 플랑드르 중계 기능을 근사치로 삼았다.",
           "sources": []
+        },
+        "clove": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "gameplay",
+          "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
+          "sources": []
+        },
+        "nutmeg": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "gameplay",
+          "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
+          "sources": []
         }
       }
     },
@@ -1218,6 +1232,735 @@
         "몰타의 실제 경제 성격은 **나포품 집산지**다(기사단 corso가 잡아 온 배와 화물을 경매에 부쳤다). 그런데 이것을 supply(향신료·비단을 싸게)로 넣으면 산지보다 싼 창구가 생겨 경제가 통째로 몰타로 쏠린다. 그래서 **goods가 아니라 prizeYard(중고선 매물)로만** 표현했다 — 고증을 버린 게 아니라 표현 수단을 바꾼 것이다.",
         "실제 수출품은 원면(raw cotton)과 커민이었으나 GOODS 12품목에 없다. 품목을 늘릴 때 후보."
       ]
+    },
+    "ragusa": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "gameplay",
+        "basis": "라구사 공화국은 1458년부터 술탄에게 충성·연공을 바치는 조공국이었고 1481년에 그 액수가 금화 12,500닢으로 확정됐다. 그러나 실제로 걸린 것은 성 블라시오와 LIBERTAS가 새겨진 자기 깃발이다 — FLAGS에 라구사가 없어 종주국인 오스만 깃발을 빌렸다. art.flagTodo 참조.",
+        "sources": [
+          {
+            "title": "Republic of Ragusa",
+            "url": "https://en.wikipedia.org/wiki/Republic_of_Ragusa"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.035,
+        "verdict": "gameplay",
+        "basis": "라구사는 생산국이 아니라 통과 무역과 해운으로 먹고 산 도시였고, 연공을 바쳐 산 중립 덕에 오스만·베네치아 양쪽 화물을 다 받았다. 규모 3의 기본율 6%를 그대로 물리면 \"누구든 들르게 만든다\"는 이 도시의 전략이 게임에서 사라지므로 제노바(4.5%)보다 더 내렸다. 사료에 이 세율이 적혀 있는 것은 아니다.",
+        "sources": [
+          {
+            "title": "Republic of Ragusa",
+            "url": "https://en.wikipedia.org/wiki/Republic_of_Ragusa"
+          }
+        ]
+      },
+      "goods": {
+        "woolcloth": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "라구사는 15세기에 이탈리아 장인을 불러 모직 공방을 세우고 발칸 내륙에 옷감을 팔았다. 베네치아에 가죽·밀랍·은을 대던 도시가 스스로 만들어 판 몇 안 되는 공산품이다. 다만 생산 규모를 특정할 사료는 못 찾았다.",
+          "sources": [
+            {
+              "title": "Republic of Ragusa",
+              "url": "https://en.wikipedia.org/wiki/Republic_of_Ragusa"
+            }
+          ]
+        },
+        "salt": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "스톤(Ston)의 염전은 중세부터 공화국이 직영한 재정 기둥이었고, 소금 전매가 라구사 국고의 큰 몫을 차지했다. 다만 생산량·가격을 적은 사료는 확인하지 못했다.",
+          "sources": []
+        },
+        "wool": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "모직 공방이 있고 배후의 달마티아·보스니아가 원료 산지가 아니었으므로 원료 양모는 사들여야 했다. 카탈루냐·카스티야 양모가 아드리아로 들어온 정황은 확실하나 라구사 수입 장부는 확인하지 못했다.",
+          "sources": []
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "동방에서 온 설탕을 아드리아 너머 발칸·중부 유럽으로 넘기는 것이 라구사 상인의 밥벌이였다. 재수출 중계항의 수요를 표현한 값이다.",
+          "sources": []
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "귀족 공화국의 사치품 소비와 발칸 내륙 재수출을 함께 본 값이다. 라구사가 비단을 생산한 기록은 없다.",
+          "sources": []
+        },
+        "mastic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "키오스 유향이 유럽으로 넘어가는 길목의 하나를 라구사로 잡았다. 오스만 조공국이라 에게해 물건을 받기 유리했다는 정황에 기댄 값이다.",
+          "sources": []
+        }
+      }
+    },
+    "ancona": {
+      "flag": {
+        "value": "hospitaller",
+        "verdict": "gameplay",
+        "basis": "안코나는 자체 화폐(아곤타노)를 찍던 해양 공화국이었다가 1532년에 교황령에 편입된다. FLAGS에 교황령(엇갈린 열쇠와 삼중관)이 없어 같은 교회 세력인 성 요한 기사단 깃발을 빌렸다. art.flagTodo 참조.",
+        "sources": [
+          {
+            "title": "Ancona",
+            "url": "https://en.wikipedia.org/wiki/Ancona"
+          }
+        ]
+      },
+      "goods": {
+        "alum": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "gameplay",
+          "basis": "1461년 톨파에서 발견된 명반광은 사도 궁내청(Camera Apostolica)이 직접 쥐고 메디치에게 독점 판매권을 준 교황령의 전략물자였다. 다만 실제 적출항은 티레니아해 쪽이고 안코나는 아드리아 항구다 — 지도에 그 자리가 없어 같은 교황령 항구를 창구로 삼았다.",
+          "sources": [
+            {
+              "title": "Tolfa",
+              "url": "https://en.wikipedia.org/wiki/Tolfa"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "오스만령에서 피난 온 그리스 상인이 안코나의 최대 외국인 상단이었고 유대·라구사 상관도 레반트 교역에 매달렸다. 그 상관들이 다룬 것이 레반트 직물이라 수요로 두었다.",
+          "sources": [
+            {
+              "title": "Ancona",
+              "url": "https://en.wikipedia.org/wiki/Ancona"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "베네치아를 피해 아드리아로 들어온 동방 물화가 안코나에서 중부 이탈리아로 풀렸다. 설탕도 그 흐름에 실렸다고 보았으나 품목별 장부는 확인하지 못했다.",
+          "sources": []
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "레반트 교역에 매달린 중계항이라 향신료를 사들이는 쪽이다. 베네치아·제노바보다 얕은 시장이므로 배율도 그만큼 낮게 두었다.",
+          "sources": [
+            {
+              "title": "Ancona",
+              "url": "https://en.wikipedia.org/wiki/Ancona"
+            }
+          ]
+        }
+      }
+    },
+    "messina": {
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
+        "basis": "시칠리아 왕국은 아라곤 왕관을 거쳐 스페인 합스부르크의 영지였다. 팔레르모·나폴리와 같은 깃발이다.",
+        "sources": [
+          {
+            "title": "Messina",
+            "url": "https://en.wikipedia.org/wiki/Messina"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.68,
+          "verdict": "probable",
+          "basis": "메시나는 12세기부터 팔레르모 다음가는 시칠리아 제2의 항구였고 제노바·피사·아말피·이집트 상관이 늘어선 곳이었다. 시칠리아 생사가 이 항구에서 검인을 받아 나갔다는 것이 근세 메시나의 이름값인데, 독점 특허의 조문까지는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Messina",
+              "url": "https://en.wikipedia.org/wiki/Messina"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "시칠리아 사탕수수밭은 유럽에서 가장 오래된 축이고 근세까지 정제 설탕을 내보냈다. 다만 메시나 항 적출량을 적은 사료는 못 찾았다.",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "섬에 모직 공업이 없었으므로 옷감은 북이탈리아·플랑드르에서 들어왔다. 해협을 지나는 배가 파는 쪽이다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "해협의 세관 도시이자 요새라 화기 수요를 두었다. 카탈루냐·밀라노 화기가 들어오던 흐름을 근사한 값이다.",
+          "sources": []
+        }
+      }
+    },
+    "alghero": {
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
+        "basis": "알게로는 14세기에 아라곤이 제노바계 도리아 가문에서 빼앗아 카탈루냐인을 이주시킨 도시다. 지금도 카탈루냐어를 쓰는 사르데냐의 예외 지대다.",
+        "sources": [
+          {
+            "title": "Corallium rubrum",
+            "url": "https://en.wikipedia.org/wiki/Corallium_rubrum"
+          }
+        ]
+      },
+      "goods": {
+        "coral": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
+          "basis": "알게로 앞바다는 \"산호 리비에라\"라 불렸고 수심 4~35m의 해저 동굴에서 붉은 산호(Corallium rubrum)가 났다. 중세 이래 아프리카 연안 산호 어장의 권리를 놓고 지중해 각 세력이 다툴 만큼 값나가는 어획이었다.",
+          "sources": [
+            {
+              "title": "Corallium rubrum",
+              "url": "https://en.wikipedia.org/wiki/Corallium_rubrum"
+            }
+          ]
+        },
+        "grain": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "사르데냐는 곡물을 내보내던 섬이었다. 다만 알게로가 그 적출항이었는지는 확인하지 못해 팔레르모(0.46)보다 훨씬 얕은 값으로 두었다.",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "작은 변경 도시라 연장과 화기를 만들 줄 몰랐다. 본토에서 들여오는 쪽이다.",
+          "sources": []
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "위와 같다. 그릇도 사 오는 쪽으로 두어 이 항구가 산호 하나로만 먹고사는 성격이 드러나게 했다.",
+          "sources": []
+        }
+      }
+    },
+    "mallorca": {
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
+        "basis": "마요르카 왕국은 1349년에 아라곤 왕관에 통합됐다. 유대인 지도 제작자들이 아라곤 왕 후안 1세에게 카탈루냐 지도첩(1375)을 바친 것도 그 아래에서다.",
+        "sources": [
+          {
+            "title": "Majorcan cartographic school",
+            "url": "https://en.wikipedia.org/wiki/Majorcan_cartographic_school"
+          }
+        ]
+      },
+      "goods": {
+        "oliveoil": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
+          "basis": "마요르카의 올리브 언덕은 섬이 내놓을 수 있는 몇 안 되는 대량 산물이었다. 다만 수출 규모를 적은 사료는 확인하지 못했다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "섬이라 자급이 안 돼 시칠리아·북아프리카 곡물에 기댔다. 무슬림·유대 상인이 이탈리아·이집트·튀니지와 폭넓게 교역했다는 서술이 그 배경이다.",
+          "sources": [
+            {
+              "title": "Majorcan cartographic school",
+              "url": "https://en.wikipedia.org/wiki/Majorcan_cartographic_school"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "포르톨라노 해도의 붉은 항정선과 채색은 진사(수은 광석)를 갈아 만든 버밀리언 안료였다. 지도 제작의 중심지가 그 안료를 사들였다고 본 값인데, 마요르카 공방의 안료 구매 기록까지는 못 찾았다.",
+          "sources": [
+            {
+              "title": "Majorcan cartographic school",
+              "url": "https://en.wikipedia.org/wiki/Majorcan_cartographic_school"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "카탈루냐권 재수출과 섬의 사치품 소비를 함께 본 값이다. 지중해 설탕의 산지 셋(메시나·파마구스타·알렉산드레타)이 모두 동쪽에 있어 서쪽에 파는 자리가 필요했던 사정도 함께 반영했다.",
+          "sources": []
+        }
+      }
+    },
+    "valencia": {
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
+        "basis": "발렌시아 왕국은 아라곤 왕관의 일원이고, 15세기 말에는 히스패닉 군주국에서 가장 인구가 많은 도시였다.",
+        "sources": [
+          {
+            "title": "Valencia",
+            "url": "https://en.wikipedia.org/wiki/Valencia"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "confirmed",
+          "basis": "14세기 말 제노바 상인이 백상(白桑) 재배와 비단 제조 기술을 들여온 뒤 발렌시아는 이베리아 최대의 비단 산지가 됐다. 15세기에 지은 비단 거래소(론하 데 라 세다)가 그 규모의 증거다.",
+          "sources": [
+            {
+              "title": "Valencia",
+              "url": "https://en.wikipedia.org/wiki/Valencia"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "마니세스·파테르나의 러스터웨어는 15세기 유럽 왕실이 다투어 사들인 이베리아 도기였다. 발렌시아가 그 적출항이라는 것은 확실하나 수출량 사료는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Valencia",
+              "url": "https://en.wikipedia.org/wiki/Valencia"
+            }
+          ]
+        },
+        "wool": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "카스티야 메리노 양모는 1390년대부터 이탈리아로 나갔다. 북쪽 빌바오·산탄데르가 플랑드르행 창구였다면 이탈리아행은 지중해 항구를 탔으므로 발렌시아를 그 창구로 삼았다 — 다만 사료가 지목하는 이름은 북쪽 항구들이다.",
+          "sources": [
+            {
+              "title": "Merino",
+              "url": "https://en.wikipedia.org/wiki/Merino"
+            }
+          ]
+        },
+        "alum": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
+          "basis": "명반은 염색업이 반드시 써야 하는 매염제였다. 비단과 도기를 함께 굽는 도시라 이 바다에서 명반을 가장 비싸게 사는 자리로 두었다.",
+          "sources": [
+            {
+              "title": "Tolfa",
+              "url": "https://en.wikipedia.org/wiki/Tolfa"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "15세기 말 이베리아 제2의 대도시라 배후 우에르타만으로는 먹이지 못했다. 인구 규모에서 끌어낸 값이다.",
+          "sources": [
+            {
+              "title": "Valencia",
+              "url": "https://en.wikipedia.org/wiki/Valencia"
+            }
+          ]
+        }
+      }
+    },
+    "malaga": {
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
+        "basis": "말라가는 나스르 왕조 그라나다의 주요 항구였고 1487년 8월 18일에 카스티야에 함락된다. 게임은 연도를 고정하지 않으므로 정복 이후의 깃발을 달되, 화풍(style)은 나스르 시대의 안달루시아 이슬람 건축에 가까운 levant로 두어 두 시대가 한 화면에 겹치게 했다.",
+        "sources": [
+          {
+            "title": "Málaga",
+            "url": "https://en.wikipedia.org/wiki/M%C3%A1laga"
+          }
+        ]
+      },
+      "goods": {
+        "wine": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
+          "basis": "10세기부터 말라가의 포도밭은 건포도로 이름났고, 이븐 바투타(1325년경)도 이 도시의 포도·무화과·아몬드를 적었다. 감미포도주는 근세까지 이 항구의 대표 수출품이다.",
+          "sources": [
+            {
+              "title": "Málaga",
+              "url": "https://en.wikipedia.org/wiki/M%C3%A1laga"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "gameplay",
+          "basis": "알마덴 수은광은 2천 년에 걸쳐 약 25만 톤을 캤고 16~17세기에는 푸거 가문이 스페인 왕실에 빌려준 돈의 대가로 운영했다. 다만 그 실제 출구는 과달키비르를 타고 내려간 세비야(대서양 권역)다 — 지중해 안에 수은 창구가 하나도 없으면 이 품목이 죽으므로 안달루시아의 지중해 쪽 항구인 말라가를 출구로 삼았다.",
+          "sources": [
+            {
+              "title": "Almadén",
+              "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "배후가 산지라 곡창이 아니었다. 나스르 그라나다가 곡물을 북아프리카에서 들여왔다는 정황에 기댄 값이다.",
+          "sources": []
+        },
+        "glass": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "사치 공산품을 사들이는 쪽으로 두어, 특산을 내놓고 완제품을 사 오는 항구의 성격을 잡았다.",
+          "sources": []
+        }
+      }
+    },
+    "chios": {
+      "flag": {
+        "value": "genoa",
+        "verdict": "confirmed",
+        "basis": "1346년부터 1566년까지 키오스는 제노바의 특허 회사 \"키오스·포카이아 마오나\"가 다스렸다. 마오나가 상관과 창고를 쥐고 유향·명반·소금·역청 거래를 통제했다.",
+        "sources": [
+          {
+            "title": "Chios",
+            "url": "https://en.wikipedia.org/wiki/Chios"
+          }
+        ]
+      },
+      "goods": {
+        "mastic": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
+          "basis": "유향(마스틱)은 키오스 남부 마을에서만 나고 세계에 다른 산지가 없다. 비잔티움 때는 황제의 전매였고 오스만 치하에서는 \"같은 무게의 금값\"이라 불려, 마을을 높은 벽으로 두르고 길에 문을 내지 않은 채 사다리로만 드나들며 수지를 지켰다. 오스만이 키오스를 제국에서 가장 값진 속주의 하나로 여긴 것도 이 작물 때문이다.",
+          "sources": [
+            {
+              "title": "Mastic (plant resin)",
+              "url": "https://en.wikipedia.org/wiki/Mastic_(plant_resin)"
+            },
+            {
+              "title": "Chios",
+              "url": "https://en.wikipedia.org/wiki/Chios"
+            }
+          ]
+        },
+        "alum": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "제노바 마오나는 키오스와 함께 맞은편 포카이아의 명반광까지 한 회사로 쥐고 있었고, 마오나가 통제한 품목에 명반이 명시된다. 톨파가 발견되기 전까지 유럽의 명반은 이 동방 산지에서 왔다.",
+          "sources": [
+            {
+              "title": "Chios",
+              "url": "https://en.wikipedia.org/wiki/Chios"
+            },
+            {
+              "title": "Tolfa",
+              "url": "https://en.wikipedia.org/wiki/Tolfa"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "유향과 감귤을 심은 섬이라 곡물은 밖에서 왔다. 마오나가 곡물 거래를 현지 지주와 함께 다뤘다는 서술이 근거다.",
+          "sources": [
+            {
+              "title": "Chios",
+              "url": "https://en.wikipedia.org/wiki/Chios"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "오스만 본토 코앞의 라틴 전초라 방어 수요를 두었다. 화기 수입 장부까지는 확인하지 못했다.",
+          "sources": []
+        }
+      }
+    },
+    "salonika": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "confirmed",
+        "basis": "1430년에 오스만이 점령한 뒤 게임 시대 내내 오스만령이다. 1519년 인구조사에서 유대인 가구 3,143호·15,715명으로 도시 인구의 54%였다.",
+        "sources": [
+          {
+            "title": "Thessaloniki",
+            "url": "https://en.wikipedia.org/wiki/Thessaloniki"
+          }
+        ]
+      },
+      "goods": {
+        "woolcloth": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "1492년 알함브라 칙령 이후 약 2만 명의 세파르디가 이주해 16세기에는 세계 유일의 유대인 다수 도시가 됐고, 도시 상공인 대부분이 유대인이었다. 그 인구가 곧 모직 산업이었다는 것이 살로니카 경제사의 통설이나, 예니체리 군복지 납품 같은 구체적 계약은 이번 조사에서 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Thessaloniki",
+              "url": "https://en.wikipedia.org/wiki/Thessaloniki"
+            }
+          ]
+        },
+        "grain": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "배후의 마케도니아 평원이 곡창이라 살로니카는 곡물 적출항이었다. 다만 수출량 사료는 확인하지 못했다.",
+          "sources": []
+        },
+        "wool": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "모직을 짜는 도시이므로 원료 양모를 사들이는 쪽이다. 이 바다에서 양모를 가장 비싸게 사는 자리로 두었다.",
+          "sources": [
+            {
+              "title": "Thessaloniki",
+              "url": "https://en.wikipedia.org/wiki/Thessaloniki"
+            }
+          ]
+        },
+        "alum": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "모직 염색에 명반이 반드시 든다. 모직 도시를 명반 수요지로 두는 것은 이 품목이 왜 전략물자였는지를 그대로 옮긴 것이다.",
+          "sources": [
+            {
+              "title": "Tolfa",
+              "url": "https://en.wikipedia.org/wiki/Tolfa"
+            }
+          ]
+        },
+        "mastic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "유향의 최대 소비지는 오스만 도시들이었다. 제국 제2의 상업 도시를 그 창구로 삼았다.",
+          "sources": [
+            {
+              "title": "Mastic (plant resin)",
+              "url": "https://en.wikipedia.org/wiki/Mastic_(plant_resin)"
+            }
+          ]
+        }
+      }
+    },
+    "candia": {
+      "flag": {
+        "value": "venice",
+        "verdict": "confirmed",
+        "basis": "크레타는 1204년 이후 베네치아령 \"칸디아 왕국\"이었다. 통치 첫 세기에만 약 1만 명의 베네치아인이 이주했다.",
+        "sources": [
+          {
+            "title": "Kingdom of Candia",
+            "url": "https://en.wikipedia.org/wiki/Kingdom_of_Candia"
+          }
+        ]
+      },
+      "goods": {
+        "wine": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "크레타의 수출품은 무엇보다 밀과 감미포도주(말바지아/맘지)였다. 이 술의 이름이 유럽 전역에서 크레타산 고급 와인을 뜻하는 보통명사가 될 만큼 이 섬의 대표 산물이다.",
+          "sources": [
+            {
+              "title": "Kingdom of Candia",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Candia"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "섬에 모직 공업이 없어 옷감은 베네치아를 통해 들어왔다. 베네치아~레반트 항로의 중간 기착지라 지나는 배가 옷감을 풀고 술을 싣는 자리로 두었다.",
+          "sources": []
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "크레타는 치즈도 내보냈고 치즈와 염장육에는 소금이 든다. 이 권역에서 소금 수요지가 하나도 없어 품목이 반쯤 죽어 있던 것을 이 자리에서 조금 풀었다 — 다만 크레타의 소금 수입 사료는 확인하지 못했다.",
+          "sources": [
+            {
+              "title": "Kingdom of Candia",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Candia"
+            }
+          ]
+        },
+        "glass": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "베네치아 본국의 사치 공산품이 식민지로 흘러들던 흐름을 근사한 값이다. 통치 첫 세기에만 약 1만 명의 베네치아인이 이주해 살던 섬이라 본국 물건의 시장이 있었다.",
+          "sources": []
+        }
+      }
+    },
+    "famagusta": {
+      "flag": {
+        "value": "venice",
+        "verdict": "confirmed",
+        "basis": "1372년에 제노바가 항구를 빼앗았고 1489년부터 베네치아령이 된다. 1570~71년의 13개월 공성 끝에 오스만에 넘어갔다.",
+        "sources": [
+          {
+            "title": "Famagusta",
+            "url": "https://en.wikipedia.org/wiki/Famagusta"
+          }
+        ]
+      },
+      "goods": {
+        "sugar": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "뤼지냥·베네치아 치하 키프로스의 수출 경제는 설탕이 으뜸이었고 와인·밀·기름·캐롭이 뒤를 이었다. 1291년 아크레 함락 뒤 피난민이 몰려 파마구스타가 \"기독교권에서 가장 부유한 도시\"가 된 것도 이 중계·생산 경제 위에서다.",
+          "sources": [
+            {
+              "title": "Kingdom of Cyprus",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Cyprus"
+            },
+            {
+              "title": "Famagusta",
+              "url": "https://en.wikipedia.org/wiki/Famagusta"
+            }
+          ]
+        },
+        "coral": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "서지중해에서 난 산호가 레반트를 거쳐 더 동쪽으로 나갔다. 그 중계 자리를 키프로스로 잡았다 — 산호가 인도까지 갔다는 것은 확실하나 키프로스 경유 장부는 못 찾았다.",
+          "sources": [
+            {
+              "title": "Corallium rubrum",
+              "url": "https://en.wikipedia.org/wiki/Corallium_rubrum"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "유럽 모직물이 동지중해로 들어오던 큰 흐름 위의 항구다. 파마구스타는 만드는 쪽이 아니라 받아 넘기는 쪽이었다.",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "요새 도시라 상비 병력과 상인 인구를 먹여야 했다. 키프로스가 밀도 내보냈으므로 배율은 얕게 두었다.",
+          "sources": [
+            {
+              "title": "Kingdom of Cyprus",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Cyprus"
+            }
+          ]
+        }
+      }
+    },
+    "iskenderun": {
+      "flag": {
+        "value": "ottoman",
+        "verdict": "confirmed",
+        "basis": "1516년 이후 시리아 전역이 오스만령이다. 알레포는 제국 제2의 상업 도시였고 그 외항이 이 해안에 있었다.",
+        "sources": [
+          {
+            "title": "Tripoli, Lebanon",
+            "url": "https://en.wikipedia.org/wiki/Tripoli,_Lebanon"
+          }
+        ]
+      },
+      "goods": {
+        "silk": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "probable",
+          "basis": "알레포는 페르시아 생사가 유럽 상인에게 넘어가던 최대 시장이었고, 그 물건이 바다로 나가는 문이 이 해안의 외항이었다. 다만 부르사(0.46)가 이미 이란 생사의 1차 시장이라 여기는 그보다 훨씬 비싼 2차 값으로 두었다.",
+          "sources": [
+            {
+              "title": "Tripoli, Lebanon",
+              "url": "https://en.wikipedia.org/wiki/Tripoli,_Lebanon"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
+          "basis": "맘루크 시대 트리폴리는 14세기 후반에 유럽에 캔디·덩이설탕·가루설탕을 대던 시리아의 주요 항구였고 감귤·올리브유·비누·면직·비단(특히 벨벳)이 함께 나갔다. 이 항구는 같은 시리아 해안의 알레포 외항이라 같은 물화를 싣는다.",
+          "sources": [
+            {
+              "title": "Tripoli, Lebanon",
+              "url": "https://en.wikipedia.org/wiki/Tripoli,_Lebanon"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "유럽 모직물은 시리아 시장의 최대 수입 품목이었다 — 부르사가 생사 대금으로 받아 간 것도 같은 물건이다. 이 바다에서 모직물을 가장 비싸게 사는 자리로 두었다.",
+          "sources": []
+        },
+        "coral": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "지중해 산호는 서기 1천년기부터 인도로 나가 그곳에서 귀히 여겨졌다. 알레포 대상로는 그 산호가 페르시아·인도로 넘어가는 뭍길의 시작이다.",
+          "sources": [
+            {
+              "title": "Corallium rubrum",
+              "url": "https://en.wikipedia.org/wiki/Corallium_rubrum"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "수은과 주사는 안료·약재·금박 도금 재료로 동방에서 수요가 있었다. 대상로의 시작점을 그 창구로 삼았다.",
+          "sources": [
+            {
+              "title": "Almadén",
+              "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n"
+            }
+          ]
+        }
+      }
     }
   },
   "routes": {
@@ -1596,10 +2339,300 @@
           "note": "기독교 사략의 레반트 사냥터"
         }
       ]
+    },
+    "ancona|venezia": {
+      "risk": 2,
+      "verdict": "probable",
+      "basis": "베네치아가 사실상 만처럼 다스리던 북아드리아다. 양단이 기독교 항구이고 아군 해안이 늘 보이므로 사료 앵커의 최저선(나폴리~베네치아 2%)과 같은 급으로 둔다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "ancona|ragusa": {
+      "risk": 2.5,
+      "verdict": "probable",
+      "basis": "아드리아 횡단이라 거리는 짧지만 세니의 우스코크가 훑던 물이라 최저선에 조금 얹었다. 안코나와 라구사는 실제로 오래 동맹이었다.",
+      "sources": []
+    },
+    "messina|ragusa": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "오트란토 해협을 빠져 이오니아를 건넌다. 며칠씩 뭍이 보이지 않는 구간이라 연안 항로(2~3%)보다 두 배 위다.",
+      "sources": []
+    },
+    "candia|ragusa": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "라구사 아르고시가 다니던 장거리 본선이다. 에게 남쪽 외해에 오래 머무르므로 로도스~베네치아(7.0)보다 조금 높게 잡았다.",
+      "sources": []
+    },
+    "messina|napoli": {
+      "risk": 2,
+      "verdict": "confirmed",
+      "basis": "메시나 구간은 제노바 인수업자 장부에서 아드리아·나폴리와 함께 가장 싼 축(2%)으로 나온다. 이 게임의 요율 표에서 사료가 직접 값을 준 몇 안 되는 구간이다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "malta|messina": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "해협의 남쪽 절반이다. 몰타~팔레르모(4.0)보다 바르바리 쪽에 붙어 있어 조금 올렸다.",
+      "sources": []
+    },
+    "alghero|genova": {
+      "risk": 4,
+      "verdict": "probable",
+      "basis": "티레니아해 외해지만 양단이 다 기독교 항구이고 코르시카·엘바가 중간에 있다. 평범한 연안 항로의 위쪽 값이다.",
+      "sources": []
+    },
+    "alghero|mallorca": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "사르데냐에서 발레아레스까지는 뭍이 오래 보이지 않는다. 외해분만큼 얹었다.",
+      "sources": []
+    },
+    "barcelona|mallorca": {
+      "risk": 3,
+      "verdict": "probable",
+      "basis": "아라곤 왕관의 내해다. 양단이 같은 깃발이고 항로가 짧다.",
+      "sources": []
+    },
+    "mallorca|valencia": {
+      "risk": 3,
+      "verdict": "probable",
+      "basis": "위와 같다. 같은 왕관 아래의 짧은 도항이다.",
+      "sources": []
+    },
+    "algiers|mallorca": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "발레아레스는 알제 사략선의 단골 사냥터였다. 사료 앵커인 바르셀로나~알제(9.0) 바로 아래에 둔다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "barcelona|valencia": {
+      "risk": 2.5,
+      "verdict": "probable",
+      "basis": "해안을 따라가는 짧은 길이고 양단이 같은 세력이다.",
+      "sources": []
+    },
+    "malaga|valencia": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "연안 항로지만 바르바리 배가 안달루시아 앞바다까지 올라왔다. 평범한 연안(4.0)보다 조금 위.",
+      "sources": []
+    },
+    "algiers|malaga": {
+      "risk": 9,
+      "verdict": "probable",
+      "basis": "알보란해의 좁은 목이고 양단의 깃발이 적대한다. 바르셀로나~알제와 같은 급(9%)으로 둔다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "athens|chios": {
+      "risk": 8,
+      "verdict": "probable",
+      "basis": "에게해 앵커 8%를 그대로 쓴다. 섬이 많아 숨을 곳도 많고 노릴 곳도 많은 물이다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "chios|rodos": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "에게 남부. 섬 그늘을 타고 갈 수 있어 에게해 앵커(8.0)보다 조금 낫다.",
+      "sources": []
+    },
+    "chios|salonika": {
+      "risk": 6,
+      "verdict": "probable",
+      "basis": "북에게는 오스만 내해에 가까워 사략이 드물다. 에게해 앵커에서 내렸다.",
+      "sources": []
+    },
+    "istanbul|salonika": {
+      "risk": 4,
+      "verdict": "probable",
+      "basis": "제국 안쪽을 도는 연안 항로다. 아테네~이스탄불(4.0)과 같은 성격으로 본다.",
+      "sources": []
+    },
+    "alexandria|candia": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "알렉산드리아 편도 6%(사료 앵커)에 크레타까지의 외해분을 얹었다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "candia|famagusta": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "동지중해를 가로지른다. 뭍이 며칠 안 보이고 몰타 기사단·토스카나 갤리의 사냥터였다.",
+      "sources": []
+    },
+    "beirut|famagusta": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "키프로스와 레반트는 하루 도항이고 양단이 같은 세력권이다.",
+      "sources": []
+    },
+    "famagusta|iskenderun": {
+      "risk": 4,
+      "verdict": "probable",
+      "basis": "위와 같고 더 짧다. 평범한 연안 항로의 값이다.",
+      "sources": []
+    },
+    "alexandria|famagusta": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "알렉산드리아 편도 6%에 외해분을 조금 얹었다.",
+      "sources": [
+        {
+          "title": "제노바 인수업자 장부 (Piccinno & Iodice, ASG/ASCG)",
+          "note": "16세기 제노바 해상보험 요율"
+        }
+      ]
+    },
+    "beirut|iskenderun": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "레반트 연안을 북상하는 짧은 길이지만 기독교 사략의 레반트 사냥터와 겹친다.",
+      "sources": []
     }
   },
-  "goods": {},
-  "ships": {},
+  "goods": {
+    "alum": {
+      "base": 60,
+      "verdict": "probable",
+      "basis": "명반은 모직을 염색하려면 반드시 드는 매염제라 유럽이 전략물자로 다뤘지만, 물건 자체는 배 밑바닥에 수천 톤씩 싣던 벌크 광물이다. 근세 잉글랜드 물가에서 명반이 톤당 밀의 서너 배 선이었던 것으로 잡고, 이 프로젝트의 완화 원칙(사료 비율을 절반쯤 반영)에 따라 곡물의 3배(60닢)로 두었다. 값이 싼 대신 무게로 파는 품목이다.",
+      "sources": [
+        {
+          "title": "Tolfa",
+          "url": "https://en.wikipedia.org/wiki/Tolfa"
+        }
+      ]
+    },
+    "wool": {
+      "base": 120,
+      "verdict": "probable",
+      "basis": "고급 양모는 원료치고 아주 비쌌다 — 잉글랜드 양모 한 자루(약 165kg)가 밀 한 쿼터의 스무 배를 넘는 값이었고, 카스티야는 15세기 말부터 고급 양모 수출을 사실상 독점해 왕실 재정의 큰 몫을 벌었다(메리노 반출은 사형이었다). 다만 사료 비율을 그대로 쓰면 상아보다 비싼 원료가 되므로, 보통 양모까지 포함한 10~15배로 잡고 절반쯤 반영해 곡물의 6배(120닢)로 두었다.",
+      "sources": [
+        {
+          "title": "Merino",
+          "url": "https://en.wikipedia.org/wiki/Merino"
+        }
+      ]
+    },
+    "coral": {
+      "base": 240,
+      "verdict": "probable",
+      "basis": "가공한 산호는 사치품, 원료 가지는 그 아래다. 지중해와 인도 사이에 서기 1천년기부터 상당한 산호 교역이 있었고 인도에서 특히 귀히 여겼다는 것이 이 값의 근거다 — 즉 배로 몇 달을 실어 갈 값어치가 되는 물건이다. 곡물의 12배로 잡아 상아(15배)와 모피(8.75배) 사이에 두었다.",
+      "sources": [
+        {
+          "title": "Corallium rubrum",
+          "url": "https://en.wikipedia.org/wiki/Corallium_rubrum"
+        }
+      ]
+    },
+    "mercury": {
+      "base": 310,
+      "verdict": "probable",
+      "basis": "수은은 광석을 구워 뽑는 금속이라 값이 높았고, 16세기 중반 아메리카에서 아말감 정련이 시작된 뒤로는 은과 직결된 전략물자가 됐다. 절대 가격을 옮길 사료를 찾지 못해 곡물의 15.5배(310닢)로 두었다 — 향신료(16.5배) 바로 아래이고 상아(15배) 언저리다.",
+      "sources": [
+        {
+          "title": "Almadén",
+          "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n"
+        }
+      ]
+    },
+    "mastic": {
+      "base": 400,
+      "verdict": "probable",
+      "basis": "오스만 치하에서 유향은 \"같은 무게의 금값\"이라 불렸고 마을을 성벽으로 둘러 지켰다. 그 표현을 그대로 쓰면 금괴(35배)와 같아져 키오스 한 섬이 경제를 삼키므로, 곡물의 20배(400닢)로 눌러 비단(21배) 바로 아래에 두었다. 대신 산지 배율도 0.56으로 얕게 잡아 한 항차 차익이 비단 항로를 넘지 않게 맞췄다.",
+      "sources": [
+        {
+          "title": "Mastic (plant resin)",
+          "url": "https://en.wikipedia.org/wiki/Mastic_(plant_resin)"
+        },
+        {
+          "title": "Chios",
+          "url": "https://en.wikipedia.org/wiki/Chios"
+        }
+      ]
+    }
+  },
+  "ships": {
+    "tartane": {
+      "price": 700,
+      "verdict": "probable",
+      "basis": "타르타네는 큰 라틴세일 한 장에 바우스프릿과 앞돛을 단 작은 배로, 지중해에서 어선 겸 연안 상선으로 300년 넘게 쓰였다. 톤수·승조원을 적은 사료를 못 찾아 30~60톤급 연안선으로 잡고 화물 44칸·최소 승조원 4명으로 두었다(44÷4=11로 코카의 13과 같은 결이다). 값은 낡은 바사(320)와 코카(1,100) 사이의 빈 칸을 메운다.",
+      "sources": [
+        {
+          "title": "Tartane",
+          "url": "https://en.wikipedia.org/wiki/Tartane"
+        }
+      ]
+    },
+    "galliot": {
+      "price": 1900,
+      "verdict": "confirmed",
+      "basis": "갈리오트는 돛대 둘에 노 열여섯 쌍, 승조원 50~150명, 소구경 대포 2~10문의 작은 갤리다. 1504년에 바르바로사가 이 배로 교황령 선박 두 척을 나포했다. 게임의 압축된 눈금에 맞춰 승조원 44명(최소 26)·대포 5문으로 두었고, 화물 40÷최소 26 = 1.5로 갤리(1.6)와 같은 자리에 선다. 값은 카라벨(1,400)과 갤리(2,100) 사이의 빈 칸이다.",
+      "sources": [
+        {
+          "title": "Galiot",
+          "url": "https://en.wikipedia.org/wiki/Galiot"
+        }
+      ]
+    },
+    "xebec": {
+      "price": 5200,
+      "verdict": "confirmed",
+      "basis": "샤벡은 100~200톤(때로 600톤까지), 처음엔 돛대 둘 나중엔 셋에 라틴세일, 사략선으로 쓸 때 승조원 90~400명, 대포는 3문에서 40문까지지만 대개 20~30문이었다. 바닥을 좁혀 속력을 얻고 뱃전을 넓혀 돛을 크게 달았다 — 증기선이 나오기 전까지 동시대 어느 배보다 빨랐다. 게임 눈금에 맞춰 화물 96·대포 14·속력 1.42로 두고, 브리간틴(4,200)과 캐랙(9,800) 사이의 빈 칸에 넣었다.",
+      "sources": [
+        {
+          "title": "Xebec",
+          "url": "https://en.wikipedia.org/wiki/Xebec"
+        }
+      ]
+    },
+    "caramusal": {
+      "price": 7200,
+      "verdict": "probable",
+      "basis": "카라무살은 고물이 높이 솟은 오스만의 둥근 상선이다. 이번 조사에서 톤수·승조원을 적은 사료를 찾지 못해, 캐랙(9,800/화물 240) 한 칸 아래의 벌크 화물선으로 잡았다 — 화물 200에 최소 승조원 15명(200÷15=13.3으로 코카와 같은 자리), 대포는 여섯 문뿐이다. 값싸게 많이 싣되 혼자 다니면 먹히는 배라는 성격을 수치로 준 것이다.",
+      "sources": []
+    },
+    "greatgalley": {
+      "price": 8600,
+      "verdict": "confirmed",
+      "basis": "베네치아의 상용 대갤리(galere da mercato)는 1290년대부터 지었고 길이 46m, 화물 140~250톤, 승조원 150~180명이었으며 **승조원 전원이 방어 병력을 겸했다.** 그래서 값나가는 화물과 순례자를 이 배로 날랐고 베네치아~야파를 29일에 끊었다. 게임에서는 화물 108·최소 승조원 58(108÷58=1.9로 갤리 계열의 자리)·대포 12문으로 두고, 사람값이 무거워 싼 화물을 실으면 손해가 나게 맞췄다.",
+      "sources": [
+        {
+          "title": "Galley",
+          "url": "https://en.wikipedia.org/wiki/Galley"
+        }
+      ]
+    }
+  },
   "openQuestions": [
     "제노바의 진짜 특산은 산호·명반(alum)인데 GOODS 12품목에 없다. 품목을 늘릴 때 1순위 후보.",
     "튀니스를 하프스로 바꿨으니 알제(오스만)와 적대라는 관계를 게임 규칙으로 쓸 여지가 있다(입항세·나포 판정 등).",
@@ -1608,6 +2641,91 @@
     "동지중해 재조사에서 GOODS에 없는 실제 주력 품목이 셋 더 드러났다 — ① 유럽 모직물: 부르사가 생사 대금으로 받아 간 최대 수입품이고 시리아 시장에서도 최대 품목이었다(베르가모·브레시아·비첸차·사우샘프턴산). ② 시리아산 원면·면사: 베이루트·트리폴리에서 대량으로 서쪽으로 나갔다. ③ 구리·주석: 베네치아가 이집트·시리아로 실어 나른 최대 중량 화물이었다(1503년 한 상인이 이집트로만 약 811톤). 지금은 이 자리를 각각 금괴·비단·무기로 치환해 두었는데, 품목을 늘린다면 1순위 후보다.",
     "부르사의 향신료는 방향이 사료와 어긋난다 — 실제로는 시리아에서 올라온 후추가 이탈리아 상인에게 팔리던 중계시장이었다. 게임 지도에서 부르사가 이스탄불 안쪽 막다른 항구라 산지로 두기 어려워 수요로 남겼다. 지도 구조를 손볼 때 다시 볼 것.",
     "베이루트의 도자기 수요(1.42)가 동지중해에서 가장 약한 근거다. 베네치아의 시리아·이집트 수출 품목을 화물 단위로 복원한 연구에도 도자기가 없고, 다마스쿠스는 오히려 자체 도기를 구웠다. 이즈니크 도자기의 판로를 유지하려는 게임 사정이 실제 이유에 가까우므로 gameplay로 재분류할지 검토.",
-    "연도를 고정하지 않기로 했으므로, 앞으로 도시·세력·선종을 추가할 때 \"그 해에 있었나\"를 따지지 않는다. 대신 실제로 공존하지 않은 것끼리 붙일 때는 verdict \"gameplay\"로 표시한다."
-  ]
+    "연도를 고정하지 않기로 했으므로, 앞으로 도시·세력·선종을 추가할 때 \"그 해에 있었나\"를 따지지 않는다. 대신 실제로 공존하지 않은 것끼리 붙일 때는 verdict \"gameplay\"로 표시한다.",
+    "2차 확장에서 명반·산호·유향·수은을 넣어 openQuestions의 1·4번 숙제를 절반 갚았다. 남은 것은 **구리·주석**(베네치아가 이집트·시리아로 실어 나른 최대 중량 화물)과 **시리아산 원면**이다 — 둘 다 아직 GOODS에 없다.",
+    "`sugar`(설탕)와 `woolcloth`(모직물)는 **대서양 권역이 먼저 정의했다.** 지중해는 goods.js에 다시 적지 않고 trade.js의 supply/demand로만 쓴다. 다만 두 품목의 base(280/210)는 대서양이 잡은 값이라, 지중해 쪽 산지 배율(시칠리아 설탕 0.60·라구사 모직 0.62)이 대서양의 값과 어긋나지 않는지는 통합자가 한 번 봐야 한다.",
+    "`wool`(양모)은 지중해가 정의했지만 원래 임자는 카스티야·잉글랜드다 — 대서양 권역이 나중에 같은 id를 쓰면 충돌한다. 통합 시 어느 바다가 임자인지 정할 것.",
+    "소금 수요지를 칸디아 하나 만들었다(치즈·염장육). 소금 산지는 이제 다섯 곳(바르셀로나·팔레르모·알제·몰타·라구사)이라 여전히 공급 과잉이다. 북유럽 청어 절임이라는 진짜 수요처가 대서양 권역에 생겼는지 확인해 원양 항로로 이을 것.",
+    "올리브유도 같은 상태다 — 이번에 마요르카를 산지로 더해 여섯 곳이 됐는데 수요는 베네치아·이즈니크 둘뿐이다. 새 수요지를 만들지, 산지 하나를 접을지 결정이 필요하다.",
+    "알렉산드레타의 좌표는 **해안선 확인이 필요하다.** 실제 위치는 키프로스 북동쪽 만인데 SEA_SPANS 격자가 그 일대(x>312·y<116)를 통째로 육지로 잡고 있어 한 칸 서쪽 킬리키아 해안에 앉혔다. 같은 이유로 레바논 트리폴리는 아예 넣지 못하고 알레포 외항으로 대체했다.",
+    "메시나를 팔레르모에 잇지 않았다 — 팔레르모의 이웃이 이미 여섯이라 더 붙이면 시칠리아 곡물이 어느 길로 나갈지 흐려진다. 항로망을 손볼 때 팔레르모의 이웃 수를 정리하면서 함께 볼 것."
+  ],
+  "art": {
+    "iconTodo": [
+      {
+        "good": "alum",
+        "note": "명반 — 회백색 결정 덩어리를 삼베 자루에 담은 모습. 지금은 소금(salt) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "wool",
+        "note": "양모 — 묶어 놓은 생양모 뭉치(fleece). 지금은 모피(fur) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "coral",
+        "note": "산호 — 붉은 가지 두세 갈래. 지금은 상아(ivory) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "mercury",
+        "note": "수은 — 은빛 액체가 든 목이 좁은 도기 병(또는 가죽 자루). 지금은 올리브유(oliveoil) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "mastic",
+        "note": "유향 — 나무껍질에 맺힌 반투명 수지 방울과 그것을 담은 얕은 접시. 지금은 향신료(spice) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "woolcloth",
+        "note": "대서양 권역이 정의한 품목이지만 지중해에서도 크게 쓰인다 — 두툼한 모직 두루마리(bolt). 그림 담당이 한 번만 그리면 두 바다가 함께 쓴다"
+      },
+      {
+        "good": "sugar",
+        "note": "같음 — 원뿔형 설탕빵(sugarloaf)을 종이로 싼 모습"
+      }
+    ],
+    "hullTodo": [
+      {
+        "ship": "tartane",
+        "note": "타르타네 — 갑판이 낮고 짧은 외돛 연안선. 큰 라틴세일 한 장 + 바우스프릿의 앞돛 하나. 지금은 카라벨(caravel) 선체를 빌려 쓰는데 카라벨보다 훨씬 작아야 한다"
+      },
+      {
+        "ship": "galliot",
+        "note": "갈리오트 — 노 열여섯 쌍의 작은 갤리. 갤리 선체를 그대로 쓰되 길이를 줄이고 돛대를 둘만 세운다"
+      },
+      {
+        "ship": "xebec",
+        "note": "샤벡 — 뱃머리와 고물이 밖으로 길게 튀어나오고(overhanging) 바닥이 좁다. 라틴세일 세 장이 핵심 실루엣이다. 지금은 카라벨 선체를 빌려 쓴다"
+      },
+      {
+        "ship": "caramusal",
+        "note": "카라무살 — 고물(선미루)이 유난히 높이 솟은 둥근 오스만 상선. 지금은 캐랙 선체를 빌려 쓰는데, 캐랙과 달리 앞쪽 선수루가 거의 없어야 한다"
+      },
+      {
+        "ship": "greatgalley",
+        "note": "상용 대갤리 — 전투 갤리보다 뱃전이 높고 배가 부르다. 돛대 셋에 라틴세일, 노는 그대로. 지금은 갤리 선체를 빌려 쓴다"
+      }
+    ],
+    "flagTodo": [
+      {
+        "key": "ragusa",
+        "note": "라구사 — 흰 바탕에 성 블라시오 상, 또는 LIBERTAS를 새긴 깃발. 지금은 종주국인 오스만 깃발을 빌려 쓰고 있어 아드리아의 상인 공화국이 오스만 항구로 보인다"
+      },
+      {
+        "key": "papal",
+        "note": "교황령 — 엇갈린 열쇠와 삼중관, 노랑·흰 세로 이분. 안코나가 지금 기사단 깃발을 빌려 쓰고 있다(같은 교회 세력이라는 것 말고는 근거가 없다)"
+      },
+      {
+        "key": "nasrid",
+        "note": "나스르 왕조 그라나다 — 붉은 바탕의 은빛 사선 띠와 \"신 말고는 승자가 없다\". 말라가가 지금 스페인 깃발을 달고 있는데, 1487년 정복 이전을 그리려면 이 깃발이 필요하다"
+      }
+    ],
+    "styleTodo": [
+      {
+        "key": "andalusi",
+        "note": "안달루시아 — 말발굽 아치·회벽·아술레호 타일·알카사바의 각진 성탑. 말라가가 지금 levant(레반트) 화풍을 빌려 쓰는데, 마그레브·시리아와는 결이 다르다"
+      },
+      {
+        "key": "dalmatian",
+        "note": "달마티아 — 흰 석회암 벽과 붉은 기와, 바다로 곧장 떨어지는 성벽. 라구사가 지금 latin(이탈리아) 화풍을 쓰고 있어 큰 무리는 없으나 성벽이 더 두꺼워야 한다"
+      }
+    ]
+  }
 }

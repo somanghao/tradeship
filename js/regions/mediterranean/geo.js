@@ -53,6 +53,56 @@ export const CITIES = [
   // 동서 해운 전체를 내려다본다. 생산지가 아니라 **나포품 집산지**라 특산이 거의 없고
   // 곡물을 상시 수입한다. 나포선 경매가 서던 곳이라 tunis·algiers와 같은 prizeYard.
   { id: 'malta',      name: '몰타',         area: '시칠리아 해협', style: 'latin', x: 169, y: 161, flag: 'hospitaller', seed: 2616, size: 1, industry: 1, prizeYard: true },
+
+  /* ── 여기부터 2차 확장분 ──────────────────────────────────────
+     열여섯 항구로는 지중해가 헐거웠다. 특히 **라구사가 없는 것이 가장 큰 구멍**이었다 —
+     게임에 '라구사 아르고시'라는 최상급 상선이 있는데 그 본국이 지도에 없었다.
+     새 항구는 전부 **기존 간선에 곁가지로 붙인다.** 기존 도시 사이에 끼워 넣어
+     물길을 갈아타게 만들면(예: 팔레르모~나폴리를 끊고 메시나를 세우면) 곡물 흐름이
+     통째로 바뀌므로, 선은 **더하는 쪽으로만** 그었다.
+     좌표는 손으로 찍은 해안선 격자(sprites/maps/mediterranean.js: SEA_SPANS)와
+     기존 16곳의 이름표를 함께 놓고 검산했다 — 물가에 앉고, 12px 이상 떨어지고,
+     이름표 상자가 남의 표식을 덮지 않는 자리만 골랐다. */
+
+  // 아드리아 — 베네치아 독점의 그늘에 있던 두 항구.
+  // 안코나는 교황령의 유일한 아드리아 관문이라 베네치아를 피하려는 상인이 몰렸고
+  // 라구사·그리스·유대 상인의 상관이 서 있었다. 깃발은 FLAGS에 교황령이 없어 빌렸다.
+  { id: 'ancona',     name: '안코나',       area: '마르케',     style: 'latin',    x: 154, y: 84,  flag: 'hospitaller', seed: 2717, size: 2, industry: 1 },
+  // 라구사(두브로브니크) — 오스만에 연공 12,500 두카트를 바치고 자치를 산 상인 공화국.
+  // 이 시대 지중해 최대 해운국의 하나이고 아르고시(argosy)라는 말 자체가 이 도시 이름에서 나왔다.
+  // industry 3 — 그로슈 조선소가 최상급 상선을 뽑던 곳이다.
+  { id: 'ragusa',     name: '라구사',       area: '달마티아',   style: 'latin',    x: 172, y: 100, flag: 'ottoman', seed: 2818, size: 3, industry: 3 },
+  // 메시나 — 해협의 병목. 팔레르모~나폴리 간선은 그대로 두고 나폴리·몰타 쪽에만 물렸다.
+  // 팔레르모는 이미 이웃이 여섯이라 더 붙이면 시칠리아 곡물이 어느 길로 나갈지 흐려진다.
+  { id: 'messina',    name: '메시나',       area: '시칠리아',   style: 'latin',    x: 176, y: 134, flag: 'spain',   seed: 2919, size: 2, industry: 2 },
+  // 알게로 — 사르데냐 북서안의 카탈루냐 도시. 지도에서 사르데냐가 통째로 비어 있었다.
+  // '산호 리비에라'라 불린 해역이라 이 권역 산호의 유일한 산지로 삼았다.
+  { id: 'alghero',    name: '알게로',       area: '사르데냐',   style: 'latin',    x: 112, y: 101, flag: 'spain',   seed: 3020, size: 1, industry: 1 },
+  // 마요르카(팔마) — 포르톨라노 해도의 본산. 섬이라 곡물을 사들이고 기름을 내놓는다.
+  { id: 'mallorca',   name: '마요르카',     area: '발레아레스', style: 'latin',    x: 88,  y: 113, flag: 'spain',   seed: 3121, size: 2, industry: 2 },
+  // 발렌시아 — 15세기 이베리아에서 리스본 다음으로 큰 도시. 비단 거래소(론하)와
+  // 마니세스 러스터웨어가 이 항구의 두 기둥이다.
+  { id: 'valencia',   name: '발렌시아',     area: '발렌시아',   style: 'latin',    x: 52,  y: 113, flag: 'spain',   seed: 3222, size: 3, industry: 2 },
+  // 말라가 — 나스르 왕조 그라나다의 바다 쪽 문. 1487년에 카스티야가 뺏는다.
+  // 건포도·무화과·감미포도주의 항구라 style은 안달루시아 이슬람 건축에 가장 가까운 levant로 둔다.
+  { id: 'malaga',     name: '말라가',       area: '안달루시아', style: 'levant',   x: 30,  y: 126, flag: 'spain',   seed: 3323, size: 2, industry: 1 },
+  // 키오스 — 제노바 마오나가 쥐고 있던 섬. **유향(마스틱)의 세계 유일 산지**이고
+  // 맞은편 포카이아 명반까지 같은 회사가 관리했다. 이 게임에서 가장 특이한 산지다.
+  { id: 'chios',      name: '키오스',       area: '에게',       style: 'hellenic', x: 222, y: 96,  flag: 'genoa',   seed: 3424, size: 2, industry: 1 },
+  // 살로니카 — 1492년 이후 세파르디 유대인이 몰려들어 16세기에 세계 유일의 유대인 다수 도시가 됐다.
+  // 그 인구가 곧 모직 산업이었다. 양모를 사들여 모직물을 내놓는 항구로 세웠다.
+  { id: 'salonika',   name: '살로니카',     area: '마케도니아', style: 'hellenic', x: 196, y: 88,  flag: 'ottoman', seed: 3525, size: 3, industry: 1 },
+  // 칸디아 — 베네치아령 크레타의 수도. 말바지아(맘지) 감미포도주와 밀의 섬이고
+  // 베네치아~레반트 항로의 중간 기착지였다. 여기서는 라구사 쪽 간선에 물려
+  // 베네치아 간선과 **다른 길**이 생기게 했다.
+  { id: 'candia',     name: '칸디아',       area: '크레타',     style: 'hellenic', x: 222, y: 133, flag: 'venice',  seed: 3626, size: 2, industry: 2 },
+  // 파마구스타 — 1291년 아크레 함락 후 피난민이 몰려 "기독교권에서 가장 부유한 도시"가 됐다.
+  // 키프로스 사탕수수의 적출항. 제노바령을 거쳐 1489년부터 베네치아령.
+  { id: 'famagusta',  name: '파마구스타',   area: '키프로스',   style: 'latin',    x: 330, y: 110, flag: 'venice',  seed: 3727, size: 2, industry: 1 },
+  // 알렉산드레타 — 알레포 대상로의 바다 쪽 끝. 베이루트가 '곁가지'라면 이쪽이 본선이다.
+  // ★ 실제 위치는 키프로스 **북동쪽** 만인데 SEA_SPANS 격자가 그 일대를 육지로 잡고 있어
+  //   한 칸 서쪽(킬리키아 해안)에 앉혔다. 해안선을 손볼 때 북동으로 옮기는 것이 맞다.
+  { id: 'iskenderun', name: '알렉산드레타', area: '북시리아',   style: 'levant',   x: 292, y: 108, flag: 'ottoman', seed: 3828, size: 2, industry: 1 },
 ];
 
 /* 항로 — 인접 도시 간 연결. 여기에 없는 두 항구는 직항이 없다.
@@ -79,6 +129,26 @@ export const ROUTES = [
   ['alexandria', 'istanbul'],
   // 아나톨리아 안쪽 시장 — 이스탄불에서만 들어간다(막다른 주머니).
   ['istanbul', 'bursa'], ['istanbul', 'iznik'], ['bursa', 'iznik'],
+
+  /* ── 2차 확장분 — **곁가지로만 붙인다** ────────────────────────
+     기존 선은 하나도 지우지 않았다. 지운 선이 없으니 곡물·향신료의 기존 물길은 그대로고,
+     새 항구는 "들를 수 있는 곳"으로만 늘어난다. 이웃 수도 함께 봤다 —
+     이스탄불·아테네·로도스·팔레르모가 이미 여섯 언저리라 그쪽엔 하나씩만 더 걸었다. */
+  // 아드리아 곁길: 베네치아—안코나—라구사—칸디아. 베네치아 간선(venezia~rodos)과
+  // 나란히 달리는 **두 번째 동방 회랑**이다. 라구사 아르고시가 실제로 다니던 길이 이쪽이다.
+  ['venezia', 'ancona'], ['ancona', 'ragusa'], ['ragusa', 'messina'], ['ragusa', 'candia'],
+  ['candia', 'alexandria'], ['candia', 'famagusta'],
+  // 해협: 메시나는 북쪽(나폴리)과 남쪽(몰타)에만. 팔레르모~나폴리·팔레르모~튀니스는 그대로 둔다.
+  ['messina', 'napoli'], ['messina', 'malta'],
+  // 서지중해: 바르셀로나에서 남서로 뻗는 이베리아 연안선과 사르데냐 가지.
+  ['alghero', 'genova'], ['alghero', 'mallorca'],
+  ['mallorca', 'barcelona'], ['mallorca', 'valencia'], ['mallorca', 'algiers'],
+  ['valencia', 'barcelona'], ['valencia', 'malaga'], ['malaga', 'algiers'],
+  // 에게: 키오스를 아테네·로도스·살로니카 사이에 끼워 북에게가 살아나게 했다.
+  ['chios', 'athens'], ['chios', 'rodos'], ['chios', 'salonika'], ['salonika', 'istanbul'],
+  // 레반트: 키프로스를 축으로 이집트·시리아가 삼각으로 물린다.
+  ['famagusta', 'beirut'], ['famagusta', 'alexandria'], ['famagusta', 'iskenderun'],
+  ['iskenderun', 'beirut'],
 ];
 
 /* 항로 위험도 — **당대 해상보험 요율(%)**이다.
@@ -121,6 +191,34 @@ export const ROUTE_RISK = {
   'bursa|iznik': null,
   'malta|palermo': 4.0,
   'malta|tunis': 9.0,
+
+  /* ── 2차 확장분 ──────────────────────────────────────────────
+     같은 잣대를 그대로 쓴다: (내해/외해) × (양단 깃발의 적대) × (아군 해안까지의 거리).
+     교통량은 변수가 아니다. 새 값은 기존 앵커 사이를 메우는 자리에만 놓았다. */
+  'ancona|venezia': 2.0,        // 베네치아가 '만'처럼 다스리던 북아드리아. 나폴리~베네치아와 같은 급.
+  'ancona|ragusa': 2.5,         // 아드리아 횡단. 짧지만 세니의 우스코크가 훑던 물이라 조금 얹는다.
+  'messina|ragusa': 5.0,        // 오트란토 해협을 빠져 이오니아를 건넌다 — 며칠 뭍이 안 보인다.
+  'candia|ragusa': 7.5,         // 라구사 아르고시의 장거리 본선. 에게 남쪽 외해라 로도스~베네치아(7.0)보다 높다.
+  'messina|napoli': 2.0,        // 사료에 '메시나 2'로 직접 나오는 앵커값.
+  'malta|messina': 5.5,         // 해협 남쪽 절반. 몰타~팔레르모(4.0)보다 바르바리 쪽에 가깝다.
+  'alghero|genova': 4.0,        // 티레니아 외해지만 양단이 다 기독교 항구다.
+  'alghero|mallorca': 5.0,      // 사르데냐~발레아레스. 뭍이 오래 안 보이는 구간.
+  'barcelona|mallorca': 3.0,    // 아라곤 왕관의 내해. 양단이 같은 깃발이다.
+  'mallorca|valencia': 3.0,     // 같음.
+  'algiers|mallorca': 8.5,      // 발레아레스는 알제 사략의 단골 사냥터였다. 바르셀로나~알제(9.0) 바로 아래.
+  'barcelona|valencia': 2.5,    // 연안을 따라가는 짧은 길.
+  'malaga|valencia': 4.5,       // 연안이나 바르바리 배가 안달루시아 앞까지 올라왔다.
+  'algiers|malaga': 9.0,        // 알보란 좁은 목. 바르셀로나~알제와 같은 급으로 둔다.
+  'athens|chios': 8.0,          // 에게해 앵커 8 그대로.
+  'chios|rodos': 7.0,           // 에게 남부. 섬 그늘이 있어 8보다 조금 낫다.
+  'chios|salonika': 6.0,        // 북에게는 오스만 내해에 가까워 아래로 내린다.
+  'istanbul|salonika': 4.0,     // 제국 안쪽 연안 항로. 아테네~이스탄불과 같은 급.
+  'alexandria|candia': 7.0,     // 이집트 편도(6.0)에 크레타까지의 외해를 얹었다.
+  'candia|famagusta': 7.0,      // 동지중해 횡단. 뭍이 며칠 안 보인다.
+  'beirut|famagusta': 4.5,      // 키프로스~레반트는 하루 도항이고 양단이 오스만 세력권이다.
+  'famagusta|iskenderun': 4.0,  // 같음. 더 짧다.
+  'alexandria|famagusta': 6.5,  // 알렉산드리아 편도 6.0에 외해분을 조금 얹었다.
+  'beirut|iskenderun': 5.0,     // 레반트 연안. 몰타 기사단·토스카나 갤리가 노리던 물이다.
 };
 
 /* 해류 — 지중해는 대체로 아프리카 연안을 동쪽으로 흐르고 레반트에서 북상해 되돌아온다.
@@ -137,4 +235,9 @@ export const CURRENTS = {
   'istanbul|rodos':     { from: 'istanbul',   push: 0.10 },   // 보스포루스에서 밀려 나오는 물
   'napoli|palermo':     { from: 'napoli',     push: 0.05 },
   'genova|venezia':     { from: 'venezia',    push: 0.05 },
+  // 2차 확장분 — 같은 큰 흐름(아프리카 연안 동진 → 레반트 북상 → 아나톨리아 서진)의 연장이다.
+  'algiers|malaga':     { from: 'malaga',     push: 0.08 },   // 지브롤터로 들어온 대서양 물이 동쪽으로 민다
+  'beirut|iskenderun':  { from: 'beirut',     push: 0.06 },   // 레반트 해안을 북상하는 물
+  'candia|famagusta':   { from: 'candia',     push: 0.06 },   // 크레타 동쪽에서 키프로스로 동진
+  'alexandria|candia':  { from: 'alexandria', push: 0.07 },   // 이집트 앞바다에서 북서로 되돌아 나간다
 };
