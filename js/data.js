@@ -542,6 +542,83 @@ export const OFFICER = {
   },
 };
 
+/* ── 술집 ─────────────────────────────────────────────────────
+   **선원은 부두에서 버튼으로 사는 물건이 아니다.** 첫 화면에서 선장은 배만 있고
+   사람이 없다 — 술집에 들어가 자리를 돌며 무리를 모아야 배가 움직인다.
+
+   자리에 앉은 것은 개인이 아니라 **무리(패거리)**다. 같이 배를 타 온 몇이 함께
+   움직이므로 통째로 데려가거나 통째로 보낸다. 개인을 낱개로 세면 화면이 명부가 되고,
+   무리로 두면 "어느 패를 태울 것인가"라는 판단이 남는다.
+
+   자리마다 값이 두 갈래인 것이 핵심이다:
+     · advance 계약금 — **지금 당장** 나간다. 초반 금고를 직접 때린다.
+     · wage     요구 일당 — 항해하는 내내 따라온다. 싸게 태운 대가는 뒤에 온다.
+   싼 무리는 계약금도 일당도 낮지만 갑판에서 쓸모가 없고 쉽게 토라진다.
+   비싼 무리는 그 반대다 — "지금 아낄 것인가 나중에 아낄 것인가"가 매 자리마다 걸린다. */
+export const TAVERN = {
+  cycle: 2,          // 며칠마다 사람이 갈리나 (매물보다 빠르다 — 술집은 하루가 다르다)
+  slots: [2, 5],     // 자리 수 — 도시 size로 스케일된다(큰 항구일수록 사람이 많다)
+  band: [2, 6],      // 한 무리의 인원
+  emptyOdds: 0.22,   // 빈 자리가 나올 확률 (늘 만원이면 고를 맛이 없다)
+
+  /* 계약금 기준(1인당). 부두 고용(HIRE_UNIT 55닢)보다 **훨씬 싸다** —
+     제 발로 배를 찾아온 사람들이기 때문이다. 대신 값은 일당으로 돌아온다.
+
+     ★ 이 값은 감이 아니라 **시작 조건에서 역산한 것**이다(tools/test-tavern.mjs가 지킨다).
+       금화 150닢으로 최소 인원(낡은 바사 5명)을 태우고도 첫 항차의 항해비와
+       화물값이 남아야 한다. 14닢으로 뒀더니 여섯을 태우는 데 92닢이 나가
+       남은 58닢으로는 가장 짧은 항로(제노바 2일·41닢)조차 화물을 못 실었다 —
+       "아슬아슬"이 아니라 막다른 길이었다. */
+  advanceUnit: 8,
+};
+
+/* 기질 — 무리의 성격. 임금·백병 실력·다루기 쉬운 정도가 한 묶음으로 움직인다.
+     wageMul  요구 일당 배율 (state.js: CREW_WAGE 1.2에 곱한다)
+     advMul   계약금 배율
+     troop    백병전에서 이 무리가 서는 병종 (data.js: TROOPS)
+     temper   다루기 쉬운 정도 0~1 — 높을수록 참을성이 있다.
+              **아직 게임 규칙에 쓰이지 않는다**(급여 체불·충성도가 미구현).
+              지금은 화면에 성격으로만 드러나고, 월급 정산을 넣을 때 이 값이 임계가 된다.
+     weight   술집에 나타나는 빈도 */
+export const CREW_TRAITS = {
+  green:   { id: 'green',   name: '애송이',   wageMul: 0.70, advMul: 0.70, troop: 'sailor',   temper: 0.55, weight: 20,
+             desc: '바다를 처음 본다. 값이 싸고 그만큼 쓸모도 없다.' },
+  steady:  { id: 'steady',  name: '성실하다', wageMul: 1.00, advMul: 1.00, troop: 'sailor',   temper: 0.85, weight: 24,
+             desc: '시키는 일을 군말 없이 한다. 오래 데리고 있을 만하다.' },
+  thrifty: { id: 'thrifty', name: '검소하다', wageMul: 0.82, advMul: 1.15, troop: 'sailor',   temper: 0.75, weight: 14,
+             desc: '계약금을 더 부르는 대신 일당을 덜 받는다. 길게 갈수록 이쪽이 싸다.' },
+  salty:   { id: 'salty',   name: '노련하다', wageMul: 1.35, advMul: 1.30, troop: 'gunner',   temper: 0.80, weight: 16,
+             desc: '뱃밥을 오래 먹었다. 비싸지만 포와 삭구를 안다.' },
+  rough:   { id: 'rough',   name: '거칠다',   wageMul: 1.20, advMul: 1.10, troop: 'swordsman', temper: 0.45, weight: 14,
+             desc: '싸움에 이골이 났다. 갑판에서는 든든하고 항구에서는 골칫거리다.' },
+  corsair: { id: 'corsair', name: '해적 출신', wageMul: 1.50, advMul: 1.45, troop: 'corsair', temper: 0.35, weight: 8,
+             desc: '어느 배를 털었는지는 묻지 않는 편이 좋다. 백병전에서 값을 한다.' },
+  drunk:   { id: 'drunk',   name: '주정뱅이', wageMul: 0.55, advMul: 0.55, troop: 'sailor',   temper: 0.25, weight: 10,
+             desc: '싸다. 아주 싸다. 그럴 만한 이유가 있다.' },
+};
+export const CREW_TRAIT_KEYS = Object.keys(CREW_TRAITS);
+
+/* 무리 이름 — 깃발(권역)마다 다른 풀에서 뽑는다. 항구를 옮기면 사람이 달라 보이는 것이
+   이 게임에서 "다른 바다에 왔다"를 느끼는 가장 싼 방법이다. */
+export const CREW_NAMES = {
+  latin:   ['조반니 패', '마테오 형제', '루카의 무리', '베르나르도 패', '도메니코 패',
+            '피에트로 형제', '안젤로의 무리', '리카르도 패', '살바토레 패', '토마소 형제'],
+  iberian: ['디에고 패', '라몬의 무리', '알폰소 형제', '후안 패', '미겔의 무리',
+            '파블로 패', '산초 형제', '엔리케의 무리'],
+  greek:   ['니콜라오스 패', '스타브로스의 무리', '디미트리 형제', '얀니스 패',
+            '테오도로스의 무리', '마놀리스 패', '코스타스 형제'],
+  levant:  ['하산 패', '유수프의 무리', '카림 형제', '무라트 패', '이브라힘의 무리',
+            '살림 패', '오마르 형제', '라시드의 무리'],
+};
+
+/** 깃발 → 이름 풀. 여기 없는 깃발은 latin으로 떨어진다(도시를 늘려도 안 깨진다). */
+export const CREW_NAME_POOL = {
+  venice: 'latin', genoa: 'latin', france: 'latin',
+  spain: 'iberian',
+  hospitaller: 'greek',
+  ottoman: 'levant', hafsid: 'levant',
+};
+
 /* 해상 이벤트 가중치 */
 export const SEA_EVENTS = [
   { id: 'calm',     weight: 40, name: '순조로운 항해' },

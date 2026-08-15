@@ -5,6 +5,7 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
+  TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL,
 } from './data.js';
 
 export const state = {
@@ -29,6 +30,11 @@ export const state = {
   shocks: [],                // 시장 충격 — { city, good, mult, until, why }. 기근·전손 같은 **사건**이 만든다
   contract: null,            // 맡은 대형 주문 (한 번에 하나)
   officer: null,             // 부관 — { hiredDay, earned }. 오직 한 명(data.js: OFFICER)
+  /* 태운 선원 무리 — [{ n, trait, wage, name, from, day }]. 술집에서 모은 패거리다.
+     인원의 **정본은 `state.crew`**(숫자)이고 이쪽은 "누가 타고 있나"의 기록이다.
+     둘이 어긋날 수 있다(전투로 죽으면 crew만 준다) — `trimBands()`가 맞춘다. */
+  bands: [],
+  hired: [],                 // 이미 태운 술집 자리의 id — 같은 무리를 두 번 태우지 못하게
   npcs: [],                  // 저 혼자 도는 상인·해적 (world.js가 굴린다)
   known: new Set(['venezia']),
   everOwned: new Set(['hulk']),   // 한 번이라도 몰아 본 선종 — 상위 선박 해금 조건(SHIPS[].requires)
@@ -361,7 +367,120 @@ export function hire(n) {
   if (max <= 0) return { ok: false, reason: room <= 0 ? '선실이 가득 찼다' : '금화가 모자란다' };
   state.gold -= max * HIRE_UNIT;
   state.crew += max;
+  // 부두에서 급히 긁어모은 인력에는 이름이 없다. 일당은 표준값으로 친다 —
+  // 값을 두 배로 치르는 대신 고르지 않는 것이 이 경로의 성격이다.
+  state.bands.push({ n: max, trait: 'steady', wage: CREW_WAGE, name: '부두 인부', from: state.at, day: state.day });
   return { ok: true, n: max, cost: max * HIRE_UNIT };
+}
+
+/* ── 술집 ─────────────────────────────────────────────────────
+   선원을 모으는 자리. 부두 고용(`hire`)이 "값을 두 배로 치르고 아무나 긁어모으는" 길이라면
+   이쪽은 **고르는** 길이다 — 자리마다 인원·기질·계약금·요구 일당이 다르다.
+
+   매물(`usedListings`)·계약(`contractOffer`)과 같은 결정론 규칙을 쓴다:
+   항구를 나갔다 들어와도 같은 사람이 앉아 있어야 한다(재입장 스캠 방지).
+   사람은 이틀마다 갈린다 — 배보다 빠르고 시세와도 리듬이 다르다. */
+
+/** 기질을 weight에 비례해 하나 뽑는다. */
+function pickTrait(r) {
+  const total = CREW_TRAIT_KEYS.reduce((a, k) => a + CREW_TRAITS[k].weight, 0);
+  let t = r * total;
+  for (const k of CREW_TRAIT_KEYS) {
+    t -= CREW_TRAITS[k].weight;
+    if (t <= 0) return k;
+  }
+  return 'steady';
+}
+
+/** 그 항구 술집에 지금 앉아 있는 무리들. 화면과 규칙이 같은 목록을 본다. */
+export function tavernCrews(cityId = state.at, day = state.day) {
+  const city = CITY_BY_ID[cityId];
+  if (!city) return [];
+
+  const cyc = Math.floor(day / TAVERN.cycle);
+  // 큰 항구일수록 사람이 많다. size 1→2자리, 3→4자리가 기본이고 여기서 빈 자리가 빠진다.
+  const slots = Math.min(TAVERN.slots[1], TAVERN.slots[0] + (city.size - 1));
+  // 나포선 경매항(튀니스·알제·몰타)에는 거친 자들이 더 모인다 — 그 도시의 성격이
+  // 시장·조선소만이 아니라 **사람**에서도 드러나야 한다.
+  const roughPort = !!city.prizeYard;
+  const pool = CREW_NAMES[CREW_NAME_POOL[city.flag] ?? 'latin'];
+
+  const out = [];
+  for (let i = 0; i < slots; i++) {
+    if (hash(cityId, 'tav', i, cyc) < TAVERN.emptyOdds) continue;   // 빈 자리
+
+    let trait = pickTrait(hash(cityId, 'tavtrait', i, cyc));
+    // 거친 항구에서 애송이가 걸리면 한 번 더 굴린다. 확률표를 따로 두지 않고
+    // 재굴림으로 기울이는 이유는 도시를 늘려도 표를 손볼 필요가 없기 때문이다.
+    if (roughPort && trait === 'green') trait = pickTrait(hash(cityId, 'tavtrait2', i, cyc));
+    const T = CREW_TRAITS[trait];
+
+    const rn = hash(cityId, 'tavn', i, cyc);
+    const n = TAVERN.band[0] + Math.floor(rn * (TAVERN.band[1] - TAVERN.band[0] + 1));
+    // 값은 기질이 정하고 ±12%만 흔든다. 흔들림이 크면 기질이 안 읽힌다.
+    const jitter = 0.88 + hash(cityId, 'tavjit', i, cyc) * 0.24;
+
+    const nameIdx = Math.floor(hash(cityId, 'tavname', i, cyc) * pool.length);
+    out.push({
+      id: `${cityId}-${cyc}-${i}`,
+      n,
+      trait,
+      traitName: T.name,
+      desc: T.desc,
+      troop: T.troop,
+      temper: T.temper,
+      wage: Math.round(CREW_WAGE * T.wageMul * jitter * 100) / 100,
+      advance: Math.round(TAVERN.advanceUnit * T.advMul * jitter) * n,
+      name: pool[nameIdx],
+      city: cityId,
+    });
+  }
+  return out;
+}
+
+/** 무리를 통째로 태운다. 낱개로 고를 수 없다 — 같이 다니는 사람들이기 때문이다. */
+export function recruitBand(id, cityId = state.at) {
+  const band = tavernCrews(cityId).find((b) => b.id === id);
+  if (!band) return { ok: false, reason: '그 자리는 비었다' };
+  if (state.hired?.includes(id)) return { ok: false, reason: '이미 태운 무리다' };
+  const room = state.crewMax - state.crew;
+  if (room <= 0) return { ok: false, reason: '선실이 가득 찼다' };
+  if (band.n > room) return { ok: false, reason: `선실이 ${band.n - room}자리 모자란다` };
+  if (band.advance > state.gold) {
+    return { ok: false, reason: `계약금이 ${(band.advance - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  }
+
+  state.gold -= band.advance;
+  state.crew += band.n;
+  state.bands.push({
+    n: band.n, trait: band.trait, wage: band.wage,
+    name: band.name, from: cityId, day: state.day,
+  });
+  (state.hired ||= []).push(id);
+  return { ok: true, band };
+}
+
+/** 선원 1인 1일 평균 임금 — 무리마다 요구가 다르므로 가중평균으로 낸다.
+    무리 기록이 없으면(시뮬·테스트가 `state.crew`만 세울 때) 표준 일당으로 떨어진다.
+    ★ 인원과 무관한 **단가**를 돌려주는 이유: `voyageCost`가 `crew`를 인자로 받아
+      "선원이 N명이면 얼마인가"를 묻기 때문이다. 총액을 돌려주면 그 물음에 못 답한다. */
+export function avgCrewWage() {
+  const inBands = state.bands.reduce((a, b) => a + b.n, 0);
+  if (!inBands) return CREW_WAGE;
+  return state.bands.reduce((a, b) => a + b.n * b.wage, 0) / inBands;
+}
+
+/** 무리 인원 합을 `state.crew`에 맞춘다 — 사람이 죽으면 무리도 줄어야 한다.
+    싼 무리부터 깎지 않고 **뒤에 태운 무리부터** 깎는다(먼저 탄 사람이 살아남는다). */
+export function trimBands() {
+  let over = state.bands.reduce((a, b) => a + b.n, 0) - state.crew;
+  while (over > 0 && state.bands.length) {
+    const last = state.bands[state.bands.length - 1];
+    const cut = Math.min(over, last.n);
+    last.n -= cut;
+    over -= cut;
+    if (last.n <= 0) state.bands.pop();
+  }
 }
 
 /* ── 개장 ─────────────────────────────────────────────────────
@@ -782,10 +901,13 @@ export function sellShip(key) {
   return { ok: true, gain };
 }
 
-/** 선원이 줄어 슬롯이 닫히면 그 자리의 병종도 내린다 */
+/** 선원이 줄어 슬롯이 닫히면 그 자리의 병종도 내린다.
+    무리 명부도 여기서 함께 맞춘다 — `state.crew`가 줄어드는 자리(전투 사상·폭풍)는
+    전부 이 함수를 이미 부르고 있으므로, 배선을 한 곳으로 모으면 빠뜨릴 자리가 없다. */
 export function trimLoadout() {
   const open = openSlots();
   for (let i = open + 1; i < MELEE_SLOTS; i++) state.loadout[i] = null;
+  trimBands();
 }
 
 /* ── 항로 ─────────────────────────────────────────────────── */
@@ -1148,7 +1270,8 @@ export function armsUpkeep(arms = state.arms) {
 }
 
 export function voyageCost(days, crew = state.crew, leg = null) {
-  const wages = Math.round(crew * CREW_WAGE * days);
+  // 일당은 무리마다 다르다 — 술집에서 누구를 태웠는지가 여기서 값으로 돌아온다.
+  const wages = Math.round(crew * avgCrewWage() * days);
   const supplies = Math.round(crew * SUPPLY_UNIT * days);
   const fleet = fleetUpkeep() * days;
   // 기함 선체 유지 — 삭구·타르·펌프질. 예전에는 "기함은 선원 급여로 갈음한다"며 뺐는데,
@@ -1253,26 +1376,35 @@ export function playerTroops() {
   return out;
 }
 
+/* 시작 조건 — 배는 있고 **사람이 없다.**
+   선원 0명은 단순한 난이도 조정이 아니라 시작의 뼈대다:
+   첫 화면에서 할 수 있는 일이 "술집에 간다" 하나로 좁혀지고,
+   선장이 맨 처음 내리는 결정이 매매가 아니라 **누구를 태울 것인가**가 된다.
+   금화 150닢은 그 결정을 아프게 만드는 값이다 — 다섯을 태우면 살 것을 못 사고,
+   셋만 태우면 배가 제 속력을 못 낸다(낡은 바사 crewMin 5). */
+export const START_GOLD = 150;
+
 export function resetGame() {
   const s = SHIPS.hulk;
   const arms = { light: s.guns, medium: 0, long: 0 };
   Object.assign(state, {
-    day: 1, gold: 900, shipKey: 'hulk',
-    hp: s.hp, maxHp: s.hp, crew: s.crew, crewMax: s.crewMax,
+    day: 1, gold: START_GOLD, shipKey: 'hulk',
+    hp: s.hp, maxHp: s.hp, crew: 0, crewMax: s.crewMax,
     guns: s.guns, arms: { ...arms },
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
     cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at: 'venezia',
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
+    bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
     fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,
-    loadout: ['captain', 'sailor', null, null, null, null],
+    loadout: ['captain', null, null, null, null, null],
     known: new Set(['venezia']), everOwned: new Set(['hulk']), log: [],
     stats: { battles: 0, wins: 0, profit: 0, distance: 0 },
   });
   trimLoadout();
   refreshPrices();
-  pushLog('베네치아 부두. 물이 새는 낡은 바사 한 척과 금화 900닢으로 시작한다.', 'warn');
+  pushLog(`베네치아 부두. 물이 새는 낡은 바사 한 척과 금화 ${START_GOLD}닢으로 시작한다.`, 'warn');
+  pushLog('갑판에 사람이 없다. 술집에서 선원을 모으지 않으면 배는 뜨지 않는다.', 'warn');
   pushLog(`${OFFICER.name}이(가) 장부를 안고 갑판에 올라섰다. 급여 ${OFFICER.wage}닢/일.`, 'good');
-  pushLog('제대로 된 배를 살 때까지는 짧은 항로만 돌아야 한다.', 'info');
 }

@@ -3,7 +3,7 @@
 import { VW, VH } from './sprites/scene.js';
 import { loadAssetPack } from './assets.js';
 import { loadEvidence } from './evidence.js';
-import { state, resetGame } from './state.js';
+import { state, resetGame, START_GOLD } from './state.js';
 import { initWorld } from './world.js';
 import { refreshHUD, refreshLog, clearOverlay, el, overlay } from './ui.js';
 
@@ -96,10 +96,12 @@ async function boot() {
   const { portScene } = await import('./scenes/port.js');
   const { battleScene } = await import('./scenes/battle.js');
   const { shipyardScene } = await import('./scenes/shipyard.js');
+  const { tavernScene } = await import('./scenes/tavern.js');
   register('map', mapScene);
   register('port', portScene);
   register('battle', battleScene);
   register('shipyard', shipyardScene);
+  register('tavern', tavernScene);
 
   fit();
   resetGame();
@@ -115,9 +117,10 @@ function titleScreen() {
     el('h1', { text: '지중해 교역기' }),
     // ★ 연도를 박지 않는다(최상위 지침) · 시작 조건은 state.js: resetGame이 정본이다.
     //   전에는 "1500년, 카라벨 한 척과 3,200닢"이었는데 둘 다 사실이 아니게 된 지 오래였다.
-    el('div.sub', { text: '베네치아 — 물 새는 낡은 바사 한 척과 금화 900닢' }),
+    el('div.sub', { text: `베네치아 — 물 새는 낡은 바사 한 척과 금화 ${START_GOLD}닢` }),
     el('div.keys', {
-      html: '항구에서 <b>싸게 사고</b> 다른 도시에서 <b>비싸게 판다</b>.<br>'
+      html: '갑판에는 아무도 없다. 먼저 <b>술집</b>에서 선원을 모아야 배가 뜬다.<br>'
+          + '항구에서 <b>싸게 사고</b> 다른 도시에서 <b>비싸게 판다</b>.<br>'
           + '바다에는 해적이 있다. <b>포격</b>으로 몰아붙이고 <b>백병전</b>으로 나포하라.',
     }),
     el('button.btn', {

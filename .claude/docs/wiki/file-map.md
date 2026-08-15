@@ -19,7 +19,7 @@
 | `js/world.js` | 저 혼자 도는 세계 — 생성·하루진행·습격·조회 | `initWorld`, `worldTick(days)`, `npcsOnLeg/npcsAtPort/npcPos`, `removeNpc`, `newsLines` |
 | `js/npc/config.js` | NPC 튜닝값(숫자만) | `NPC`(traders·pirates·raidBase·pressure·loadRatio·pickTop), `TRADER_SHIPS`/`PIRATE_SHIPS`, `PURSE` |
 | `js/npc/behavior.js` | NPC 판단(어디로·무엇을) | `chooseTrade`, `choosePirateMove`, `chooseWander` — 게임 모듈을 import하지 않고 `ctx`로만 받는다 |
-| `js/state.js` | 게임 상태 + 규칙 | `state`, `priceOf`, `costFor/gainFor`(시장 깊이), `tariffRate`, `windOf/windFactor/routeFactor`(바람·해류), `voyageCost`, `contractOffer/acceptContract/deliverContract`(대형 주문), `buy/sell`, `repair/hire`, `purchaseShip/boardShip/sellShip`·`sellsShip/tierNeeded/yardCapable/shipPriceAt/buildableAt`(조선소)·`usedListings/buyUsed`(중고선)·`shipLockedBy`(해금), `buyCannon/removeCannon`·`armsFactor/armsAimAt/zoneFactor`(무장), `setSlot/openSlots/trimLoadout`(갑판 배치), `voyageDays`, `rollSeaEvent`, `pickEnemy`, `playerTroops`, `resetGame` |
+| `js/state.js` | 게임 상태 + 규칙 | `state`, `priceOf`, `costFor/gainFor`(시장 깊이), `tariffRate`, `windOf/windFactor/routeFactor`(바람·해류), `voyageCost`, `contractOffer/acceptContract/deliverContract`(대형 주문), `buy/sell`, `repair/hire`, `purchaseShip/boardShip/sellShip`·`sellsShip/tierNeeded/yardCapable/shipPriceAt/buildableAt`(조선소)·`usedListings/buyUsed`(중고선)·`shipLockedBy`(해금), `buyCannon/removeCannon`·`armsFactor/armsAimAt/zoneFactor`(무장), `setSlot/openSlots/trimLoadout`(갑판 배치), `tavernCrews/recruitBand/avgCrewWage/trimBands`(술집·선원 무리), `START_GOLD`, `voyageDays`, `rollSeaEvent`, `pickEnemy`, `playerTroops`, `resetGame` |
 | `js/ui.js` | DOM 오버레이 헬퍼 | `el`, `modal`, `toast`, `refreshHUD`, `refreshLog`, `iconEl`, `spriteEl`, `spriteElTrim`(여백 크롭), `bar` |
 | `js/main.js` | 캔버스/씬 매니저/루프 | `go(scene)`, `toLogical`, `toScreen`, `viewport`, `register` |
 | `js/scenes/port.js` | 항구 — 시세·매매·정비·조선소 | `portScene` |
@@ -52,14 +52,18 @@
 | `dashboard/port-view.js` | **항구 탭** 렌더 | 항구 일람·상세(교역품 3묶음)·공업력 비교·부동산·근거 현황 |
 | `dashboard/app.js` | 탭 셸 | 왼쪽 사이드바 · 해적·항구·보수 탭은 **처음 열 때만** 계측(무겁다) |
 | `js/scenes/shipyard.js` | 조선소 — 선박 교체·갑판 배치·무장 → [shipyard.md](shipyard.md) | `shipyardScene` |
+| `js/scenes/tavern.js` | 술집 — 선원 무리 등용 → [crew-tavern.md](crew-tavern.md) | `tavernScene` |
+| `tools/test-tavern.mjs` | 술집·시작 조건 검증 20종 | 시작(선원 0·금화 150) · 결정론 · 항구 성격 · 기질별 값 · **첫 항차 성립** · 명부 동기화 |
 
 기타: `index.html`(셸) · `css/style.css`(UI 테마) · `preview.html`(에셋 미리보기 — 그림마다 `bake` 키를 적어 준다) · `serve.py`(개발 서버 — 캐시 끔 + `.mjs` MIME 등록, `-m http.server` 대신 이걸 쓴다) · `assets/`(에셋 팩 — `README.md`에 교체 절차)
 
 ## 씬 흐름
 
 ```
-port ──조선소──▶ shipyard ──나가기──▶ port      (선박·선원·무장)
+port ──조선소──▶ shipyard ──나가기──▶ port      (선박·갑판배치·무장·개장·중고)
+port ──술집────▶ tavern   ──나가기──▶ port      (선원 무리 등용 · 게임 시작 시 여기부터)
 port ──출항──▶ map ──도시 클릭──▶ (항해 연출)
+     └ 선원 0명이면 출항 버튼이 tavern으로 간다
                      │
                      ├ 이벤트 없음 ─▶ port (도착)
                      ├ 폭풍/표류물 ─▶ 모달 ─▶ 항해 재개

@@ -691,3 +691,201 @@ export function cannonSprite(kind = 'medium', recoil = 0) {
     outline(ctx, A.w, 24);
   });
 }
+
+/* ══════════════════════════════════════════════════════════════
+   6. 술집 실내
+   ══════════════════════════════════════════════════════════════
+   선원을 모으는 자리. 항구 씬과 달리 **실내**라 광원이 적다 —
+   창으로 드는 저녁빛과 매달린 등불 둘. 어두운 목재를 바탕에 깔고
+   등불 둘레만 밝혀 시선이 테이블로 모이게 한다.
+
+   ★ 그림은 **왼쪽 절반(x < 192)에만** 담는다. 오른쪽은 DOM 패널이 덮으므로
+     거기 그린 것은 한 픽셀도 보이지 않는다. 처음에 카운터·창·그물을 오른쪽까지
+     펼쳤다가 통째로 가려졌다 — 조선소(#yard-panel)와 같은 실수를 반복하지 말 것.
+
+   ★ **배경과 전경이 나뉜다.** 사람이 테이블에 앉은 것처럼 보이려면 테이블이
+     인물보다 **앞에** 와야 하는데, 배경 한 장이면 인물이 항상 위에 그려져
+     테이블이 발치에 깔린 널빤지처럼 보인다. 그래서 상판과 다리는
+     `tavernFrontSprite()`로 빼서 인물을 그린 **뒤에** 덧그린다. */
+
+/* 무리가 앉는 자리 — 캐릭터 **중심 x**와 **발끝 y**.
+   그림(테이블)과 씬 코드가 같은 상수를 봐야 사람이 허공에 서지 않는다.
+   앞줄 넷은 테이블에 가려 하반신이 보이지 않고, 뒷줄 하나는 통째로 선 모습이다. */
+export const TAVERN_SEATS = [
+  { x: 34,  y: 209, flip: false },
+  { x: 72,  y: 209, flip: true  },
+  { x: 132, y: 209, flip: false },
+  { x: 168, y: 209, flip: true  },
+  { x: 104, y: 184, flip: true  },   // 뒷줄 — 서서 기다리는 무리
+];
+
+/* 테이블 — [x, 폭]. 상판 y는 아래 TAV_TABLE_Y 하나로 맞춘다.
+   앞줄 좌석 넷이 이 둘에 나뉘어 앉는다. */
+const TAV_TABLES = [[8, 92], [112, 84]];
+const TAV_TABLE_Y = 198;    // 좌석 발끝(209)보다 11px 위 — 그만큼 다리가 가려진다
+const TAV_FLOOR = 166;      // 바닥이 시작되는 y
+
+/** 등불 하나 — 사슬에 매달린 놋쇠 램프 */
+function tavernLamp(g, x, y) {
+  g.v(x, 0, y - 5, P.ironD);
+  g.r(x - 3, y - 4, 7, 3, P.goldD);
+  g.h(y - 5, x - 2, x + 2, P.goldM);
+  g.r(x - 2, y - 1, 5, 4, P.goldM);
+  g.r(x - 1, y, 3, 3, P.goldL);
+  g.px(x, y + 1, '#fff6cf');
+  g.r(x - 3, y + 3, 7, 1, P.goldD);
+}
+
+/** 등불 빛무리.
+    알파를 진하게 깔면 벽에 큰 타원 얼룩이 남고, 너무 얕으면 등불이 꺼진 것처럼 보인다.
+    바깥은 아주 얕게(0.018) 깔되 **심지 둘레만 좁고 진하게**(0.05) 겹쳐 광원처럼 만든다. */
+function lampGlow(g, x, y, r0) {
+  for (let i = 6; i >= 1; i--) {
+    const rr = r0 * (i / 6);
+    g.ellipse(x, y + rr * 0.3, rr, rr * 0.66, 'rgba(255,206,120,0.018)');
+  }
+  for (let i = 3; i >= 1; i--) {
+    const rr = (r0 * 0.26) * (i / 3);
+    g.ellipse(x, y + rr * 0.2, rr, rr * 0.8, 'rgba(255,222,150,0.05)');
+  }
+}
+
+/** 나무 술통 */
+function barrel(g, x, y, w = 13, h = 16) {
+  g.r(x, y, w, h, P.woodM);
+  g.r(x + 1, y + 1, w - 2, h - 2, P.woodL);
+  g.r(x + 2, y + 2, 2, h - 4, P.woodH);
+  g.h(y + 3, x, x + w - 1, P.ironM);
+  g.h(y + h - 4, x, x + w - 1, P.ironM);
+  g.h(y, x + 1, x + w - 2, P.woodD);
+  g.h(y + h - 1, x + 1, x + w - 2, P.woodD);
+}
+
+export function tavernSprite(styleKey = 'latin', seed = 1) {
+  const key = `scene:tavern:${styleKey}:${seed}`;
+  return bake(key, VW, VH, (g, ctx) => {
+    const S = STYLES[styleKey];
+    const r = rng(seed);
+
+    // ── 벽 ───────────────────────────────────────────────
+    // 도시 벽색을 어둡게 깔아 실내 그늘을 만든다. 밝은 회벽 그대로면 담벼락처럼 보인다.
+    g.r(0, 0, VW, TAV_FLOOR, S.wallD);
+    g.r(0, 0, VW, TAV_FLOOR, '#00000040');
+    for (let y = 0; y < TAV_FLOOR; y += 3) g.h(y, 0, VW - 1, '#00000012');
+
+    // ── 천장 들보 ────────────────────────────────────────
+    g.r(0, 0, VW, 12, P.woodD);
+    g.h(12, 0, VW - 1, P.out2);
+    g.h(11, 0, VW - 1, P.woodM);
+    for (let x = 10; x < 200; x += 44) {
+      g.r(x, 0, 9, 12, P.woodM);
+      g.v(x, 0, 11, P.woodL);
+      g.v(x + 8, 0, 11, P.woodD);
+    }
+
+    // ── 창 (하나만, 왼쪽) ─────────────────────────────────
+    // 실내가 어두우므로 창이 화면에서 가장 밝은 면이 된다 — 시선의 닻이다.
+    const wx = 20;
+    g.r(wx - 3, 28, 52, 52, P.woodD);
+    g.r(wx, 31, 46, 46, S.sky[2]);
+    g.r(wx, 31, 46, 22, S.sky[1]);
+    g.r(wx, 31, 46, 10, S.sky[0]);
+    g.r(wx, 62, 46, 15, P.seaD);
+    g.h(66, wx, wx + 45, P.seaM);
+    g.h(70, wx + 5, wx + 26, P.seaL);
+    g.r(wx + 10, 55, 18, 7, P.blackM);            // 정박한 배 실루엣
+    g.v(wx + 17, 42, 55, P.blackM);
+    g.poly([[wx + 18, 43], [wx + 28, 54], [wx + 18, 54]], '#2a2230');
+    g.v(wx + 22, 31, 76, P.woodM);                // 창살
+    g.h(53, wx, wx + 45, P.woodM);
+    g.box(wx - 3, 28, 52, 52, P.out2);
+
+    // ── 벽에 걸린 노 ─────────────────────────────────────
+    // 여기 오는 사람들이 뭘 하는 사람인지 한 줄로 말한다.
+    // 자루를 가늘게 뽑고 날을 작게 두면 빗자루로 보인다 — 날은 넓고 길어야 노다.
+    g.r(83, 30, 4, 44, P.woodM);
+    g.v(83, 30, 73, P.woodL);
+    g.v(86, 30, 73, P.woodD);
+    g.r(82, 30, 6, 3, P.woodH);                    // 손잡이 마구리
+    g.poly([[79, 72], [91, 72], [92, 92], [85, 100], [78, 92]], P.woodL);   // 날
+    g.poly([[81, 74], [89, 74], [89, 90], [85, 96], [81, 90]], P.woodH);
+    g.v(85, 74, 95, P.woodM);                      // 날 가운데 능선
+    g.line(79, 72, 78, 92, P.woodD);
+    g.line(91, 72, 92, 92, P.woodD);
+
+    // ── 술통 선반 ────────────────────────────────────────
+    g.r(100, 88, 88, 3, P.woodM);
+    g.h(88, 100, 187, P.woodL);
+    barrel(g, 104, 72, 15, 16);
+    barrel(g, 124, 74, 13, 14);
+    barrel(g, 144, 72, 15, 16);
+    barrel(g, 166, 75, 12, 13);
+    // 선반 아래 매달린 컵들
+    for (const cx of [108, 120, 152, 174]) {
+      g.r(cx, 92, 3, 4, P.clothD);
+      g.h(96, cx, cx + 2, P.clothM);
+    }
+
+    // ── 허리 높이 목재 징두리 ─────────────────────────────
+    g.r(0, 116, VW, TAV_FLOOR - 116, P.woodD);
+    g.h(116, 0, VW - 1, P.woodM);
+    g.h(117, 0, VW - 1, P.woodL);
+    for (let x = 0; x < 200; x += 13) g.v(x, 118, TAV_FLOOR - 1, '#00000038');
+
+    // ── 바닥 ────────────────────────────────────────────
+    // 벽(징두리)보다 **밝게** 둔다. 어둡게 깔았더니 벽과 붙어 바닥이 사라졌다.
+    g.r(0, TAV_FLOOR, VW, VH - TAV_FLOOR, P.woodM);
+    g.h(TAV_FLOOR, 0, VW - 1, P.woodD);
+    g.h(TAV_FLOOR + 1, 0, VW - 1, P.woodH);
+    for (let y = TAV_FLOOR + 3; y < VH; y += 6) {
+      g.h(y, 0, VW - 1, '#00000026');
+      // 판자 이음매를 줄마다 어긋나게 — 격자로 깔면 타일처럼 보인다
+      const off = Math.floor(r() * 46);
+      for (let x = off; x < VW; x += 68) g.v(x, y - 2, Math.min(VH - 1, y + 3), '#00000030');
+    }
+    // 앞으로 갈수록 어둡게 — 바닥이 눕는 느낌
+    for (let y = VH - 22; y < VH; y++) g.h(y, 0, VW - 1, '#0000000a');
+
+    // ── 등불과 빛 ───────────────────────────────────────
+    lampGlow(g, 52, 44, 84);
+    lampGlow(g, 148, 40, 76);
+    tavernLamp(g, 52, 44);
+    tavernLamp(g, 148, 40);
+
+    // ── 구석 그늘 ───────────────────────────────────────
+    for (let i = 0; i < 22; i++) {
+      g.box(-i, -i, VW + i * 2, VH + i * 2, `rgba(20,14,26,0.0${Math.max(1, 5 - Math.floor(i / 5))})`);
+    }
+  });
+}
+
+/** 테이블 앞면 — **인물을 그린 뒤** 덧그린다. 이게 있어야 "앉아 있는" 것으로 보인다. */
+export function tavernFrontSprite() {
+  return bake('scene:tavern:front', VW, VH, (g) => {
+    for (const [x, w] of TAV_TABLES) {
+      const y = TAV_TABLE_Y;
+      // 상판
+      g.r(x, y, w, 4, P.woodL);
+      g.h(y, x, x + w - 1, P.woodH);
+      g.h(y + 3, x, x + w - 1, P.woodD);
+      // 앞치마와 다리
+      g.r(x + 1, y + 4, w - 2, 3, P.woodM);
+      g.h(y + 6, x + 1, x + w - 2, '#00000040');
+      g.r(x + 4, y + 7, 4, 13, P.woodM);
+      g.r(x + w - 8, y + 7, 4, 13, P.woodM);
+      g.v(x + 4, y + 7, y + 19, P.woodL);
+      g.v(x + w - 8, y + 7, y + 19, P.woodL);
+      g.h(y + 20, x + 4, x + 7, P.woodD);
+      g.h(y + 20, x + w - 8, x + w - 5, P.woodD);
+      // 상판 위 잔과 병 — 방금까지 누가 마시고 있었다
+      g.r(x + 12, y - 4, 3, 4, P.clothM);
+      g.px(x + 13, y - 5, P.clothL);
+      g.r(x + 26, y - 6, 4, 6, P.grnD);
+      g.px(x + 27, y - 7, P.grnM);
+      g.px(x + 28, y - 4, P.grnL);
+      g.r(x + w - 16, y - 4, 3, 4, P.clothM);
+      g.px(x + w - 15, y - 5, P.clothL);
+      g.r(x + w - 28, y - 3, 3, 3, P.goldD);
+    }
+  });
+}

@@ -6,13 +6,17 @@ import {
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf,
-  contractOffer,
+  contractOffer, START_GOLD,
 } from '../js/state.js';
 
 const ok = (c, msg) => console.log(`${c ? 'PASS' : 'FAIL'}  ${msg}`);
 
 resetGame();
-ok(state.shipKey === 'hulk' && state.gold === 900, `시작: ${state.shipKey} / ${state.gold}닢 / 선체 ${state.hp} / 화물칸 ${state.cargoCap}`);
+ok(state.shipKey === 'hulk' && state.gold === START_GOLD,
+   `시작: ${state.shipKey} / ${state.gold}닢 / 선체 ${state.hp} / 화물칸 ${state.cargoCap}`);
+// 갑판이 빈 채로 시작하므로(술집에서 모은다) 이 아래 검사들은 선원을 세워 두고 돈다.
+// 술집 규칙 자체는 tools/test-tavern.mjs가 본다.
+state.crew = 10;
 ok(armsTotal() === state.guns, `포문 동기화 ${state.guns}문`);
 
 // 누수: 항해하면 선체가 삭는다
@@ -168,7 +172,7 @@ resetGame();
 ok(hasOfficer(), '시작할 때부터 부관이 타고 있다');
 ok(state.officer.hiredDay === 0 && state.officer.paid === 0 && state.officer.earned === 0,
    '0일차부터 함께 — 장부는 아직 백지다');
-ok(state.gold === 900, '계약금이 없다 — 시작 금화가 그대로 900닢');
+ok(state.gold === START_GOLD, `계약금이 없다 — 시작 금화가 그대로 ${START_GOLD}닢`);
 
 // 물 새는 배를 몰아도 떠나지 않는다 (예전엔 이 조건에서 승선을 거절했다)
 ok(ship().leak && hasOfficer(), '물 새는 낡은 바사를 몰아도 함께 있다');

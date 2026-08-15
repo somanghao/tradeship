@@ -11,6 +11,7 @@
 |---|---|---|
 | 시세 · 가격 공식 · 산지/수요 · `wobble` · 매매 · 손익 · 매입가 · 화물/적재 · 항해 일수 · 항해비 · 초기 조건 · 무역 곡선 | [wiki/economy-trade.md](wiki/economy-trade.md) | `js/data.js`(GOODS·CITY_TRADE·SPREAD·MARKET·TARIFF) · `js/state.js`(priceOf·buy/sell·voyageCost) |
 | **부관 · 부선장 · 에이미** · 급여 · 성과급 · 입항세 감면 · 시장압력 감면 | [wiki/officer.md](wiki/officer.md) | `js/data.js: OFFICER` · `js/state.js`(officerPerk·voyageCost의 officer·sell의 cut) |
+| **술집 · 선원 등용 · 무리 · 기질 · 계약금 · 요구 일당** · 선원이 왜 0명으로 시작하나 · 부두 인부 | [wiki/crew-tavern.md](wiki/crew-tavern.md) | `js/data.js: TAVERN·CREW_TRAITS·CREW_NAMES` · `js/state.js`(tavernCrews·recruitBand·avgCrewWage·trimBands) · 씬 `js/scenes/tavern.js` · 검증 `node tools/test-tavern.mjs` |
 | 상인/해적 NPC · 세계가 혼자 돈다 · 시장압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 | [wiki/world-npc.md](wiki/world-npc.md) | 숫자 `js/npc/config.js` · 판단 `js/npc/behavior.js` · 집행 `js/world.js` · 계약 `js/data.js: CONTRACT` |
 | **도시 특산품 고증** · 어느 도시가 뭘 팔았나 · 깃발/국적 근거 · 사료 출처 | [wiki/city-goods-history.md](wiki/city-goods-history.md) (서술본·34KB로 무겁다) | **`content/city-evidence.json`**(기계 정본) → 검증 `node tools/check-evidence.mjs` |
 | **교역품 물가 고증** · 밀·소금·기름·와인·후추가 서로 몇 배였나 · 화물 1칸은 실제로 얼마인가 · **대조 2축의 정본** | 근거 JSON이 곧 문서다(주석이 상세) | **`content/goods-evidence.json`** → 검증 `node tools/check-prices.mjs` |
@@ -31,7 +32,9 @@
 | 시세 변동폭·주기 | `state.js: wobble()` (3일 주기 ±15%) |
 | 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`) |
 | 입항세 | `data.js: TARIFF` (도시 size별) |
-| 항해비 갈래 | `state.js: voyageCost()` — 일당(`CREW_WAGE` 1.2)·보급(`SUPPLY_UNIT` 1.3)·선체(`HULL_UPKEEP`×`SHIPS[].upkeep`)·무장(`ARM_UPKEEP`)·선단·**적하보험**(`INSURANCE_RATE`×항로요율×화물가치)·부관 |
+| 항해비 갈래 | `state.js: voyageCost()` — 일당(**`avgCrewWage()`** — 술집에서 누구를 태웠나로 갈린다·기본 `CREW_WAGE` 1.2)·보급(`SUPPLY_UNIT` 1.3)·선체(`HULL_UPKEEP`×`SHIPS[].upkeep`)·무장(`ARM_UPKEEP`)·선단·**적하보험**(`INSURANCE_RATE`×항로요율×화물가치)·부관 |
+| 시작 조건(금화·선원·배) | `state.js: START_GOLD`(150) · `resetGame()` — **선원 0명**으로 시작한다 |
+| 선원 무리의 값·기질 | `data.js: TAVERN`(cycle·slots·band·emptyOdds·**advanceUnit**) · `CREW_TRAITS`(wageMul·advMul·troop·temper) → [crew-tavern.md](wiki/crew-tavern.md) |
 | 부관 급여·성과급·능력 | `data.js: OFFICER` — `wage`·`cut`·`perks`는 **한 묶음**이라 함께 재측정. 고치면 `content/wage-evidence.json`도 같은 커밋에서 → [officer.md](wiki/officer.md) |
 | 도시 추가 | `map/geo.js: CITY_GEO`(좌표·깃발·규모) **와** `data.js: CITY_TRADE`(경제)에 **같은 id**로 — 한쪽만 넣으면 콘솔 경고 |
 | 시세 성향 | `data.js: CITY_TRADE` — `supply`(배율<1, 산지) / `demand`(배율>1, 수요지). 근거 → [city-goods-history.md](wiki/city-goods-history.md) |
@@ -52,6 +55,12 @@
 | 게임이 근거 JSON을 읽는 곳 | `js/evidence.js` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓으려고 `content/city-evidence.json`을 읽는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
 
 ## 3. 이 도메인 전용 함정·가드
+
+- **인원의 정본은 `state.crew`(숫자)이고 `state.bands`는 기록일 뿐이다.** 둘은 어긋날 수 있다(전투·폭풍으로 사람이 죽으면 crew만 준다) — `trimBands()`가 맞추고, 그 호출은 **`trimLoadout()` 안에** 있다. `crew`가 줄어드는 자리는 전부 이미 `trimLoadout()`을 부르고 있으므로 배선을 거기 모아 두면 빠뜨릴 자리가 없다. 새로 crew를 깎는 코드를 쓸 때도 같은 함수를 부를 것.
+- **`avgCrewWage()`는 총액이 아니라 단가를 돌려준다.** `voyageCost(days, crew, leg)`가 crew를 인자로 받아 "N명이면 얼마인가"를 묻기 때문이다. 총액으로 바꾸면 시뮬·대시보드가 조용히 틀린 값을 낸다.
+- **`TAVERN.advanceUnit`은 시작 조건에서 역산한 값이다.** 14닢으로 뒀더니 150닢으로 여섯을 태우는 데 92닢이 나가 **가장 짧은 항로조차 화물을 못 실었다.** 이 값을 올릴 때는 `node tools/test-tavern.mjs` ⑤(첫 항차 성립)를 반드시 다시 돌린다.
+- **`CREW_TRAITS[].temper`는 아직 어떤 규칙에도 안 물려 있다.** 급여 월말 정산·체불 불만·도망/반란의 임계로 쓰려고 미리 넣은 자리다 — "안 쓰는 필드"로 보고 지우지 말 것.
+- **시뮬은 술집을 쓴다**(`sim-core.mjs: manCrew`). 선원을 안 태우면 첫 항차부터 인원 부족으로 속력이 깎여 곡선이 통째로 어긋난다 — 실제로 배를 한 척도 못 사는 결과가 나왔다. 시작 조건을 만지면 `node tools/sim-trade.mjs`를 다시 돌릴 것.
 
 - **시세 노이즈는 `Math.random()`이 아니라 (도시·품목·날짜) 해시**다. 항구를 나갔다 들어와도 값이 변하면 안 된다(재입장 스캠 방지). `wobble()`을 난수로 바꾸지 말 것.
 - **매매 수량은 실패시키지 말고 클램프**한다. `min(요청, 화물여유, floor(gold/단가))` — "가능한 만큼" 사는 게 기존 UX다.
@@ -75,6 +84,6 @@
 - **부관 효과는 같은 시드로 짝지어(paired) 잰다.** 그냥 두 번 돌려 비교하면 시뮬이 "돈이 모이면 즉시 큰 배를 사는" 탓에 기준선이 25%씩 튀어 **효과의 부호가 뒤집힌다**(실제로 −20%와 +62%가 같은 설정에서 나왔다). 지표도 금화가 아니라 **총자산(금화+선단 매각가)**으로 본다 — 금화만 보면 "방금 배를 샀는가"에 지배된다.
 - **부관은 능력·급여·성과급을 한 묶음으로 조정한다.** `perks`만 후하게 하면 "고용 안 할 이유가 없는" 장치가 되고 `cut`만 올리면 아무도 안 쓴다(노림수는 승률 6할). 그리고 **총액이 같아도 급여와 성과급은 효과가 다르다** — 성과급은 잘 벌 때 더 떼므로 성장기 재투자 자본을 깎아 **복리로** 아프고, 급여는 고정이라 규모가 커질수록 가벼워진다. 총 부담을 맞춰 성과급 12%→8%+급여16으로 갈랐더니 순효과가 +14%→**+21%로 올라갔다.** "총액을 맞췄으니 균형도 같겠지"로 넘기지 말 것.
 - **선금이 있는 계약은 위약금이 선금보다 커야 한다.** 위약금을 선금의 50%로 뒀더니 "받고 파기"가 순이득이었다(+3,448닢). 지금은 ×1.25.
-- **계약 보수는 수량 × 단가가 아니라 목표 보수에서 역산한다.** 수량을 먼저 뽑으면 비단·금괴가 걸렸을 때 계약 하나가 5만 닢을 넘었다(시작 자금이 900닢인데). `CONTRACT.value`가 규모를 잡고 수량은 거기서 나온다.
+- **계약 보수는 수량 × 단가가 아니라 목표 보수에서 역산한다.** 수량을 먼저 뽑으면 비단·금괴가 걸렸을 때 계약 하나가 5만 닢을 넘었다(시작 자금이 150닢인데). `CONTRACT.value`가 규모를 잡고 수량은 거기서 나온다.
 - **NPC가 시장을 선점하면 플레이어가 굶는다.** NPC 거래 압력을 100% 반영했더니 5~15항차 자산이 바닥을 겼다. `npc/config.js: NPC.pressure`(0.5)로 절반만 남긴다.
 - **시뮬의 `ORDER`는 화물칸 오름차순이다.** 가격순으로 두면 갤리(비싸고 짐은 적다)를 사서 화물칸이 줄어든다. 그리고 **지금 타는 배보다 나은 것만** 사게 해야 한다 — 안 그러면 싼 배를 사서 하향 갈아탄다(실제로 그랬다).

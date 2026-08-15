@@ -11,6 +11,7 @@ import {
   state, resetGame, advanceDays, neighborsOf, voyageDays, voyageCost,
   buy, sell, costFor, gainFor, tariffRate, purchaseShip, boardShip, sellsShip,
   cargoFree, repair, hire, shorthanded, shipPriceAt,
+  tavernCrews, recruitBand, ship,
 } from '../js/state.js';
 import { initWorld, worldTick } from '../js/world.js';
 
@@ -67,9 +68,36 @@ export function bestRun(minMargin = 0) {
 /** 한 판을 끝까지 돌린다.
     hooks.onVoyage(rec)  — 항차가 끝날 때마다. rec에 그 항차의 수지·NPC 소식이 다 들어있다.
     hooks.onStart()      — 초기화 직후(0항차 시점 스냅샷용). */
+/* 배를 몰 사람을 채운다 — 게임은 **갑판이 빈 채로** 시작하므로(술집에서 모은다)
+   시뮬도 사람을 태우지 않으면 첫 항차부터 인원 부족으로 속력이 깎인다.
+
+   실제 플레이어처럼 **술집을 먼저 본다**(계약금이 부두 고용의 1/7이다).
+   싼 순으로 훑되 일당이 표준보다 비싼 무리는 뒤로 미룬다 — 계약금만 보고 태우면
+   주정뱅이로 갑판을 채우게 되고, 그건 사람이 아니라 값만 보는 플레이다.
+   술집이 비었거나 자리가 모자라면 부두 인부로 메운다(막다른 길을 막는 자리). */
+function manCrew() {
+  if (!shorthanded()) return 0;
+  let spent = 0;
+  const offers = tavernCrews(state.at)
+    .filter((b) => !state.hired.includes(b.id))
+    .sort((x, y) => (x.advance / x.n) * (x.wage / 1.2) - (y.advance / y.n) * (y.wage / 1.2));
+  for (const b of offers) {
+    if (!shorthanded()) break;
+    const g = state.gold;
+    if (recruitBand(b.id).ok) spent += g - state.gold;
+  }
+  while (shorthanded()) {
+    const g = state.gold;
+    if (!hire(1).ok) break;              // 금화가 바닥나면 인원 부족인 채로 떠난다
+    spent += g - state.gold;
+  }
+  return spent;
+}
+
 export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
   resetGame();
   initWorld();
+  manCrew();               // 첫 배를 몰 사람부터 태운다
   hooks.onStart?.();
 
   const got = {};      // shipKey -> 언제 샀나
@@ -94,12 +122,7 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
         shipSpend += before - state.gold;
         boardShip(key);
         got[key] = { v, day: state.day, gold: state.gold };
-        // 새 배를 몰려면 사람이 필요하다
-        while (shorthanded()) {
-          const g = state.gold;
-          if (!hire(1).ok) break;
-          hireSpend += g - state.gold;
-        }
+        hireSpend += manCrew();     // 새 배를 몰려면 사람이 더 필요하다
       }
     }
     if (state.hp < state.maxHp * 0.6) {

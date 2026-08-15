@@ -8,7 +8,7 @@ import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
   hasOfficer, officerPerk, routeDangerLabel,
-  jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks,
+  jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines, pirateEnemy,
@@ -403,6 +403,7 @@ function resolveEvent(ev, voyage) {
       const lost = Math.random() < 0.35 ? 1 + Math.floor(Math.random() * 2) : 0;
       state.hp = Math.max(1, state.hp - dmg);
       state.crew = Math.max(1, state.crew - lost);
+      if (lost) trimLoadout();   // 무리 명부와 갑판 슬롯을 줄어든 인원에 맞춘다
 
       /* ★ 폭풍이 심하면 배를 살리려 짐을 던진다(공동해손) — 보험이 무는 사건이 이것이다.
          전에는 보험료만 걷고 보상하는 자리가 없어, 그 항목이 사실상 세금이었다.

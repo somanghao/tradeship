@@ -6,9 +6,9 @@ import { unitSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, OFFICER } from '../data.js';
 import {
-  state, ship, cargoUsed, cargoFree, buy, sell, repair, hire,
-  marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT, HIRE_UNIT,
-  impactFactor, costFor, tariffRate,
+  state, ship, cargoUsed, cargoFree, buy, sell, repair,
+  marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT,
+  impactFactor, costFor, tariffRate, shorthanded,
   contractOffer, acceptContract, deliverContract, abandonContract,
   hasOfficer,
 } from '../state.js';
@@ -348,13 +348,11 @@ function sidePanel() {
             pushLog(`${city.name}에서 선체를 수리했다.`);
             after();
           }),
-        svcRow(`선원 고용 (${HIRE_UNIT}닢/명)`, `${state.crew}/${state.crewMax}`,
-          '5명', state.crew >= state.crewMax, () => {
-            const r = hire(5);
-            if (!r.ok) return toast(r.reason, 'bad');
-            toast(`선원 ${r.n}명 고용 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
-            after();
-          }),
+        /* 선원은 부두에서 버튼으로 사지 않고 술집에서 모은다.
+           "5명 고용" 버튼이던 자리다 — 값만 있고 선택이 없어서 뺐다. */
+        svcRow('선원', `${state.crew}/${state.crewMax}`
+              + (shorthanded() ? ` · 최소 ${ship().crewMin}명 미달` : ''),
+          '술집', false, () => go('tavern')),
         svcRow('무장', `${state.guns}/${gunCap()}문`,
           '무장 탭', false, () => go('shipyard', { tab: 'arms' })),
         svcRow('갑판 배치', `${playerTroops().length}칸`,
@@ -363,6 +361,10 @@ function sidePanel() {
           text: '⚒  조선소로 간다',
           onclick: () => go('shipyard'),
         }),
+        el('button.btn.dark', {
+          text: '🍺  술집으로 간다',
+          onclick: () => go('tavern'),
+        }),
       ]),
     ]),
 
@@ -370,10 +372,14 @@ function sidePanel() {
     contractCard(),
     harborCard(),
 
+    /* 사람이 하나도 없으면 배는 부두에 묶여 있다.
+       ★ crewMin **미달**은 막지 않는다 — 그건 속력이 떨어지는 벌칙이지 금지가 아니고,
+         전투로 선원을 잃었을 때 항구에 갇히면 빠져나갈 길이 없어진다.
+         0명만 막는 이유는 그 상태가 "출항"이라는 말 자체가 성립하지 않기 때문이다. */
     el('button.btn', {
-      text: '⚓  출항하기',
+      text: state.crew > 0 ? '⚓  출항하기' : '⚓  선원이 없다 — 술집으로',
       style: { fontSize: '14px', padding: '10px' },
-      onclick: () => go('map'),
+      onclick: () => go(state.crew > 0 ? 'map' : 'tavern'),
     }),
   ]);
 }

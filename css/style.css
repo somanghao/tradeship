@@ -613,3 +613,65 @@ html, body {
 .ctr-line { font-size: 13px; color: var(--parch); line-height: 1.6; }
 .ctr-line b { color: var(--brass-l); }
 .ctr-sub { font-size: 11.5px; color: #8f8878; line-height: 1.6; }
+
+/* ══ 술집 ══════════════════════════════════════════════════════
+   조선소(#yard-panel)와 같은 뼈대를 쓰되 색을 술집 쪽으로 눕힌다 —
+   놋쇠·목재 대신 등불빛. 자리마다 "지금 나가는 값(계약금)"과
+   "계속 나가는 값(일당)"이 나란히 보여야 하므로 값을 2열로 세운다. */
+#tavern-panel {
+  position: absolute;
+  display: flex; flex-direction: column;
+  background: linear-gradient(var(--panel-2), var(--panel));
+  border: 2px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 6px 18px #000a, inset 0 1px 0 #ffffff10;
+  overflow: hidden;
+}
+.tav-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(#43301c, #2c1f13);
+  border-bottom: 1px solid var(--brass-d);
+}
+.tav-head h3 { font-size: 13px; letter-spacing: .08em; color: var(--brass-l); }
+.tav-head .sub { font-size: 11px; color: #a89a84; margin-top: 3px; line-height: 1.5; }
+
+.tav-body { flex: 1 1 auto; overflow: auto; padding: 9px; min-height: 0; }
+.tav-empty {
+  font-size: 12px; color: #8f8878; line-height: 1.7;
+  padding: 18px 10px; text-align: center;
+}
+
+.tav-card {
+  padding: 8px; margin-bottom: 7px;
+  background: #ffffff08; border: 1px solid #ffffff10; border-radius: 2px;
+}
+.tav-card:hover { background: #ffffff0e; }
+.tav-card.taken { opacity: .45; }
+.tav-card.tav-dock { background: #00000028; border-style: dashed; }
+
+.tav-row { display: flex; align-items: flex-start; gap: 8px; }
+.tav-por { flex: 0 0 auto; image-rendering: pixelated; }
+.tav-info { flex: 1 1 auto; min-width: 0; }
+.tav-name { display: flex; align-items: baseline; gap: 7px; }
+.tav-name b { color: var(--brass-l); font-size: 12.5px; }
+.tav-n { font-size: 11px; color: var(--parch); }
+.tav-trait { font-size: 11px; color: #a89a84; margin-top: 2px; }
+.tav-desc { font-size: 11px; color: #6f6858; margin-top: 3px; line-height: 1.5; }
+
+.tav-cost { display: flex; gap: 7px; margin: 7px 0 6px; }
+.tav-cost-cell {
+  flex: 1 1 0; min-width: 0;
+  padding: 4px 6px; background: #00000030; border-radius: 2px;
+  display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap;
+}
+.tav-cost-cell .k { font-size: 10.5px; color: #8f8878; }
+.tav-cost-cell b { font-size: 11.5px; color: var(--parch); font-variant-numeric: tabular-nums; }
+.tav-delta { font-size: 10.5px; }
+
+.tav-card .btn { width: 100%; }
+.tav-done {
+  font-size: 11.5px; color: var(--brass-l); text-align: center;
+  padding: 5px 0; background: #d2a52a14; border-radius: 2px;
+}
