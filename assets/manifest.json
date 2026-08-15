@@ -13,5 +13,6 @@
     "scene:map:eastasia": "map/eastasia.png",
     "scene:map:caribbean": "map/caribbean.png",
     "scene:map:southamerica": "map/southamerica.png"
-  }
+  },
+  "version": "20260815164241"
 }

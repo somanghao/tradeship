@@ -17,7 +17,7 @@
 //   node tools/gen-map-png.mjs            # 서버가 8155에 떠 있어야 한다
 //   node tools/gen-map-png.mjs --port 9000 --only indian
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { open } from './playtest.mjs';
@@ -79,6 +79,17 @@ try {
     console.log(`  ${rid.padEnd(16)} ${String(buf.length).padStart(7)} bytes → assets/map/${rid}.png`);
     n++;
   }
+  /* 판 번호를 올린다 — 안 올리면 브라우저가 옛 그림을 들고 있다.
+     `js/assets.js`가 이 값을 `?v=`로 붙여 읽으므로, 새로고침만 해도 새 지도가 뜬다.
+     (`serve.py`는 no-store라 괜찮지만 `python -m http.server`나 다른 서버로 띄우면 그렇지 않다.) */
+  const mp = join(HERE, '..', 'assets', 'manifest.json');
+  if (existsSync(mp)) {
+    const man = JSON.parse(readFileSync(mp, 'utf-8'));
+    man.version = new Date().toISOString().slice(0, 19).replace(/[:T-]/g, '');
+    writeFileSync(mp, `${JSON.stringify(man, null, 2)}\n`, 'utf-8');
+    console.log(`  manifest.json 판 번호 → ${man.version}`);
+  }
+
   console.log(`\n지도 ${n}장을 다시 뽑았다. 검수: python tools/check-map.py --all`);
   console.log('이 그림이 게임이 쓰는 지도다(assets/manifest.json). 코드 생성은 폴백으로 남는다.');
 } finally {

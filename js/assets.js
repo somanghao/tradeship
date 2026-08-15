@@ -65,10 +65,16 @@ export async function loadAssetPack(base = 'assets') {
     if (!res.ok) return null;
     const man = await res.json();
     const entries = Object.entries(man.sprites || {});
+    /* ★ 그림에도 판 번호를 붙인다. manifest는 `no-store`로 읽지만 **이미지는 캐시가 걸린다** —
+       `serve.py`는 no-store를 보내니 괜찮지만, `python -m http.server`나 다른 서버로 띄우면
+       PNG를 다시 뽑아도 브라우저가 옛 그림을 쓴다. 지도를 고쳤는데 새로고침해도 그대로면
+       그리기 코드를 의심하게 되므로(오늘 실제로 그 함정에 빠졌다) 여기서 막는다.
+       `tools/gen-map-png.mjs`가 그림을 다시 뽑을 때마다 이 값을 갱신한다. */
+    const ver = man.version ? `?v=${encodeURIComponent(man.version)}` : '';
     let ok = 0;
     for (const [key, file] of entries) {
       try {
-        overrides.set(key, toCanvas(await loadImage(`${base}/${file}`)));
+        overrides.set(key, toCanvas(await loadImage(`${base}/${file}${ver}`)));
         ok++;
       } catch {
         console.warn(`[assets] '${key}' → ${file} 을 못 읽었다. 이 스프라이트는 코드 생성으로 남는다.`);
