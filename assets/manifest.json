@@ -1,5 +1,17 @@
 {
-  "name": "지중해 항해 지도",
-  "_왜 비어 있나": "지도 납품물 2차까지 반려. assets/map/에 보관은 하되 여기서 꺼 둔다 — 붙이면 항구 점이 엉뚱한 자리에 찍힌다. 1차는 실제 지중해를 정확히 그려 게임 좌표(도식)와 어긋났고, 2차는 tools/check-map.py는 통과하나 도시·항로 그래프의 볼록껍질을 바다로 칠한 것이라 반도·섬 실루엣이 없다(고유색 8색). 되살리려면 sprites 안에 \"scene:map\": \"map/mediterranean.webp\"를 다시 넣는다.",
-  "sprites": {}
+  "name": "권역 지도 기준판",
+  "_이것은 무엇인가": "좌표(js/regions/*/geo.js)가 데이터인 것처럼, 그 좌표로 그린 지도도 파일로 굳혀 둔다. 매 부팅마다 다시 그릴 이유가 없다 — 좌표가 고정이면 그림도 고정이다. 이 PNG는 tools/gen-map-png.mjs가 게임 코드 그대로 뽑은 것이라 화면과 어긋날 수 없다.",
+  "_좌표를 옮기면": "tools/gen-map-png.mjs 를 다시 돌린다. 안 돌리면 항구 점이 뭍에 앉는다 — tools/check-map.py --all 이 그것을 잡는다(항로가 육지를 가로지르는가/항구에 물이 닿는가).",
+  "_사람이 그린 지도가 오면": "같은 파일 이름으로 덮는다. 코드는 한 줄도 안 고친다. 검수는 같은 tools/check-map.py --all.",
+  "sprites": {
+    "scene:map:mediterranean": "map/mediterranean.png",
+    "scene:map:atlantic": "map/atlantic.png",
+    "scene:map:africa": "map/africa.png",
+    "scene:map:mideast": "map/mideast.png",
+    "scene:map:indian": "map/indian.png",
+    "scene:map:seasia": "map/seasia.png",
+    "scene:map:eastasia": "map/eastasia.png",
+    "scene:map:caribbean": "map/caribbean.png",
+    "scene:map:southamerica": "map/southamerica.png"
+  }
 }

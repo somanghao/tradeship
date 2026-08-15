@@ -62,7 +62,7 @@ export const battleScene = {
     };
     fx = [];
     state.stats.battles++;
-    /* 첫 줄을 상대에게 준다. 명부(`regions/*/npc-pirates.js`)에 적혀 있던 `lines.hail`이
+    /* 첫 줄을 상대에게 준다. 명부(`regions/<권역>/npc-pirates.js`)에 적혀 있던 `lines.hail`이
        여기서 처음 화면에 뜬다 — 없는 상대는 급으로 대신한다. 이 한 줄이 있고 없고가
        "바르바로사와 붙었다"와 "적선과 붙었다"를 가른다. */
     logLine(enemy.hail ?? OPENING[enemy.level] ?? OPENING[1], 'warn');
@@ -769,8 +769,13 @@ function sideBar(side, name, s, color) {
   /* 상대가 누구인지를 이름표 밑에 한 줄로 둔다.
      ★ 명부에 세기(strength)를 적어 두었는데 화면에는 이름뿐이라, 좀도둑과 바르바로사가
        같은 무게로 읽혔다. 숫자를 그대로 내보이지 않고 말로 옮긴다 — 이 게임의 방식이다. */
+  const RANK = {
+    pirate:   ['', '잡배', '무리', '이름난 자', '두목', '이 바다의 주인'],
+    navy:     ['', '초계', '순찰', '물목지기', '왕실 소속', '기함'],
+    merchant: ['', '작은 상단', '상단', '큰 상단', '선단', '선단'],
+  };
   const tag = side === 'right'
-    ? [B.enemy.nation, ['', '잡배', '무리', '이름난 자', '두목', '이 바다의 주인'][B.enemy.level] || null,
+    ? [B.enemy.nation, RANK[foeKind(B.enemy)][B.enemy.level] || null,
        B.enemy.bounty ? '현상금' : null].filter(Boolean).join(' · ')
     : null;
   return el(`div.bar-wrap.${side}`, {}, [

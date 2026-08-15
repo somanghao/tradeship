@@ -15,7 +15,7 @@ import {
 import { openPayday } from '../payday.js';
 import { npcsAtPort, figuresAt } from '../world.js';
 import { goodRank, goodBasis } from '../evidence.js';
-import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal } from '../ui.js';
+import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal, josa, npcTitle } from '../ui.js';
 import { go } from '../main.js';
 
 let bg, city, dockers;
@@ -322,13 +322,33 @@ function officerCard() {
           }),
         ]),
       ]),
-      // 물 새는 배를 몰고 있으면 재촉한다. 떠나겠다는 말이 아니다 — 떠날 수 없는 사람이다
-      leaky ? el('div.ctr-sub', {
-        html: `<span style="color:#d05a4a">${OFFICER.lines.leaky}</span>`,
-        style: { lineHeight: '1.5' },
-      }) : null,
+      /* 한 줄만 띄운다. 셋을 한꺼번에 걸면 카드가 대사집이 되고, 매번 같은 줄이 붙어 있으면
+         벽지가 된다. 지금 상황에 맞는 것 하나만:
+           ① 물 새는 배를 몰고 있으면 재촉한다(떠나겠다는 말이 아니다 — 떠날 수 없는 사람이다)
+           ② 첫날에는 자기소개. ★ 이 줄이 이 게임 문체의 기준인데 **어디에도 안 떠 있었다.**
+           ③ 세금이 무거운 항구에서는 서류 이야기를 한다(그 감면이 실제로 걸리는 자리다) */
+      officerLine(leaky),
     ].filter(Boolean)),
   ]);
+}
+
+/** 지금 이 항구에서 에이미가 할 말 — 없으면 null */
+function officerLine(leaky) {
+  const L = OFFICER.lines;
+  // 아직 한 번도 안 떠난 날. 날짜는 항해할 때만 흐르므로(state.js: advanceDays) 이것이 첫날이다
+  const first = state.day <= state.officer.hiredDay + 1;
+  // 감면이 이미 반영된 실효 세율이다(state.js: tariffRate). 큰 항구·중과세 항구에서만 걸린다
+  const heavy = tariffRate(city.id) >= 0.038;
+  /* ★ 순서가 중요하다. 처음에는 `leaky`를 먼저 봤는데, **시작 배가 물이 새는 배**라
+     첫 화면이 늘 재촉으로 열렸고 자기소개(`start`)는 끝내 한 번도 안 떴다 —
+     이 게임 문체의 기준으로 적어 둔 줄이 정작 화면에 없었다는 뜻이다.
+     첫날은 소개가 먼저다. 그 줄이 이미 "배는 낡았고"라고 말하고 있다. */
+  const pick = first ? L.start : leaky ? L.leaky : heavy ? L.tariff : null;
+  if (!pick) return null;
+  return el('div.ctr-sub', {
+    html: `<span style="color:${!first && leaky ? '#d05a4a' : '#54a89b'}">${pick}</span>`,
+    style: { lineHeight: '1.5' },
+  });
 }
 
 /* ── 급여 ──────────────────────────────────────────────
@@ -372,8 +392,10 @@ function harborCard() {
   if (!ships.length) return null;
   return el('div.panel', {}, [
     el('h3', {}, el('span', { text: '정박 중인 배' })),
+    /* ★ 이름 뒤에 '호'를 무조건 붙이던 자리다 — 명부에서 온 배는 이름이 사람·상단의 것이라
+       '개성 송상호'·'왕직호'가 부두에 떴다. 부르는 법은 `npcTitle`이 안다. */
     el('div.svc', {}, ships.slice(0, 5).map((n) => el('div.ctr-sub', {
-      text: `${n.name}호 (${SHIPS[n.shipKey].name})`
+      text: `${npcTitle(n)} (${SHIPS[n.shipKey].name})`
           + (n.kind === 'pirate' ? ' — 수상한 무리다' : ''),
       style: n.kind === 'pirate' ? { color: '#d05a4a' } : null,
     }))),
@@ -394,6 +416,36 @@ const SERVICE_LABEL = {
   recruit: '사람을 소개한다', permit: '이 바다를 다닐 문서',
 };
 
+/** 직업 — 그 사람이 무엇을 하는 사람인지. 명부의 `job` 키를 말로 옮긴다. */
+const JOB_LABEL = {
+  broker: '중개인', informant: '정보상', smuggler: '밀수업자', moneylender: '전주',
+  shipwright: '선장인', harbormaster: '항무관', interpreter: '통역', cartographer: '지도장이',
+  physician: '선의', gunsmith: '총포장이', priest: '사제', scholar: '학자',
+  guildmaster: '길드장', official: '관리', '官': '관리',
+};
+
+/* ★ 인물 명부에는 `blurb`와 `lines{greet,offer,done}`이 사람마다 적혀 있는데,
+   화면에서는 그것이 **마우스를 올려야 나오는 title 툴팁** 한 덩어리였다.
+   툴팁은 읽히지 않는다 — 그 자리에 사람이 있다는 것조차 모르고 지나간다.
+   그래서 줄을 눌러 **말을 걸 수 있게** 한다. 거래는 아직 없다(값이 규칙에 안 물렸다).
+   지금 여기서 일어나는 일은 하나뿐이고 그것으로 충분하다 — 그 사람이 말을 한다. */
+function talkTo(f) {
+  const job = JOB_LABEL[f.job] ?? f.job ?? '';
+  modal({
+    title: f.name,
+    body: `<span style="color:#8f8878">${[job, city.name].filter(Boolean).join(' · ')}</span><br><br>`
+        + (f.blurb ? `${f.blurb}<br>` : '')
+        + (f.lines?.greet ? `<br><span style="color:#c9b98a">${f.lines.greet}</span>` : '')
+        + (f.lines?.offer ? `<br><span style="color:#c9b98a">${f.lines.offer}</span>` : '')
+        + (SERVICE_LABEL[f.service]
+            ? `<br><br><span style="opacity:.75">파는 것 — ${SERVICE_LABEL[f.service]}`
+              + (f.fee ? ` · 값 ${f.fee[0]}~${f.fee[1]}닢` : ' · 값은 받지 않는다')
+              + `</span>`
+            : ''),
+    actions: [{ label: '자리를 뜬다' }],
+  });
+}
+
 function figureCard() {
   const people = figuresAt(city.id);
   if (!people.length) return null;
@@ -401,18 +453,16 @@ function figureCard() {
     el('h3', {}, [
       el('span', { text: '항구의 사람들' }),
       el('span', {
-        text: `${people.length}명`,
+        text: `${people.length}명 · 눌러서 말을 건다`,
         style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
       }),
     ]),
     el('div.svc', {}, people.slice(0, 6).map((f) => el('div.ctr-sub', {
-      title: [
-        f.blurb,
-        f.lines?.greet,
-        SERVICE_LABEL[f.service] ? `— ${SERVICE_LABEL[f.service]}` : null,
-        f.fee ? `값 ${f.fee[0]}~${f.fee[1]}닢` : '값을 받지 않는다',
-      ].filter(Boolean).join('\n'),
+      title: f.blurb ?? '',
+      style: { cursor: 'pointer' },
+      onclick: () => talkTo(f),
       text: `${f.name}`
+          + (JOB_LABEL[f.job] ? ` (${JOB_LABEL[f.job]})` : '')
           + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
     }))),
   ]);

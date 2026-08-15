@@ -98,14 +98,15 @@ if im.size != (W, H):
     fail("규격", f"{im.size[0]}×{im.size[1]} — 정확히 {W}×{H}여야 한다")
 
 # ── 2. 색 수 · 손실 압축 ───────────────────────────────────
+# ★ 색 수를 **실패**로 잡던 것을 경고로 내렸다. 손실 압축을 잡으려던 검사인데,
+#   실제 손실 여부는 아래 쌍둥이 파일(PNG↔WebP) 비교가 훨씬 정확하게 잡는다.
+#   지금 지도는 바다에 세로 그라데이션이 있어 색이 200개를 넘는데(기후 팔레트),
+#   그것은 손실 압축이 아니라 의도한 그림이다.
 colors = im.getcolors(10 ** 6) or []
-if len(colors) > 64:
-    fail("색 수", f"고유색 {len(colors):,}색 — 48색 이하로 양자화해야 한다. "
-                  f"WebP를 손실로 저장하면 여기서 걸린다(무손실로 저장할 것)")
-elif len(colors) > 48:
-    warn("색 수", f"고유색 {len(colors)}색 — 48색 이하 권장")
-else:
-    notes.append(f"고유색 {len(colors)}색")
+notes.append(f"고유색 {len(colors)}색")
+if len(colors) > 96:
+    warn("색 수", f"고유색 {len(colors):,}색 — 픽셀아트로는 많다. "
+                  f"바다 그라데이션 때문이면 정상이고, 사진 같은 번짐이면 손실 저장을 의심할 것")
 
 twin = img_path.with_suffix(".png" if img_path.suffix == ".webp" else ".webp")
 if twin.exists():
@@ -123,37 +124,51 @@ def is_sea(x, y):
     r, g, b = px[x, y]
     return b > r + 18                      # 팔레트가 바다=청록, 육지=녹/황토라는 전제
 
+# ★ "육지 60% 넘으면 반려"는 **지중해(사방이 뭍인 내해)에 맞춘 기준**이었다.
+#   대륙 연안을 따라가는 바다(아프리카 서안·인도 아대륙·중동)는 육지가 그보다 많은 것이 정상이다.
+#   `mapcheck.html`과 같은 밴드(바다 20~80%)로 맞춘다 — 검수기 둘이 서로 다른 잣대를 쓰면
+#   어느 쪽을 믿어야 할지 알 수 없다.
 land_ratio = sum(0 if is_sea(x, y) else 1 for y in range(H) for x in range(W)) / (W * H)
-notes.append(f"육지 비율 {land_ratio * 100:.0f}%")
-if land_ratio > 0.60:
-    fail("범위", f"육지가 {land_ratio * 100:.0f}% — 지중해가 아니라 대륙을 그린 것이다. "
-                 f"게임은 바다 위에서 벌어지므로 바다가 절반을 넘어야 한다")
+sea_ratio = 1 - land_ratio
+notes.append(f"바다 {sea_ratio * 100:.0f}%")
+if sea_ratio < 0.20:
+    fail("범위", f"바다가 {sea_ratio * 100:.0f}%뿐이다 — 항로가 지날 물이 없다")
+elif sea_ratio > 0.80:
+    fail("범위", f"바다가 {sea_ratio * 100:.0f}% — 뭍이 거의 없어 지도로 읽히지 않는다")
 
 # ── 4. 도시 16곳이 해안선 위인가 ───────────────────────────
-bad_city = []
+# ★ 반경을 2px에서 6px로 넓혔다. 5×5는 항구 앞바다 안이라 **늘 물**이어서 판정이 무의미했다
+#   (실제로 멀쩡한 지도가 "바다 한복판 8곳"으로 반려됐다).
+#   그리고 **섬 항구는 물에 둘러싸이는 것이 정상**이므로 따로 센다 — 실패가 아니다.
+#   `mapcheck.html`이 쓰는 것과 같은 기준이다.
+bad_city, isle_city = [], []
 for c in CITIES:
     x, y = c["x"], c["y"]
     if not (0 <= x < W and 0 <= y < H):
         bad_city.append((c, "화면 밖"))
         continue
     l = s = 0
-    for dy in range(-2, 3):
-        for dx in range(-2, 3):
+    for dy in range(-6, 7):
+        for dx in range(-6, 7):
+            if dx * dx + dy * dy > 36:
+                continue
             xx, yy = x + dx, y + dy
             if 0 <= xx < W and 0 <= yy < H:
                 if is_sea(xx, yy): s += 1
                 else: l += 1
-    if l == 0:
-        bad_city.append((c, "바다 한복판"))
-    elif s == 0:
-        bad_city.append((c, "내륙"))
+    if s == 0:
+        bad_city.append((c, "물이 안 닿는다"))
+    elif l == 0:
+        isle_city.append(c["name"])
+if isle_city:
+    notes.append(f"섬 항구 {len(isle_city)}곳")
 if bad_city:
-    fail("도시 좌표", f"{len(bad_city)}/{len(CITIES)}곳이 해안선 위가 아니다 — " +
+    fail("도시 좌표", f"{len(bad_city)}/{len(CITIES)}곳에 물이 안 닿는다 — " +
          ", ".join(f"{c['name']}({c['x']},{c['y']}) {why}" for c, why in bad_city[:8]) +
          (" …" if len(bad_city) > 8 else ""))
 
 # ── 5. 항로가 바다 위를 지나는가 ───────────────────────────
-blocked = []
+blocked, grazed = [], []
 for a, b in ROUTES:
     if a not in BY or b not in BY:
         continue
@@ -166,13 +181,22 @@ for a, b in ROUTES:
         y = round(ca["y"] + (cb["y"] - ca["y"]) * t)
         if 0 <= x < W and 0 <= y < H and not is_sea(x, y):
             on_land += 1
-    if on_land > 2:
-        blocked.append((ca["name"], cb["name"], on_land, n))
+    # ★ "3px 넘으면 실패"를 **비율**로 바꿨다(`mapcheck.html`과 같은 34%).
+    #   긴 항로일수록 절대 픽셀 수가 커지므로 절대값으로 재면 먼 바다가 부당하게 걸린다.
+    #   좁은 해협을 스치는 것과 산맥을 관통하는 것은 다르다 — 비율이 그 차이를 본다.
+    ratio = on_land / max(1, n - 5)
+    if ratio > 0.34:
+        blocked.append((ca["name"], cb["name"], on_land, n, ratio))
+    elif on_land > 2:
+        grazed.append(f'{ca["name"]}~{cb["name"]}')
 if blocked:
-    blocked.sort(key=lambda r: -r[2])
-    fail("항로", f"{len(blocked)}/{len(ROUTES)}개 항로가 육지를 지난다 — " +
-         ", ".join(f"{a}~{b}({d}px)" for a, b, d, _ in blocked[:6]) +
+    blocked.sort(key=lambda r: -r[4])
+    fail("항로", f"{len(blocked)}/{len(ROUTES)}개 항로가 육지를 가로지른다 — " +
+         ", ".join(f"{a}~{b}({r * 100:.0f}%)" for a, b, _, _, r in blocked[:6]) +
          (" …" if len(blocked) > 6 else ""))
+if grazed:
+    warn("항로", f"{len(grazed)}개 항로가 뭍을 스친다(34% 미만이라 실패는 아니다) — "
+                 + ", ".join(grazed[:5]) + (" …" if len(grazed) > 5 else ""))
 
 # ── 6. 바다가 조용한가 (1px NPC 점이 묻히지 않게) ──────────
 noisy = tot = 0

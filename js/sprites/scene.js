@@ -118,10 +118,20 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
     let land, isles, ranges;
     if (def.hand) {
       land = landFromSpans(def.hand.spans, def.hand.gw, def.hand.gh, def.hand.gs ?? GS_DEFAULT);
-      /* 손으로 찍은 격자는 그때의 항구에 맞춰 찍은 것이라, 나중에 넣은 항구가 뭍에 앉는다.
-         지형은 그대로 두고 **물길만 판다** — 실루엣을 잃지 않으면서 항구를 물가로 되돌린다. */
+      /* ★ 섬을 **먼저 육지 맵에 넣고** 물길을 판다. 순서가 거꾸로면 애써 판 물길을
+         그 뒤에 그리는 섬이 도로 덮는다 — 사르데냐가 알게로~제노바를, 시칠리아가
+         팔레르모~튀니스를 막고 있었다(검수기가 75%·61%로 잡았는데 원인을 한참 못 찾았다).
+         지형은 그대로 두고 물길만 판다 — 실루엣을 잃지 않으면서 항구를 물가로 되돌린다. */
+      for (const [cx, cy, rx, ry] of def.hand.isles ?? []) {
+        for (let y = Math.max(0, cy - ry); y <= Math.min(VH - 1, cy + ry); y++) {
+          for (let x = Math.max(0, cx - rx); x <= Math.min(VW - 1, cx + rx); x++) {
+            const nx = (x - cx) / (rx || 1), ny = (y - cy) / (ry || 1);
+            if (nx * nx + ny * ny <= 1) land[y * VW + x] = 1;
+          }
+        }
+      }
       carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 6, bay: 6.5 });
-      isles = def.hand.isles ?? [];
+      isles = [];                       // 이미 land에 들어갔다 — 두 번 그리지 않는다
       ranges = def.hand.ranges ?? [];
     } else {
       land = autoLandMap(cities, routes, def.auto);

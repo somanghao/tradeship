@@ -20,7 +20,10 @@
 //   항구는 뭍과 물이 만나는 자리다. 그래서 그 도시에서 **항로가 나가는 방향으로만** 열고
 //   반대쪽은 뭍으로 남긴다. 그러면 해안선이 저절로 생기고 항구가 그 위에 앉는다.
 //
-//   이 그림은 **기준판이자 임시본**이다. 사람이 그린 지도가 오면 `assets/manifest.json`으로
+//   ★ 이 코드가 그린 결과는 `tools/gen-map-png.mjs`가 PNG로 뽑아 `assets/map/`에 굳혀 두었고,
+//   게임은 그 PNG를 쓴다(`assets/manifest.json`). 여기는 **그 PNG를 만드는 자리**이자
+//   팩이 없을 때의 폴백이다 — 좌표를 옮겼으면 반드시 다시 뽑아야 한다.
+//   사람이 그린 지도가 오면 `assets/manifest.json`으로
 //   갈아 끼운다 — 그때 이 그림이 그대로 발주용 기준판이 된다(좌표가 이미 맞으므로).
 //   검수는 `mapcheck.html`이 한다(항구가 물가인가 · 항로가 바다인가 · 이름표가 겹치는가).
 
@@ -144,13 +147,14 @@ export function autoLandMap(cities, routes, opts = {}) {
       }
       // ④ 대륙을 굳히는 자리 — 단, 항로·항구 앞바다(core)는 못 지운다
       if (sea && !core) {
+        /* ★ 경계를 **바깥으로** 번지게 한다. 예전에는 안쪽으로 물렸는데(`edge > 3+fine*3`),
+           그러면 사각형 가장자리 3~6px이 늘 물로 남는다 — 대륙을 계단 사각형 여러 장으로
+           쌓으면 **장과 장 사이가 줄무늬 바다로 벌어진다.** 남아메리카가 가로줄 친 대륙으로
+           보였던 것이 이것이다. 바깥으로 번지면 이웃 사각형과 저절로 이어지고,
+           잡음이 실려 자로 그은 티도 안 난다. */
+        const m = 3 + fine * 3.5;
         for (const [x0, y0, x1, y1] of landmass) {
-          if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
-            // 가장자리는 잡음으로 물러 두어 자로 그은 경계가 안 생기게
-            const edge = Math.min(x - x0, x1 - x, y - y0, y1 - y);
-            if (edge > 3 + fine * 3) sea = false;
-            break;
-          }
+          if (x >= x0 - m && x <= x1 + m && y >= y0 - m && y <= y1 + m) { sea = false; break; }
         }
       }
 
@@ -308,6 +312,44 @@ export function carveHarbors(land, cities, routes, opts = {}) {
       }
       if (cut) land[y * VW + x] = 0;
     }
+  }
+
+  /* ── 2차: **아직 막힌 항로만** 더 판다 ─────────────────────
+     ★ 손으로 찍은 격자에서는 한 번 파는 것으로 안 뚫리는 구간이 남는다 —
+       사르데냐를 지나는 알게로~제노바(육지 75%)와 시칠리아 해협의 팔레르모~튀니스(61%)가
+       그랬다. 회랑 폭을 통째로 키우면 멀쩡한 해안까지 깎이므로, **막힌 선만 골라** 넓힌다.
+       그래서 나중에 도시를 더 넣어도 그 선만 저절로 뚫린다. */
+  for (let pass = 0; pass < 3; pass++) {
+    let fixed = 0;
+    for (const seg of segs) {
+      const n = Math.max(1, Math.round(Math.hypot(seg[2] - seg[0], seg[3] - seg[1])));
+      let onLand = 0;
+      for (let i = 3; i < n - 2; i++) {
+        const t = i / n;
+        const x = Math.round(seg[0] + (seg[2] - seg[0]) * t);
+        const y = Math.round(seg[1] + (seg[3] - seg[1]) * t);
+        if (land[y * VW + x]) onLand++;
+      }
+      if (onLand / Math.max(1, n - 5) <= 0.30) continue;    // 이미 지날 만하다
+
+      // 이 선을 따라 좁은 물길을 낸다(폭 3~4px). 실루엣을 최소로 깎는다
+      const w = 3 + pass;
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const cx = seg[0] + (seg[2] - seg[0]) * t;
+        const cy = seg[1] + (seg[3] - seg[1]) * t;
+        for (let dy = -w; dy <= w; dy++) {
+          for (let dx = -w; dx <= w; dx++) {
+            if (dx * dx + dy * dy > w * w) continue;
+            const x = Math.round(cx + dx), y = Math.round(cy + dy);
+            if (x < 0 || y < 0 || x >= VW || y >= VH) continue;
+            land[y * VW + x] = 0;
+          }
+        }
+      }
+      fixed++;
+    }
+    if (!fixed) break;
   }
   return land;
 }

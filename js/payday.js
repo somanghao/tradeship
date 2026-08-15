@@ -179,8 +179,9 @@ function buyingHint() {
     .sort((a, b) => a.p - b.p)[0];
   if (!cand) return `남는 ${won(left)}닢으로 살 것을 고른다. 여기는 특산이 없다.`;
   const n = Math.min(room, Math.floor(left / cand.p));
+  const gname = GOOD_BY_ID[cand.gid].name;
   return n > 0
-    ? `남는 ${won(left)}닢이면 <b>${GOOD_BY_ID[cand.gid].name}</b>을(를) ${n}칸까지 실을 수 있다.`
+    ? `남는 ${won(left)}닢이면 <b>${gname}</b>${josa(gname, '을/를')} ${n}칸까지 실을 수 있다.`
     : `남는 ${won(left)}닢으로는 여기서 <b>한 칸도 못 산다</b>(${GOOD_BY_ID[cand.gid].name} ${won(cand.p)}닢).`;
 }
 
@@ -215,13 +216,31 @@ function report(r, onDone) {
 
   const lines = [];
   if (r.missed > 0) {
+    /* ★ "0닢을 치렀다"는 문장이 실제로 떴다. 금고가 비어 **한 푼도 못 준** 달이
+       "얼마를 냈다"는 말투로 보고되면, 이 게임에서 가장 나쁜 소식이 회계 항목이 된다. */
     lines.push(el('p', {
-      html: `<b>${won(r.paid)}닢</b>을 치렀다. <span class="pay-warn">${won(r.missed)}닢이 밀렸다.</span>`,
+      html: r.paid > 0
+        ? `<b>${won(r.paid)}닢</b>을 치렀다. <span class="pay-warn">${won(r.missed)}닢이 밀렸다.</span>`
+        : `금고를 열어 보였다. 바닥이었다. `
+          + `<span class="pay-warn">${won(r.missed)}닢이 그대로 밀린 삯으로 남는다.</span>`,
     }));
-    pushLog(`급여 ${won(r.paid)}닢 지급 · ${won(r.missed)}닢 체불.`, 'bad');
+    pushLog(r.paid > 0
+      ? `급여 ${won(r.paid)}닢 지급 · ${won(r.missed)}닢 체불.`
+      : `급여를 한 푼도 못 치렀다 — ${won(r.missed)}닢 체불.`, 'bad');
   } else {
     lines.push(el('p', { html: `삯 <b>${won(r.paid)}닢</b>을 남김없이 치렀다. 갑판이 조용하다.` }));
     pushLog(`급여 ${won(r.paid)}닢을 모두 치렀다.`, 'good');
+  }
+
+  /* 밀렸는데 아직 아무도 안 내려갔을 때 — **다음이 있다는 것**을 말해 준다.
+     이 경고가 없으면 두 달째에 갑자기 사람이 사라지고, 플레이어는 그것을 사고로 읽는다. */
+  if (r.missed > 0 && !r.deserted.length) {
+    const edgy = state.bands.filter((b) => (b.unrest || 0) >= DESERT_AT * 0.6).length;
+    lines.push(el('p.pay-warn', {
+      html: edgy
+        ? '이번엔 아무도 내려가지 않았다. 대신 갑판에서 말이 줄었다 — 다음 달까지다.'
+        : '이번엔 넘어갔다. 두 번은 안 넘어간다.',
+    }));
   }
 
   /* ★ 이 대목은 이 게임에서 가장 무거운 장면이다 — 사람이 배를 버리고, 밀린 삯 대신

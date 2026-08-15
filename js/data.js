@@ -507,14 +507,19 @@ export const SHOCK = {
       id: 'blockade', name: '봉쇄', kind: 'demand', tone: 'bad',
       mult: 1.7, days: 14, perDay: 0.008,
       goods: ['grain', 'weapon', 'wine', 'oliveoil'],
-      line: (city, good) => `함대가 ${city} 앞바다를 막았다. ${good}이(가) 동난다.`,
+      /* ★ 전에는 "함대가 ○○ 앞바다를 막았다"였다. 이 사건은 그 물건을 **사들이는** 도시면
+         어디든 걸리므로 바그다드·이스파한·투쿠만처럼 **바다가 없는 도시**에도 함대가 떴다.
+         봉쇄는 물길만의 일이 아니다 — 끊긴 것은 앞바다가 아니라 **길**이다. */
+      line: (city, good) => `${city}로 들어가는 길이 끊겼다. ${good} 재고가 바닥났다.`,
     },
     {
       id: 'glut', name: '풍작·독점 붕괴', kind: 'supply', tone: 'good',
       mult: 0.62, days: 16, perDay: 0.009,
       goods: null,             // 산지 품목이면 무엇이든
       // 톨파 명반이 무너졌을 때 값이 절반이 됐다. 싸게 살 기회 — 소식을 듣고 달려가는 재미.
-      line: (city, good) => `${city}에 ${good}이(가) 넘쳐난다. 지금이 살 때다.`,
+      // 조사 표기(`이(가)`)를 쓰지 않는다 — data.js는 화면 헬퍼(ui.js: josa)를 부를 수 없으므로
+      // 품목 이름 뒤에 조사가 붙지 않는 문장으로 적는다.
+      line: (city, good) => `${city} 부두에 ${good} 자루가 쌓였다. 지금이 살 때다.`,
     },
   ],
 };

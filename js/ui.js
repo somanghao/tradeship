@@ -118,7 +118,7 @@ export function josa(word, pair) {
 }
 
 /** 바다에서 만난 배를 뭐라고 부를 것인가.
-    ★ 명부(`regions/*/npc-*.js`)에서 온 배는 이름이 이미 **사람·상단·무리**의 것이다.
+    ★ 명부(`regions/<권역>/npc-traders.js`·`npc-pirates.js`)에서 온 배는 이름이 이미 **사람·상단·무리**의 것이다.
       거기에 '호'를 붙이면 '왕직호'·'개성 송상호'·'식량형제단호'가 된다.
       이름이 없어 배 이름을 굴려 쓴 쪽(`npc/config.js`의 '산타 마리아')만 '호'를 받는다. */
 export const npcTitle = (n) => (n?.defId ? n.name : `${n?.name ?? ''}호`);

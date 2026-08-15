@@ -324,7 +324,7 @@ function arrive(cityId) {
 /* 해적 NPC → 전투용 적 변환은 규칙이라 `world.js`가 정본이다(대시보드도 같은 값을 읽는다). */
 
 /* ── 명부에 적힌 사람을 화면으로 꺼낸다 ───────────────────────
-   `regions/*/npc-traders.js`·`npc-pirates.js`에는 배마다 `blurb`와
+   `regions/<권역>/npc-traders.js`·`npc-pirates.js`에는 배마다 `blurb`와
    `lines{greet,deal,refuse}`·`lines{hail,spare}`가 적혀 있는데 **아무도 읽지 않았다.**
    그래서 바르바로사와 이름 없는 좀도둑이 화면에서 똑같이 "돛이 보인다"였다.
    여기서 명부를 되짚어 그 한 줄을 만나는 순간에 얹는다 — 새 규칙은 없고, 말만 붙는다. */
@@ -337,19 +337,31 @@ function quote(line, color = '#c9b98a') {
   return line ? `<br><br><span style="color:${color}">${line}</span>` : '';
 }
 
-/** 이름만으로는 급이 안 보인다. 명부의 소개가 있으면 그것을, 없으면 세기를 말로 옮긴다. */
-const RANK_WORD = [
-  '', '이름도 못 얻은 잡배다.', '몇 번 굴러 본 무리다.',
-  '이 바다에서 이름이 도는 자다.', '두목급이다. 상선단이 철을 피해 다니는 이름이다.',
-  '이 바다의 주인 행세를 하는 자다.',
-];
+/* 이름만으로는 급이 안 보인다. 명부의 소개가 있으면 그것을, 없으면 세기를 말로 옮긴다.
+   ★ 사다리를 둘로 나눈 이유 — 이 표에는 해적만 있는 게 아니다. 프랑스 순찰 프리깃한테
+     "두목급이다. 상선단이 철을 피해 다니는 이름이다"라고 적으면 왕의 배가 산적이 된다. */
+const RANK_WORD = {
+  pirate: ['', '이름도 못 얻은 잡배다.', '몇 번 굴러 본 무리다.',
+           '이 바다에서 이름이 도는 자다.', '두목급이다. 상선단이 철을 피해 다니는 이름이다.',
+           '이 바다의 주인 행세를 하는 자다.'],
+  navy:   ['', '허가장 한 장을 앞세운 작은 배다.', '순찰이라 부르지만 하는 일은 다르지 않다.',
+           '이 물목을 맡은 배다. 서류가 모자라면 짐도 모자라게 된다.',
+           '왕실이 이름을 아는 배다. 이쪽 서류로는 이기지 못한다.',
+           '기함이다. 이 바다를 제 앞바다로 여긴다.'],
+};
 
 /** 상선 NPC를 전투용 적으로 — 무장이 빈약한 대신 화물이 실려 있다 */
 function merchantEnemy(n) {
   const s = SHIPS[n.shipKey];
   const goods = Object.keys(n.cargo);
+  const def = defOf(n);
   return {
-    id: `npc:${n.id}`, name: npcTitle(n), nation: '상인',
+    id: `npc:${n.id}`,
+    // 명부에서 온 상단은 '콘타리니 상관의 상선', 이름 없는 배는 '상선 산타 마리아호'
+    name: n.defId ? `${n.name}의 상선` : `상선 ${n.name}호`,
+    // 덮친 쪽이 먼저 듣는 말 — 전투 첫 줄에 뜬다
+    hail: def?.lines?.refuse ?? null,
+    nation: '상인',
     hull: s.hull, tint: s.tint, flag: 'genoa',
     hp: Math.round(s.hp * 0.85), guns: Math.max(2, Math.round(s.guns * 0.5)),
     crew: Math.max(12, Math.round(s.crewMax * 0.45)),
@@ -426,8 +438,7 @@ function meetMerchant(n, finish) {
     body: `${CITY_BY_ID[n.at].name}에서 ${to}로 가는 <b>${who}</b>(${SHIPS[n.shipKey].name}).<br>`
         + (def?.blurb ? `<span style="opacity:.75">${def.blurb}</span><br>` : '')
         + `싣고 있는 것: <b>${rows}</b>`
-        + quote(def?.lines?.greet)
-        + '<br><br>'
+        + (def?.lines?.greet ? quote(def.lines.greet) + '<br>' : '<br><br>')
         + (deal && deal.qty > 0
             ? `선장이 <b>${GOOD_BY_ID[deal.gid].name}</b>${josa(GOOD_BY_ID[deal.gid].name, '을/를')} `
               + `개당 ${deal.unit}닢에 넘기겠다고 한다. 항구 시세보다는 싸다.`
@@ -456,10 +467,10 @@ function officerAside(lineKey) {
      피해량은 건드리지 않는다 — 같은 크기의 사고가 그 길에 맞는 얼굴로 온다. */
 const isCaravan = (v) => !!laneOf(v.from.id, v.to.id)?.overland;
 
-/** 대상로에서는 바다의 사건이 뭍의 사건으로 갈린다.
-    폭풍→모래폭풍은 그대로 두고(같은 손해를 다른 말로 적는다), 배가 있어야 성립하는
-    해적 조우·상선 조우·표류물만 길 위의 것으로 바꾼다. */
-const CARAVAN_EVENT = { pirate: 'bandit', merchant: 'toll', drift: 'bandit' };
+/** 대상로에서는 사건의 **얼굴**만 바꾼다 — 폭풍은 모래폭풍으로, 표류물은 길가에 버려진 짐으로.
+    갈아 끼우는 것은 하나뿐이다: 해적 조우는 뱃전을 맞대야 성립하므로 노상강도가 받는다.
+    (좋은 사건까지 나쁜 사건으로 바꾸면 그 구간만 조용히 더 가혹해진다 — 말이 아니라 밸런스다) */
+const CARAVAN_EVENT = { pirate: 'bandit' };
 
 function resolveEvent(ev0, voyage) {
   const caravan = isCaravan(voyage);
@@ -498,7 +509,9 @@ function resolveEvent(ev0, voyage) {
             ? `<br><br>짐승이 주저앉기 시작하자 대상장이 소리쳤다. <b>짐을 버려라.</b><br>`
             : `<br><br>파도가 갑판을 쓸자 갑판장이 소리쳤다. <b>짐을 던져라.</b><br>`)
           + Object.entries(jet.lost).map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ')
-          + `를 ${caravan ? '모래' : '바다'}에 버렸다(${jet.value.toLocaleString('ko-KR')}닢어치).`
+          // 목록 끝에 오는 것은 수량이다 — '소금 10를'이 아니라 '소금 10을'
+          + `${josa(String(Object.values(jet.lost).at(-1) ?? ''), '을/를')} `
+          + `${caravan ? '모래' : '바다'}에 버렸다(${jet.value.toLocaleString('ko-KR')}닢어치).`
           + (jet.payout > 0
               ? `<br>적하보험이 <b>${jet.payout.toLocaleString('ko-KR')}닢</b>을 물어 준다.`
               : '')
@@ -581,11 +594,15 @@ function resolveEvent(ev0, voyage) {
       if (qty > 0) state.cargo[id] = (state.cargo[id] || 0) + qty;
       state.gold += coin;
       const gname = GOOD_BY_ID[id].name;
-      pushLog(`난파선 잔해에서 ${qty > 0 ? `${gname} ${qty}개와 ` : ''}금화 ${coin}닢을 건졌다.`, 'good');
+      pushLog(caravan
+        ? `길가에 버려진 짐에서 ${qty > 0 ? `${gname} ${qty}개와 ` : ''}금화 ${coin}닢을 챙겼다.`
+        : `난파선 잔해에서 ${qty > 0 ? `${gname} ${qty}개와 ` : ''}금화 ${coin}닢을 건졌다.`, 'good');
       refreshHUD(); refreshLog();
       modal({
-        title: '표류물 발견',
-        body: `부서진 선체 조각 사이에서 건질 만한 것이 나왔다.<br>`
+        title: caravan ? '버려진 짐' : '표류물 발견',
+        body: (caravan
+                ? `길가에 짐짝이 흩어져 있다. 앞서 간 대열이 짐승을 잃은 자리다.<br>`
+                : `부서진 선체 조각 사이에서 건질 만한 것이 나왔다.<br>`)
             + (qty > 0 ? `<b>${gname} ${qty}개</b>와 ` : '') + `<b>금화 ${coin}닢</b>.`
             + officerAside('salvage'),
         actions: [{ label: '거둬들인다', onClick: finish }],
@@ -598,8 +615,10 @@ function resolveEvent(ev0, voyage) {
       /* ★ 이 구간에 상선이 하나도 안 떠 있으면 예전에는 **아무 말도 없이** 지나갔다.
          조우 열두 번 중 한 번이 소리 없이 사라진 셈이라, 플레이어에게는 그냥 멈칫한
          항해였다. 만난 것이 없으면 없는 대로 한 줄은 나와야 한다 — 바다는 넓다는 말이다. */
-      if (!met) {
-        pushLog('멀리 돛 하나가 지나갔다. 깃발만 확인하고 각자 길을 갔다.');
+      if (!met || caravan) {
+        pushLog(caravan
+          ? '맞은편에서 오는 대열과 스쳤다. 물자루만 나눠 마시고 각자 길을 갔다.'
+          : '멀리 돛 하나가 지나갔다. 깃발만 확인하고 각자 길을 갔다.');
         refreshLog();
         finish();
         break;
@@ -627,16 +646,18 @@ function resolveEvent(ev0, voyage) {
       /* 깃발을 사실대로 적는다. 예전에는 무엇이 오든 "수평선에 검은 깃발"이었는데,
          이 표에는 프랑스 순찰 프리깃과 바르바리 기함도 들어 있다 —
          **국왕의 배가 검은 깃발을 달지는 않는다.** 왜 그 배가 상선을 세우는지도 함께 적는다. */
-      const flagLine = (enemy.flag === 'pirate' || enemy.nation === '해적')
+      const blackFlag = enemy.flag === 'pirate' || enemy.nation === '해적';
+      const flagLine = blackFlag
         ? '수평선에 검은 깃발.'
         : `수평선에 ${enemy.nation} 깃발. 사략 허가장을 쥔 배다 — 이 바다에서 그것은 해적과 같은 말이다.`;
+      const rank = RANK_WORD[blackFlag ? 'pirate' : 'navy'][enemy.level] ?? '';
 
       pushLog(`${name}${josa(name, '이/가')} 항로를 막아섰다!`, 'warn');
       refreshLog();
       modal({
         title: '돛이 보인다',
         body: `${flagLine} <b>${name}</b>${josa(name, '이/가')} 바람을 타고 다가온다.<br>`
-            + `<span style="opacity:.75">${enemy.blurb ?? RANK_WORD[enemy.level] ?? ''}`
+            + `<span style="opacity:.75">${enemy.blurb ?? rank}`
             + `${enemy.bounty ? ' 목에 값이 걸린 자다.' : ''}</span>`
             + quote(enemy.hail)
             + `<br><br>싸워서 나포하거나, 실은 것을 넘겨주고 달아날 수 있다.`
