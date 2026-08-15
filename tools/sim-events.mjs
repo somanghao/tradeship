@@ -11,14 +11,14 @@
 // ★ 반드시 여러 시드를 평균한다(메모리: 1회 실행 표본오차를 결론으로 적어 오판한 적 있음).
 
 import {
-  state, resetGame, neighborsOf, voyageDays, voyageCost, buy, cargoValue, cargoFree,
-  cargoUsed, hire, shorthanded, ship, jettisonCargo, banditRaid, payToll,
-  jettisonOdds, officerPerk, boardShip, tariffRate,
+  state, resetGame, neighborsOf, voyageDays, voyageCost, buy, cargoFree,
+  hire, shorthanded, jettisonCargo, banditRaid, payToll,
+  officerPerk, boardShip, capLoot, capSpoils, spareCrew, prizeCrewNeed, spoilsCap,
 } from '../js/state.js';
 import { planFor, setLastPort } from './sim-core.mjs';
 import {
-  SHIPS, GOOD_BY_ID, ENEMIES, CITY_BY_ID, SHIP_RESALE, PRIZE_SCRAP,
-  INSURANCE_COVER, INLAND_LOSS, INLAND_ODDS, SEA_EVENTS,
+  SHIPS, GOOD_BY_ID, ENEMIES, SHIP_RESALE, PRIZE_HULL, PRIZE_SCRAP,
+  INSURANCE_COVER, INLAND_ODDS, SEA_EVENTS,
 } from '../js/data.js';
 import { ALL_PIRATES } from '../js/regions/index.js';
 import { pirateEnemy } from '../js/world.js';
@@ -127,7 +127,10 @@ function measure(st) {
   const legTo = run?.to ?? null;
   const voyNet = run?.net ?? 0;
 
-  const out = { st, assets, cargoAt, gold: state.gold, voyNet, legTo, days: run?.days ?? 0, ev: {} };
+  const out = {
+    st, assets, cargoAt, gold: state.gold, voyNet, legTo, days: run?.days ?? 0,
+    capValue: spoilsCap(), ev: {},
+  };
 
   // 폭풍 투하 — 실제 함수를 돌린다
   const jets = [];
@@ -163,43 +166,54 @@ function measure(st) {
   // 해적에게 짐을 던지고 도주
   out.ev.flee = -Math.round(cargoAt * MIRROR.fleeCargoShare + state.gold * MIRROR.fleeGoldShare);
 
-  // 고정 적함(ENEMIES) — 나포 시 전리품
-  out.enemies = ENEMIES.map((e) => ({
-    name: e.name, level: e.level,
-    capture: mid(e.loot.gold) + prizeValue(e.prize),
-    sink: mid(e.loot.gold) * 0.45,
-  }));
+  // 고정 적함(ENEMIES) — 나포 시 전리품. pickEnemy가 상한을 씌운 사본을 내준다
+  out.enemies = ENEMIES.map((e) => {
+    const c = capLoot(e);
+    return {
+      name: e.name, level: e.level,
+      raw: mid(e.loot.gold) + prizeValue(e.prize),
+      capture: mid(c.loot.gold) + prizeValue(e.prize),
+      goods: c.loot.goods.length,
+    };
+  });
 
+  out.roster = pirateRoster();
   return out;
 }
 
-/** 나포선의 값 — 같은 선종을 이미 가졌으면 해체(0.30), 아니면 선단에 들어온다(되팔면 0.55) */
+/** 나포선이 실제로 손에 남기는 값.
+    끌고 갈 사람이 모자라면 해체값(상한 적용), 되면 선체 60%짜리 배를 되판 값. */
 function prizeValue(key) {
   if (!key || !SHIPS[key]) return 0;
-  return Math.round(SHIPS[key].price * SHIP_RESALE * 0.6 /* 선체 60%만 남아 값이 깎인다 */);
+  const s = SHIPS[key];
+  if (spareCrew() < prizeCrewNeed(key)) return capSpoils(s.price * PRIZE_SCRAP);
+  return Math.round(s.price * SHIP_RESALE * PRIZE_HULL);
 }
 
-/* ── NPC 해적 명부 ────────────────────────────────────────── */
+/* ── NPC 해적 명부 — 지금 상태에서 저놈을 잡으면 얼마인가 ──── */
 function pirateRoster() {
   const rows = [];
   for (const d of ALL_PIRATES) {
     const key = d.ship && SHIPS[d.ship] ? d.ship : 'brig';
     const s = SHIPS[key];
     const lv = Math.min(5, Math.max(1, d.strength ?? 2));
-    const mul = 0.62 + lv * 0.14;
-    // world.js: pirateEnemy — 생성 직후(purse 그대로)의 전리품
+    // world.js: pirateEnemy를 **그대로** 돌린다 — 여기서 공식을 다시 쓰면 갈라진다
+    const lo = pirateEnemy({ id: 0, name: d.name, shipKey: key, strength: lv, bounty: d.bounty,
+      gold: d.purse ? d.purse[0] : 300, cargo: {}, flag: d.flag });
+    const hi = pirateEnemy({ id: 0, name: d.name, shipKey: key, strength: lv, bounty: d.bounty,
+      gold: d.purse ? d.purse[1] : 1200, cargo: {}, flag: d.flag });
     const g0 = Math.max(200, d.purse ? d.purse[0] : 300);
     const g1 = Math.max(200, d.purse ? d.purse[1] : 1200);
-    const lootLo = Math.round(g0 * 0.6) + (d.bounty ? d.bounty[0] : 0);
-    const lootHi = g1 + (d.bounty ? d.bounty[1] : 0);
     rows.push({
       id: d.id, name: d.name, lv, ship: s.name, shipKey: key,
-      hp: Math.round(s.hp * mul), guns: Math.max(2, Math.round(s.guns * mul)),
-      crew: Math.max(10, Math.round(s.crewMax * (0.35 + lv * 0.09))),
-      lootLo, lootHi, prize: prizeValue(key),
+      hp: lo.hp, guns: lo.guns, crew: lo.crew,
+      rawLo: Math.round(g0 * 0.6) + (d.bounty ? d.bounty[0] : 0),
+      rawHi: g1 + (d.bounty ? d.bounty[1] : 0),
+      lootLo: lo.loot.gold[0], lootHi: hi.loot.gold[1],
+      prize: prizeValue(key),
     });
   }
-  return rows.sort((a, b) => a.lv - b.lv || a.lootLo - b.lootLo);
+  return rows.sort((a, b) => a.lv - b.lv || a.rawLo - b.rawHi);
 }
 
 /* ══════════════════════════════════════════════════════════════ */
@@ -215,6 +229,8 @@ for (const st of STAGES) {
     voyNet: avg((r) => r.voyNet), days: avg((r) => r.days),
     ev: Object.fromEntries(Object.keys(runs[0].ev).map((k) => [k, avg((r) => r.ev[k])])),
     enemies: runs[0].enemies,
+    roster: runs[0].roster,
+    cap: runs[0].capValue,
   });
 }
 
@@ -257,31 +273,40 @@ for (const s of stages) {
     + `   선원 손실 ${(s.ev.stormCrewPct * 100).toFixed(1)}% / 1회`);
 }
 
-console.log('\n고정 적함(ENEMIES) — 나포 시 전리품(금화 + 나포선 되판 값)');
-console.log('                                 전리품      초반%     중반%     후반%');
-for (const e of stages[0].enemies) {
-  const line = `  lv${e.level} ${e.name.padEnd(22)} ${won(e.capture).padStart(8)}`
-    + stages.map((s) => `${((e.capture / s.assets) * 100).toFixed(0)}%`.padStart(10)).join('');
-  console.log(line);
+console.log(`\n전리품 상한(spoilsCap) — 초반 ${won(stages[0].cap)} · 중반 ${won(stages[1].cap)} · 후반 ${won(stages[2].cap)}닢`);
+
+console.log('\n고정 적함(ENEMIES) — 나포 시 전리품(금화 + 나포선) · 상한 적용 전 → 후');
+console.log('                             단계    상한 전    상한 후   자산대비  항차대비  노획품목');
+for (const s of stages) {
+  for (const e of s.enemies) {
+    console.log(`  lv${e.level} ${e.name.padEnd(20)} ${s.st.label.padEnd(4)}`
+      + `${won(e.raw).padStart(9)}${won(e.capture).padStart(11)}`
+      + `${(((e.capture / s.assets) * 100).toFixed(0) + '%').padStart(10)}`
+      + `${((e.capture / s.voyNet).toFixed(1) + 'x').padStart(10)}`
+      + `${String(e.goods).padStart(8)}종`);
+  }
+  console.log('');
 }
 
-console.log('\nNPC 해적 명부 — pirateEnemy() 실측 (생성 직후 · 습격 전)');
-console.log('  세기 이름                        배           hp  포  선원      전리품(금화)    +나포선     초반자산대비');
-for (const r of pirateRoster()) {
-  console.log(`   ${r.lv}  ${r.name.padEnd(24)}${r.ship.padEnd(12)}`
-    + `${String(r.hp).padStart(4)}${String(r.guns).padStart(4)}${String(r.crew).padStart(5)}`
-    + `   ${(won(r.lootLo) + '~' + won(r.lootHi)).padStart(15)}`
-    + `${won(r.prize).padStart(9)}`
-    + `${(((mid([r.lootLo, r.lootHi]) + r.prize) / stages[0].assets) * 100).toFixed(0).padStart(9)}%`);
-}
-
-const s1 = pirateRoster().filter((r) => r.lv === 1);
-if (s1.length) {
-  const lo = Math.min(...s1.map((r) => r.lootLo)), hi = Math.max(...s1.map((r) => r.lootHi));
-  const prize = Math.round(s1.reduce((a, r) => a + r.prize, 0) / s1.length);
-  console.log(`\n  ★ 세기 1 해적 하나 = 금화 ${won(lo)}~${won(hi)} + 나포선 ~${won(prize)}닢`
-    + `  = 시작 자산의 ${(((mid([lo, hi]) + prize) / stages[0].assets) * 100).toFixed(0)}%`
-    + ` · 초반 항차 순이익의 ${((mid([lo, hi]) + prize) / stages[0].voyNet).toFixed(1)}배`);
+for (const s of stages) {
+  const rows = s.roster;
+  console.log(`NPC 해적 명부 — ${s.st.label}(자산 ${won(s.assets)}닢)에서 저놈을 잡으면`);
+  console.log('  세기  머릿수   전리품 상한 전       상한 후        +나포선   자산대비   항차대비');
+  for (let lv = 1; lv <= 5; lv++) {
+    const g = rows.filter((r) => r.lv === lv);
+    if (!g.length) continue;
+    const rawLo = Math.min(...g.map((r) => r.rawLo)), rawHi = Math.max(...g.map((r) => r.rawHi));
+    const lo = Math.min(...g.map((r) => r.lootLo)), hi = Math.max(...g.map((r) => r.lootHi));
+    const prize = Math.round(g.reduce((a, r) => a + r.prize, 0) / g.length);
+    const total = mid([lo, hi]) + prize;
+    console.log(`   ${lv}   ${String(g.length).padStart(4)}명`
+      + `${(won(rawLo) + '~' + won(rawHi)).padStart(16)}`
+      + `${(won(lo) + '~' + won(hi)).padStart(14)}`
+      + `${won(prize).padStart(11)}`
+      + `${((total / s.assets * 100).toFixed(0) + '%').padStart(10)}`
+      + `${((total / s.voyNet).toFixed(1) + 'x').padStart(10)}`);
+  }
+  console.log('');
 }
 
 console.log(`\n조우 빈도 참고 — 해적 ${SEA_EVENTS.find((e) => e.id === 'pirate').weight}% ·`

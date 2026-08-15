@@ -91,6 +91,18 @@
           "verdict": "gameplay",
           "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
           "sources": []
+        },
+        "pepper": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "corrected",
+          "basis": "후추를 사 주는 곳이 세계에서 인도 안 두 곳뿐이라 \"유럽이 대양으로 나선 이유\"가 값으로 성립하지 않았다(인도양 감수자가 찾아냈다). 후추는 이 시대 향신료 무역의 부피였고 베네치아·제노바가 레반트에서 받아 유럽에 재분배한 물건이므로 수요를 여기 둔다. 범용 향신료보다 낮게 잡는 것은 후추가 최고가가 아니라 물량이었기 때문이다.",
+          "sources": [
+            {
+              "title": "Spice trade",
+              "url": "https://en.wikipedia.org/wiki/Spice_trade"
+            }
+          ]
         }
       }
     },
@@ -171,6 +183,18 @@
           "verdict": "probable",
           "basis": "르네상스 이탈리아 도시 귀족의 모피 수요라는 일반 패턴. 제노바 특정 사료는 없다.",
           "sources": []
+        },
+        "pepper": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "corrected",
+          "basis": "후추를 사 주는 곳이 세계에서 인도 안 두 곳뿐이라 \"유럽이 대양으로 나선 이유\"가 값으로 성립하지 않았다(인도양 감수자가 찾아냈다). 후추는 이 시대 향신료 무역의 부피였고 베네치아·제노바가 레반트에서 받아 유럽에 재분배한 물건이므로 수요를 여기 둔다. 범용 향신료보다 낮게 잡는 것은 후추가 최고가가 아니라 물량이었기 때문이다.",
+          "sources": [
+            {
+              "title": "Spice trade",
+              "url": "https://en.wikipedia.org/wiki/Spice_trade"
+            }
+          ]
         }
       },
       "tariff": {
@@ -1140,6 +1164,18 @@
             {
               "title": "Benjamin Arbel, \"The Last Decades of Venice's Trade with the Mamluks: Importations into Egypt and Syria\", Mamlūk Studies Review 8/2 (2004)",
               "url": "https://knowledge.uchicago.edu/record/1096"
+            }
+          ]
+        },
+        "pepper": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "corrected",
+          "basis": "후추를 사 주는 곳이 세계에서 인도 안 두 곳뿐이라 \"유럽이 대양으로 나선 이유\"가 값으로 성립하지 않았다(인도양 감수자가 찾아냈다). 후추는 이 시대 향신료 무역의 부피였고 베네치아·제노바가 레반트에서 받아 유럽에 재분배한 물건이므로 수요를 여기 둔다. 범용 향신료보다 낮게 잡는 것은 후추가 최고가가 아니라 물량이었기 때문이다.",
+          "sources": [
+            {
+              "title": "Spice trade",
+              "url": "https://en.wikipedia.org/wiki/Spice_trade"
             }
           ]
         }

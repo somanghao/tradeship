@@ -33,6 +33,10 @@ function walk(dir, exts, out = []) {
   for (const name of readdirSync(abs)) {
     const p = join(abs, name);
     if (statSync(p).isDirectory()) { walk(join(dir, name), exts, out); continue; }
+    /* `_`로 시작하는 파일은 **작업 중 임시본**이다 — 트리에 적지 않는다.
+       여럿이 동시에 일하면서 각자 진단 스크립트를 만들었다 지우는데, 그때마다 이 검사가
+       실패하면 검증이 남의 작업 리듬에 묶인다. 규약을 하나 두고 조용히 넘긴다. */
+    if (name.startsWith('_')) continue;
     if (exts.some((e) => name.endsWith(e))) out.push(relative(ROOT, p).replace(/\\/g, '/'));
   }
   return out;

@@ -15,6 +15,7 @@
 import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS } from './data.js';
 import {
   state, neighborsOf, distanceBetween, priceOf, addPressure, tariffRate, pushLog, addShock,
+  capLoot,
 } from './state.js';
 import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
@@ -365,7 +366,11 @@ export function pirateEnemy(n) {
   /* 세기가 배와 사람에 함께 실린다. 낮은 세기는 배를 덜어 **첫 배로도 붙어 볼 수 있게** 하고,
      높은 세기는 그 반대다 — 명부의 1~2가 43%인 것이 초반이 성립하는 이유다. */
   const mul = 0.62 + lv * 0.14;                 // 1→0.76 … 5→1.32
-  return {
+  /* ★ 전리품은 **여기서 정해지고 씬에서 지급된다.** 그 사이에 상한이 없으면
+     세기 1 좀도둑의 지갑(+현상금)이 시작 자산의 다섯 배가 된다 —
+     첫 배로 하나만 잡으면 코카를 사서 초반이 통째로 사라졌다(tools/sim-events.mjs).
+     `capLoot`(state.js)이 "옮겨 실을 수 있는 만큼"으로 눌러 준다. 규칙은 떠돌이 해적과 같다. */
+  return capLoot({
     id: `npc:${n.id}`, name: `${n.name}호`, nation: '해적',
     hull: s.hull, tint: 'dark', flag: n.flag ?? 'pirate',
     hp: Math.round(s.hp * mul), guns: Math.max(2, Math.round(s.guns * mul)),
@@ -379,7 +384,7 @@ export function pirateEnemy(n) {
         : [Math.round(gold * 0.6), gold],
       goods: Object.keys(n.cargo).length ? Object.keys(n.cargo) : ['salt', 'wine'],
     },
-  };
+  });
 }
 
 /** 그 항구에 상주하는 인물들 — 철이 맞는 사람만.

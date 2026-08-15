@@ -14,3 +14,9 @@ desktop.ini
 # 런타임 산출물
 node_modules/
 *.log
+
+# 작업 중 임시본 — 여럿이 동시에 일할 때 각자 만드는 진단 스크립트와 캡처
+tools/_*.mjs
+.playtest/
+_probe*
+probe_tmp*

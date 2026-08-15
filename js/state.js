@@ -16,7 +16,8 @@ import {
   LURE_PER, LURE_PER_STEP, LURE_CAP,
   ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
-  USED, PRIZE_HULL, PRIZE_SCRAP,
+  USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW,
+  SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR, SPOILS_GOODS_PER_CREW, SPOILS_GOODS_CAP,
 } from './data.js';
 
 /* 튜닝 상수를 그대로 내보낸다 — **호출부는 예전처럼 `state.js`에서 가져와도 된다.**
@@ -30,7 +31,8 @@ export {
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
   ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
-  USED, PRIZE_HULL, PRIZE_SCRAP,
+  USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW,
+  SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR,
 };
 
 export const state = {
@@ -906,14 +908,29 @@ export function buyUsed(key, cityId = state.at) {
 /* ── 나포한 배 ────────────────────────────────────────────────
    백병전으로 이겨 갑판을 장악하면 그 배를 끌고 갈 수 있다.
    이미 같은 선종을 가지고 있으면 끌고 갈 인원이 없어 자재로 판다. */
+/* ★ 나포선을 끌고 가려면 **사람을 옮겨 태워야 한다**(prize crew).
+   남는 선원이 모자라면 배는 못 끌고 가고 해체값만 건진다 — 씬은 이미 그 갈래를
+   ("끌고 갈 인원이 없어 …해체해 자재로 팔았다") 문장으로 갖고 있었고,
+   지금까지는 *같은 선종을 이미 가진 경우*에만 그 길로 갔다.
+   이 규칙이 없으면 선원 여섯짜리 낡은 바사가 브리간틴(4,200닢)을 통째로 끌고 가
+   성장 사다리를 다섯 칸 건너뛴다. → data.js: PRIZE_CREW */
+export function prizeCrewNeed(key) {
+  return Math.ceil((SHIPS[key]?.crewMin || 0) * PRIZE_CREW);
+}
+export function spareCrew() {
+  return Math.max(0, state.crew - (ship().crewMin || 0));
+}
+
 export function captureShip(key) {
   const s = SHIPS[key];
   if (!s) return { ok: false, reason: '끌고 갈 만한 배가 아니다' };
-  if (state.fleet[key]) {
-    const gain = Math.round(s.price * PRIZE_SCRAP);
+  const short = spareCrew() < prizeCrewNeed(key);
+  if (state.fleet[key] || short) {
+    // 해체값도 **실어 갈 수 있는 만큼만** — 안 그러면 해체가 상한을 우회하는 뒷문이 된다
+    const gain = capSpoils(s.price * PRIZE_SCRAP);
     state.gold += gain;
     book('income', 'loot', gain);
-    return { ok: true, scrapped: true, gain };
+    return { ok: true, scrapped: true, gain, why: short && !state.fleet[key] ? 'crew' : 'dup' };
   }
   state.fleet[key] = {
     at: state.at,
@@ -1225,12 +1242,49 @@ export function rollSeaEvent(opts = {}) {
   return SEA_EVENTS[0];
 }
 
+/* ── 전리품 상한 — 실어 갈 수 있는 만큼만 ─────────────────────
+   전리품은 **진 자의 크기**로 정해지는데 뜻은 **이긴 자의 크기**로 읽힌다.
+   그 어긋남이 초반을 통째로 지웠다(실측 `node tools/sim-events.mjs`):
+   세기 1 좀도둑 하나가 시작 자산의 573% — 첫 배로 하나만 잡으면 코카를 샀다.
+
+   해적을 가난하게 만들지 않는다(그러면 후반 현상금이 죽는다). 대신 **옮겨 실을 수 있는
+   양**에 한계를 둔다 — 낡은 바사 갑판에 여섯이 서서 갤리엇의 금고를 통째로 나를 수는 없다.
+   상한 위로도 꼬리(SPOILS_TAIL)가 남아 큰 놈이 여전히 더 값나간다. → data.js: SPOILS_* */
+export function spoilsCap() {
+  return Math.max(SPOILS_FLOOR, Math.round((state.gold + cargoValue()) * SPOILS_SHARE));
+}
+
+export function capSpoils(v) {
+  const cap = spoilsCap();
+  return Math.round(v <= cap ? v : cap + (v - cap) * SPOILS_TAIL);
+}
+
+/** 노획 화물의 품목 수 — 씬이 품목마다 3~11개를 옮겨 싣는다.
+    갑판에 사람이 많아야 적선 화물칸을 다 털 수 있다(선장 혼자서는 한 품목이 고작이다). */
+export function spoilsGoodsLimit() {
+  return Math.max(1, Math.min(SPOILS_GOODS_CAP, 1 + Math.floor(state.crew / SPOILS_GOODS_PER_CREW)));
+}
+
+/** 적함 정의에 상한을 씌운 **사본**을 돌려준다(원본 ENEMIES를 건드리지 않는다).
+    `world.js: pirateEnemy()`도 이것을 통과시킨다 — 명부 해적과 떠돌이 해적이 같은 규칙을 받게. */
+export function capLoot(e) {
+  const [lo, hi] = e.loot.gold;
+  return {
+    ...e,
+    loot: {
+      ...e.loot,
+      gold: [capSpoils(lo), capSpoils(hi)],
+      goods: (e.loot.goods || []).slice(0, spoilsGoodsLimit()),
+    },
+  };
+}
+
 export function pickEnemy(rand = Math.random) {
   // 자산이 커질수록 거물이 붙는다. 낡은 배로 시작하는 초반엔 큰 놈이 아예 붙지 않는다
   // (해적도 털 값이 나오는 배를 고른다).
   const wealth = state.gold + cargoUsed() * 60;
   // 볼품없는 배는 큰 놈이 상대해 주지 않는다 — 낡은 바사를 모는 동안은 잡배만 붙는다
-  if (SHIPS[state.shipKey].leak) return rand() < 0.9 ? ENEMIES[0] : ENEMIES[1];
+  if (SHIPS[state.shipKey].leak) return capLoot(rand() < 0.9 ? ENEMIES[0] : ENEMIES[1]);
   const table = wealth > 30000 ? [0.05, 0.10, 0.25, 0.35, 0.25]
               : wealth > 14000 ? [0.10, 0.25, 0.40, 0.20, 0.05]
               : wealth > 6000  ? [0.30, 0.42, 0.24, 0.04, 0.00]
@@ -1239,9 +1293,9 @@ export function pickEnemy(rand = Math.random) {
   let n = rand();
   for (let i = 0; i < table.length; i++) {
     n -= table[i];
-    if (n <= 0) return ENEMIES[i];
+    if (n <= 0) return capLoot(ENEMIES[i]);
   }
-  return ENEMIES[0];
+  return capLoot(ENEMIES[0]);
 }
 
 /* ── 항해 비용 ────────────────────────────────────────────────
@@ -1519,9 +1573,14 @@ export function settlePayroll(rand = Math.random) {
    `rand`를 받는 이유는 검증 스크립트가 시드를 고정해 발생률을 재기 때문이다. */
 export function rollShockEvents(days, rand = Math.random) {
   const hit = [];
+  /* ★ `perDay`는 **세계 전체에서** 하루에 몇 건이냐다. 도시가 16에서 175로 늘자
+     한 도시가 사건을 겪는 주기가 20개월 → 216개월로 벌어져, "대박은 사건에서 나온다"는
+     설계가 세계를 넓힌 것만으로 사실상 사라졌다. 도시 수로 환산해 **도시당 빈도**를
+     지중해 시절과 같게 맞춘다 — 바다를 늘리면 사건도 따라 는다. → data.js: SHOCK.densityBase */
+  const density = CITIES.length / (SHOCK.densityBase || CITIES.length);
   for (let d = 0; d < days; d++) {
     for (const ev of SHOCK.events) {
-      if (rand() >= ev.perDay) continue;
+      if (rand() >= Math.min(0.4, ev.perDay * density)) continue;
 
       // 그 사건이 걸릴 수 있는 도시·품목 짝을 모은다.
       // ★ 후보를 여기서 만드는 이유: 도시나 품목을 늘리면 사건도 저절로 늘어난다.
