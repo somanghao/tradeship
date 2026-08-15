@@ -20,8 +20,8 @@
 | 의상 색 추가 | `sprites/char.js: SCHEMES` |
 | 선종 추가 | `sprites/ship.js: HULLS`에 비례값 (len/deck/depth/sheer/masts/ports) — 낡은 배는 `worn: true`(덧댄 판자·물때), 노는 `oars`, 충각은 `ram` |
 | 선체 색 추가 | `sprites/ship.js: TINTS` (oak/dark/white/green/**rot**=삭은 배) |
-| 국가 깃발 추가 | `sprites/ship.js: FLAGS` (venice/genoa/spain/ottoman/france/england/pirate) |
-| 도시 건축 양식 추가 | `sprites/scene.js: STYLES` |
+| 국가 깃발 추가 | `sprites/ship.js: FLAGS` — **29종**. 구조는 `{field, fieldD, mark, shape}`이고 `shape`가 표식 모양(block·cross·saltire·crescent·disc·ring·bar·taeguk·none·skull). ★ **표식은 열 1~6에만 놓는다** — 깃발 천이 `sin`으로 물결쳐 열 7 이후에 놓으면 원이 마름모로 일그러진다(십자·X자만 물결을 타도 자연스럽다) |
+| 도시 건축 양식 추가 | `sprites/scene.js: STYLES` — **13종**(latin·hellenic·levant·hanseatic·nordic·swahili·guinea·dravidian·malabar·malay·sinic·jiangnan·colonial). 색만으로는 함부르크와 나가사키가 안 갈려 `roofKind`(pitched·flat·gable·eave·thatch·steep)를 함께 쓴다. 새 tower를 넣으면 `portSprite`의 `landmark()`도 늘려야 한다(gable·pagoda·gopuram이 그렇게 들어왔다). ★ `lowRise`를 안 주면 이엉집 화풍이 **3층 진흙 마천루**로 나온다 |
 | 지형 수정 | `sprites/scene.js: SEA_SPANS`(격자) / `ISLES`(섬) — 먼저 [map-terrain.md](wiki/map-terrain.md) |
 | 그림을 외부에 발주 | `assets/PORT-BACKGROUND-BRIEF.md`(항구 16장) · `assets/WORLD-MAP-BRIEF.md`(지도 1장) — 규격·좌표·검수기준 정본 |
 | **납품된 지도 검수** | `python tools/check-map.py [파일]` — 규격·색수(손실 webp 탐지)·도시 16곳 해안선·항로 28개·바다 소음을 한 번에. 좌표는 `geo.js`에서 직접 읽는다 |

@@ -2,7 +2,7 @@
 // 게임 논리 해상도 400x225 기준으로 그린 뒤 정수배 확대해서 쓴다.
 
 import { PAL as P, G, bake, outline, rng } from '../pixel.js';
-import { autoLandMap, scatterIsles } from './maps/auto.js';
+import { autoLandMap, scatterIsles, carveHarbors } from './maps/auto.js';
 import { mapDefOf, climateOf } from './maps/index.js';
 
 export const VW = 400, VH = 225;
@@ -118,6 +118,9 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
     let land, isles, ranges;
     if (def.hand) {
       land = landFromSpans(def.hand.spans, def.hand.gw, def.hand.gh, def.hand.gs ?? GS_DEFAULT);
+      /* 손으로 찍은 격자는 그때의 항구에 맞춰 찍은 것이라, 나중에 넣은 항구가 뭍에 앉는다.
+         지형은 그대로 두고 **물길만 판다** — 실루엣을 잃지 않으면서 항구를 물가로 되돌린다. */
+      carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 6, bay: 6.5 });
       isles = def.hand.isles ?? [];
       ranges = def.hand.ranges ?? [];
     } else {
@@ -301,7 +304,7 @@ export const STYLES = {
     hillL: ['#4f7d3c', '#5d8f46'],
     sea: ['#2f8a86', '#1d6470', '#0f3a48', '#55b0aa'],
     rampart: ['#8a6238', '#a87f4e', '#563a1c'],   // 흙과 통나무
-    tower: 'dome', accent: P.grnL, roofKind: 'thatch',
+    tower: 'dome', accent: P.grnL, roofKind: 'thatch', lowRise: 0.52,
   },
 
   /* ── 인도양 ───────────────────────────────────────────── */
@@ -329,7 +332,7 @@ export const STYLES = {
     hillL: ['#3f8c52', '#4d9e5e'],
     sea: ['#2f9c9c', '#1d7080', '#0f4252', '#5cc4c0'],
     rampart: ['#7a5c38', '#9c7a4e', '#4a3620'],   // 대나무와 통나무 부두
-    tower: 'pagoda', accent: P.grnL, roofKind: 'thatch',
+    tower: 'pagoda', accent: P.grnL, roofKind: 'thatch', lowRise: 0.58,
   },
 
   /* ── 동아시아 ─────────────────────────────────────────── */
@@ -589,7 +592,8 @@ function landmark(g, S, r, x, groundY) {
       for (let k = 0; k < h; k++) {
         const half = Math.round((base / 2) * (1 - (k / h) * 0.45));
         const band = k % 7 === 6;                    // 층 띠
-        g.h(groundY - k, x - half, x + half, band ? S.wallD : S.wall[0]);
+        // 시가지와 같은 벽색을 쓰면 탑이 건물에 묻힌다 — 가장 밝은 벽색으로 띄운다
+        g.h(groundY - k, x - half, x + half, band ? S.wallD : S.wall[2]);
         g.px(x - half, groundY - k, S.wallD);
         g.px(x + half, groundY - k, S.wallD);
         if (band) g.h(groundY - k - 1, x - half + 1, x + half - 1, S.wall[2]);
@@ -714,9 +718,12 @@ export function portSprite(styleKey, seed) {
     drawHills(g, S, r);
 
     // 시가지 — 뒤쪽(작고 어두움) → 앞쪽(크고 밝음) 3열
+    // ★ `lowRise`가 이 바다의 취락 규모다. 기니·말레이의 이엉집을 도시 높이로 세우면
+    //   진흙 마천루가 된다(실제로 그렇게 나왔다) — 절반으로 낮춰야 마을로 읽힌다.
+    const lr = S.lowRise ?? 1;
     for (let row = 0; row < 3; row++) {
       const groundY = 112 + row * 10;
-      const hMin = 14 + row * 7, hMax = 32 + row * 13;
+      const hMin = Math.round((14 + row * 7) * lr), hMax = Math.round((32 + row * 13) * lr);
       let x = -4 + Math.floor(r() * 6);
       while (x < VW + 4) {
         const w = 8 + Math.floor(r() * 16);

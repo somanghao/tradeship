@@ -50,9 +50,12 @@ export const CITIES = [
   { id: 'beirut',     name: '베이루트',     area: '레반트',     style: 'levant',   x: 351, y: 121, flag: 'ottoman', seed: 2212, size: 2, industry: 1 },
   { id: 'alexandria', name: '알렉산드리아', area: '이집트',     style: 'levant',   x: 320, y: 159, flag: 'ottoman', seed: 2313, size: 3, industry: 2 },
   // 몰타 — 카를 5세가 성 요한 기사단에 넘긴 섬(1530). 시칠리아 해협의 병목에 앉아
+  // ★ y를 161에서 172로 내렸다(2026-08-15). 튀니스와 6.4px밖에 안 떨어져 **몰타의 이름표가
+  //   튀니스의 항구 표식을 덮고 있었다**(mapcheck.html이 잡아냈다). 클릭 판정은 최근접으로
+  //   고쳐 눌리기는 하지만, 이름이 남의 항구를 가리는 것은 그대로 남는다.
   // 동서 해운 전체를 내려다본다. 생산지가 아니라 **나포품 집산지**라 특산이 거의 없고
   // 곡물을 상시 수입한다. 나포선 경매가 서던 곳이라 tunis·algiers와 같은 prizeYard.
-  { id: 'malta',      name: '몰타',         area: '시칠리아 해협', style: 'latin', x: 169, y: 161, flag: 'hospitaller', seed: 2616, size: 1, industry: 1, prizeYard: true },
+  { id: 'malta',      name: '몰타',         area: '시칠리아 해협', style: 'latin', x: 169, y: 178, flag: 'hospitaller', seed: 2616, size: 1, industry: 1, prizeYard: true },
 
   /* ── 여기부터 2차 확장분 ──────────────────────────────────────
      열여섯 항구로는 지중해가 헐거웠다. 특히 **라구사가 없는 것이 가장 큰 구멍**이었다 —

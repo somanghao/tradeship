@@ -24,8 +24,10 @@ export const TRADE = {
     // 누에바에스파냐의 유일한 합법 항구. 멕시코 은과 오아하카 코치닐과 파판틀라 바닐라가
     // 여기 모여 대서양으로 나간다. 반대로 아말감 정련용 수은과 유럽 포도주·기름이 여기로 들어온다.
     // 카카오는 이 부왕령이 **최대 소비지**였다 — 산지가 아니라 사들이는 쪽이다.
+    // 소가죽 수요는 은광이 낸다. 광석 자루·풀무·노새 마구가 전부 가죽이라
+    // 사카테카스로 올라가는 가죽이 이 항구를 지났다.
     supply: { silver: 0.50, cochineal: 0.46, vanilla: 0.50 },
-    demand: { mercury: 1.44, cacao: 1.28, wine: 1.32, oliveoil: 1.26 },
+    demand: { mercury: 1.44, wine: 1.32, cacao: 1.28, hide: 1.22 },
     blurb: '누에바에스파냐의 유일한 합법 항구. 앞바다 산호섬의 요새가 은과 코치닐을 지킨다.',
   },
   campeche: {
@@ -48,7 +50,7 @@ export const TRADE = {
     // 아메리카 전역의 배가 여기 모여 함께 대서양을 건넌다. 쿠바 담배와 설탕을 내놓지만
     // 이 항구의 본업은 **사 모으는 것**이다 — 함대에 실을 것이면 무엇이든.
     supply: { tobacco: 0.54, sugar: 0.60 },
-    demand: { cochineal: 1.34, vanilla: 1.30, emerald: 1.24, hide: 1.20 },
+    demand: { cochineal: 1.34, vanilla: 1.30, emerald: 1.24, logwood: 1.22 },
     blurb: '서인도 함대가 모이는 항구. 실을 것이면 무엇이든 값을 쳐 준다.',
   },
   santiagocuba: {
@@ -152,7 +154,7 @@ export const TRADE = {
     // 그 첫째가 은, 둘째가 코치닐이었다. 그래서 여기는 **아시아행 짐을 사 모으는 자리**다.
     // 은은 멕시코 것이 곧장 실리므로 supply, 나머지는 뭍길로 실어 와야 하므로 demand다.
     supply: { silver: 0.52 },
-    demand: { vanilla: 1.28, cochineal: 1.26, cacao: 1.24, emerald: 1.20 },
+    demand: { vanilla: 1.28, cochineal: 1.26, cacao: 1.24, tobacco: 1.20 },
     blurb: '마닐라 갤리온이 떠나는 부두. 갤리온이 없는 철에는 열병 도는 어촌이다.',
   },
 };

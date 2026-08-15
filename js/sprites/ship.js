@@ -68,10 +68,11 @@ export const FLAGS = {
   safavid:  { field: P.grnM,   fieldD: P.grnD,   mark: P.goldL,  shape: 'disc' },
 
   /* ── 인도양 ───────────────────────────────────────────── */
-  // 사무티리(캘리컷) — 케랄라의 초록에 금빛 표식. ★ 도안 기록이 없어 색으로만 가른다.
-  zamorin:      { field: '#2a6b52', fieldD: '#17402f', mark: P.goldL, shape: 'disc' },
-  // 비자야나가르 — 바라하(멧돼지)와 해·달. 사프란 바탕에 검은 멧돼지로 냈다. 색은 미상.
-  vijayanagara: { field: '#c4652a', fieldD: '#8a3f16', mark: P.blackM },
+  // 사무티리(캘리컷) — 힌두 왕가의 사프란 바탕에 흰 해. ★ 도안 기록이 없어 색으로만 가른다.
+  //   베냉도 같은 사프란이지만 표식이 검정이라(흰 해 ↔ 검은 표범) 갈리고, 두 바다가 다르다.
+  zamorin:      { field: '#c4652a', fieldD: '#8a3f16', mark: P.clothL, shape: 'disc' },
+  // 비자야나가르 — 바라하(멧돼지)와 해·달. 초록 바탕에 금빛 멧돼지로 냈다. 색은 미상.
+  vijayanagara: { field: '#2a6b52', fieldD: '#17402f', mark: P.goldL },
   // 구자라트 술탄국 — ★ 도안 미상. 오스만 초록과 갈리도록 짙은 남색에 흰 초승달로 둔다.
   gujarat:      { field: P.blueD,  fieldD: '#0d1b2c', mark: P.clothL, shape: 'crescent' },
   // 벵골 술탄국 — ★ 도안 미상. 같은 무슬림인 구자라트와 갈리도록 짙은 녹색으로 둔다.
@@ -386,7 +387,10 @@ function drawMasts(g, H, tint, furl) {
 /* 표식 도안. 좌표는 **깃발 안의 칸**이다 — 열 i는 깃대에서 바깥으로 0..17,
    행 j는 위에서 아래로 0(윗단) … hgt(아랫단). 천이 펄럭이므로 mp()가 그 물결을
    따라 픽셀을 얹어 준다(평평하게 찍으면 표식만 종이처럼 떠 보인다).
-   ★ 모양을 늘릴 때는 **행 1..6 · 열 1..13 안**에 담을 것. 그 밖은 천이 얇아 잘린다. */
+   ★ 모양을 늘릴 때는 **행 1..6 · 열 1..13 안**에 담을 것. 그 밖은 천이 얇아 잘린다.
+   ★ 원·네모처럼 윤곽이 또렷해야 하는 표식은 **열 1~6**에 담는다. 그 구간만 물결이 평평해서
+     모양이 안 일그러진다 — 열 7부터는 1px씩 어긋나 원이 마름모가 된다(실제로 그렇게 나왔다).
+     반대로 십자·X자는 물결을 타야 천에 그린 것처럼 보인다. */
 function drawMark(mp, F) {
   const M = F.mark;
   switch (F.shape) {
@@ -402,36 +406,36 @@ function drawMark(mp, F) {
       }
       break;
     case 'crescent':                                // 초승달 — 오른쪽으로 열린다
-      for (const i of [5, 6, 7]) { mp(i, 1, M); mp(i, 6, M); }
-      mp(4, 2, M); mp(5, 2, M); mp(4, 5, M); mp(5, 5, M);
-      mp(3, 3, M); mp(4, 3, M); mp(3, 4, M); mp(4, 4, M);
+      for (const i of [3, 4, 5]) { mp(i, 1, M); mp(i, 6, M); }
+      mp(2, 2, M); mp(3, 2, M); mp(2, 5, M); mp(3, 5, M);
+      mp(1, 3, M); mp(2, 3, M); mp(1, 4, M); mp(2, 4, M);
       break;
     case 'disc': case 'ring': case 'taeguk': {      // 원 계열
       const two = F.shape === 'taeguk';
       for (let j = 2; j <= 6; j++) {
         const half = (j === 2 || j === 6) ? 1 : 2;
-        for (let i = 6 - half; i <= 6 + half; i++) {
-          mp(i, j, two ? ((i - 6) + (j - 4) <= 0 ? F.mark2 : M) : M);
+        for (let i = 4 - half; i <= 4 + half; i++) {
+          mp(i, j, two ? ((i - 4) + (j - 4) <= 0 ? F.mark2 : M) : M);
         }
       }
       if (F.shape === 'ring') {                     // 가운데를 파내 고리로
-        mp(5, 4, F.field); mp(6, 4, F.field); mp(7, 4, F.field);
-        mp(6, 3, F.field); mp(6, 5, F.field);
+        mp(3, 4, F.field); mp(4, 4, F.field); mp(5, 4, F.field);
+        mp(4, 3, F.field); mp(4, 5, F.field);
       }
       break;
     }
     case 'bar': break;                              // 가로 2색기는 천을 그릴 때 처리한다
     case 'skull': {                                 // 졸리 로저 — 해골과 뼈
-      for (let i = 5; i <= 8; i++) { mp(i, 2, M); mp(i, 3, M); }
-      mp(6, 3, F.field); mp(8, 3, F.field);         // 눈구멍
-      mp(6, 4, M); mp(7, 4, M);                     // 턱
-      for (let i = 3; i <= 10; i++) mp(i, 6, M);    // 엇갈린 뼈
-      mp(3, 5, M); mp(10, 5, M);
+      for (let i = 2; i <= 5; i++) { mp(i, 2, M); mp(i, 3, M); }
+      mp(3, 3, F.field); mp(5, 3, F.field);         // 눈구멍
+      mp(3, 4, M); mp(4, 4, M);                     // 턱
+      for (let i = 1; i <= 7; i++) mp(i, 6, M);     // 엇갈린 뼈
+      mp(1, 5, M); mp(7, 5, M);
       break;
     }
     default:                                        // block — 네모 문장(기본)
-      for (let j = 2; j <= 5; j++) for (let i = 5; i <= 8; i++) mp(i, j, M);
-      mp(6, 3, F.field);
+      for (let j = 2; j <= 5; j++) for (let i = 3; i <= 6; i++) mp(i, j, M);
+      mp(4, 3, F.field);
   }
 }
 

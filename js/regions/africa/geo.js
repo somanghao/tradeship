@@ -76,7 +76,7 @@ export const CITIES = [
   { id: 'mombasa',    name: '몸바사',   area: '스와힐리',      style: 'swahili',  x: 320, y: 90,  flag: 'hafsid', seed: 4114, size: 3, industry: 2 },
   // 말린디 — 몸바사의 숙적이라 포르투갈과 손을 잡았다. 1498년 다 가마를 환대한 도시로
   // 그때 인구 5,000~10,000. 유럽 배에 관세가 헐한 것이 이 도시의 성격이다.
-  { id: 'malindi',    name: '말린디',   area: '스와힐리',      style: 'swahili',  x: 336, y: 70,  flag: 'hafsid', seed: 4115, size: 2, industry: 1 },
+  { id: 'malindi',    name: '말린디',   area: '스와힐리',      style: 'swahili',  x: 338, y: 78,  flag: 'hafsid', seed: 4115, size: 2, industry: 1 },
   // 라무·파테 군도 — 뱃집의 섬. 못 하나 안 쓰고 야자 노끈으로 판자를 꿰매는
   // 므템베 목수들이 여기 있었다. 1506년 포르투갈 봉쇄로 연 600메티칼의 조공을 물었다.
   { id: 'lamu',       name: '라무',     area: '스와힐리',      style: 'swahili',  x: 354, y: 54,  flag: 'hafsid', seed: 4116, size: 2, industry: 2 },

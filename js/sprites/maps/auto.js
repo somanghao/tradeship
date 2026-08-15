@@ -8,16 +8,21 @@
 //
 //   결론은 **작업 순서를 뒤집는 것**이었다 — 지형을 그리고 도시를 얹는 게 아니라,
 //   **도시를 놓고 그 점들이 물가에 오도록 지형을 만든다.** 그것을 코드로 한 것이 이 파일이다.
-//   그래서 여기서 나온 지도는 "항구가 물가에 있고 항로가 바다를 지난다"가 **구조적으로 참**이다.
-//   검수 스크립트(tools/check-map.py)가 검사하는 항목을 그림이 만족하는 게 아니라,
-//   만족할 수밖에 없는 방식으로 만든다.
 //
-//   다만 이것만으로는 실루엣이 밋밋하다(2차 납품의 실패가 그것이었다). 그래서
-//   해안선에 **값 잡음(value noise)**을 먹여 만과 곶을 파고, 바다 쪽에 섬을 흩고,
-//   항로에서 먼 바다는 통째로 열어 둔다. 이 셋이 "선 모양 바다"를 지도처럼 보이게 한다.
+// ── 무엇을 바다로 하는가 (우선순위 순) ────────────────────────
+//   ① 항로 회랑    — 배가 지나는 길은 반드시 바다다. 아무것도 이것을 덮지 못한다.
+//   ② 항구 앞바다  — **항로가 나가는 쪽만** 연다(아래 ★).
+//   ③ openSea      — 대양 쪽. 이것이 없으면 지도가 "항로를 따라 난 운하"가 된다.
+//   ④ landmass     — 통째로 뭍인 자리. ①②를 **덮지 못한다**(덮으면 항구가 내륙에 갇힌다).
+//
+// ★ 항구 앞바다를 원형으로 파면 안 된다 — 처음에 그렇게 만들었다가 검수에서 드러났다.
+//   원형으로 파면 항구가 물가에 서는 게 아니라 **호수 한가운데 떠 있는 섬**이 된다.
+//   항구는 뭍과 물이 만나는 자리다. 그래서 그 도시에서 **항로가 나가는 방향으로만** 열고
+//   반대쪽은 뭍으로 남긴다. 그러면 해안선이 저절로 생기고 항구가 그 위에 앉는다.
 //
 //   이 그림은 **기준판이자 임시본**이다. 사람이 그린 지도가 오면 `assets/manifest.json`으로
 //   갈아 끼운다 — 그때 이 그림이 그대로 발주용 기준판이 된다(좌표가 이미 맞으므로).
+//   검수는 `mapcheck.html`이 한다(항구가 물가인가 · 항로가 바다인가 · 이름표가 겹치는가).
 
 import { rng } from '../../pixel.js';
 
@@ -54,6 +59,23 @@ function distToSeg(px, py, x0, y0, x1, y1) {
   return Math.hypot(px - qx, py - qy);
 }
 
+/** 도시·항로에서 선분 목록과 항구별 "바다가 열린 방향"을 뽑는다 */
+function topology(cities, routes) {
+  const byId = Object.fromEntries(cities.map((c) => [c.id, c]));
+  const segs = [];
+  const dirs = {};
+  for (const c of cities) dirs[c.id] = [];
+  for (const [a, b] of routes) {
+    const ca = byId[a], cb = byId[b];
+    if (!ca || !cb) continue;
+    segs.push([ca.x, ca.y, cb.x, cb.y]);
+    const d = Math.hypot(cb.x - ca.x, cb.y - ca.y) || 1;
+    dirs[a].push([(cb.x - ca.x) / d, (cb.y - ca.y) / d]);
+    dirs[b].push([(ca.x - cb.x) / d, (ca.y - cb.y) / d]);
+  }
+  return { byId, segs, dirs };
+}
+
 /**
  * 도시·항로에서 바다를 만든다.
  *
@@ -63,23 +85,17 @@ function distToSeg(px, py, x0, y0, x1, y1) {
  *   seed      권역마다 다른 해안을 얻기 위한 씨앗
  *   lane      항로 회랑의 기본 반폭(px). 클수록 바다가 넓다
  *   bay       항구 앞바다의 기본 반경(px)
- *   openSea   [[x0,y0,x1,y1]…] 통째로 바다인 사각형 — **대양 쪽을 열어 두는 자리**다.
- *             이것이 없으면 지도가 "항로를 따라 난 운하"처럼 보인다.
+ *   openSea   [[x0,y0,x1,y1]…] 통째로 바다인 사각형 — **대양 쪽을 열어 두는 자리**
  *   landmass  [[x0,y0,x1,y1]…] 통째로 육지인 사각형 — 대륙 안쪽을 굳혀 만을 막는다.
- *             openSea보다 **먼저** 적용되므로 겹치면 바다가 이긴다.
+ *             ★ 항로 회랑과 항구 앞바다는 **덮지 못한다**(덮으면 항구가 내륙에 갇힌다).
  * @returns Uint8Array(VW*VH) — 1이면 육지
  */
 export function autoLandMap(cities, routes, opts = {}) {
   const {
-    seed = 0xA11A5, lane = 7.5, bay = 11, openSea = [], landmass = [],
+    seed = 0xA11A5, lane = 8, bay = 9, openSea = [], landmass = [],
   } = opts;
 
-  const byId = Object.fromEntries(cities.map((c) => [c.id, c]));
-  const segs = [];
-  for (const [a, b] of routes) {
-    const ca = byId[a], cb = byId[b];
-    if (ca && cb) segs.push([ca.x, ca.y, cb.x, cb.y]);
-  }
+  const { segs, dirs } = topology(cities, routes);
 
   // 해안을 굽이치게 하는 잡음 둘 — 큰 굴곡과 잔 요철을 겹친다
   const nBig = valueNoise(seed, 26);
@@ -94,22 +110,40 @@ export function autoLandMap(cities, routes, opts = {}) {
       const wob = (nBig(x, y) - 0.5) * 2;          // -1 … 1
       const fine = (nSmall(x, y) - 0.5) * 2;
 
-      let sea = false;
-
-      // ① 항구 앞바다 — 큰 항구일수록 넓다(size 1~3)
-      for (const c of cities) {
-        const r = bay * (0.8 + (c.size ?? 2) * 0.16) + wob * 4 + fine * 2;
-        if (Math.hypot(x - c.x, y - c.y) < r) { sea = true; break; }
+      // ① 항로 회랑 — 아무것도 이것을 덮지 못한다
+      let core = false;
+      const w = lane + wob * 3.5 + fine * 1.6;
+      for (const s of segs) {
+        if (distToSeg(x, y, s[0], s[1], s[2], s[3]) < w) { core = true; break; }
       }
-      // ② 항로 회랑
-      if (!sea) {
-        const w = lane + wob * 3.5 + fine * 1.6;
-        for (const s of segs) {
-          if (distToSeg(x, y, s[0], s[1], s[2], s[3]) < w) { sea = true; break; }
+
+      // ② 항구 앞바다 — **항로가 나가는 쪽만** 연다
+      if (!core) {
+        for (const c of cities) {
+          const dx = x - c.x, dy = y - c.y;
+          const dist = Math.hypot(dx, dy);
+          const r = bay * (0.8 + (c.size ?? 2) * 0.16) + wob * 3 + fine * 1.5;
+          if (dist > r) continue;
+          const dl = dirs[c.id];
+          if (!dl.length) { core = true; break; }        // 외딴 항구는 그냥 둘레를 판다
+          if (dist < 2.5) { core = true; break; }        // 항구 바로 앞은 늘 물이다
+          const ux = dx / dist, uy = dy / dist;
+          // 항로 방향과 이루는 각이 100도 안쪽이면 바다 쪽이다
+          if (dl.some(([vx, vy]) => vx * ux + vy * uy > -0.17)) { core = true; break; }
         }
       }
-      // ③ 대륙을 굳히는 자리 — 바다가 안쪽으로 새는 것을 막는다
-      if (sea) {
+
+      let sea = core;
+
+      // ③ 열린 바다 — 대양 쪽. 경계를 잡음으로 흔들어 사각형 티를 없앤다
+      if (!sea) {
+        for (const [x0, y0, x1, y1] of openSea) {
+          const m = 4 + wob * 5;
+          if (x >= x0 - m && x <= x1 + m && y >= y0 - m && y <= y1 + m) { sea = true; break; }
+        }
+      }
+      // ④ 대륙을 굳히는 자리 — 단, 항로·항구 앞바다(core)는 못 지운다
+      if (sea && !core) {
         for (const [x0, y0, x1, y1] of landmass) {
           if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
             // 가장자리는 잡음으로 물러 두어 자로 그은 경계가 안 생기게
@@ -119,11 +153,25 @@ export function autoLandMap(cities, routes, opts = {}) {
           }
         }
       }
-      // ④ 열린 바다 — 대양 쪽. 경계를 잡음으로 흔들어 사각형 티를 없앤다
-      if (!sea) {
-        for (const [x0, y0, x1, y1] of openSea) {
-          const m = 4 + wob * 5;
-          if (x >= x0 - m && x <= x1 + m && y >= y0 - m && y <= y1 + m) { sea = true; break; }
+
+      /* ⑤ 항구 **뒤편**은 뭍이다 — 이것이 마지막이고 무엇보다 세다.
+         ★ 앞의 규칙들만으로는 부족했다. 항로 회랑이 항구를 통과하므로 항구 둘레가
+           결국 사방 다 물이 되어, 항구가 물가가 아니라 **물 한가운데** 서 있었다
+           (검수 페이지가 "바다 한복판"으로 잡아냈다). 항구는 뭍에 붙어 있어야 항구다.
+         그래서 그 도시의 **모든 항로 방향과 등지는 쪽**을 뭍으로 되돌린다.
+         이웃이 사방에 있는 도시는 되돌릴 자리가 없어 섬이 되는데, 그것은 옳다 —
+         실제로 그런 항구는 섬이거나 곶이다. */
+      if (sea) {
+        for (const c of cities) {
+          const dx = x - c.x, dy = y - c.y;
+          const dist = Math.hypot(dx, dy);
+          const back = bay * 1.7 + wob * 3;
+          if (dist > back || dist < 2.5) continue;
+          const dl = dirs[c.id];
+          if (!dl.length) continue;
+          const ux = dx / dist, uy = dy / dist;
+          // 모든 항로 방향과 110도 넘게 벌어졌으면 배가 갈 일이 없는 쪽 = 뭍
+          if (dl.every(([vx, vy]) => vx * ux + vy * uy < -0.34)) { sea = false; break; }
         }
       }
 
@@ -153,7 +201,7 @@ function despeckle(src) {
   return land;
 }
 
-/** 바다 한복판에 갇힌 작은 육지 조각을 섬으로 남기고, 육지 속 웅덩이는 메운다.
+/** 육지 속에 갇힌 물웅덩이를 메운다.
     호수는 이 게임에 없다 — 배가 못 가는 물이 지도에 있으면 플레이어가 항로를 오해한다. */
 function smooth(land) {
   const seen = new Uint8Array(VW * VH);
@@ -172,7 +220,27 @@ function smooth(land) {
     const x = i % VW, y = (i / VW) | 0;
     push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
   }
-  for (let i = 0; i < land.length; i++) if (!land[i] && !seen[i]) land[i] = 1;
+  /* ★ 여기서 메우는 것은 **가장자리에 닿지 않는 물**이다. 항로로 판 물길은 대개
+     지도 밖까지 이어지지 않으므로 그대로 메워질 수 있다 — 그래서 이 함수는
+     **호수가 될 만큼 작은 것만** 지운다. 큰 내해(지중해 같은)를 통째로 메우면 안 된다. */
+  const pool = [];
+  const mark = new Uint8Array(VW * VH);
+  for (let i = 0; i < land.length; i++) {
+    if (land[i] || seen[i] || mark[i]) continue;
+    // 이 웅덩이의 크기를 잰다
+    const cells = [i]; mark[i] = 1;
+    for (let k = 0; k < cells.length; k++) {
+      const j = cells[k], x = j % VW, y = (j / VW) | 0;
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        if (nx < 0 || ny < 0 || nx >= VW || ny >= VH) continue;
+        const n = ny * VW + nx;
+        if (land[n] || mark[n]) continue;
+        mark[n] = 1; cells.push(n);
+      }
+    }
+    if (cells.length < 90) pool.push(...cells);     // 90px 미만이면 웅덩이로 본다
+  }
+  for (const i of pool) land[i] = 1;
   return land;
 }
 
@@ -182,12 +250,7 @@ function smooth(land) {
 export function scatterIsles(land, cities, routes, opts = {}) {
   const { seed = 0x15E5, count = 14 } = opts;
   const r = rng(seed);
-  const byId = Object.fromEntries(cities.map((c) => [c.id, c]));
-  const segs = [];
-  for (const [a, b] of routes) {
-    const ca = byId[a], cb = byId[b];
-    if (ca && cb) segs.push([ca.x, ca.y, cb.x, cb.y]);
-  }
+  const { segs } = topology(cities, routes);
   const out = [];
   let guard = 0;
   while (out.length < count && guard++ < count * 60) {
@@ -203,4 +266,48 @@ export function scatterIsles(land, cities, routes, opts = {}) {
     out.push([x, y, rx, ry]);
   }
   return out;
+}
+
+/**
+ * 손으로 찍은 격자에 **항구와 항로만 파낸다.**
+ *
+ * ★ 지중해는 실루엣이 눈에 익어 손으로 찍은 격자를 그대로 쓴다. 그런데 그 격자는
+ *   열여섯 항구에 맞춰 찍은 것이라, 나중에 라구사·키오스·파마구스타를 넣자
+ *   **새 항구가 뭍 한복판에 앉았다**(검수 페이지가 잡아냈다).
+ *   격자를 통째로 다시 찍는 것은 실루엣을 잃는 일이고, 도시 좌표를 지형에 맞춰 비트는 것은
+ *   이 프로젝트가 지도 외주에서 두 번 실패하며 하지 않기로 한 바로 그것이다.
+ *   그래서 **지형은 두고 물길만 판다** — 최소한으로.
+ *
+ * @param land  landFromSpans가 만든 육지 맵 (제자리에서 고친다)
+ */
+export function carveHarbors(land, cities, routes, opts = {}) {
+  const { seed = 0xC0A57, lane = 4.5, bay = 5.5 } = opts;
+  const { segs, dirs } = topology(cities, routes);
+  const n = valueNoise(seed, 9);
+
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      if (!land[y * VW + x]) continue;              // 이미 바다면 둘 것 없다
+      const wob = (n(x, y) - 0.5) * 2;
+
+      // 항로 — 배가 지나는 길은 반드시 물이어야 한다
+      const w = lane + wob * 1.8;
+      let cut = segs.some((s) => distToSeg(x, y, s[0], s[1], s[2], s[3]) < w);
+
+      // 항구 앞바다 — 항로가 나가는 쪽만. 뒤편은 뭍으로 남겨 물가가 되게 한다
+      if (!cut) {
+        for (const c of cities) {
+          const dx = x - c.x, dy = y - c.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > bay + wob * 2) continue;
+          const dl = dirs[c.id];
+          if (!dl.length || dist < 2) { cut = true; break; }
+          const ux = dx / dist, uy = dy / dist;
+          if (dl.some(([vx, vy]) => vx * ux + vy * uy > 0)) { cut = true; break; }
+        }
+      }
+      if (cut) land[y * VW + x] = 0;
+    }
+  }
+  return land;
 }

@@ -30,9 +30,11 @@
 //   자메이카는 1655년 잉글랜드에 넘어가기 전의 스페인령 자메이카로 뒀다 —
 //   연표를 고정하지 않는 것이 이 프로젝트의 방침이고, 은 함대 시대의 자메이카는
 //   가죽과 밀무역의 뒷문이었지 포트 로열이 아니었다.
-//   화풍(`STYLES`)은 latin/hellenic/levant 셋뿐이라, 성벽을 두른 스페인 요새항은 latin으로,
-//   볕에 구운 낮은 회벽과 마야·과히라의 흙집이 섞인 항구는 levant로 뒀다.
-//   아메리카 식민 항구의 화풍이 따로 필요하다는 것은 `art.styleTodo`에 적었다.
+//   화풍(`STYLES`)은 성벽을 두른 스페인 요새항에 `colonial`(회칠한 벽·붉은 기와·각진 능보)을
+//   준다 — "도시가 아니라 요새 하나"라는 이 바다의 성격이 그대로 들어맞는다.
+//   아직 `levant`(황토벽·미나레트)로 남아 있는 낮은 항구들(캄페체·트루히요·리오아차·
+//   누에바카디스·마라카이보·놈브레데디오스·아카풀코)은 마그레브 화풍을 빌려 쓰는 것이라
+//   어울리지 않는다. 무엇이 필요한지는 근거 JSON의 `art.styleTodo`에 적었다.
 
 /** 도시의 지리·외형. 필드 설명은 `js/regions/mediterranean/geo.js`가 정본이다.
     size     1~3 시장 깊이와 입항세
@@ -48,45 +50,45 @@ export const CITIES = [
   // 앞바다 산호섬의 산 후안 데 울루아 요새(1582년 착공)가 이 항구의 얼굴이다.
   // 1568년 호킨스와 드레이크가 여기서 보급하다 루한의 함대에 걸려 배를 거의 다 잃었다 —
   // 잉글랜드가 스페인령 아메리카를 적으로 돌린 것이 그 일이다.
-  { id: 'veracruz',     name: '베라크루스',     area: '누에바에스파냐', style: 'latin',  x: 62,  y: 44,  flag: 'spain',  seed: 6101, size: 2, industry: 2 },
+  { id: 'veracruz',     name: '베라크루스',     area: '누에바에스파냐', style: 'colonial', x: 62,  y: 44,  flag: 'spain',  seed: 6101, size: 2, industry: 2 },
   // 캄페체 — 유카탄의 바다 쪽 문. 1540년 몬테호가 마야의 칸 페치 위에 세웠다.
   // 이 항구의 두 기둥은 **로그우드(팔로 데 캄페체)**와 소금이고, 조선소로도 이름났다.
   // 성벽(1686~1704, 둘레 2,560m·능보 여덟)은 1633년과 1663년의 약탈이 낳은 것이다.
-  { id: 'campeche',     name: '캄페체',         area: '유카탄',         style: 'levant', x: 106, y: 62,  flag: 'spain',  seed: 6102, size: 2, industry: 2 },
+  { id: 'campeche',     name: '캄페체',         area: '유카탄',         style: 'levant',   x: 106, y: 62,  flag: 'spain',  seed: 6102, size: 2, industry: 2 },
   // 트루히요 — 1525년, 중앙아메리카 본토 최초의 스페인 도시. 온두라스 내륙(코마야과·
   // 테구시갈파)의 금은과 과테말라 인디고가 바다로 나오는 문이었다. 성채(1550년경)를
   // 세우고도 1633~1797년에 몇 번씩 불탔고, 결국 왕실이 방어를 포기하고 수도를
   // 내륙 코마야과로 옮겼다. 이 바다에서 "지키지 못한 항구"의 표본이다.
-  { id: 'trujillo',     name: '트루히요',       area: '온두라스',       style: 'levant', x: 118, y: 116, flag: 'spain',  seed: 6118, size: 1, industry: 1 },
+  { id: 'trujillo',     name: '트루히요',       area: '온두라스',       style: 'levant',   x: 118, y: 116, flag: 'spain',  seed: 6118, size: 1, industry: 1 },
 
   // ── 대앤틸리스 (가운데) ───────────────────────────────────────
   // 아바나 — **이 권역의 이유**다. 1519년에 지금 자리로 옮겨 앉은 뒤로 아메리카 전역의
   // 배가 여기 모여 함께 대서양을 건넜다. 신대륙 유일의 건선거를 갖춘 조선소가 있었고
   // 그래서 industry 3이다. 1555년 프랑스 사략선 자크 드 소르가 도시를 불태운 것이
   // 라 레알 푸에르사·엘 모로·라 푼타 요새를 낳았다.
-  { id: 'havana',       name: '아바나',         area: '쿠바',           style: 'latin',  x: 150, y: 46,  flag: 'spain',  seed: 6103, size: 3, industry: 3 },
+  { id: 'havana',       name: '아바나',         area: '쿠바',           style: 'colonial', x: 150, y: 46,  flag: 'spain',  seed: 6103, size: 3, industry: 3 },
   // 산티아고데쿠바 — 1515년 창건, 1589년까지 쿠바의 수도였다. 아바나에 자리를 내준 뒤로는
   // 엘 코브레 구리광과 담배로 버텼다. 1662년 크리스토퍼 밍스가 털어 갔다.
-  { id: 'santiagocuba', name: '산티아고데쿠바', area: '쿠바',           style: 'latin',  x: 196, y: 78,  flag: 'spain',  seed: 6104, size: 2, industry: 1 },
+  { id: 'santiagocuba', name: '산티아고데쿠바', area: '쿠바',           style: 'colonial', x: 196, y: 78,  flag: 'spain',  seed: 6104, size: 2, industry: 1 },
   // 토르투가 — 이 바다에서 유일하게 스페인 것이 아닌 항구. 1625년 세인트키츠에서 건너온
   // 프랑스·잉글랜드 사람들이 자리를 잡았고 1640년 로셰 요새가 서면서 뽑히지 않았다.
   // 1641년부터 스스로를 '해안형제단'이라 불렀다. 원래 생업은 약탈이 아니라 야생 소를 잡아
   // 고기를 훈제(boucan)하고 가죽을 절이는 것이었다 — 뷰캐니어라는 말이 거기서 나왔다.
   // 나포선이 경매에 서는 곳이라 prizeYard.
-  { id: 'tortuga',      name: '토르투가',       area: '이스파니올라',   style: 'latin',  x: 226, y: 56,  flag: 'pirate', seed: 6105, size: 1, industry: 1, prizeYard: true },
+  { id: 'tortuga',      name: '토르투가',       area: '이스파니올라',   style: 'latin',    x: 226, y: 56,  flag: 'pirate', seed: 6105, size: 1, industry: 1, prizeYard: true },
   // 자메이카(산티아고 데 라 베가의 외항) — 은 함대 시대에는 변두리였다. 금도 은도 없어
   // 스페인이 거의 버려 두었고, 그래서 소를 놓아기르고 가죽을 팔고 밀무역을 했다.
   // 1655년에 잉글랜드가 가져가지만 여기서는 그 전의 스페인령 자메이카로 둔다.
-  { id: 'jamaica',      name: '자메이카',       area: '자메이카',       style: 'latin',  x: 194, y: 100, flag: 'spain',  seed: 6106, size: 1, industry: 1 },
+  { id: 'jamaica',      name: '자메이카',       area: '자메이카',       style: 'colonial', x: 194, y: 100, flag: 'spain',  seed: 6106, size: 1, industry: 1 },
   // 산토도밍고 — 1496년. **아메리카 최초의 유럽 도시**이고 한때 모든 원정대가 여기서 떠났다.
   // 멕시코와 페루가 정복된 뒤로는 설탕 제당소(ingenio)와 소가죽(cuero)으로 먹고사는
   // 뒷물이 됐다. 1586년 드레이크에게 털렸고, 1605~06년 왕실이 밀무역을 끊겠다고
   // 북쪽 해안을 통째로 비워 버린 '오소리오의 파괴'가 이 섬의 숨통을 눌렀다.
-  { id: 'santodomingo', name: '산토도밍고',     area: '이스파니올라',   style: 'latin',  x: 262, y: 74,  flag: 'spain',  seed: 6107, size: 2, industry: 2 },
+  { id: 'santodomingo', name: '산토도밍고',     area: '이스파니올라',   style: 'colonial', x: 262, y: 74,  flag: 'spain',  seed: 6107, size: 2, industry: 2 },
   // 산후안 — 유럽에서 오는 배가 카리브에 들어와 **처음 닿는 스페인 항구**다. 그래서
   // 생산지가 아닌데도 요새가 두꺼웠다(엘 모로·산 크리스토발). 1595년 드레이크,
   // 1598년 클리퍼드, 1625년 네덜란드의 헨드릭스가 차례로 덤볐고 엘 모로는 버텼다.
-  { id: 'sanjuan',      name: '산후안',         area: '푸에르토리코',   style: 'latin',  x: 310, y: 62,  flag: 'spain',  seed: 6108, size: 2, industry: 1 },
+  { id: 'sanjuan',      name: '산후안',         area: '푸에르토리코',   style: 'colonial', x: 310, y: 62,  flag: 'spain',  seed: 6108, size: 2, industry: 1 },
 
   // ── 티에라피르메 = 스페인 본토(Spanish Main) (오른쪽 아래) ─────
   // 누에바카디스(쿠바과 섬) — 진주 하나로 선 도시다. 1500년 계절 야영지, 1528년 시(市).
@@ -94,24 +96,24 @@ export const CITIES = [
   // 1541년 폭풍이 남은 건물을 쓸어 갔다. 물 한 방울 안 나는 섬이라 먹을 물까지 배로 왔다.
   // ★ 그 진주를 건진 것은 강제로 물에 들여보낸 원주민과 아프리카인 잠수부였다 —
   //   근거 JSON에 적었다. 사람은 교역품으로 만들지 않는다(goods.js 머리말 참조).
-  { id: 'nuevacadiz',   name: '누에바카디스',   area: '마르가리타',     style: 'levant', x: 344, y: 112, flag: 'spain',  seed: 6109, size: 1, industry: 0 },
+  { id: 'nuevacadiz',   name: '누에바카디스',   area: '마르가리타',     style: 'levant',   x: 344, y: 112, flag: 'spain',  seed: 6109, size: 1, industry: 0 },
   // 리오아차 — 과히라 해안의 진주밭과 마나우레 염전. 1535년 페더만이 카보 데 라 벨라에
   // 세운 것을 뒤에 란체리아 강어귀로 옮겼다. 1596년 드레이크가 금과 진주를 노리고 들이닥쳤다.
   // 네덜란드와의 밀무역이 이 해안의 실제 경제였다.
-  { id: 'riohacha',     name: '리오아차',       area: '과히라',         style: 'levant', x: 306, y: 136, flag: 'spain',  seed: 6110, size: 1, industry: 0 },
+  { id: 'riohacha',     name: '리오아차',       area: '과히라',         style: 'levant',   x: 306, y: 136, flag: 'spain',  seed: 6110, size: 1, industry: 0 },
   // 마라카이보 — 세 번 만에 선 도시(1529 독일 벨저가의 노이뉘른베르크 · 1569 · 1574).
   // 호수 안쪽에서 카카오와 바리나스 담배가 나와 좁은 목을 지나 바다로 빠진다.
   // 그 좁은 목이 약점이라 1667년 롤로네, 1669년 모건이 차례로 들어와 털었다.
-  { id: 'maracaibo',    name: '마라카이보',     area: '베네수엘라',     style: 'levant', x: 330, y: 162, flag: 'spain',  seed: 6111, size: 1, industry: 1 },
+  { id: 'maracaibo',    name: '마라카이보',     area: '베네수엘라',     style: 'levant',   x: 330, y: 162, flag: 'spain',  seed: 6111, size: 1, industry: 1 },
   // 산타마르타 — 1525년 바스티다스가 세운, 콜롬비아에서 지금까지 남은 가장 오래된 도시.
   // 막달레나 강과 시에라네바다로 들어가는 문이라 타이로나의 금세공이 여기로 나왔다.
   // 성벽 없는 도시라 해적이 제집처럼 드나들었고 결국 카르타헤나에 밀렸다.
-  { id: 'santamarta',   name: '산타마르타',     area: '누에바그라나다', style: 'latin',  x: 258, y: 150, flag: 'spain',  seed: 6112, size: 1, industry: 1 },
+  { id: 'santamarta',   name: '산타마르타',     area: '누에바그라나다', style: 'colonial', x: 258, y: 150, flag: 'spain',  seed: 6112, size: 1, industry: 1 },
   // 카르타헤나 — 1533년 에레디아 창건. 티에라피르메 함대의 요새항이고
   // 무소의 에메랄드와 안티오키아의 금이 막달레나 강을 타고 여기로 내려온다.
   // 1586년 드레이크가 배 23척·3,000명으로 들이쳐 성당까지 태운 뒤 안토넬리의
   // 방어 설계가 들어갔다 — 성벽 11km(1614~1796)와 산 펠리페 요새(1654)가 그 결과다.
-  { id: 'cartagena',    name: '카르타헤나',     area: '누에바그라나다', style: 'latin',  x: 222, y: 162, flag: 'spain',  seed: 6113, size: 2, industry: 2 },
+  { id: 'cartagena',    name: '카르타헤나',     area: '누에바그라나다', style: 'colonial', x: 222, y: 162, flag: 'spain',  seed: 6113, size: 2, industry: 2 },
 
   // ── 지협 — 두 대양이 30리그 사이에서 마주 보는 자리 ────────────
   // 놈브레데디오스 — 포르토벨로에게 자리를 내주기 전의 옛 종착지. 1572년 드레이크가
@@ -121,11 +123,11 @@ export const CITIES = [
   //   이 게임이 특정 연도가 아니라 "대항해시대쯤"을 배경으로 하기 때문이다
   //   (로도스와 몰타를 함께 둔 것과 같은 예외다). 대신 성격을 갈랐다 —
   //   놈브레데디오스는 노새 대열이 가끔 들어오는 쇠락한 옛 문, 포르토벨로는 페리아가 서는 지금의 문.
-  { id: 'nombrededios', name: '놈브레데디오스', area: '지협',           style: 'levant', x: 196, y: 190, flag: 'spain',  seed: 6114, size: 1, industry: 1 },
+  { id: 'nombrededios', name: '놈브레데디오스', area: '지협',           style: 'levant',   x: 196, y: 190, flag: 'spain',  seed: 6114, size: 1, industry: 1 },
   // 포르토벨로 — 1597년 창건. 페루 은이 대서양으로 나오는 문이고 **페리아**가 서는 곳이다.
   // 함대가 닿으면 마흔 날 동안 아메리카에서 가장 비싼 시장이 됐다가, 배가 떠나면
   // 열병이 도는 빈 마을로 돌아갔다. 1668년 모건이 450명으로 들어와 열나흘을 뒤졌다.
-  { id: 'portobelo',    name: '포르토벨로',     area: '지협',           style: 'latin',  x: 150, y: 190, flag: 'spain',  seed: 6115, size: 2, industry: 1 },
+  { id: 'portobelo',    name: '포르토벨로',     area: '지협',           style: 'colonial', x: 150, y: 190, flag: 'spain',  seed: 6115, size: 2, industry: 1 },
 
   // ── 태평양 쪽 = 남해(Mar del Sur) (왼쪽 아래 구석) ─────────────
   // ★ 여기 둘은 카리브의 어느 항구와도 **바다로 이어지지 않는다.**
@@ -133,12 +135,12 @@ export const CITIES = [
   // 카야오에서 올라온 페루 은이 여기 내려 카미노 레알·카미노 데 크루세스를 타고
   // 지협을 넘는다. 앞바다 진주 군도(Archipiélago de las Perlas)의 이름이 곧 이 항구의 특산이다.
   // 1671년 모건이 1,400명으로 들이쳐 도시가 불탔고 뒤에 서쪽으로 옮겨 앉는다.
-  { id: 'panama',       name: '파나마',         area: '지협(태평양)',   style: 'latin',  x: 96,  y: 196, flag: 'spain',  seed: 6116, size: 2, industry: 1 },
+  { id: 'panama',       name: '파나마',         area: '지협(태평양)',   style: 'colonial', x: 96,  y: 196, flag: 'spain',  seed: 6116, size: 2, industry: 1 },
   // 아카풀코 — 1565년부터 마닐라 갤리온이 닿는 항구. 함대가 안 들어오는 철에는
   // 열병 도는 어촌이었고 페리아가 서면 아메리카에서 가장 비싼 물건이 쏟아졌다.
   // 1616년 산 디에고 요새. 여기서 내린 짐은 배가 아니라 노새를 타고 '중국길'을 넘어
   // 멕시코시티를 거쳐 베라크루스로 간다.
-  { id: 'acapulco',     name: '아카풀코',       area: '남해(태평양)',   style: 'levant', x: 26,  y: 168, flag: 'spain',  seed: 6117, size: 1, industry: 1 },
+  { id: 'acapulco',     name: '아카풀코',       area: '남해(태평양)',   style: 'levant',   x: 26,  y: 168, flag: 'spain',  seed: 6117, size: 1, industry: 1 },
 ];
 
 /* 항로 — ★ 이 권역에는 **뭍길이 둘** 있다(요율 null). 그것이 이 지도의 뼈대다.

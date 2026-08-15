@@ -9,9 +9,18 @@
 //   node tools/test-world.mjs     세계가 굴러가는지
 //   http://localhost:8891/dashboard/   시세·물동량이 실제로 움직이는지
 
+import { REGIONS } from '../regions/index.js';
+
 export const NPC = {
-  traders: 9,          // 동시에 도는 상인 수
-  pirates: 4,          // 배회하는 해적 수
+  /* ★ 세계가 지중해 한 바다(도시 16)에서 아홉 권역(도시 190여)으로 넓어지면서
+     상인 아홉·해적 넷으로는 **바다가 텅 비었다.** 한 권역에 상인 하나가 될까 말까라,
+     서른 날을 굴려도 해적과 상인이 같은 구간에서 마주치는 일이 거의 없어졌다
+     (test-world의 "해적 습격 0건"이 그것을 잡아냈다 — 규칙이 아니라 밀도의 문제다).
+
+     그래서 절대수가 아니라 **권역당 몇 척인가**로 적는다. 바다를 늘리면 배도 따라 는다.
+     `traders`·`pirates`는 그 결과값이고, 읽는 쪽 코드는 예전과 똑같이 쓴다. */
+  tradersPerRegion: 3,
+  piratesPerRegion: 1.4,
 
   /* 같은 구간에서 마주쳤을 때 해적이 덮칠 확률(하루당).
      올리면 항로가 위험해지고 상인 수가 줄어 시세 압력도 함께 줄어든다. */
@@ -33,6 +42,12 @@ export const NPC = {
   /* 그 미만이면 아예 싣지 않는다 — 푼돈 거래로 로그를 채우지 않기 위해 */
   minLot: 5,
 };
+
+/* 권역 수를 곱해 실제 척수를 낸다. `js/world.js`는 `NPC.traders`·`NPC.pirates`를 그대로
+   읽으므로 여기서 채워 준다 — 바다가 늘 때마다 이 숫자를 손으로 고치지 않기 위해서다. */
+const regionCount = REGIONS.filter((r) => (r.mod.geo.CITIES ?? []).length).length || 1;
+NPC.traders = Math.round(NPC.tradersPerRegion * regionCount);
+NPC.pirates = Math.round(NPC.piratesPerRegion * regionCount);
 
 /** 상인이 타고 다니는 배 (data.js SHIPS의 키).
     큰 배를 섞으면 한 번에 나르는 양이 늘어 시세 압력이 세진다. */

@@ -21,12 +21,147 @@
 // ★ **시나리오가 있는 상단을 몇은 두어라.** circuit과 season이 그 장치다 —
 //   "여름이면 알렉산드리아에 향신료를 부리고 겨울에는 안 온다"가 성립하면
 //   플레이어가 달력을 보고 항로를 짜게 된다.
+//
+// ── 이 바다의 상인들을 이렇게 짠 이유 ────────────────────────
+// ① **여기는 계절이 항로를 가른다.** 지중해가 겨울에 "위험해지는" 정도라면, 발트는
+//    아예 **얼어붙어 닫힌다.** 한자 도시들의 법(Schiffahrtsordnung)은 2월 22일부터
+//    11월 11일까지만 항해를 허용했다. 그래서 이 권역의 큰 상단 둘은 'summer'다 —
+//    겨울에 뤼베크·단치히 쪽으로 가면 세계가 실제로 텅 비어 있어야 한다.
+// ② **대신 겨울에 열리는 길도 있다.** 보르도의 포도주 선단은 수확 직후인 늦가을에 떠났고
+//    (첫 vinée), 한자의 노브고로드 겨울여행(Winterfahrt)은 얼음이 얼어야 썰매로 넘을 수 있었다.
+//    "겨울엔 아무도 안 다닌다"가 아니라 **다니는 배가 달라진다**가 이 바다의 규칙이다.
+// ③ **북쪽은 조합, 남쪽은 왕실이다.** 한자와 모험상인조합은 개인이 아니라 단체로 다녔고
+//    리스본은 왕이 직접 상관을 차렸다. 그래서 이 파일에는 사람 이름보다 기관 이름이 많다 —
+//    당대 대서양 무역의 주체가 실제로 그러했다.
+// ④ **원양의 문이 둘이다.** 리스본과 세비야. 여기 'ocean' 상단들은 그 문을 드나든다.
 
 export const TRADERS = [
-  // { id:'contarini', name:'콘타리니 상관', flag:'venice', ship:'carrack',
-  //   purse:[4000,12000], goods:['spice','silk'], scope:'region', rank:4,
-  //   circuit:['venezia','rodos','alexandria','beirut','rodos','venezia'],
-  //   season:null,
-  //   blurb:'리알토에 상관을 둔 오래된 가문. 향신료라면 값을 아끼지 않는다.',
-  //   lines:{ greet:'“베네치아의 배요. 길을 비켜 주시오.”' } },
+  /* ── 리스본 ───────────────────────────────────────────────
+     후추가 유럽에 닿는 마지막 문. 왕이 직접 사고팔았으니 경쟁자가 없다. */
+  {
+    id: 'casadaindia', name: '카사 다 인디아', flag: 'spain', ship: 'nau',
+    purse: [10000, 26000], goods: ['spice', 'clove', 'nutmeg', 'sugar'],
+    scope: 'ocean', rank: 5, season: null,
+    // 왕실 독점 상관이라 값을 흥정하지 않는다 — 정가를 붙여 놓고 사 갈 사람을 기다린다.
+    // 순회로가 짧은 것도 그 때문이다. **인도까지 가는 것은 저쪽이고 이쪽은 되파는 자리다.**
+    circuit: ['lisboa', 'funchal', 'sevilla', 'lisboa'],
+    blurb: '왕이 차린 향신료 상관. 값을 부르는 것이 아니라 붙여 놓고 기다린다.',
+    lines: {
+      greet: '“왕실 상관의 배요. 짐은 이미 왕의 것이오.”',
+      deal: '“값은 카사에서 정해 붙였소. 여기서 깎는 것은 왕을 깎는 것이오.”',
+      refuse: '“이 배 한 척이 왕국 세입의 몇 할이오. 알아서 하시오.”',
+    },
+  },
+
+  /* ── 잉글랜드 ─────────────────────────────────────────────
+     한 가지 물건(모직)만 파는 나라의 상인은 그 한 가지를 어디에 부릴지만 고민한다. */
+  {
+    id: 'adventurers', name: '모험상인조합', flag: 'england', ship: 'holk',
+    purse: [5000, 14000], goods: ['woolcloth', 'linen', 'wax', 'spice'],
+    scope: 'region', rank: 4, season: null,
+    // 이름은 거창하지만 실제로는 **런던에서 스헬더 강 건너까지**가 전부다.
+    // 조합이 판매처를 한 곳으로 묶어 값을 지켰기 때문이다. 짧은 삼각 고리로 둔 이유.
+    circuit: ['london', 'antwerpen', 'brugge', 'london'],
+    blurb: '잉글랜드 모직을 저지대에 부리는 조합. 파는 곳을 하나로 묶어 값을 지킨다.',
+    lines: {
+      greet: '“런던의 옷감이오. 이 배 말고는 살 데가 없소.”',
+      deal: '“조합이 정한 값이오. 조합 밖에서 사면 그건 밀수요.”',
+    },
+  },
+  {
+    id: 'gasconfleet', name: '가스코뉴 포도주 선단', flag: 'england', ship: 'holk',
+    purse: [2500, 7000], goods: ['wine', 'woolcloth', 'stockfish'],
+    scope: 'region', rank: 3, season: 'winter',
+    // ★ 겨울 상단이다. 이유가 술이다 — 수확이 끝나야 실을 것이 생기므로 첫 포도주 선단은
+    //   늦가을에 떠났다. 봄에 두 번째가 떠나기 전까지 이 바다에서 술을 실은 배는 이들뿐이다.
+    circuit: ['bordeaux', 'bristol', 'london', 'larochelle', 'bordeaux'],
+    blurb: '햇포도주를 싣고 겨울 비스케이를 건너는 무리. 늦으면 술이 상한다.',
+    lines: {
+      greet: '“햇것이오. 봄까지 기다리면 이 맛이 아니오.”',
+      deal: '“겨울 비스케이를 건너온 값이오. 배 값이 아니라 목숨 값이지.”',
+      refuse: '“통을 깨면 당신도 마실 것이 없소.”',
+    },
+  },
+
+  /* ── 한자 ─────────────────────────────────────────────────
+     같은 붉은-흰 깃발을 셋이 나눠 단다. 도시가 달라도 조합의 규약은 하나였다.
+     ★ FLAGS에 'hanse'가 없어 가장 가까운 붉은바탕-흰마크(hospitaller)를 빌려 쓴다. */
+  {
+    id: 'bergenfahrer', name: '뤼베크 베르겐파러', flag: 'hospitaller', ship: 'cog',
+    purse: [2000, 6000], goods: ['stockfish', 'salt', 'grain', 'woolcloth'],
+    scope: 'region', rank: 3, season: 'summer',
+    // 뤼베크의 소금을 베르겐에 부리고 말린 대구를 실어 온다 — 한자 무역의 원형이다.
+    // 여름뿐인 이유: 한자 규약이 11월 11일 이후 출항을 금했다. 그 법이 곧 이 배의 달력이다.
+    circuit: ['lubeck', 'kobenhavn', 'bergen', 'kobenhavn', 'lubeck'],
+    blurb: '소금을 지고 올라가 말린 대구를 지고 내려오는 배. 겨울에는 부두에 묶여 있다.',
+    lines: {
+      greet: '“한자의 배요. 규약대로 다니오.”',
+      deal: '“조합이 정한 값 말고는 부를 값이 없소.”',
+    },
+  },
+  {
+    id: 'ferber', name: '페르버 상관', flag: 'hospitaller', ship: 'fluyt',
+    purse: [5000, 14000], goods: ['grain', 'timber', 'amber', 'salt'],
+    scope: 'region', rank: 4, season: 'summer',
+    // 단치히 시장(市長)을 낸 집안이다. 비스와강을 타고 내려온 폴란드 밀이 여기서 배에 올라
+    // 외레순 해협을 지나 암스테르담으로 간다 — 네덜란드 사람들이 '어머니 장사'라 부르던 그 길.
+    // 겨울에는 해협도 강도 얼어 짐이 아예 부두에 쌓인다.
+    circuit: ['danzig', 'kobenhavn', 'bergen', 'amsterdam', 'bergen', 'kobenhavn', 'danzig'],
+    blurb: '비스와강이 실어 온 폴란드 밀을 해협 너머로 넘기는 집안. 얼면 멈춘다.',
+    lines: {
+      greet: '“단치히의 밀이오. 이 배가 안 가면 네덜란드가 굶소.”',
+      deal: '“해협 통행세까지 얹힌 값이오. 덴마크 왕이 절반을 가져가오.”',
+    },
+  },
+  {
+    id: 'novgorodfahrer', name: '노브고로드 겨울여행단', flag: 'hospitaller', ship: 'crayer',
+    purse: [1400, 4200], goods: ['fur', 'wax', 'woolcloth', 'salt'],
+    scope: 'region', rank: 2, season: 'winter',
+    // ★ 이 상단만 겨울에 나온다. 그럴 만한 이유가 있다 —
+    //   모피는 겨울털이 값을 받고, 레발에서 노브고로드로 넘는 길은 **얼어야 썰매가 지난다.**
+    //   한자는 이 여정을 실제로 여름여행·겨울여행으로 갈라 불렀다.
+    //   그래서 발트가 텅 빈 철에 이 작은 배 하나만 항적을 남긴다.
+    circuit: ['lubeck', 'danzig', 'riga', 'reval', 'novgorod', 'reval', 'riga', 'danzig', 'lubeck'],
+    blurb: '얼음이 얼어야 길이 열린다고 믿는 무리. 겨울털이라야 값을 받는다.',
+    lines: {
+      greet: '“이 철에 여기 있는 배가 왜 없겠소. 털은 지금이 제철이오.”',
+      deal: '“여름털은 안 사오. 헐거워서 값이 안 되오.”',
+      refuse: '“얼음 위에서 싸우자는 거요? 둘 다 빠지오.”',
+    },
+  },
+
+  /* ── 남독일 자본 ──────────────────────────────────────────
+     ★ 퓌거·벨저는 한자가 아니다. 아우크스부르크의 광산자본이 안트베르펜 지점을 통해
+     바다로 나온 것이라, 이들이 다루는 것은 옷감이 아니라 **금속**이다. */
+  {
+    id: 'fugger', name: '푸거 상관 안트베르펜 지점', flag: 'spain', ship: 'kraweel',
+    purse: [11000, 28000], goods: ['iron', 'amber', 'wax', 'linen'],
+    scope: 'ocean', rank: 5, season: null,
+    // 이 집의 진짜 상품은 헝가리 구리와 티롤 은인데, 그것은 강과 노새로 단치히·안트베르펜까지
+    // 온 다음에야 배에 오른다 — 그래서 `goods`에 구리를 적지 않았다. 바다에서 만나는 이 배가
+    // 싣고 있는 것은 늘 **부차적인 짐**이고, 진짜 재산은 장부에 있다.
+    circuit: ['antwerpen', 'amsterdam', 'hamburg', 'lubeck', 'danzig', 'lubeck', 'hamburg', 'amsterdam', 'antwerpen'],
+    blurb: '황제에게 돈을 꿔 준 집. 배에 실린 것보다 장부에 적힌 것이 훨씬 무겁다.',
+    lines: {
+      greet: '“아우크스부르크에서 왔소. 바다는 우리 일의 끄트머리요.”',
+      deal: '“현물로 받겠소? 어음으로 받겠소? 우리는 둘 다 되오.”',
+      refuse: '“황제가 우리에게 빚을 졌소. 우리를 털면 황제가 화를 내오.”',
+    },
+  },
+
+  /* ── 비스케이 ─────────────────────────────────────────────
+     철이 나는 산과 바다가 붙어 있는 드문 자리. 그래서 배도 철도 같은 사람이 만들었다. */
+  {
+    id: 'bilbaoconsulado', name: '빌바오 상인단', flag: 'spain', ship: 'redonda',
+    purse: [1400, 4200], goods: ['iron', 'woolcloth', 'linen', 'tar'],
+    scope: 'region', rank: 2, season: null,
+    // 비스카야 철은 잉글랜드·플랑드르의 대장간 원료였고, 돌아올 때는 카스티야 양모를
+    // 실어 나르던 같은 배가 옷감을 지고 왔다. 짧고 확실한 왕복이라 밑천이 작아도 굴러간다.
+    circuit: ['bilbao', 'larochelle', 'london', 'brugge', 'london', 'larochelle', 'bilbao'],
+    blurb: '산에서 캔 철을 배에 실어 그대로 파는 사람들. 배도 자기들이 짓는다.',
+    lines: {
+      greet: '“비스카야의 철이오. 당신 배의 못도 아마 우리 것이오.”',
+      deal: '“무게로 파오. 깎을 데가 없소.”',
+    },
+  },
 ];

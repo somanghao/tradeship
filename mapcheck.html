@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>권역 지도 검수 — tradeship</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #14121a; color: #ded2b8;
+    font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif; font-size: 13px;
+  }
+  header { padding: 18px 24px 10px; border-bottom: 1px solid #2e2839; }
+  h1 { font-size: 18px; margin: 0 0 4px; color: #f4dd86; letter-spacing: .03em; }
+  p.sub { margin: 0; font-size: 12px; color: #8b8394; line-height: 1.7; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 10px 24px; border-bottom: 1px solid #2e2839; flex-wrap: wrap; }
+  label { color: #8b8394; font-size: 12px; }
+  button, select { background: #1d1a26; border: 1px solid #2e2839; color: #ded2b8; font: inherit; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+  button.on { border-color: #f4dd86; color: #f4dd86; }
+  main { padding: 20px 24px 60px; }
+  section { margin-bottom: 34px; }
+  h2 { font-size: 14px; margin: 0 0 4px; color: #7fb2d8; }
+  h2 small { color: #8b8394; font-weight: 400; margin-left: 8px; font-size: 11.5px; }
+  .wrap { position: relative; display: inline-block; background: #0a0810; border: 1px solid #2e2839; }
+  canvas { display: block; image-rendering: pixelated; }
+  .verdict { margin: 6px 0 0; font-size: 12px; line-height: 1.8; }
+  .ok { color: #7fd8a0; } .warn { color: #e0a45c; } .bad { color: #e08282; }
+  .verdict code { color: #8b8394; }
+</style>
+</head>
+<body>
+<header>
+  <h1>권역 지도 검수</h1>
+  <p class="sub">
+    지도가 <b>도시 좌표에서 역산</b>돼 만들어진다(<code>js/sprites/maps/auto.js</code>). 그래서
+    "항구가 물가에 있고 항로가 바다를 지난다"가 구조적으로 참이어야 한다 — 이 페이지가 그것을 실측한다.<br>
+    지중해만은 손으로 찍은 격자를 쓰므로 예외가 나올 수 있다(그쪽이 원래 그렇게 만들어졌다).<br>
+    <b>이 화면이 그대로 그림 발주의 기준판이다</b> — 마젠타 점이 항구 정위치, 회색 선이 항로다.
+  </p>
+</header>
+
+<div class="bar">
+  <label>배율</label>
+  <select id="zoom"><option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option></select>
+  <button id="tgCity" class="on">항구 점</button>
+  <button id="tgRoute" class="on">항로</button>
+  <button id="tgLabel" class="on">이름표</button>
+  <button id="tgBare">지형만 (발주용)</button>
+  <span id="stamp" style="color:#8b8394;font-size:11px"></span>
+</div>
+
+<main id="main"></main>
+
+<script type="module">
+import { mapSprite, VW, VH } from './js/sprites/scene.js';
+import { REGIONS, REGION_BY_ID } from './js/regions/index.js';
+import { CITIES, ROUTES } from './js/data.js';
+import { REGION_OF_CITY, isOceanLane } from './js/map/geo.js';
+
+const $ = (id) => document.getElementById(id);
+const show = { city: true, route: true, label: true };
+let zoom = 2;
+
+const citiesOf = (rid) => CITIES.filter((c) => c.region === rid);
+const routesOf = (rid) => ROUTES.filter(([a, b]) =>
+  REGION_OF_CITY[a] === rid && REGION_OF_CITY[b] === rid && !isOceanLane(a, b));
+
+/* ── 판정 ─────────────────────────────────────────────────────
+   외주 지도가 두 번 반려된 항목을 그대로 잰다:
+     ① 항구가 물가인가 — 점 주위 반경 3px 안에 바다와 육지가 **둘 다** 있어야 물가다
+     ② 항로가 바다를 지나는가 — 선을 따라 짚어 육지 비율을 잰다
+     ③ 육지/바다 비율 — 한쪽이 8할을 넘으면 지도로 안 읽힌다
+     ④ 이름표 겹침 — 이름표 상자가 남의 항구 표식을 덮는가
+   바다인지 육지인지는 **색으로** 가른다(파란 계열이면 바다). 생성기 내부를 다시 구현하지
+   않으려는 것이다 — 화면에 실제로 보이는 것으로 재야 검수가 된다. */
+function analyze(img, cities, routes) {
+  const cv = document.createElement('canvas');
+  cv.width = VW; cv.height = VH;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  cx.drawImage(img, 0, 0);
+  const d = cx.getImageData(0, 0, VW, VH).data;
+
+  const isSea = (x, y) => {
+    if (x < 0 || y < 0 || x >= VW || y >= VH) return true;
+    const i = (y * VW + x) * 4;
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    return b > r + 12 && b > 40;          // 파란 쪽이면 물
+  };
+
+  let sea = 0;
+  for (let y = 0; y < VH; y++) for (let x = 0; x < VW; x++) if (isSea(x, y)) sea++;
+
+  /* 항구가 물가인가 — 반경 6px 안에 바다와 뭍이 **둘 다** 있어야 물가다.
+     반경을 3px로 잡았더니 항로 회랑 안이라 전부 바다로 나와 판정이 무의미했다.
+     섬 항구는 물에 둘러싸이는 것이 정상이므로 따로 센다(실패가 아니다). */
+  const dry = [], isle = [];
+  for (const c of cities) {
+    let s = 0, l = 0;
+    for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) {
+      if (dx * dx + dy * dy > 36) continue;
+      (isSea(c.x + dx, c.y + dy) ? (s++) : (l++));
+    }
+    if (s === 0) dry.push(`${c.name}`);
+    else if (l === 0) isle.push(`${c.name}`);
+  }
+
+  const blocked = [];
+  for (const [a, b] of routes) {
+    const A = cities.find((c) => c.id === a), B = cities.find((c) => c.id === b);
+    if (!A || !B) continue;
+    const n = Math.max(1, Math.round(Math.hypot(B.x - A.x, B.y - A.y)));
+    let land = 0;
+    for (let i = 1; i < n; i++) {
+      const u = i / n;
+      if (!isSea(Math.round(A.x + (B.x - A.x) * u), Math.round(A.y + (B.y - A.y) * u))) land++;
+    }
+    const ratio = land / Math.max(1, n - 1);
+    if (ratio > 0.34) blocked.push(`${A.name}~${B.name} ${Math.round(ratio * 100)}%`);
+  }
+
+  // 이름표가 남의 항구 표식을 덮는가 (게임 화면과 같은 기하)
+  const clash = [];
+  for (const c of cities) {
+    const w = c.name.length * 6, r = 2 + c.size;
+    const box = { x0: c.x - w / 2 - 2, x1: c.x + w / 2 + 2, y0: c.y - r - 10, y1: c.y - r - 2 };
+    for (const o of cities) {
+      if (o === c) continue;
+      const orr = 2 + o.size + 1.4;
+      if (o.x + orr > box.x0 && o.x - orr < box.x1 && o.y + orr > box.y0 && o.y - orr < box.y1) {
+        clash.push(`${c.name}→${o.name}`);
+      }
+    }
+  }
+  return { seaPct: sea / (VW * VH), dry, isle, blocked, clash };
+}
+
+function draw() {
+  $('main').innerHTML = '';
+  const t0 = performance.now();
+  for (const rg of [...REGIONS].sort((a, b) => a.order - b.order)) {
+    const cities = citiesOf(rg.id), routes = routesOf(rg.id);
+    const sec = document.createElement('section');
+    const hand = !!(rg.id === 'mediterranean');
+    sec.innerHTML = `<h2>${rg.name}
+      <small>${cities.length}곳 · 항로 ${routes.length} · ${hand ? '손으로 찍은 격자' : '좌표에서 역산'}</small></h2>`;
+
+    if (!cities.length) {
+      sec.insertAdjacentHTML('beforeend',
+        `<p class="verdict warn">아직 도시가 없다 — 이 바다는 비어 있다.</p>`);
+      $('main').append(sec);
+      continue;
+    }
+
+    const img = mapSprite(rg.id, cities, routes);
+    const wrap = document.createElement('div');
+    wrap.className = 'wrap';
+    const cv = document.createElement('canvas');
+    cv.width = VW * zoom; cv.height = VH * zoom;
+    const g = cv.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    g.drawImage(img, 0, 0, VW * zoom, VH * zoom);
+
+    const Z = zoom;
+    if (show.route) {
+      g.strokeStyle = 'rgba(255,255,255,.42)'; g.lineWidth = 1;
+      for (const [a, b] of routes) {
+        const A = cities.find((c) => c.id === a), B = cities.find((c) => c.id === b);
+        if (!A || !B) continue;
+        g.beginPath(); g.moveTo(A.x * Z, A.y * Z); g.lineTo(B.x * Z, B.y * Z); g.stroke();
+      }
+    }
+    if (show.city) {
+      for (const c of cities) {
+        g.fillStyle = '#ff00ff';
+        g.fillRect(c.x * Z - (Z > 1 ? 1 : 0), c.y * Z - (Z > 1 ? 1 : 0), Math.max(1, Z), Math.max(1, Z));
+      }
+    }
+    if (show.label) {
+      g.font = `${6 * Z}px "Malgun Gothic", sans-serif`;
+      g.textAlign = 'center';
+      for (const c of cities) {
+        const y = (c.y - (2 + c.size) - 4) * Z;
+        const w = g.measureText(c.name).width;
+        g.fillStyle = 'rgba(13,11,17,.78)';
+        g.fillRect(c.x * Z - w / 2 - 2, y - 6 * Z, w + 4, 8 * Z);
+        g.fillStyle = '#ded2b8';
+        g.fillText(c.name, c.x * Z, y);
+      }
+      g.textAlign = 'left';
+    }
+    wrap.append(cv);
+    sec.append(wrap);
+
+    const v = analyze(img, cities, routes);
+    const line = (cls, txt) => `<span class="${cls}">${txt}</span>`;
+    const parts = [];
+    parts.push(v.seaPct > 0.2 && v.seaPct < 0.8
+      ? line('ok', `바다 ${Math.round(v.seaPct * 100)}%`)
+      : line('bad', `바다 ${Math.round(v.seaPct * 100)}% — 한쪽으로 치우쳤다`));
+    parts.push(v.dry.length
+      ? line('bad', `물이 안 닿는 항구 ${v.dry.length}곳: ${v.dry.slice(0, 4).join(' · ')}`)
+      : line('ok', `항구 전부 물가${v.isle.length ? ` (섬 ${v.isle.length}곳 포함)` : ''}`));
+    parts.push(v.blocked.length
+      ? line('warn', `육지를 많이 지나는 항로 ${v.blocked.length}: ${v.blocked.slice(0, 3).join(' · ')}`)
+      : line('ok', '항로 전부 바다'));
+    parts.push(v.clash.length
+      ? line('warn', `이름표가 남의 표식을 덮음 ${v.clash.length}: ${v.clash.slice(0, 3).join(' · ')}`)
+      : line('ok', '이름표 안 겹침'));
+    sec.insertAdjacentHTML('beforeend', `<p class="verdict">${parts.join(' &nbsp;·&nbsp; ')}</p>`);
+    $('main').append(sec);
+  }
+  $('stamp').textContent = `${Math.round(performance.now() - t0)}ms`;
+}
+
+for (const [id, key] of [['tgCity', 'city'], ['tgRoute', 'route'], ['tgLabel', 'label']]) {
+  $(id).onclick = () => { show[key] = !show[key]; $(id).classList.toggle('on', show[key]); draw(); };
+}
+$('tgBare').onclick = () => {
+  const bare = show.city || show.route || show.label;
+  show.city = show.route = show.label = !bare;
+  for (const [id, key] of [['tgCity', 'city'], ['tgRoute', 'route'], ['tgLabel', 'label']]) {
+    $(id).classList.toggle('on', show[key]);
+  }
+  $('tgBare').classList.toggle('on', bare);
+  draw();
+};
+$('zoom').onchange = (e) => { zoom = +e.target.value; draw(); };
+draw();
+</script>
+</body>
+</html>

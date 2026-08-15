@@ -1,4 +1,4 @@
-// regions/mediterranean/npc-traders.js — 지중해의 무역상
+// regions/caribbean/npc-traders.js — 카리브·누에바에스파냐의 무역상
 //
 // 이 바다에서 **저 혼자 장사하는 사람들**이다. 플레이어와 같은 시장을 쓰므로
 // 이들이 사고판 것이 시세에 그대로 압력으로 남는다(`js/world.js`).
@@ -18,15 +18,17 @@
 //   blurb    한 줄 소개
 //   lines    { greet, deal, refuse } — 해상에서 만났을 때 한 줄씩(없어도 된다)
 //
-// ★ **시나리오가 있는 상단을 몇은 두어라.** circuit과 season이 그 장치다 —
-//   "여름이면 알렉산드리아에 향신료를 부리고 겨울에는 안 온다"가 성립하면
-//   플레이어가 달력을 보고 항로를 짜게 된다.
+// ★ **아직 비워 둔다.** geo.js에는 도시가 들어왔지만 trade.js에 경제가 아직 없다
+//   (`[regions] 'havana'(caribbean): trade.js에 경제가 없다` 경고가 그것이다).
+//   무엇이 나고 무엇을 사는지가 정해지기 전에 상단을 앉히면 `goods`도 순회로도
+//   근거 없이 지어내는 것이 된다 — **경제가 들어온 다음에 채운다.**
+//
+// 채울 때 이 바다의 뼈대는 이미 정해져 있다(regions/index.js의 OCEAN_LANES):
+//   · **서인도 함대(flota)** — 세비야에서 아바나로. 은을 모아 떼로 건너간다.
+//     한 해에 한 번 뜨는 배라 season을 붙이기에 가장 좋은 자리다(허리케인 철을 피해 떠났다).
+//   · **파나마 지협** — 포르토벨로에서 노새로 넘어 카야오까지. 배가 아니라 짐이 넘는 길이다.
+//     포르토벨로의 장(feria)은 함대가 올 때만 섰다 — 이것도 season 자리다.
+//   · **밀무역** — 리오아차·마라카이보 같은 변방 항구는 왕실 허가 없이 외국 배와 거래했다.
+//     작은 rank, 좁은 goods, 순회로 없는(그때그때 이문을 좇는) 상단이 어울린다.
 
-export const TRADERS = [
-  // { id:'contarini', name:'콘타리니 상관', flag:'venice', ship:'carrack',
-  //   purse:[4000,12000], goods:['spice','silk'], scope:'region', rank:4,
-  //   circuit:['venezia','rodos','alexandria','beirut','rodos','venezia'],
-  //   season:null,
-  //   blurb:'리알토에 상관을 둔 오래된 가문. 향신료라면 값을 아끼지 않는다.',
-  //   lines:{ greet:'“베네치아의 배요. 길을 비켜 주시오.”' } },
-];
+export const TRADERS = [];

@@ -1,4 +1,4 @@
-// regions/mediterranean/npc-traders.js — 지중해의 무역상
+// regions/southamerica/npc-traders.js — 남아메리카의 무역상
 //
 // 이 바다에서 **저 혼자 장사하는 사람들**이다. 플레이어와 같은 시장을 쓰므로
 // 이들이 사고판 것이 시세에 그대로 압력으로 남는다(`js/world.js`).
@@ -18,15 +18,17 @@
 //   blurb    한 줄 소개
 //   lines    { greet, deal, refuse } — 해상에서 만났을 때 한 줄씩(없어도 된다)
 //
-// ★ **시나리오가 있는 상단을 몇은 두어라.** circuit과 season이 그 장치다 —
-//   "여름이면 알렉산드리아에 향신료를 부리고 겨울에는 안 온다"가 성립하면
-//   플레이어가 달력을 보고 항로를 짜게 된다.
+// ★ **아직 비워 둔다.** geo.js에는 도시가 들어왔지만 trade.js에 경제가 아직 없다
+//   (`[regions] 'potosi'(southamerica): trade.js에 경제가 없다` 경고가 그것이다).
+//   무엇이 나고 무엇을 사는지가 정해지기 전에 상단을 앉히면 `goods`도 순회로도
+//   근거 없이 지어내는 것이 된다 — **경제가 들어온 다음에 채운다.**
+//
+// 채울 때 이 바다의 뼈대:
+//   · **은의 길** — 포토시에서 아리카로 내려와 카야오에 모이고, 포르토벨로로 넘어간다.
+//     한 방향으로만 흐르는 화물이라 순회로가 왕복이 아니라 **한 줄**이 되는 드문 자리다.
+//   · **브라질 설탕** — 헤시피·살바도르에서 리스본으로. 루안다에서 남대서양을 가로지르는
+//     원양 항로가 이 권역에 닿아 있으니 'ocean' 상단이 여기서 들어온다.
+//   · **부에노스아이레스 밀무역** — 은이 세비야를 거치지 않고 라플라타로 새어 나가던 길.
+//     왕실이 금지했는데도 굴러가던 장사라, rank는 낮고 goods는 은 하나로 좁히면 성격이 산다.
 
-export const TRADERS = [
-  // { id:'contarini', name:'콘타리니 상관', flag:'venice', ship:'carrack',
-  //   purse:[4000,12000], goods:['spice','silk'], scope:'region', rank:4,
-  //   circuit:['venezia','rodos','alexandria','beirut','rodos','venezia'],
-  //   season:null,
-  //   blurb:'리알토에 상관을 둔 오래된 가문. 향신료라면 값을 아끼지 않는다.',
-  //   lines:{ greet:'“베네치아의 배요. 길을 비켜 주시오.”' } },
-];
+export const TRADERS = [];

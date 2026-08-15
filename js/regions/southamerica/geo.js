@@ -44,78 +44,78 @@ export const CITIES = [
   // 헤시피 — 올린다의 짐을 부리는 갯벌 위의 항구. 1541년 두아르치 코엘류가
   // 제당 기계를 싣고 돌아오면서 카피바리비 강가가 통째로 사탕수수밭이 됐다.
   // 1630년부터 24년간 네덜란드 서인도회사의 수도 '마우리츠스타트'이기도 했다.
-  { id: 'recife',       name: '헤시피',           area: '페르남부쿠',   style: 'latin', x: 368, y: 52,  flag: 'spain', seed: 6101, size: 2, industry: 2 },
+  { id: 'recife',       name: '헤시피',           area: '페르남부쿠',   style: 'colonial', x: 368, y: 52,  flag: 'spain', seed: 6101, size: 2, industry: 2 },
   // 살바도르 — ★ 원양 항로가 닿는 관문. 1549년 토메 지 소자가 세운 브라질의 첫 수도이고
   // 1763년까지 그 자리를 지켰다. 만 안쪽 헤콩카부의 제당소들이 이 항구를 먹였다.
   // 리스본에서 오는 배(30일)와 루안다에서 오는 배(22일)가 여기 닻을 내린다.
-  { id: 'salvador',     name: '살바도르',         area: '바이아',       style: 'latin', x: 356, y: 82,  flag: 'spain', seed: 6102, size: 3, industry: 2 },
+  { id: 'salvador',     name: '살바도르',         area: '바이아',       style: 'colonial', x: 356, y: 82,  flag: 'spain', seed: 6102, size: 3, industry: 2 },
   // 일례우스 — 1534년 세습 카피타니아 중 가장 먼저 실패한 축에 든다. 제당은 시들었지만
   // 배후의 대서양림이 **파우 브라질의 본산**이라 이 권역에서 붉은 나무가 가장 싸다.
-  { id: 'ilheus',       name: '일례우스',         area: '일례우스',     style: 'latin', x: 350, y: 106, flag: 'spain', seed: 6103, size: 1, industry: 1 },
+  { id: 'ilheus',       name: '일례우스',         area: '일례우스',     style: 'colonial', x: 350, y: 106, flag: 'spain', seed: 6103, size: 1, industry: 1 },
   // 리우데자네이루 — 1555년 빌가뇽의 프랑스인들이 과나바라 만에 요새를 세웠고(프랑스 남극),
   // 1565년 이스타시우 지 사가 도시를 세워 1567년에 그들을 몰아냈다. 남쪽 물길의 축이다.
-  { id: 'riodejaneiro', name: '리우데자네이루',   area: '과나바라',     style: 'latin', x: 318, y: 136, flag: 'spain', seed: 6104, size: 2, industry: 2 },
+  { id: 'riodejaneiro', name: '리우데자네이루',   area: '과나바라',     style: 'colonial', x: 318, y: 136, flag: 'spain', seed: 6104, size: 2, industry: 2 },
   // 산투스 — 상비센치의 외항. 브라질 최초의 제당소(엔제뉴 두스 에라주스)가 이 언저리에 섰고,
   // 뭍 안쪽 고원(상파울루)으로 올라가는 문이라 내륙 원정대가 여기서 출발했다.
-  { id: 'santos',       name: '산투스',           area: '상비센치',     style: 'latin', x: 300, y: 158, flag: 'spain', seed: 6105, size: 1, industry: 1 },
+  { id: 'santos',       name: '산투스',           area: '상비센치',     style: 'colonial', x: 300, y: 158, flag: 'spain', seed: 6105, size: 1, industry: 1 },
 
   // ── 대서양 쪽: 라플라타 ──────────────────────────────────────
   // 콜로니아 두 사크라멘투 — 1680년 포르투갈이 부에노스아이레스 **맞은편**에 일부러 세운
   // 밀무역 기지다. 강 하나 건너에 스페인 도시가 있고, 그 사이로 유럽 물건과 은이 오갔다.
-  { id: 'colonia',      name: '콜로니아',         area: '반다오리엔탈', style: 'latin', x: 272, y: 178, flag: 'spain', seed: 6106, size: 1, industry: 1 },
+  { id: 'colonia',      name: '콜로니아',         area: '반다오리엔탈', style: 'colonial', x: 272, y: 178, flag: 'spain', seed: 6106, size: 1, industry: 1 },
   // 부에노스아이레스 — ★ 밀무역의 창구. 1536년의 첫 도시는 굶어 흩어졌고 1580년에
   // 아순시온에서 내려온 후안 데 가라이가 다시 세웠다. 스페인은 모든 짐을 리마와
   // 파나마를 거치게 했으므로, 여기 상인들은 관에서 눈감아 주는 밀무역으로 먹고살았다.
-  { id: 'buenosaires',  name: '부에노스아이레스', area: '라플라타',     style: 'latin', x: 238, y: 192, flag: 'spain', seed: 6107, size: 2, industry: 1 },
+  { id: 'buenosaires',  name: '부에노스아이레스', area: '라플라타',     style: 'colonial', x: 238, y: 192, flag: 'spain', seed: 6107, size: 2, industry: 1 },
   // 투쿠만 — 1565년. 부에노스아이레스에서 포토시로 오르는 노새길 위의 도시다.
   // 이 게임에서는 **막다른 주머니**다(파일 머리말의 '은길' 항목 참조).
-  { id: 'tucuman',      name: '투쿠만',           area: '투쿠만',       style: 'latin', x: 198, y: 196, flag: 'spain', seed: 6108, size: 1, industry: 0 },
+  { id: 'tucuman',      name: '투쿠만',           area: '투쿠만',       style: 'latin',    x: 198, y: 196, flag: 'spain', seed: 6108, size: 1, industry: 0 },
   // 아순시온 — 1537년. '도시들의 어머니'라 불린다. 여기서 나간 원정대가 예순 곳 넘는
   // 도시를 세웠고 부에노스아이레스의 두 번째 창건도 그중 하나다. 바다에서 파라나 강을
   // 한참 거슬러 올라야 닿는다 — 이 권역에서 강으로만 가는 유일한 항구다.
-  { id: 'asuncion',     name: '아순시온',         area: '파라과이',     style: 'latin', x: 254, y: 152, flag: 'spain', seed: 6109, size: 2, industry: 1 },
+  { id: 'asuncion',     name: '아순시온',         area: '파라과이',     style: 'latin',    x: 254, y: 152, flag: 'spain', seed: 6109, size: 2, industry: 1 },
 
   // ── 태평양 쪽: 페루·칠레 ────────────────────────────────────
   // 과야킬 — 1538년 창건, 1547년에 조선소로 자리를 굳혔다. **태평양의 스페인 조선소**다.
   // 강 상류의 아름드리 목재가 뗏목에 실려 내려와 여기서 배가 됐고, 남해 함대가 여기서 났다.
   // industry 3은 그래서다 — 이 권역에서 최상급 배를 짓는 유일한 항구다.
-  { id: 'guayaquil',    name: '과야킬',           area: '키토',         style: 'latin', x: 46,  y: 52,  flag: 'spain', seed: 6110, size: 2, industry: 3 },
+  { id: 'guayaquil',    name: '과야킬',           area: '키토',         style: 'colonial', x: 46,  y: 52,  flag: 'spain', seed: 6110, size: 2, industry: 3 },
   // 파이타 — 1578~88년 페루 북서안의 중심이었고 **마닐라 갤리온이 물을 긷던 끝자리**다.
   // 코르세어가 하도 들이닥쳐 관청을 안쪽 피우라로 옮겼다. 로하의 나무껍질이 여기서 실린다.
-  { id: 'paita',        name: '파이타',           area: '피우라',       style: 'latin', x: 56,  y: 78,  flag: 'spain', seed: 6111, size: 1, industry: 1 },
+  { id: 'paita',        name: '파이타',           area: '피우라',       style: 'colonial', x: 56,  y: 78,  flag: 'spain', seed: 6111, size: 1, industry: 1 },
   // 카야오 — ★ 원양 항로가 닿는 관문. 리마의 외항이고 스페인령 태평양 전체의 심장이다.
   // "부왕령 전성기에 하下페루·상上페루·라플라타에서 난 거의 모든 것이 노새 등에 실려
   //  안데스를 넘어 카야오로 왔고, 거기서 파나마로 실려 갔다." 1579년 드레이크,
   // 1624년 네덜란드의 에르미터가 이 항구를 덮쳤다.
-  { id: 'callao',       name: '카야오',           area: '리마',         style: 'latin', x: 78,  y: 118, flag: 'spain', seed: 6112, size: 3, industry: 2 },
+  { id: 'callao',       name: '카야오',           area: '리마',         style: 'colonial', x: 78,  y: 118, flag: 'spain', seed: 6112, size: 3, industry: 2 },
   // 아리카 — 1545년부터 포토시 은의 적출항이었다. 사막 한복판의 작은 마을인데
   // 드레이크·캐번디시·호킨스·샤프·댐피어가 차례로 들이닥친 것은 여기 쌓인 은 때문이다.
-  { id: 'arica',        name: '아리카',           area: '아리카',       style: 'latin', x: 98,  y: 152, flag: 'spain', seed: 6113, size: 1, industry: 1 },
+  { id: 'arica',        name: '아리카',           area: '아리카',       style: 'colonial', x: 98,  y: 152, flag: 'spain', seed: 6113, size: 1, industry: 1 },
   // 발파라이소 — 1536년. 산티아고의 바다 쪽 문이지만 식민기 내내 "집 몇 채와 성당 하나"뿐인
   // 마을이었다. 그래도 칠레의 밀이 리마로 올라가는 자리라 배는 늘 들렀다.
   // 1578년 드레이크, 1594년 호킨스가 여기서 배를 털었다.
-  { id: 'valparaiso',   name: '발파라이소',       area: '칠레',         style: 'latin', x: 86,  y: 190, flag: 'spain', seed: 6114, size: 1, industry: 1 },
+  { id: 'valparaiso',   name: '발파라이소',       area: '칠레',         style: 'colonial', x: 86,  y: 190, flag: 'spain', seed: 6114, size: 1, industry: 1 },
 
   // ── 안데스 내륙 — ★ 이 권역에서 바다보다 중요한 자리 ─────────
   //   넷 다 industry 0이다. 배를 못 짓고, 항구에서 노새길로만 이어진다.
   // 우앙카벨리카 — 산타바르바라 수은광. 1571~1790년에 수은 140만 플라스크가 나왔다.
   // 은을 아말감으로 뽑으려면 수은이 있어야 했으므로 왕실은 **수은 소비량으로 은세(왕의 5분의 1)를
   // 매겼다.** 갱에 들어가기 전 죽은 자를 위한 미사를 올렸다는 기록이 남아 있다.
-  { id: 'huancavelica', name: '우앙카벨리카',     area: '우앙카벨리카', style: 'latin', x: 118, y: 104, flag: 'spain', seed: 6115, size: 2, industry: 0 },
+  { id: 'huancavelica', name: '우앙카벨리카',     area: '우앙카벨리카', style: 'latin',    x: 118, y: 104, flag: 'spain', seed: 6115, size: 2, industry: 0 },
   // 쿠스코 — 1533년 피사로가 들어와 1534년에 스페인 도시로 다시 세웠다. 잉카의 벽 위에
   // 그대로 성당을 얹었다. 부왕령 첫 주교좌였고, 안데스 모직(오브라헤)과 코카의 집산지다.
-  { id: 'cusco',        name: '쿠스코',           area: '쿠스코',       style: 'latin', x: 140, y: 128, flag: 'spain', seed: 6116, size: 2, industry: 0 },
+  { id: 'cusco',        name: '쿠스코',           area: '쿠스코',       style: 'latin',    x: 140, y: 128, flag: 'spain', seed: 6116, size: 2, industry: 0 },
   // 라파스 — 1548년. "포토시·오루로에서 리마로 가는 상로가 만나는 자리"에 일부러 세웠다.
   // 옛 이름 추키야푸가 '금 밭'이라는 뜻이고 실제로 개울에서 사금이 났다.
   // 바로 아래 융가스 골짜기가 코카밭이다.
-  { id: 'lapaz',        name: '라파스',           area: '차르카스',     style: 'latin', x: 158, y: 152, flag: 'spain', seed: 6117, size: 1, industry: 0 },
+  { id: 'lapaz',        name: '라파스',           area: '차르카스',     style: 'latin',    x: 158, y: 152, flag: 'spain', seed: 6117, size: 1, industry: 0 },
   // 포토시 — ★★ **이 게임 세계에서 가장 중요한 내륙 도시**다. 해발 4,067m,
   // 세로 리코 한 산이 16세기 후반 세계 은의 60%를 냈다. 17세기 초에는 런던 다음가는
   // 세계 제2의 도시였다(1603년에 원주민만 12만 명).
   // ★ 그 부는 **미타** 위에 서 있었다. 해마다 1만 3천 명이 끌려왔고 성인 남자 일곱에 하나꼴이었다.
   //   17세기 말까지 상페루 원주민 인구의 절반 가까이가 사라졌다. 이 게임은 사람을
   //   교역품으로 만들지 않는다 — 대신 그 사실을 blurb와 근거 파일에 적어 둔다.
-  { id: 'potosi',       name: '포토시',           area: '포토시',       style: 'latin', x: 172, y: 176, flag: 'spain', seed: 6118, size: 3, industry: 0 },
+  { id: 'potosi',       name: '포토시',           area: '포토시',       style: 'latin',    x: 172, y: 176, flag: 'spain', seed: 6118, size: 3, industry: 0 },
 ];
 
 /* 항로 — ★ **대서양 쪽과 태평양 쪽을 한 줄도 잇지 않았다.**
