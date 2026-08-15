@@ -63,7 +63,9 @@ function drawTable() {
   const rows = visible();
   host.innerHTML = '';
   host.append(el('p', 'sub', `${regionName(currentRegion())} — <b>${rows.length}척</b>. `
-    + '값은 정가이고, 실제 값은 그 항구의 공업력 여유와 전통 조선지 할인만큼 내려간다.'));
+    + '값은 정가이고, 실제 값은 그 항구의 공업력 여유와 전통 조선지 할인만큼 내려간다. '
+    + '<b>지을 수 있는 항구</b>는 <b>해금을 마쳤다고 치고</b> 공업력만으로 센 것이다 — '
+    + '🔒는 선행 선종을 몰아 봐야 열린다는 뜻(그 사슬은 아래 <b>해금 사슬</b>에 있다).'));
 
   const t = el('table', 'tbl');
   t.innerHTML = `<thead><tr>
@@ -92,7 +94,8 @@ function drawTable() {
       <td class="r">${r.speed.toFixed(2)}</td>
       <td class="r">${r.upkeep}</td>
       <td class="dim">${r.yardNames.length ? r.yardNames.join('·') : '—'}</td>
-      <td class="r" style="color:${strayTint}">${r.portCount}곳${stray ? ` <span class="dim">(밖 ${stray})</span>` : ''}</td>`;
+      <td class="r" style="color:${strayTint}">${r.portCount}곳${stray ? ` <span class="dim">(밖 ${stray})</span>` : ''}`
+        + `${r.requires ? ' <span class="dim">🔒</span>' : ''}</td>`;
     if (r.requires) {
       const req = ROWS.find((x) => x.key === r.requires);
       withTip(tr.children[0], `<b>${r.name}</b><br>${r.desc ?? ''}<br><br>`

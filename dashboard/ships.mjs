@@ -11,7 +11,7 @@
 //   ④ 해금 사슬은 어떻게 이어지는가 (requires)
 
 import { SHIPS, CITIES, CITY_BY_ID } from '../js/data.js';
-import { resetGame, sellsShip, shipPriceAt, industryOf } from '../js/state.js';
+import { state, resetGame, sellsShip, shipPriceAt, industryOf } from '../js/state.js';
 import { REGION_BY_ID } from '../js/regions/index.js';
 
 /** 이 배가 실제로 건조 가능한 항구들 — `sellsShip`을 항구마다 그대로 물어본다.
@@ -50,9 +50,15 @@ function shipRow(key, s, opts = {}) {
   };
 }
 
-/** 전 선종. `withPorts`가 false면 항구 훑기를 건너뛴다(60선종 × 175항구라 무겁다). */
+/** 전 선종. `withPorts`가 false면 항구 훑기를 건너뛴다(선종 × 175항구라 무겁다). */
 export function allShips({ withPorts = true } = {}) {
   resetGame();
+  /* ★ 해금 사슬을 다 밟은 셈 친다. `sellsShip`은 공업력과 **해금**을 둘 다 보는데,
+     대시보드는 갓 리셋한 상태라 `everOwned`가 비어 있어 `requires`가 걸린 배 29척이
+     전부 "지을 수 있는 항구 0곳"으로 떴다 — 일본 담당이 "아무도 못 짓는 배 아니냐"고
+     물어 와서 알았다. 이 탭이 답해야 하는 것은 "해금했다면 어디서 짓나"이지
+     "지금 이 세이브에서 짓나"가 아니다. 규칙을 다시 구현하지 않고 **상태만 바꿔 묻는다.** */
+  state.everOwned = new Set(Object.keys(SHIPS));
   return Object.entries(SHIPS)
     .map(([k, s]) => shipRow(k, s, { skipPorts: !withPorts }))
     .sort((a, b) => (a.tier - b.tier) || (a.price - b.price));
