@@ -29,34 +29,34 @@
           치타공은 아라칸·포르투갈 사략이 벵골만에서 턴 배를 부리던 소굴이었다. */
 export const CITIES = [
   // ── 구자라트 — 인도양에서 제일 부유한 상인 해안. 면포와 인디고가 여기서 나간다 ──
-  { id: 'cambay',       name: '캄바트',       area: '구자라트',   style: 'levant',    x: 56,  y: 36,  flag: 'ottoman', seed: 5101, size: 3, industry: 2 },
-  { id: 'surat',        name: '수라트',       area: '구자라트',   style: 'levant',    x: 80,  y: 50,  flag: 'ottoman', seed: 5102, size: 2, industry: 3 },
-  { id: 'diu',          name: '디우',         area: '사우라슈트라', style: 'colonial',  x: 34,  y: 56,  flag: 'spain',   seed: 5103, size: 2, industry: 2 },
+  { id: 'cambay',       name: '캄바트',       area: '구자라트',   style: 'levant',    x: 56,  y: 36,  flag: 'gujarat', seed: 5101, size: 3, industry: 2 },
+  { id: 'surat',        name: '수라트',       area: '구자라트',   style: 'levant',    x: 80,  y: 50,  flag: 'gujarat', seed: 5102, size: 2, industry: 3 },
+  { id: 'diu',          name: '디우',         area: '사우라슈트라', style: 'colonial',  x: 34,  y: 56,  flag: 'portugal',   seed: 5103, size: 2, industry: 2 },
   // ── 콘칸·카나라 — 데칸 술탄국들의 바다 문. 말과 은이 여기로 들어와 내륙으로 간다 ──
   // 차울은 갈베트(노 젓는 무장 연안선)의 전통 조선지라 industry 2다 — 1이면
   // ships.js의 yards가 값을 깎지 못하고 그냥 죽은 줄이 된다.
-  { id: 'chaul',        name: '차울',         area: '콘칸',       style: 'malabar',   x: 64,  y: 84,  flag: 'ottoman', seed: 5104, size: 2, industry: 2 },
-  { id: 'dabhol',       name: '다불',         area: '콘칸',       style: 'malabar',   x: 88,  y: 96,  flag: 'ottoman', seed: 5105, size: 2, industry: 1 },
-  { id: 'goa',          name: '고아',         area: '고아',       style: 'colonial',  x: 64,  y: 112, flag: 'spain',   seed: 5106, size: 3, industry: 3 },
-  { id: 'bhatkal',      name: '바트칼',       area: '카나라',     style: 'malabar',   x: 92,  y: 126, flag: 'venice',  seed: 5107, size: 1, industry: 1 },
+  { id: 'chaul',        name: '차울',         area: '콘칸',       style: 'malabar',   x: 64,  y: 84,  flag: 'gujarat', seed: 5104, size: 2, industry: 2 },
+  { id: 'dabhol',       name: '다불',         area: '콘칸',       style: 'malabar',   x: 88,  y: 96,  flag: 'gujarat', seed: 5105, size: 2, industry: 1 },
+  { id: 'goa',          name: '고아',         area: '고아',       style: 'colonial',  x: 64,  y: 112, flag: 'portugal',   seed: 5106, size: 3, industry: 3 },
+  { id: 'bhatkal',      name: '바트칼',       area: '카나라',     style: 'malabar',   x: 92,  y: 126, flag: 'vijayanagara',  seed: 5107, size: 1, industry: 1 },
   // ── 말라바르 — 후추가 나는 유일한 해안. 이 게임 경제의 축이 여기 있다 ──
-  { id: 'cannanore',    name: '칸나노르',     area: '말라바르',   style: 'malabar',   x: 68,  y: 140, flag: 'venice',  seed: 5108, size: 2, industry: 1 },
-  { id: 'calicut',      name: '캘리컷',       area: '말라바르',   style: 'malabar',   x: 96,  y: 152, flag: 'venice',  seed: 5109, size: 3, industry: 2, prizeYard: true },
-  { id: 'cochin',       name: '코친',         area: '말라바르',   style: 'colonial',  x: 72,  y: 166, flag: 'spain',   seed: 5110, size: 3, industry: 2 },
-  { id: 'quilon',       name: '킬론',         area: '말라바르',   style: 'malabar',   x: 100, y: 180, flag: 'venice',  seed: 5111, size: 1, industry: 1 },
+  { id: 'cannanore',    name: '칸나노르',     area: '말라바르',   style: 'malabar',   x: 68,  y: 140, flag: 'zamorin',  seed: 5108, size: 2, industry: 1 },
+  { id: 'calicut',      name: '캘리컷',       area: '말라바르',   style: 'malabar',   x: 96,  y: 152, flag: 'zamorin',  seed: 5109, size: 3, industry: 2, prizeYard: true },
+  { id: 'cochin',       name: '코친',         area: '말라바르',   style: 'colonial',  x: 72,  y: 166, flag: 'portugal',   seed: 5110, size: 3, industry: 2 },
+  { id: 'quilon',       name: '킬론',         area: '말라바르',   style: 'malabar',   x: 100, y: 180, flag: 'zamorin',  seed: 5111, size: 1, industry: 1 },
   // ── 섬들 — 몰디브는 조개돈, 실론은 계피와 진주 ──
-  { id: 'maldives',     name: '몰디브',       area: '몰디브',     style: 'swahili',   x: 36,  y: 190, flag: 'ottoman', seed: 5112, size: 1, industry: 1 },
-  { id: 'colombo',      name: '콜롬보',       area: '실론',       style: 'colonial',  x: 152, y: 188, flag: 'spain',   seed: 5113, size: 2, industry: 1 },
-  { id: 'galle',        name: '갈레',         area: '실론',       style: 'malabar',   x: 180, y: 198, flag: 'venice',  seed: 5114, size: 1, industry: 1 },
-  { id: 'jaffna',       name: '자프나',       area: '실론',       style: 'dravidian', x: 168, y: 166, flag: 'venice',  seed: 5115, size: 1, industry: 1 },
+  { id: 'maldives',     name: '몰디브',       area: '몰디브',     style: 'swahili',   x: 36,  y: 190, flag: 'kotte', seed: 5112, size: 1, industry: 1 },
+  { id: 'colombo',      name: '콜롬보',       area: '실론',       style: 'colonial',  x: 152, y: 188, flag: 'kotte',   seed: 5113, size: 2, industry: 1 },
+  { id: 'galle',        name: '갈레',         area: '실론',       style: 'malabar',   x: 180, y: 198, flag: 'kotte',  seed: 5114, size: 1, industry: 1 },
+  { id: 'jaffna',       name: '자프나',       area: '실론',       style: 'dravidian', x: 168, y: 166, flag: 'kotte',  seed: 5115, size: 1, industry: 1 },
   // ── 코로만델 — 항구다운 항구가 없는 모래 해안인데도 면포가 세계로 나간다 ──
-  { id: 'nagapattinam', name: '나가파티남',   area: '코로만델',   style: 'dravidian', x: 216, y: 152, flag: 'venice',  seed: 5116, size: 2, industry: 2 },
-  { id: 'pulicat',      name: '풀리카트',     area: '코로만델',   style: 'dravidian', x: 248, y: 124, flag: 'venice',  seed: 5117, size: 2, industry: 1 },
-  { id: 'masulipatnam', name: '마술리파트남', area: '코로만델',   style: 'dravidian', x: 272, y: 92,  flag: 'ottoman', seed: 5118, size: 3, industry: 2 },
+  { id: 'nagapattinam', name: '나가파티남',   area: '코로만델',   style: 'dravidian', x: 216, y: 152, flag: 'vijayanagara',  seed: 5116, size: 2, industry: 2 },
+  { id: 'pulicat',      name: '풀리카트',     area: '코로만델',   style: 'dravidian', x: 248, y: 124, flag: 'vijayanagara',  seed: 5117, size: 2, industry: 1 },
+  { id: 'masulipatnam', name: '마술리파트남', area: '코로만델',   style: 'dravidian', x: 272, y: 92,  flag: 'vijayanagara', seed: 5118, size: 3, industry: 2 },
   // ── 벵골 — 쌀과 초석과 모슬린. 세계에서 배를 가장 싸게 짓던 곳이다 ──
   // 벵골은 목재가 흔해 삼각주 어디서나 배를 지었다(치타공 3 · 사트가온 2).
-  { id: 'satgaon',      name: '사트가온',     area: '벵골',       style: 'levant',    x: 312, y: 48,  flag: 'ottoman', seed: 5119, size: 2, industry: 2 },
-  { id: 'chittagong',   name: '치타공',       area: '벵골',       style: 'levant',    x: 352, y: 66,  flag: 'ottoman', seed: 5120, size: 2, industry: 3, prizeYard: true },
+  { id: 'satgaon',      name: '사트가온',     area: '벵골',       style: 'levant',    x: 312, y: 48,  flag: 'bengal', seed: 5119, size: 2, industry: 2 },
+  { id: 'chittagong',   name: '치타공',       area: '벵골',       style: 'levant',    x: 352, y: 66,  flag: 'bengal', seed: 5120, size: 2, industry: 3, prizeYard: true },
 ];
 
 /* 항로 — 연안을 한 줄로 잇고, 건너뛰는 선은 셋만 두었다.

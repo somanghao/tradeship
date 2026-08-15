@@ -11,9 +11,9 @@
   "cities": {
     "cambay": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "구자라트 술탄국의 깃발이 FLAGS에 없어 이슬람 술탄국을 뜻하는 자리로 오스만 녹색을 빌렸다. 캄바트는 오스만이 다스린 적이 없다 — 도안이 생기면 갈라야 한다.",
+        "value": "gujarat",
+        "verdict": "probable",
+        "basis": "구자라트 술탄국. 캄바트만의 항구들이 인도 최대의 면포·인디고 수출을 맡았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -96,9 +96,9 @@
     },
     "surat": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "구자라트 술탄국(뒤에는 무굴)의 항구다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다 — 실제로 오스만령이었던 적은 없다.",
+        "value": "gujarat",
+        "verdict": "probable",
+        "basis": "구자라트 술탄국. 캄바트만의 항구들이 인도 최대의 면포·인디고 수출을 맡았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -160,15 +160,10 @@
     },
     "diu": {
       "flag": {
-        "value": "spain",
-        "verdict": "gameplay",
-        "basis": "1535년부터 포르투갈 요새다. FLAGS에 포르투갈 깃발이 없어 이베리아 자리로 스페인을 빌렸다 — 지중해 권역이 나폴리·팔레르모에 쓴 것과 같은 처리다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Diu, India (1535년 구자라트 술탄이 방어동맹을 맺고 포르투갈의 요새 축조와 수비대 주둔을 허락했다)",
-            "url": "https://en.wikipedia.org/wiki/Diu,_India"
-          }
-        ]
+        "value": "portugal",
+        "verdict": "probable",
+        "basis": "포르투갈령. 요새와 세관을 두고 카르타스(통행증)를 팔았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "tariff": {
         "value": 0.075,
@@ -224,9 +219,9 @@
     },
     "chaul": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "니잠 샤히(아마드나가르) 술탄국의 항구다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다.",
+        "value": "gujarat",
+        "verdict": "probable",
+        "basis": "구자라트 술탄국. 캄바트만의 항구들이 인도 최대의 면포·인디고 수출을 맡았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -272,9 +267,9 @@
     },
     "dabhol": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "바흐마니에 이어 비자푸르 술탄국의 항구다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다.",
+        "value": "gujarat",
+        "verdict": "probable",
+        "basis": "구자라트 술탄국. 캄바트만의 항구들이 인도 최대의 면포·인디고 수출을 맡았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -341,15 +336,10 @@
     },
     "goa": {
       "flag": {
-        "value": "spain",
-        "verdict": "gameplay",
-        "basis": "1510년 알부케르크가 비자푸르에게서 빼앗아 에스타두 다 인디아의 수도가 된 도시다. 포르투갈 깃발이 FLAGS에 없어 이베리아 자리로 스페인을 빌렸다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Goa ('In 1510, the Portuguese defeated the ruling Bijapur sultan Yusuf Adil Shah with the help of a local ally, Thimmayya')",
-            "url": "https://en.wikipedia.org/wiki/Goa"
-          }
-        ]
+        "value": "portugal",
+        "verdict": "probable",
+        "basis": "포르투갈령. 요새와 세관을 두고 카르타스(통행증)를 팔았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "tariff": {
         "value": 0.08,
@@ -423,9 +413,9 @@
     },
     "bhatkal": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "비자야나가르 제국의 봉신령 항구다. 힌두 왕국의 깃발이 FLAGS에 없어 붉은 바탕에 금색 문장인 베네치아 도안을 빌렸다 — 남인도 라자의 기치로 읽어도 어색하지 않다는 판단이다.",
+        "value": "vijayanagara",
+        "verdict": "probable",
+        "basis": "비자야나가라 제국이 관장한 코로만델·카나라 해안. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -488,15 +478,10 @@
     },
     "cannanore": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "콜라티리(콜라투나두) 왕국의 항구다. 힌두 왕국 자리로 베네치아 도안을 빌렸다. 실제로는 17세기부터 이 도시를 다스린 아라칼이 케랄라 유일의 무슬림 술탄국이라 깃발이 갈려야 한다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Kannur (Kolathiri / Kolathunadu; 17세기 아라칼 술탄국)",
-            "url": "https://en.wikipedia.org/wiki/Kannur"
-          }
-        ]
+        "value": "zamorin",
+        "verdict": "probable",
+        "basis": "사무티리(자모린)가 다스린 말라바르. 캘리컷이 그 중심이고 관세를 매매가의 1/40만, 그것도 팔 때만 물렸다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "pepper": {
@@ -558,9 +543,9 @@
     },
     "calicut": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "사무티리(자모린)의 항구다. 사무티리의 깃발이 FLAGS에 없어 붉은 바탕 금색 문장인 베네치아 도안을 빌렸다 — art.flagTodo 참조.",
+        "value": "zamorin",
+        "verdict": "probable",
+        "basis": "사무티리(자모린)가 다스린 말라바르. 캘리컷이 그 중심이고 관세를 매매가의 1/40만, 그것도 팔 때만 물렸다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "tariff": {
@@ -662,15 +647,10 @@
     },
     "cochin": {
       "flag": {
-        "value": "spain",
-        "verdict": "gameplay",
-        "basis": "1503년부터 포르투갈 요새(포르트 이마누엘)가 선 항구다. 실제 주권자는 코친 왕국의 라자였고 포르투갈은 그 동맹이었다 — 깃발을 하나만 걸 수 있어 요새 쪽을 택했다. 포르투갈 깃발이 없어 이베리아 자리로 스페인을 빌렸다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Kochi ('From 1503 to 1663, Fort Kochi (Fort Emmanuel) was ruled by Portugal')",
-            "url": "https://en.wikipedia.org/wiki/Kochi"
-          }
-        ]
+        "value": "portugal",
+        "verdict": "probable",
+        "basis": "포르투갈령. 요새와 세관을 두고 카르타스(통행증)를 팔았다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "pepper": {
@@ -738,9 +718,9 @@
     },
     "quilon": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "베나디(킬론) 왕국의 항구다. 힌두 왕국 자리로 베네치아 도안을 빌렸다.",
+        "value": "zamorin",
+        "verdict": "probable",
+        "basis": "사무티리(자모린)가 다스린 말라바르. 캘리컷이 그 중심이고 관세를 매매가의 1/40만, 그것도 팔 때만 물렸다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -781,9 +761,9 @@
     },
     "maldives": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "몰디브 술탄국이다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다.",
+        "value": "kotte",
+        "verdict": "probable",
+        "basis": "실론(코테 왕국)과 그 해안. 계피의 세계 유일 산지였다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -842,15 +822,10 @@
     },
     "colombo": {
       "flag": {
-        "value": "spain",
-        "verdict": "gameplay",
-        "basis": "1505년 포르투갈이 들어와 1517년 요새를 지었다. 실제 주권자는 코테 왕국이었으나 계피 교역을 쥔 쪽을 깃발로 택했고, 포르투갈 도안이 없어 스페인을 빌렸다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Colombo (포르투갈 1505년 도래, 1517년 요새 축조)",
-            "url": "https://en.wikipedia.org/wiki/Colombo"
-          }
-        ]
+        "value": "kotte",
+        "verdict": "probable",
+        "basis": "실론(코테 왕국)과 그 해안. 계피의 세계 유일 산지였다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "cinnamon": {
@@ -910,9 +885,9 @@
     },
     "galle": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "코테 왕국(불교)의 항구다. 토착 왕국 자리로 베네치아 도안을 빌렸다 — 불교 왕국의 기치는 art.flagTodo에.",
+        "value": "kotte",
+        "verdict": "probable",
+        "basis": "실론(코테 왕국)과 그 해안. 계피의 세계 유일 산지였다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -946,9 +921,9 @@
     },
     "jaffna": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "아리야차크라바르티 왕조의 타밀 왕국이다. 힌두 왕국 자리로 베네치아 도안을 빌렸다.",
+        "value": "kotte",
+        "verdict": "probable",
+        "basis": "실론(코테 왕국)과 그 해안. 계피의 세계 유일 산지였다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
         "sources": []
       },
       "goods": {
@@ -998,15 +973,10 @@
     },
     "nagapattinam": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "탄자부르 나야카(비자야나가르 계열)의 항구다. 힌두 왕국 자리로 베네치아 도안을 빌렸다. 1554년부터 포르투갈 상관이 있었으나 주권은 토착 왕조였다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Nagapattinam (포르투갈이 1554년 상업 거점을 세웠다)",
-            "url": "https://en.wikipedia.org/wiki/Nagapattinam"
-          }
-        ]
+        "value": "vijayanagara",
+        "verdict": "probable",
+        "basis": "비자야나가라 제국이 관장한 코로만델·카나라 해안. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "calico": {
@@ -1083,15 +1053,10 @@
     },
     "pulicat": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "비자야나가르의 지원으로 포르투갈이 1502년 상관을 세운 항구다. 주권은 비자야나가르였으므로 힌두 왕국 자리로 베네치아 도안을 빌렸다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Pulicat (포르투갈이 1502년 비자야나가르의 지원으로 상관을 세우고 1609년까지 유지)",
-            "url": "https://en.wikipedia.org/wiki/Pulicat"
-          }
-        ]
+        "value": "vijayanagara",
+        "verdict": "probable",
+        "basis": "비자야나가라 제국이 관장한 코로만델·카나라 해안. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "calico": {
@@ -1143,15 +1108,10 @@
     },
     "masulipatnam": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "골콘다(쿠트브 샤히) 왕국의 항구다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Machilipatnam ('The town served as the primary sea port for the Kingdom of Golkonda')",
-            "url": "https://en.wikipedia.org/wiki/Machilipatnam"
-          }
-        ]
+        "value": "vijayanagara",
+        "verdict": "probable",
+        "basis": "비자야나가라 제국이 관장한 코로만델·카나라 해안. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "tariff": {
         "value": 0.07,
@@ -1231,15 +1191,10 @@
     },
     "satgaon": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "벵골 술탄국의 항구이자 조폐 도시다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Bengal Sultanate (사트가온은 술탄국의 행정구이자 조폐 도시였다)",
-            "url": "https://en.wikipedia.org/wiki/Bengal_Sultanate"
-          }
-        ]
+        "value": "bengal",
+        "verdict": "probable",
+        "basis": "벵골 술탄국. 갠지스 삼각주의 쌀·면포가 여기서 실렸다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "grain": {
@@ -1312,15 +1267,10 @@
     },
     "chittagong": {
       "flag": {
-        "value": "ottoman",
-        "verdict": "gameplay",
-        "basis": "벵골 술탄국의 항구였고 16세기 말부터 아라칸이 차지했다. 이슬람 술탄국 자리로 오스만 깃발을 빌렸다 — 아라칸(불교 왕국)까지 담지는 못한다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Chittagong (벵골의 항구이자 아라칸이 16세기 말부터 1666년까지 지배)",
-            "url": "https://en.wikipedia.org/wiki/Chittagong"
-          }
-        ]
+        "value": "bengal",
+        "verdict": "probable",
+        "basis": "벵골 술탄국. 갠지스 삼각주의 쌀·면포가 여기서 실렸다. ★ 2026-08-16 통합자 배선. 이 깃발들은 `js/sprites/ship.js: FLAGS`에 **이미 그려져 있었는데** `geo.js`가 지중해 깃발(ottoman·venice·spain)을 계속 빌려 쓰고 있었다 — 힌두 왕국이 베네치아 사자기를, 말레이 술탄국이 오스만 초록기를 달고 있었다는 뜻이다. 근세 아시아에는 유럽식 국기 제도가 없어 도안은 사서가 아니라 왕실·선박 문양에서 왔으므로 판정은 probable이다.",
+        "sources": []
       },
       "goods": {
         "calico": {
@@ -1838,32 +1788,7 @@
         "note": "갈베트 — 노를 양현에 늘어놓은 낮은 무장 연안선. 지금은 galley를 빌려 쓰는데 크기가 지중해 갤리보다 작아야 한다."
       }
     ],
-    "flagTodo": [
-      {
-        "key": "portugal",
-        "note": "포르투갈 — 흰 바탕에 파란 방패 다섯(퀴나스)과 성곽 테두리. 지금은 고아·코친·디우·콜롬보가 spain을 빌려 쓴다. 이 권역에서 가장 급하다."
-      },
-      {
-        "key": "zamorin",
-        "note": "사무티리(캘리컷) — 케랄라 나이르 왕가의 기치. 지금은 venice(붉은 바탕 금색)를 빌려 쓴다."
-      },
-      {
-        "key": "gujarat",
-        "note": "구자라트 술탄국 — 캄바트·수라트·차울·다불이 ottoman을 빌려 쓴다. 오스만이 다스린 적이 없는 도시들이다."
-      },
-      {
-        "key": "vijayanagara",
-        "note": "비자야나가르 — 바라하(멧돼지)와 해·달. 바트칼·풀리카트·나가파티남이 venice를 빌려 쓴다."
-      },
-      {
-        "key": "bengal",
-        "note": "벵골 술탄국 — 사트가온·치타공이 ottoman을 빌려 쓴다. 치타공은 16세기 말부터 아라칸(불교 왕국)령이라 언젠가 또 갈려야 한다."
-      },
-      {
-        "key": "kotte",
-        "note": "코테·자프나 — 실론의 사자기와 타밀 왕국의 황소기. 지금은 갈레·자프나가 venice를 빌려 쓴다."
-      }
-    ],
+    "flagTodo": [],
     "styleTodo": [
       {
         "key": "dravidian",
