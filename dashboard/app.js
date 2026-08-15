@@ -6,6 +6,7 @@
 import { runPirates, bindPirateControls, pirateStopPlay, pirateLoaded } from './pirate-view.js';
 import { runWages, bindWageControls, wageLoaded } from './wage-view.js';
 import { runPorts, portLoaded } from './port-view.js';
+import { runOverview, overviewLoaded } from './overview-view.js';
 
 const tabs = [...document.querySelectorAll('#nav .tab')];
 const grps = [...document.querySelectorAll('#nav .grp')];
@@ -21,6 +22,8 @@ function show(name) {
   if (name === 'pirate' && !pirateLoaded()) runPirates();
   if (name === 'wage' && !wageLoaded()) runWages();
   if (name === 'port' && !portLoaded()) runPorts();
+  // 오버뷰는 계측이 가볍지만 **캐시 실측**이 있어 열 때마다 다시 그린다
+  if (name === 'overview') runOverview();
   location.hash = `#${name}`;
   scrollTo(0, 0);
 }

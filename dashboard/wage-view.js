@@ -6,7 +6,7 @@
 //   ② 그 값을 치르고 데리고 다닐 만한가 (같은 시드로 짝지어 잰다)
 
 import { measureAll, goodsTable } from './wages.mjs';
-import { $, fmt, pct, el, svg, node, withTip } from './shared.mjs';
+import { $, fmt, pct, el, svg, node, withTip } from './shared.js';
 
 let Wg = null;   // 계측 결과
 let EV = null;   // 근거 정본

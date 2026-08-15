@@ -47,9 +47,12 @@
 | `dashboard/dash.js` | **경제 탭** 렌더 | 시세 매트릭스·현금흐름·물동량·NPC |
 | `dashboard/pirate-view.js` | **해적 탭** 렌더 | 조우빈도·등급표·자산별 발생확률·지도(재생)·항로 밀도·명부 |
 | `dashboard/wage-view.js` | **보수 탭** 렌더 | 보수 사다리·사료 대조(배율)·수입 구성·항해비 몫·짝지어 비교·근거표 |
-| `dashboard/shared.mjs` | 세 탭 공용 그리기 도구 | `$`·`el`·`svg`·`node`·`heat`·`TIER_COLOR`·툴팁 — 갈라지면 한 화면으로 안 보인다 |
+| `dashboard/shared.js` | 네 탭 공용 그리기 도구 (**DOM을 쓰므로 `.js`** — `.mjs`는 계측 전용이다) | `$`·`el`·`svg`·`node`·`heat`·`TIER_COLOR`·툴팁 — 갈라지면 한 화면으로 안 보인다 |
 | `dashboard/ports.mjs` | **항구** 지표 채집(DOM 없음) | `portRows`·`goodsOf`(근거 신뢰도 순 정렬)·`yardOf`(공업력)·`realEstate`(부동산 앵커 배율 환산) |
 | `dashboard/port-view.js` | **항구 탭** 렌더 | 항구 일람·상세(교역품 3묶음)·공업력 비교·부동산·근거 현황 |
+| `dashboard/architecture.mjs` | **계층 트리·동적 생성물·상태의 정본**(DOM 없음) | `LAYERS`·`RUNTIME`·`STATE_FIELDS`·`allFiles` — `tools/check-architecture.mjs`가 실제 파일·state와 대조 |
+| `dashboard/overview-view.js` | **오버뷰 탭** 렌더 | 계층 트리·동적 생성물(캐시 실측 + 게임에서 잰 값)·세이브 대상 |
+| `tools/check-architecture.mjs` | 트리 ↔ 실제 파일·실제 `state` 정합 | **실패**: 유령·누락·중복·상태 필드 불일치. 구조 설명이 조용히 낡는 것을 막는다 |
 | `dashboard/app.js` | 탭 셸 | 왼쪽 사이드바 · 해적·항구·보수 탭은 **처음 열 때만** 계측(무겁다) |
 | `js/scenes/shipyard.js` | 조선소 — 선박 교체·갑판 배치·무장 → [shipyard.md](shipyard.md) | `shipyardScene` |
 | `js/scenes/tavern.js` | 술집 — 선원 무리 등용 → [crew-tavern.md](crew-tavern.md) | `tavernScene` |

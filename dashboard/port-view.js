@@ -12,7 +12,7 @@
 
 import { portRows, goodsOf, realEstate, RANK } from './ports.mjs';
 import { CREW_WAGE } from '../js/state.js';
-import { $, fmt, pct, el, svg, node, withTip, mono } from './shared.mjs';
+import { $, fmt, pct, el, svg, node, withTip, mono } from './shared.js';
 
 let EV = null;    // content/city-evidence.json
 let AE = null;    // content/asset-evidence.json

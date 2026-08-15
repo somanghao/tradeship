@@ -4,7 +4,7 @@
 // 규칙을 다시 구현하지 않는다는 원칙은 dash.js와 같다.
 
 import { measureAll } from './pirates.mjs';
-import { $, fmt, pct, el, svg, node, mono, TIER_COLOR, tipShow, tipMove, tipHide, withTip } from './shared.mjs';
+import { $, fmt, pct, el, svg, node, mono, TIER_COLOR, tipShow, tipMove, tipHide, withTip } from './shared.js';
 
 let P = null;              // 계측 결과
 let frameIdx = 0;

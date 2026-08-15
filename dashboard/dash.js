@@ -8,7 +8,7 @@ import { CITIES, GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, MARKET } from '../js/data
 import { state, marketDepth, tariffRate, tierNeeded, sellsShip, shipPriceAt, shipLockedBy } from '../js/state.js';
 import { measure, statsOf, starvedCells, allCells } from './measure.mjs';
 /* 그리기 도구는 `shared.mjs`가 정본 — 해적 탭과 같은 것을 써야 한 화면으로 보인다 */
-import { $, fmt, el, heat, mono, svg, node } from './shared.mjs';
+import { $, fmt, el, heat, mono, svg, node } from './shared.js';
 
 /* 근거 데이터 — 수치가 왜 그 값인지. content/city-evidence.json이 정본이고
    `node tools/check-evidence.mjs`가 코드와의 불일치를 잡는다. 여기서는 읽기만 한다. */

@@ -20,7 +20,8 @@
 | **유지비·위험비용 고증** · 선체/무장 유지 · 적하보험 · 화물이 해적을 부르는 정도 | 근거 JSON | **`content/upkeep-evidence.json`** |
 | **급여 고증** · 부관이 선원의 몇 배인가 · maestre · 사무역(quintalada) | [wiki/officer.md](wiki/officer.md) §고증 — 지금 ×2.17로 **c.1500 사료 구간(2.0~2.3) 안**이다(한때 ×6.67 = 1634년 값) | **`content/wage-evidence.json`** → 검증 `node tools/check-wages.mjs` |
 | **항로 위험도 고증** · 어느 항로가 위험했나 · 보험료율 | 근거 JSON이 곧 문서다 | **`content/route-evidence.json`** · 수치 `js/map/geo.js: ROUTE_RISK` → 검증 `node tools/check-routes.mjs` |
-| 경제·해적·보수 **관측**(시세가 실제로 움직이나 · 물자가 닿나 · 자산 곡선 · 조우확률 · 급여 사료 대조) | `dashboard/` — `python serve.py` 후 `/dashboard/` | 계측 `dashboard/measure.mjs`·`pirates.mjs`·`wages.mjs` · 렌더 `dash.js`·`pirate-view.js`·`wage-view.js` · 공용 `shared.mjs` · 셸 `app.js` |
+| **아키텍처 트리 · 동적 생성물 · 상태(세이브 대상)** — 무엇이 어느 계층에 있나 · 런타임에 만들어지는 것 · state가 들고 있는 것 | 대시보드 **오버뷰** 탭 | 정본 `dashboard/architecture.mjs` · 렌더 `overview-view.js` · **검증 `node tools/check-architecture.mjs`**(실제 파일·실제 state와 대조) |
+| 경제·해적·보수 **관측**(시세가 실제로 움직이나 · 물자가 닿나 · 자산 곡선 · 조우확률 · 급여 사료 대조) | `dashboard/` — `python serve.py` 후 `/dashboard/` | 계측(DOM 없음) `measure.mjs`·`pirates.mjs`·`ports.mjs`·`wages.mjs`·`architecture.mjs` · 렌더(DOM) `dash.js`·`*-view.js`·`shared.js` · 셸 `app.js` |
 | 파일이 뭘 담당하나 · 씬 흐름 (역방향: 파일 → 기능) | [wiki/file-map.md](wiki/file-map.md) | — |
 
 ## 2. 수치를 어디서 고치나
@@ -51,8 +52,8 @@
 | NPC 수·습격률·시장 영향·싣는 양 | `npc/config.js: NPC` (traders·pirates·raidBase·pressure·loadRatio·pickTop) |
 | NPC가 어디로 갈지·무엇을 살지 | `npc/behavior.js: chooseTrade/choosePirateMove` — `ctx`로만 받으므로 통째로 갈아 끼워도 `world.js`는 그대로 |
 | 경제가 실제로 도는지 확인 | 대시보드 `/dashboard/` · 곡선 `node tools/sim-trade.mjs` · 실효 위험 `node tools/sim-risk.mjs` · 항차 수익 분포 `node tools/check-voyage.mjs` · 화면 없이 계측만 `node -e "import('./dashboard/measure.mjs')…"` |
-| 대시보드 탭이 무엇을 보여주나 | 사이드바 4탭. **경제** 시세·현금흐름·물동량·NPC(`dash.js`) · **해적** 조우확률·등급별 발생·현상금·NPC 위치 재생·항로 위험(`pirate-view.js`+`pirates.mjs`) · **항구** 항구별 교역품(근거 신뢰도 순)·공업력·부동산 앵커·근거 현황(`port-view.js`+`ports.mjs`) · **보수** 급여 사다리·사료 대조·에이미 수입·부관 유무 짝비교(`wage-view.js`+`wages.mjs`). 탭 셸은 `app.js`, 공용 그리기는 `shared.mjs` |
-| 대시보드 탭 추가 | `index.html`에 nav `.grp` + `section.tabpage` → `app.js`에 `run*()`/`*Loaded()` 배선 → 계측 `*.mjs`(출력 없는 순수 로직) + 그리기 `*-view.js`로 가른다 |
+| 대시보드 탭이 무엇을 보여주나 | 사이드바 **5탭**. **오버뷰** 계층 트리·동적 생성물·상태(`overview-view.js`+`architecture.mjs`) · **경제** 시세·현금흐름·물동량·NPC(`dash.js`) · **해적** 조우확률·등급별 발생·현상금·NPC 위치 재생·항로 위험(`pirate-view.js`+`pirates.mjs`) · **항구** 항구별 교역품(근거 신뢰도 순)·공업력·부동산 앵커·근거 현황(`port-view.js`+`ports.mjs`) · **보수** 급여 사다리·사료 대조·에이미 수입·부관 유무 짝비교(`wage-view.js`+`wages.mjs`). 탭 셸은 `app.js`, 공용 그리기는 `shared.js` |
+| 대시보드 탭 추가 | `index.html`에 nav `.grp` + `section.tabpage` → `app.js`에 `run*()`/`*Loaded()` 배선 → 계측 `*.mjs`(**DOM 없음**) + 그리기 `*-view.js`(**DOM 있음**)로 가른다. 파일을 늘리면 `dashboard/architecture.mjs` 트리에도 적는다 — 안 적으면 `check-architecture.mjs`가 실패시킨다 |
 | 시장 충격(기근·봉쇄·풍작·나포) | `data.js: SHOCK.events`(종류·확률·문구) · 판정 `state.js: shockFactor/addShock/rollShockEvents` · 나포 배선 `world.js: raids()` · 화면 `scenes/map.js` "뱃사람들의 소문" |
 | 화물을 잃는 사건 | 폭풍 투하 `state.js: jettisonOdds/jettisonCargo` · 보상 `INSURANCE_COVER` · 뭍의 사고 `banditRaid/payToll`(`INLAND_ODDS`) · 빈도 검증 `node tools/sim-risk.mjs` |
 | 게임이 근거 JSON을 읽는 곳 | `js/evidence.js` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓으려고 `content/city-evidence.json`을 읽는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
