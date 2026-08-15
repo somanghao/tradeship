@@ -2,7 +2,7 @@
 
 > 2026-08-15 웹 조사. **게임 경제 밸런스의 근거 자료**이고 코드 정본이 아니다.
 > 자매 문서 — 품목 기준가 `content/goods-evidence.json` · 선박/부동산 `content/asset-evidence.json` ·
-> 임금 `content/wage-evidence.json` · 항로 위험 `content/route-evidence.json`.
+> 임금 `content/wage-evidence.json` · 항로 위험 `content/regions/<권역>-evidence.json`.
 > 이 문서는 **아직 어떤 코드도 바꾸지 않았다.** §7의 JSON은 초안이다.
 
 **연도 고정 금지** — 게임은 특정 연도를 쓰지 않는다. 아래 연도는 전부 **출처 표기용**이고,

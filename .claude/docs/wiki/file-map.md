@@ -25,8 +25,8 @@
 | `js/scenes/port.js` | 항구 — 시세·매매·정비·조선소 | `portScene` |
 | `js/scenes/map.js` | 지도 — 항로 선택·항해·해상 이벤트·NPC 조우 | `mapScene` |
 | `js/scenes/battle.js` | 전투 — 포격전·백병전 | `battleScene` |
-| `content/city-evidence.json` | 도시 수치의 **근거 정본** — 항목별 `{side, value, verdict, basis, sources[]}` | 서술본은 [city-goods-history.md](city-goods-history.md), 정합 검사는 `tools/check-evidence.mjs` |
-| `content/route-evidence.json` | 항로 위험도의 **근거 정본** — 항로별 `{risk, verdict, basis, sources[]}`. `risk`는 당대 해상보험 요율(%) | 수치 정본은 `map/geo.js: ROUTE_RISK`, 검사는 `tools/check-routes.mjs` |
+| `content/regions/<권역>-evidence.json` | 도시 수치의 **근거 정본** — 항목별 `{side, value, verdict, basis, sources[]}` | 서술본은 [city-goods-history.md](city-goods-history.md), 정합 검사는 `tools/check-evidence.mjs` |
+| `content/regions/<권역>-evidence.json` | 항로 위험도의 **근거 정본** — 항로별 `{risk, verdict, basis, sources[]}`. `risk`는 당대 해상보험 요율(%) | 수치 정본은 `map/geo.js: ROUTE_RISK`, 검사는 `tools/check-routes.mjs` |
 | `tools/check-evidence.mjs` | 코드(`CITY_TRADE`·깃발) ↔ 근거 JSON 정합 검사 | **실패**: 값 불일치·유령항목·'확인됨'인데 무출처. **경고**: 미조사·짧은 basis — 근거가 없다고 실패시키면 콘텐츠를 못 늘린다 |
 | `tools/check-routes.mjs` | `ROUTE_RISK` ↔ `route-evidence.json` 정합 + **"확률이 실제로 갈렸는가"** 검사 | 배선이 끊겨 전 항로가 같은 확률이면 exit 1 |
 | `content/wage-evidence.json` | 부관·선원 보수의 **근거 정본** — 사료 앵커(배율)·발견·판정 | 수치 정본은 `data.js: OFFICER`·`data.js: CREW_WAGE`(튜닝 상수 절), 검사는 `tools/check-wages.mjs` |
@@ -86,8 +86,8 @@ port ──출항──▶ map ──도시 클릭──▶ (항해 연출)
 | 시세 성향 | `data.js: CITY_TRADE` (supply=산지 배율<1, demand=수요 배율>1) |
 | 항로 연결 | `map/geo.js: ROUTES` |
 | NPC 수·습격률·시장 영향 | `npc/config.js: NPC` |
-| 도시 수치의 근거·출처 | `content/city-evidence.json` → `node tools/check-evidence.mjs` |
-| 항로 위험도의 근거·출처 | `content/route-evidence.json` · 수치는 `map/geo.js: ROUTE_RISK` → `node tools/check-routes.mjs` |
+| 도시 수치의 근거·출처 | `content/regions/<권역>-evidence.json` → `node tools/check-evidence.mjs` |
+| 항로 위험도의 근거·출처 | `content/regions/<권역>-evidence.json` · 수치는 `map/geo.js: ROUTE_RISK` → `node tools/check-routes.mjs` |
 | 부관 보수의 근거·출처 | `content/wage-evidence.json` · 수치는 `data.js: OFFICER` → `node tools/check-wages.mjs` |
 | 그림 발주 사양 | `assets/PORT-BACKGROUND-BRIEF.md`(항구 16장) · `assets/WORLD-MAP-BRIEF.md`(지도 1장) |
 | 그림을 PNG로 교체 | `assets/manifest.json` (키는 `preview.html`에서) → `assets/README.md` |

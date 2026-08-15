@@ -54,8 +54,8 @@ node tools/test-rules.mjs      # 규칙 전반(경제·개장·나포·유지비
 node tools/test-world.mjs      # NPC 세계·바람·해류·계약 10항목
 node tools/sim-trade.mjs       # 무역 곡선 — "몇 항차에 어느 배를 사는가"
 node tools/sim-risk.mjs [항차] [시드수]   # 실효 조우율·화물 손실 빈도 (기본 90×20 — ★시드 평균)
-node tools/check-evidence.mjs  # 도시 수치 ↔ content/city-evidence.json 정합 (exit 1)
-node tools/check-routes.mjs    # 항로 요율 ↔ content/route-evidence.json 정합 (exit 1)
+node tools/check-evidence.mjs  # 도시 수치 ↔ content/regions/<권역>-evidence.json 정합 (exit 1)
+node tools/check-routes.mjs    # 항로 요율 ↔ content/regions/<권역>-evidence.json 정합 (exit 1)
 node tools/check-wages.mjs     # 부관·선원 보수 ↔ content/wage-evidence.json 정합 (exit 1)
 node tools/check-prices.mjs    # 물가·자산·유지비 ↔ goods/asset/upkeep-evidence.json 정합 (exit 1)
 node tools/check-voyage.mjs    # 항차 수익 분포·손실 빈도·톤당승조원 ↔ voyage-evidence.json

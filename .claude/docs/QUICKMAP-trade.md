@@ -14,12 +14,12 @@
 | **급여 정산 · 급여일 · 체불 · 불만 · 이탈 · 화물 절도 · 장부 · 결산 화면** | [wiki/payroll.md](wiki/payroll.md) | `js/state.js`(payroll·ledger·`book`·`settlePayroll`·`stealCargo`·`MONTH_DAYS`·`DESERT_AT`) · 화면 `js/payday.js` · 검증 `node tools/test-payroll.mjs` |
 | **술집 · 선원 등용 · 무리 · 기질 · 계약금 · 요구 일당** · 선원이 왜 0명으로 시작하나 · 부두 인부 | [wiki/crew-tavern.md](wiki/crew-tavern.md) | `js/data.js: TAVERN·CREW_TRAITS·CREW_NAMES` · `js/state.js`(tavernCrews·recruitBand·avgCrewWage·trimBands) · 씬 `js/scenes/tavern.js` · 검증 `node tools/test-tavern.mjs` |
 | 상인/해적 NPC · 세계가 혼자 돈다 · 시장압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 | [wiki/world-npc.md](wiki/world-npc.md) | 숫자 `js/npc/config.js` · 판단 `js/npc/behavior.js` · 집행 `js/world.js` · 계약 `js/data.js: CONTRACT` |
-| **도시 특산품 고증** · 어느 도시가 뭘 팔았나 · 깃발/국적 근거 · 사료 출처 | [wiki/city-goods-history.md](wiki/city-goods-history.md) (서술본·34KB로 무겁다) | **`content/city-evidence.json`**(기계 정본) → 검증 `node tools/check-evidence.mjs` |
+| **도시 특산품 고증** · 어느 도시가 뭘 팔았나 · 깃발/국적 근거 · 사료 출처 | [wiki/city-goods-history.md](wiki/city-goods-history.md) (서술본·34KB로 무겁다) | **`content/regions/<권역>-evidence.json`**(기계 정본) → 검증 `node tools/check-evidence.mjs` |
 | **교역품 물가 고증** · 밀·소금·기름·와인·후추가 서로 몇 배였나 · 화물 1칸은 실제로 얼마인가 · **대조 2축의 정본** | 근거 JSON이 곧 문서다(주석이 상세) | **`content/goods-evidence.json`** → 검증 `node tools/check-prices.mjs` |
 | **선박·부동산 고증** · 배가 선원 연봉의 몇 배인가 · 집세·주택값 · 거점을 넣을 때의 앵커 | 근거 JSON | **`content/asset-evidence.json`** (부동산은 아직 게임 기능이 아니라 스케일 기준점) |
 | **유지비·위험비용 고증** · 선체/무장 유지 · 적하보험 · 화물이 해적을 부르는 정도 | 근거 JSON | **`content/upkeep-evidence.json`** |
 | **급여 고증** · 부관이 선원의 몇 배인가 · maestre · 사무역(quintalada) | [wiki/officer.md](wiki/officer.md) §고증 — 지금 ×2.17로 **c.1500 사료 구간(2.0~2.3) 안**이다(한때 ×6.67 = 1634년 값) | **`content/wage-evidence.json`** → 검증 `node tools/check-wages.mjs` |
-| **항로 위험도 고증** · 어느 항로가 위험했나 · 보험료율 | 근거 JSON이 곧 문서다 | **`content/route-evidence.json`** · 수치 `js/map/geo.js: ROUTE_RISK` → 검증 `node tools/check-routes.mjs` |
+| **항로 위험도 고증** · 어느 항로가 위험했나 · 보험료율 | 근거 JSON이 곧 문서다 | **`content/regions/<권역>-evidence.json`의 `routes`** · 수치 각 권역 `geo.js: ROUTE_RISK` → 검증 `node tools/check-routes.mjs` |
 | **아키텍처 트리 · 동적 생성물 · 상태(세이브 대상)** — 무엇이 어느 계층에 있나 · 런타임에 만들어지는 것 · state가 들고 있는 것 | 대시보드 **오버뷰** 탭 | 정본 `dashboard/architecture.mjs` · 렌더 `overview-view.js` · **검증 `node tools/check-architecture.mjs`**(실제 파일·실제 state와 대조) |
 | 경제·해적·보수 **관측**(시세가 실제로 움직이나 · 물자가 닿나 · 자산 곡선 · 조우확률 · 급여 사료 대조) | `dashboard/` — `python serve.py` 후 `/dashboard/` | 계측(DOM 없음) `measure.mjs`·`pirates.mjs`·`ports.mjs`·`wages.mjs`·`architecture.mjs` · 렌더(DOM) `dash.js`·`*-view.js`·`shared.js` · 셸 `app.js` |
 | 파일이 뭘 담당하나 · 씬 흐름 (역방향: 파일 → 기능) | [wiki/file-map.md](wiki/file-map.md) | — |
@@ -33,7 +33,7 @@
 | 차익 폭(돈 버는 속도) | `data.js: SPREAD` — 이 한 계수가 무역 곡선 전체를 좌우한다 |
 | 시세 변동폭·주기 | `state.js: wobble()` (3일 주기 ±15%) |
 | 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`) |
-| 입항세 | **두 겹** — `data.js: TARIFF`(size별 기본율) + `CITY_TARIFF`(그 도시만의 오버라이드). 오버라이드를 적으면 `content/city-evidence.json`의 `cities[id].tariff`에도 같은 값과 근거를 적는다 |
+| 입항세 | **두 겹** — `data.js: TARIFF`(size별 기본율) + `CITY_TARIFF`(그 도시만의 오버라이드). 오버라이드를 적으면 `content/regions/<권역>-evidence.json`의 `cities[id].tariff`에도 같은 값과 근거를 적는다 |
 | 입항세를 읽는 함수 | 항구의 성질 → **`state.js: baseTariff()`** · 지금 실제로 무는 값(부관 특전 포함) → `tariffRate()` |
 | 항해비 갈래 | `state.js: voyageCost()` — 일당(**`avgCrewWage()`** — 술집에서 누구를 태웠나로 갈린다·기본 `CREW_WAGE` 1.2)·보급(`SUPPLY_UNIT` 1.3)·선체(`HULL_UPKEEP`×`SHIPS[].upkeep`)·무장(`ARM_UPKEEP`)·선단·**적하보험**(`INSURANCE_RATE`×항로요율×화물가치)·부관 |
 | 시작 조건(금화·선원·배) | `state.js: START_GOLD`(200) · `resetGame()` — **선원 0명**으로 시작한다. 값의 근거는 [payroll.md](wiki/payroll.md) §6 |
@@ -42,7 +42,7 @@
 | 부관 급여·성과급·능력 | `data.js: OFFICER` — `wage`·`cut`·`perks`는 **한 묶음**이라 함께 재측정. 고치면 `content/wage-evidence.json`도 같은 커밋에서 → [officer.md](wiki/officer.md) |
 | 도시 추가 | `map/geo.js: CITY_GEO`(좌표·깃발·규모) **와** `data.js: CITY_TRADE`(경제)에 **같은 id**로 — 한쪽만 넣으면 콘솔 경고 |
 | 시세 성향 | `data.js: CITY_TRADE` — `supply`(배율<1, 산지) / `demand`(배율>1, 수요지). 근거 → [city-goods-history.md](wiki/city-goods-history.md) |
-| 도시 수치의 근거·출처 | `content/city-evidence.json` (정본) — 고치면 `node tools/check-evidence.mjs`. 대시보드 매트릭스 **근거** 모드에서도 보인다 |
+| 도시 수치의 근거·출처 | `content/regions/<권역>-evidence.json` (정본) — 고치면 `node tools/check-evidence.mjs`. 대시보드 매트릭스 **근거** 모드에서도 보인다 |
 | 항로 연결 | `map/geo.js: ROUTES` — 선 하나가 경제 전체의 물길을 바꾼다 |
 | 바람·해류 | `map/geo.js: CURRENTS` · 배의 `rig` · `state.js: windOf/windFactor/routeFactor` |
 | 해적 조우 빈도 | 기본 표는 `data.js: SEA_EVENTS`(합 100), **항로별 차등은 `map/geo.js: ROUTE_RISK` → `state.js: encounterOdds()`**. 라벨은 `routeDangerLabel()` |
@@ -56,7 +56,7 @@
 | 대시보드 탭 추가 | `index.html`에 nav `.grp` + `section.tabpage` → `app.js`에 `run*()`/`*Loaded()` 배선 → 계측 `*.mjs`(**DOM 없음**) + 그리기 `*-view.js`(**DOM 있음**)로 가른다. 파일을 늘리면 `dashboard/architecture.mjs` 트리에도 적는다 — 안 적으면 `check-architecture.mjs`가 실패시킨다 |
 | 시장 충격(기근·봉쇄·풍작·나포) | `data.js: SHOCK.events`(종류·확률·문구) + `SHOCK.densityBase`(**perDay는 세계 전체 건수라 도시 수로 환산한다**) · 판정 `state.js: shockFactor/addShock/rollShockEvents` · 나포 배선 `world.js: raids()` · 화면 `scenes/map.js` "뱃사람들의 소문" |
 | 화물을 잃는 사건 | 폭풍 투하 `state.js: jettisonOdds/jettisonCargo` · 보상 `INSURANCE_COVER` · 뭍의 사고 `banditRaid/payToll`(`INLAND_ODDS`) · 빈도 검증 `node tools/sim-risk.mjs` |
-| 게임이 근거 JSON을 읽는 곳 | `js/evidence.js` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓으려고 `content/city-evidence.json`을 읽는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
+| 게임이 근거 JSON을 읽는 곳 | `js/evidence.js` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓으려고 `content/regions/<권역>-evidence.json`을 읽는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
 
 ## 3. 이 도메인 전용 함정·가드
 
@@ -78,11 +78,11 @@
 - **`GOODS[].base`를 고치면 `content/goods-evidence.json`도 같은 커밋에서.** `node tools/check-prices.mjs`가 곡물 대비 비율·임금 사다리·**임금 대비 배값**(캐랙 ÷ 선원연봉)·유지비 계수를 대조해 실패시킨다. 이 "임금 대비 배값"이 낮으면 배가 싼 게 아니라 **임금이 비싼** 것이다 — 부관 급여 과다가 실제로 여기서 드러났다.
 - **교역품 값을 올리면 화물 매입 자본이 커진다.** 사료 비율로 기준가를 올렸더니 시뮬이 배를 사고 나서 실을 것을 못 사 **절반이 파산**했다(금화의 92%까지 배에 쓰던 규칙 때문). 물가를 만지면 `sim-core`의 구매 여유(`state.gold * 0.70`)도 함께 본다.
 - **`ROUTE_RISK`는 두 곳에서 쓰인다.** 해적 조우 확률(`encounterOdds`)과 **적하보험료**(`insuranceFor`)다. 요율을 고치면 위험만 바뀌는 게 아니라 후반 비용 구조가 함께 움직인다 — 한쪽만 보고 조정하지 말 것.
-- **`ROUTE_RISK`를 고치면 `content/route-evidence.json`도 같은 커밋에서.** `node tools/check-routes.mjs`가 불일치·유령 항로뿐 아니라 **"확률이 실제로 갈렸는가"**까지 본다(배선이 끊기면 실패). 요율은 추정이 아니라 당대 인수업자가 매긴 값이라 감으로 바꾸지 말 것.
+- **`ROUTE_RISK`를 고치면 `content/regions/<권역>-evidence.json`도 같은 커밋에서.** `node tools/check-routes.mjs`가 불일치·유령 항로뿐 아니라 **"확률이 실제로 갈렸는가"**까지 본다(배선이 끊기면 실패). 요율은 추정이 아니라 당대 인수업자가 매긴 값이라 감으로 바꾸지 말 것.
 - **`SEA_EVENTS`의 weight 합 100을 깨지 말 것.** 항로별 위험은 pirate weight를 갈아 끼우고 **그 차이를 calm에서 덜어와** 유지한다(`state.js: rollSeaEvent`). pirate만 올리면 폭풍·표류물·상선조우의 상대 빈도가 통째로 내려앉는다 — 테스트가 이걸 지킨다.
 - **시뮬 수치는 반드시 여러 시드를 평균한다 — 한 판은 판단 근거가 못 된다.** "내해를 안전하게 만들어 실효 조우율이 18%→**10.3%**로 내려갔다(90항차 중 33항차가 무위험)"고 메모리에 적어 두고 대체 이벤트까지 후보로 올렸는데, **시드 20판을 평균하니 18.6%·내해 통과 7%로 종전과 같았다**(2026-08-15 정정). 원인은 `sim-risk.mjs`가 시드 없는 1회 실행이었던 것 — 어느 항로를 탔느냐가 통째로 운이라 10%대와 20%대를 오간다. 지금은 `node tools/sim-risk.mjs [항차] [시드수]`가 평균을 낸다. **`sim-trade.mjs`로는 안 잡힌다**(해상 이벤트를 모델링하지 않는다).
 - **항차 ROI는 경제가 아니라 "얼마나 가려 싣느냐"가 정한다.** `sim-core.mjs: planFor`의 `minMargin`이 0이면(총이익 최대화) 마지막 칸의 마진이 0이라 중앙값이 5%로 눌리고, 0.15면 같은 경제·같은 시드에서 10.1%가 된다. 조사가 "중앙값이 사료(10~20%)의 절반"이라며 `MARKET`을 낮추자고 제안했으나 **실측에서 폐기**했다 — impact를 0.36→0.22로 낮추면 중앙값은 1.7%p 오르고 90항차 자산이 34k→100k로 부푼다. 판정은 `node tools/check-voyage.mjs`가 근거 파일이 정한 minMargin에서만 한다.
-- **`CITY_TRADE`를 고치면 `content/city-evidence.json`도 같은 커밋에서 고친다.** 항목마다 판정(`confirmed`/`probable`/`corrected`/`gameplay`)·근거·출처가 붙어 있고 `node tools/check-evidence.mjs`가 불일치·누락·유령 항목을 잡아 **실패시킨다**. 수치만 바꾸면 "왜 이 값인지"를 아무도 모르게 된다.
+- **`CITY_TRADE`를 고치면 `content/regions/<권역>-evidence.json`도 같은 커밋에서 고친다.** 항목마다 판정(`confirmed`/`probable`/`corrected`/`gameplay`)·근거·출처가 붙어 있고 `node tools/check-evidence.mjs`가 불일치·누락·유령 항목을 잡아 **실패시킨다**. 수치만 바꾸면 "왜 이 값인지"를 아무도 모르게 된다.
 - **`CITY_TRADE` 수치에는 고증 근거가 달려 있다.** 15~16세기 실제 교역을 조사해 맞춰 둔 것이라, 밸런스만 보고 되돌리면 같은 오류가 재발한다(곡물을 북아프리카 수요지로 두는 것이 대표적 — 알제·튀니스는 곡물 **수출**지였다). 게임성 때문에 일부러 고증을 덮어쓴 곳도 문서에 따로 적혀 있으니 고치기 전에 [city-goods-history.md](wiki/city-goods-history.md)를 본다.
 - **품목마다 산지와 수요지가 둘 다 있어야 죽지 않는다.** 산지만 있고 수요가 0이면 그 품목은 중립가로만 팔린다(거래는 되지만 재미가 준다). 반대로 수요만 있고 산지가 0이면 그 칸은 아예 죽는다 — 모피가 그럴 뻔했고 이스탄불(흑해 관문)을 산지로 세워 살렸다. 확인은 대시보드 **물동량** 모드.
 - **수요지를 신설해도 항로가 멀면 아무도 안 나른다.** NPC는 이웃 한 칸만 보므로 중간 항구가 먼저 흡수한다. 이스탄불 곡물 수요를 넣었더니 유입이 **1**이었고, 알렉산드리아 직항을 놓고서야 흘렀다. 수요를 추가하면 대시보드 "부족한데 아무도 안 나르는 곳"을 반드시 확인할 것.

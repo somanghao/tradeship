@@ -64,7 +64,7 @@ addPressure(city, good, qty × NPC_PRESSURE)   // NPC_PRESSURE = 0.5
   `state`는 `world`를 모르므로(순환 참조) 호출자인 `map.js`가 값을 넘긴다.
 - 출항 시점에 굳힌다(`sailing.threat`) — 항해 중에는 `worldTick`이 안 돌아 세계가 멈춰 있다.
 - **weight 합 100은 calm에서 덜어내 유지한다.** pirate만 올리면 폭풍·표류물·상선조우의 상대 빈도가 통째로 내려앉는다.
-- 근거·출처는 `content/route-evidence.json`, 검증은 `node tools/check-routes.mjs`.
+- 근거·출처는 `content/regions/<권역>-evidence.json`, 검증은 `node tools/check-routes.mjs`.
 
 ### 지도의 붉은 점과 실제 조우
 

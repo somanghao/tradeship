@@ -98,7 +98,7 @@ factor = min(0.35, 0.30 × (pressure + (n−1)/2) / depth)
 
 - `data.js: TARIFF` — 규모별 **기본율**. size 1 = 3% / 2 = 4.5% / 3 = 6%. 도시를 추가해도 저절로 정해진다.
 - `data.js: CITY_TARIFF` — 그 도시만의 **오버라이드**. 관세가 도시 성격의 일부인 항구에만 적는다.
-  적으면 `content/city-evidence.json`의 `cities[id].tariff`에 근거도 적어야 하고,
+  적으면 `content/regions/<권역>-evidence.json`의 `cities[id].tariff`에 근거도 적어야 하고,
   `check-evidence.mjs`가 불일치·유령·**배선끊김**을 실패시킨다. 어디에 몇 %인지도 그 스크립트가 출력한다.
 
 읽는 함수가 둘이라 헷갈리기 쉽다 — 항구의 **성질**을 적는 자리(표·검증)는 `baseTariff()`,

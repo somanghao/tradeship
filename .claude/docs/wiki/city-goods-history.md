@@ -12,7 +12,7 @@
 > |---|---|---|
 > | ① UI 도시 | `js/map/geo.js: CITY_GEO` | 좌표·깃발·규모·항구 화풍 |
 > | ② 도시 테이블 | `js/data.js: CITY_TRADE` | supply/demand 수치 |
-> | ③ **근거 데이터(정본)** | `content/city-evidence.json` | 항목마다 `{side, value, verdict, basis, sources[]}` |
+> | ③ **근거 데이터(정본)** | `content/regions/<권역>-evidence.json` | 항목마다 `{side, value, verdict, basis, sources[]}` |
 > | ③' 서술 | **이 문서** | ③을 사람이 읽게 풀어쓴 것 |
 >
 > 셋은 `id`(+`goodId`)로 맞물린다. **수치만 고치고 근거를 안 고치면 조용히 어긋나므로**
@@ -227,4 +227,4 @@
 - ~~로도스는 1522년에 오스만으로 넘어간다. 게임에 연표가 생기면 깃발이 바뀌는 이벤트로 쓸 수 있다.~~
   → **보류.** 연도를 고정하지 않기로 했으므로 연표 이벤트 자체가 지침과 충돌한다. 넣는다면 "시대가 흐른다"가 아니라 별도 시나리오여야 한다.
 - **몰타의 원면·커민, 제노바의 산호·명반**은 모두 `GOODS`에 없는 실제 특산이다. 품목 확장 시 함께 검토.
-- 항로 위험도는 별도 근거 계층으로 갈라졌다 → `content/route-evidence.json` · 검증 `node tools/check-routes.mjs`.
+- 항로 위험도는 별도 근거 계층으로 갈라졌다 → `content/regions/<권역>-evidence.json` · 검증 `node tools/check-routes.mjs`.
