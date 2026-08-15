@@ -1226,7 +1226,13 @@ export function isInland(from, to) {
 }
 
 export function rollSeaEvent(opts = {}) {
-  const { rand = Math.random, from = null, to = null } = opts;
+  const { rand = Math.random, from = null, to = null, damp = 1 } = opts;
+
+  /* `damp`는 **같은 항해에서 몇 번째 판정인가**를 받는다.
+     긴 항해일수록 판정을 여러 번 굴리는데(map.js), 매번 같은 확률이면 서른 날 항로는
+     사건이 100% 나고 나쁜 일만 두 번 가까이 겹친다 — 그건 위험이 아니라 통행세다.
+     뒤로 갈수록 눅여서, 긴 항해가 **확실히 더 험하되 반드시 험하지는 않게** 둔다. */
+  if (damp < 1 && rand() >= damp) return SEA_EVENTS.find((e) => e.id === 'calm');
 
   // 뭍의 구간 — 해적을 뺀 자리를 노상강도·통행세가 받는다.
   // 안 그러면 아나톨리아 안쪽 주머니가 **완전 무위험 구간**이 되어

@@ -48,6 +48,9 @@ function syncBg() {
    처음엔 3일 항로가 1초 만에 끝나 "언제 움직였는지 모르겠다"는 소리를 들었다. */
 const VOYAGE_BASE = 1.5, VOYAGE_PER_DAY = 0.42;
 
+/* 몇 번째 판정이냐에 따라 사건 확률을 눅인다 — 긴 항해가 '반드시' 험해지지 않게. */
+const EVENT_DAMP = [1, 0.62, 0.45, 0.34];
+
 /* 항해 중인 배의 상태 */
 function startVoyage(toId) {
   const from = CITY_BY_ID[state.at], to = CITY_BY_ID[toId];
@@ -61,7 +64,16 @@ function startVoyage(toId) {
     threat: pirateThreat(state.at, toId),
     t: 0,
     speed: 1 / (VOYAGE_BASE + days * VOYAGE_PER_DAY),   // 거리에 비례한 연출 시간
-    eventAt: 0.35 + Math.random() * 0.35,
+    /* ★ 판정 횟수를 **일수에 매단다.** 전에는 항해 한 건에 딱 한 번이었다 —
+       그러면 이틀짜리 잔지바르 항로와 **서른 날짜리 희망봉 항로의 위험이 같다.**
+       요율 11.0을 적어 두어도 상한이 1건이라 "보험료가 비싸다"는 뜻밖에 못 했다.
+       아프리카 테스터가 희망봉을 여섯 번 넘었는데 넷이 사건 0건이었고,
+       그래서 이 게임에서 가장 긴 항로가 가장 지루하다고 적어 왔다.
+       8일에 한 번씩, 넉 장까지. 좋은 사건(표류물·순풍·상선)도 같이 늘어나므로
+       긴 항해가 위험해지기만 하는 것이 아니라 **사건이 많아진다.** */
+    rollsLeft: Math.max(1, Math.min(4, Math.ceil(days / 8))),
+    rollIdx: 0,
+    eventAt: 0.22 + Math.random() * 0.3,
     eventDone: false,
   };
   buildUI();
@@ -96,6 +108,7 @@ export const mapScene = {
       // 항로마다 위험이 다르다 — 보험료율(ROUTE_RISK) + 그 구간에 실제로 뜬 해적 수
       const ev = rollSeaEvent({
         from: sailing.from.id, to: sailing.to.id, threat: sailing.threat,
+        damp: EVENT_DAMP[sailing.rollIdx ?? 0] ?? 0.3,
       });
       if (ev.id !== 'calm') {
         const held = sailing;
@@ -475,12 +488,26 @@ const isCaravan = (v) => !!laneOf(v.from.id, v.to.id)?.overland;
     (좋은 사건까지 나쁜 사건으로 바꾸면 그 구간만 조용히 더 가혹해진다 — 말이 아니라 밸런스다) */
 const CARAVAN_EVENT = { pirate: 'bandit' };
 
+/** 사건 하나를 치른 뒤 남은 항로를 마저 간다. 판정이 남아 있으면 다음 자리를 잡는다. */
+function resumeVoyage(voyage) {
+  const left = (voyage.rollsLeft ?? 1) - 1;
+  const t = voyage.t ?? 0;
+  return {
+    ...voyage,
+    rollsLeft: left,
+    rollIdx: (voyage.rollIdx ?? 0) + 1,
+    eventDone: left <= 0,
+    // 남은 구간 안에서 다음 판정 자리를 잡는다 — 사건이 연달아 붙지 않게 여유를 둔다
+    eventAt: left > 0 ? Math.min(0.97, t + (1 - t) * (0.3 + Math.random() * 0.45)) : 2,
+  };
+}
+
 function resolveEvent(ev0, voyage) {
   const caravan = isCaravan(voyage);
   const ev = caravan && CARAVAN_EVENT[ev0.id] ? { ...ev0, id: CARAVAN_EVENT[ev0.id] } : ev0;
   const finish = () => {
     // 이벤트 처리 후 남은 항로를 마저 간다
-    sailing = { ...voyage, eventDone: true };
+    sailing = resumeVoyage(voyage);
     buildUI();
   };
 
@@ -675,12 +702,12 @@ function resolveEvent(ev0, voyage) {
                   if (npc && result !== 'lose') removeNpc(npc.id);   // 바다에서 지운다
                   if (result === 'lose') return;      // 패배는 battle 씬이 처리
                   go('map');
-                  sailing = { ...voyage, eventDone: true };
+                  sailing = resumeVoyage(voyage);
                   buildUI();
                 },
                 retreatTo: () => {
                   go('map');
-                  sailing = { ...voyage, eventDone: true };
+                  sailing = resumeVoyage(voyage);
                   buildUI();
                 },
               });
