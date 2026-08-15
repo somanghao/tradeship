@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """check-map.py — 납품된 지도 그림이 게임 좌표와 맞는지 기계로 본다.
 
-    python tools/check-map.py [assets/map/mediterranean.webp]
+    python tools/check-map.py [assets/map/mediterranean.png]
 
 지도는 "예쁜 지중해"가 아니라 **게임 좌표에 맞는 판**이어야 한다.
 1차 납품에서 실제 지중해를 정확히 그렸는데도 반려된 이유가 이것이다 —
@@ -24,10 +24,21 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# ★ 게임이 쓰는 그림은 이제 PNG다(반려됐던 webp 납품본은 지웠다). 확장자를 하나로 못 박으면
+#   납품 형식이 바뀔 때마다 검수 도구가 통째로 죽는다 — 실제로 그렇게 죽어 있었다.
+#   있는 쪽을 고른다: PNG → WebP 순.
+def _pick(rid):
+    for ext in (".png", ".webp"):
+        f = ROOT / f"assets/map/{rid}{ext}"
+        if f.exists():
+            return f
+    return ROOT / f"assets/map/{rid}.png"
+
+
 # ── 어느 바다의 지도인가 ─────────────────────────────────────
 #  세계가 아홉 권역으로 갈리면서 `js/map/geo.js`는 **합성 계층**이 되어 좌표를 담지 않는다.
 #  좌표의 정본은 `js/regions/<권역>/geo.js`이므로 파일 이름에서 권역을 알아내 그쪽을 읽는다.
-#      python tools/check-map.py assets/map/indian.webp     → indian 권역으로 검사
+#      python tools/check-map.py assets/map/indian.png      → indian 권역으로 검사
 #      python tools/check-map.py --all                      → 아홉 장을 차례로
 REGIONS = ["mediterranean", "atlantic", "africa", "mideast", "indian",
            "seasia", "eastasia", "caribbean", "southamerica"]
@@ -49,7 +60,7 @@ if "--all" in sys.argv:
     import subprocess
     bad = []
     for r in REGIONS:
-        f = ROOT / f"assets/map/{r}.webp"
+        f = _pick(r)
         if not f.exists():
             f = ROOT / f"assets/map/{r}.png"
         if not f.exists():
@@ -65,7 +76,7 @@ if "--all" in sys.argv:
     print(f"\n아홉 장 중 {9 - len(bad)}장 통과" + (f" · 실패: {', '.join(bad)}" if bad else ""))
     sys.exit(1 if bad else 0)
 
-_img_arg = sys.argv[1] if len(sys.argv) > 1 else "assets/map/mediterranean.webp"
+_img_arg = sys.argv[1] if len(sys.argv) > 1 else str(_pick("mediterranean"))
 REGION = region_of(_img_arg)
 GEO = load_geo(REGION)
 

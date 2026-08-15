@@ -104,7 +104,6 @@ export const mapScene = {
     sailing.t = Math.min(1, sailing.t + dt * sailing.speed);
 
     if (!sailing.eventDone && sailing.t >= sailing.eventAt) {
-      sailing.eventDone = true;
       // 항로마다 위험이 다르다 — 보험료율(ROUTE_RISK) + 그 구간에 실제로 뜬 해적 수
       const ev = rollSeaEvent({
         from: sailing.from.id, to: sailing.to.id, threat: sailing.threat,
@@ -116,6 +115,15 @@ export const mapScene = {
         resolveEvent(ev, held);
         return;
       }
+      /* ★ 잔잔했어도 **판정 한 장을 쓴 것**이라 다음 자리를 잡아야 한다.
+         전에는 여기서 `eventDone = true`로 먼저 잠그고 calm이면 그대로 끝냈다 —
+         그러면 `rollsLeft`를 넉 장으로 잡아 둬도 **첫 판정이 잔잔한 순간 나머지 세 장이
+         버려진다.** 다음 자리를 잡는 곳이 `resumeVoyage` 하나뿐이고 그것은 사건이 났을 때만
+         불리기 때문이다. 그래서 "긴 항해가 더 험하다"가 화면에 안 나왔다 —
+         아프리카 테스터가 희망봉을 16구간 뛰어 6구간이 여전히 사건 0건임을 보고 잡아냈다.
+         ★ 교훈: 규칙 함수를 직접 N번 불러 재는 것과 **게임이 실제로 밟는 경로**를 재는 것은
+           다르다. 나는 앞의 방법으로 재고 "고쳤다"고 했다. */
+      sailing = resumeVoyage(sailing);
     }
     if (sailing.t >= 1) {
       const to = sailing.to;

@@ -278,6 +278,12 @@ html, body {
   display: flex; flex-direction: column; gap: 10px;
   max-height: 100%; overflow: auto;
 }
+/* 출항 단추는 패널이 아무리 길어져도 아래에 붙어 있는다 — 이 화면에서 나가는 유일한 길이다 */
+.btn-sail {
+  position: sticky; bottom: 0; z-index: 2;
+  font-size: 14px; padding: 10px;
+  box-shadow: 0 -10px 12px -6px #14111b;
+}
 .svc { padding: 10px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
 .svc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .svc-row .lbl { color: #b6ac9c; }
