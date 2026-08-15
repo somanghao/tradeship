@@ -168,7 +168,7 @@ export const TRADE = {
     // 해도의 본산. 섬이라 곡물은 늘 모자라고 올리브유는 남는다.
     // 수은(주사)을 사들이는 것은 포르톨라노 해도의 붉은색이 진사 안료였기 때문이다.
     supply: { oliveoil: 0.58 },
-    demand: { grain: 1.30, mercury: 1.26, sugar: 1.24 },
+    demand: { grain: 1.30, mercury: 1.22, sugar: 1.24 },
     blurb: '해도를 그리는 섬. 양피지 위의 붉은 선이 여기서 그어진다.',
   },
   valencia: {
@@ -196,7 +196,7 @@ export const TRADE = {
     // 1492년 이후 몰려든 세파르디가 곧 이 도시의 모직 산업이었다. 원료 양모와
     // 염색용 명반을 사들여 옷감을 짜 냈다. 배후 마케도니아 평원은 곡물 산지다.
     supply: { woolcloth: 0.56, grain: 0.56 },
-    demand: { wool: 1.34, alum: 1.30, mastic: 1.24 },
+    demand: { wool: 1.34, alum: 1.30, mastic: 1.20 },
     blurb: '베틀 소리가 그치지 않는 오스만의 유대인 도시. 양모를 받아 옷감을 내놓는다.',
   },
   candia: {

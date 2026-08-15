@@ -141,8 +141,12 @@ export const SHIPS = {
     desc: '노 열여섯 쌍의 작은 갤리. 바르바로사가 교황의 배를 뺏을 때 탔던 물건이다. 빠르지만 짐은 거의 못 싣는다.',
   },
   xebec: {
-    hull: 'caravel', name: '샤벡', origin: '바르바리 해안', originFlag: null, tier: 2, era: 'classic',
-    yards: ['algiers', 'tunis', 'malaga'],
+    hull: 'caravel', name: '샤벡', origin: '알제(오스만 섭정령)', originFlag: 'ottoman', tier: 2, era: 'classic',
+    // 알제는 명목상 오스만의 섭정령이라 originFlag를 오스만으로 둔다 — 그래야 공업력 1의
+    // 알제에서도 지을 수 있다("제 나라 배는 짓기 쉽다"). 튀니스는 하프스 깃발이라 못 짓는데,
+    // 그 항구의 함대는 원래 나포선 개조(prizeYard)로 채워졌으니 어긋나지 않는다.
+    // 발렌시아를 넣은 것은 스페인이 나중에 이 선형을 그대로 받아 지었기 때문이다.
+    yards: ['algiers', 'istanbul', 'valencia'],
     price: 5200,
     hp: 150, crew: 46, crewMax: 78, crewMin: 24, cargo: 96, guns: 14, speed: 1.42,
     upkeep: 18, rig: 0.10, tint: 'dark',

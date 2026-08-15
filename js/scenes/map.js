@@ -244,13 +244,24 @@ function drawPlayer(ctx, t) {
 const ease = (u) => u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
 
 /* ── 입력 ───────────────────────────────────────────── */
+/** 커서 아래 항구 — **가장 가까운 것**을 고른다.
+    ★ 예전에는 반경 안에 든 **첫 번째**를 잡았다. 도시가 열여섯일 때는 아무 도시도 겹치지
+      않아 문제가 안 됐지만, 세계가 139곳이 되자 6px 안에 둘이 드는 자리가 생겼다
+      (시칠리아 해협의 튀니스~몰타가 6.4px다). 첫 번째를 잡으면 목록에서 뒤에 있는 도시는
+      **영영 고를 수 없다** — 지도를 넓힐 때마다 좌표를 억지로 떼어 놓는 대신 판정을 고친다. */
+function cityAt(p) {
+  let best = null, bestD = 6;
+  for (const c of viewCities()) {
+    const d = Math.hypot(c.x - p.x, c.y - p.y);
+    if (d <= bestD) { best = c; bestD = d; }
+  }
+  return best;
+}
+
 function onMove(ev) {
   if (sailing) { hover = null; return; }
   const p = toLogical(ev);
-  let found = null;
-  for (const c of viewCities()) {
-    if (Math.hypot(c.x - p.x, c.y - p.y) <= 6) { found = c.id; break; }
-  }
+  const found = cityAt(p)?.id ?? null;
   const near = found && neighborsOf(state.at).includes(found);
   canvas.style.cursor = near ? 'pointer' : 'default';
   if (found === hover) return;          // 바뀔 때만 사이드 패널을 다시 그린다
@@ -260,18 +271,13 @@ function onMove(ev) {
 
 function onClick(ev) {
   if (sailing) return;
-  const p = toLogical(ev);
-  for (const c of viewCities()) {
-    if (Math.hypot(c.x - p.x, c.y - p.y) <= 6) {
-      if (c.id === state.at) return;
-      if (!neighborsOf(state.at).includes(c.id)) {
-        toast('직항로가 없다. 이웃 항구를 거쳐 가야 한다.', 'bad');
-        return;
-      }
-      startVoyage(c.id);
-      return;
-    }
+  const c = cityAt(toLogical(ev));
+  if (!c || c.id === state.at) return;
+  if (!neighborsOf(state.at).includes(c.id)) {
+    toast('직항로가 없다. 이웃 항구를 거쳐 가야 한다.', 'bad');
+    return;
   }
+  startVoyage(c.id);
 }
 
 /* ── 도착 / 이벤트 ──────────────────────────────────── */
