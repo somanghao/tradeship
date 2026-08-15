@@ -45,6 +45,10 @@ export const LAYERS = [
         + '권역이 늘면 이 트리도 저절로 는다 — 손으로 적으면 권역 하나에 일곱 줄을 빠뜨릴 자리가 생긴다.',
     files: [
       ['js/regions/index.js', '권역 목록 · **원양 항로**(권역을 잇는 선) · 조각 합성'],
+      // 동아시아만 선박이 나라별로 갈려 있다 — 세 나라를 동시에 손볼 때 같은 줄에서 안 부딪히게
+      ['js/regions/eastasia/ships-ming.js', '명(중국)의 배 — ships.js가 합친다'],
+      ['js/regions/eastasia/ships-joseon.js', '조선(한국)의 배 — ships.js가 합친다'],
+      ['js/regions/eastasia/ships-japan.js', '일본의 배 — ships.js가 합친다'],
       ...REGIONS.flatMap((r) => REGION_FILES.map(([f, d]) => [`js/regions/${r.id}/${f}`, `${r.name} — ${d}`])),
     ],
   },

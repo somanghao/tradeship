@@ -20,86 +20,12 @@
 //     **거북선은 이 배선에 기대어 산다** — tier 3인데 부산포는 industry 2라, 조선 깃발이
 //     없으면 이 배를 지을 수 있는 조선 항구가 하나도 없다.
 
-export const SHIPS = {
-  sachuan: {
-    hull: 'hulk', name: '사선', origin: '명(강남)', originFlag: 'ming', tier: 1, era: 'classic',
-    yards: ['ningbo', 'shuangyu', 'yuegang'],
-    price: 1300,
-    // 밑이 평평해 개펄에 얹혀도 넘어지지 않는다 — 강어귀와 모래톱이 많은 중국 연안에서
-    // 그것이 곧 안전이었다. 대신 용골이 없어 외해에서 옆으로 밀린다.
-    hp: 76, crew: 11, crewMax: 18, crewMin: 5, cargo: 80, guns: 2, speed: 1.00,
-    upkeep: 4, rig: 0.15, tint: 'oak',
-    desc: '밑이 평평한 연안 정크. 개펄에 얹혀도 넘어지지 않아 강어귀를 마음대로 드나든다. 외해로 나가면 옆으로 밀린다.',
-  },
-  sekibune: {
-    hull: 'galley', name: '세키부네', origin: '일본', originFlag: 'japan', tier: 1, era: 'classic',
-    yards: ['hakata', 'hirado', 'bonotsu'],
-    price: 2300,
-    // 노가 주력이고 돛은 네모 한 장이라 맞바람에 거의 못 간다. 대신 좁은 물목에서 빠르고
-    // 배를 붙여 뛰어드는 싸움에 맞다 — 왜구가 이 배로 연안을 쳤다.
-    hp: 100, crew: 40, crewMax: 70, crewMin: 28, cargo: 60, guns: 4, speed: 1.42,
-    upkeep: 11, rig: 0.85, tint: 'dark',
-    desc: '노로 가는 일본의 중형 군선. 좁은 물목에서 빠르고 배를 붙여 뛰어드는 싸움에 맞다. 맞바람에는 거의 못 간다.',
-  },
-  panokseon: {
-    hull: 'frigate', name: '판옥선', origin: '조선', originFlag: 'joseon', tier: 2, era: 'classic',
-    yards: ['busanpo'],
-    price: 4000,
-    // 1555년에 처음 지었다. 길이 스물몇~서른몇 미터에 한쪽 노가 여덟에서 열, 격군과
-    // 전투원을 합쳐 백일흔 남짓이 탔고 총통을 스물여섯 문 넘게 실었다. 쇠못을 안 쓰고
-    // 참나무 나무못을 박아 물을 먹으면 오히려 조여지는 배다 — 그래서 튼튼하다.
-    hp: 175, crew: 90, crewMax: 170, crewMin: 50, cargo: 90, guns: 16, speed: 1.10,
-    upkeep: 17, rig: 0.80, tint: 'dark',
-    desc: '두 층 갑판에 총통을 늘어세운 조선의 주력 군선. 쇠못 대신 나무못을 박아 물을 먹을수록 단단해진다.',
-  },
-  geobukseon: {
-    hull: 'frigate', name: '거북선', origin: '조선', originFlag: 'joseon', tier: 3, era: 'classic', requires: 'panokseon',
-    yards: ['busanpo'],
-    price: 9200,
-    // 판옥선의 위층 갑판을 널판으로 덮고 그 위에 쇠못과 송곳을 심은 배다. 1415년 태종 때
-    // 이미 '귀선(龜船)'이 실록에 보이고, 임진년에는 개전 직전에 석 척이 갖춰졌다.
-    // ★ 상선이 아니다. 함대의 맨 앞에서 적진을 뚫는 **돌격선**이라 화물칸을 45로 눌렀다 —
-    //   이 바다에서 짐을 가장 못 싣는 배다. 대신 이 값에 이만한 선체는 없다.
-    // ★ 포문은 판옥선보다 오히려 적다(좌우 여섯씩에 용두). 판옥선이 총통 스물여섯을
-    //   늘어세운 포대라면 이 배의 무기는 뚜껑이다 — 그래서 hp만 크게 올리고 guns는 낮췄다.
-    hp: 285, crew: 110, crewMax: 150, crewMin: 70, cargo: 45, guns: 15, speed: 1.06,
-    upkeep: 31, rig: 0.75, tint: 'dark',
-    desc: '판옥선에 뚜껑을 씌우고 쇠못을 심은 돌격선. 적진 한복판으로 먼저 들어가는 배라 짐은 거의 못 싣는다.',
-  },
-  fuchuan: {
-    hull: 'carrack', name: '복선', origin: '명(복건)', originFlag: 'ming', tier: 2, era: 'classic',
-    yards: ['quanzhou', 'fuzhou', 'guangzhou'],
-    price: 10500,
-    // 유럽인이 소마(soma)라 부르던 원양 정크다. 400~500톤급이 남중국해를 상시로 오갔고,
-    // 1613~1640년에만도 해마다 예순에서 여든 척이 일본에 닿았다. 깊은 V자 용골로
-    // 외해를 견디고 격벽으로 칸을 나눠 한 칸이 새도 가라앉지 않는다.
-    // 화물 235칸(≈470톤)을 스물몇으로 굴린다 — 칸/선원 비가 유럽 화물선(플류트 18.9)에
-    // 맞먹는 16.8이다. 정크가 사람을 적게 먹는다는 것이 이 숫자다.
-    hp: 185, crew: 30, crewMax: 60, crewMin: 14, cargo: 235, guns: 10, speed: 1.00,
-    upkeep: 21, rig: 0.15, tint: 'white',
-    desc: '남중국해를 오가던 원양 정크. 격벽으로 칸을 나눠 한 칸이 새도 뜨고, 이만한 짐을 이만큼 적은 사람으로 나른다.',
-  },
-  atakebune: {
-    hull: 'galleon', name: '아타케부네', origin: '일본', originFlag: 'japan', tier: 3, era: 'classic', requires: 'sekibune',
-    yards: ['sakai', 'hakata'],
-    price: 19500,
-    // 세키부네를 키워 널판으로 통째로 싸 버린 배. 떠다니는 성이라 튼튼하고 무섭지만
-    // 노와 네모돛 한 장으로 그 덩치를 미는 것이라 발이 느리다. 1578년 구키 요시타카가
-    // 여기에 쇠판까지 둘렀다는 철갑선이 이 계열이다.
-    hp: 300, crew: 100, crewMax: 200, crewMin: 60, cargo: 150, guns: 22, speed: 0.92,
-    upkeep: 44, rig: 1.00, tint: 'dark',
-    desc: '널판으로 통째로 싸 버린 일본의 떠다니는 성. 화살도 총알도 튕겨 내지만, 그 덩치를 노와 돛 한 장으로 민다.',
-  },
-  shuinsen: {
-    hull: 'indiaman', name: '주인선', origin: '일본', originFlag: 'japan', tier: 3, era: 'modern', requires: 'fuchuan',
-    yards: ['nagasaki', 'sakai', 'naha'],
-    price: 26000,
-    // 막부의 붉은 도장(朱印狀)을 받은 배만 바다로 나갈 수 있었다. 1604~1635년에 350척이
-    // 넘게 나갔고 평균 승선 인원이 236명이었다. 선체는 정크, 고물은 유럽식, 돛은 정크세일과
-    // 네모돛을 섞어 단 **혼혈선**이라 rig가 한가운데(0.45)다. 화물칸은 이 바다에서 가장 크지만
-    // 포문은 여섯에서 여덟뿐이었다 — 싸우러 나가는 배가 아니라 짐을 나르는 배다.
-    hp: 235, crew: 80, crewMax: 236, crewMin: 24, cargo: 300, guns: 8, speed: 1.05,
-    upkeep: 46, rig: 0.45, tint: 'white',
-    desc: '막부의 붉은 도장을 받아야 뜨는 배. 정크 선체에 유럽식 고물을 얹은 혼혈선이라 짐은 산더미인데 포문은 여덟뿐이다.',
-  },
-};
+
+import { SHIPS as MING } from './ships-ming.js';
+import { SHIPS as JOSEON } from './ships-joseon.js';
+import { SHIPS as JAPAN } from './ships-japan.js';
+
+/* ★ 이 파일은 **합치기만 한다.** 배를 더하거나 고칠 자리는 나라별 파일이다 —
+   세 나라를 동시에 손볼 때 같은 줄에서 부딪히지 않게 갈라 두었다.
+   키가 겹치면 나중 것이 이기므로, 나라별 파일 안에서 이름을 정한다. */
+export const SHIPS = { ...MING, ...JOSEON, ...JAPAN };
