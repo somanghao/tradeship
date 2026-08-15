@@ -84,6 +84,16 @@
 
   /* ── 표 ── */
   table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  /* 선박 탭처럼 열이 많은 표 — 안 두면 머리글이 서로 붙어 "최고 등급 가장 큰 배"로 읽힌다 */
+  .tbl { width: 100%; font-size: 12px; }
+  .tbl th {
+    color: var(--dim); font-weight: 500; text-align: left; white-space: nowrap;
+    padding: 6px 10px 6px 0; border-bottom: 1px solid #ffffff14;
+  }
+  .tbl td { padding: 4px 10px 4px 0; border-bottom: 1px solid #ffffff08; }
+  .tbl th.r, .tbl td.r { text-align: right; }
+  .tbl tr:hover td { background: #ffffff08; }
+  .tbl .dim { color: var(--dim); }
   .matrix { font-size: 11px; }
   .matrix th {
     color: var(--dim); font-weight: 500; padding: 4px 5px; text-align: center;
@@ -176,6 +186,18 @@
       <a href="#p-s-route">항로별 밀도</a>
       <a href="#p-s-roster">해적 명부</a>
       <a href="#p-s-link">지도와 조우의 연결</a>
+    </div>
+  </div>
+
+  <div class="grp" data-tab="ship">
+    <button class="tab" data-tab="ship">선박</button>
+    <div class="subs">
+      <a href="#s-s-sum">바다별 선단</a>
+      <a href="#s-s-list">선박 명부</a>
+      <a href="#s-s-scatter">화물칸과 값</a>
+      <a href="#s-s-chain">해금 사슬</a>
+      <a href="#s-s-stray">전통 조선지가 지켜지는가</a>
+      <a href="#s-s-ind">공업력 분포</a>
     </div>
   </div>
 
@@ -419,6 +441,39 @@
 </section>
 
 <!-- ══════════════ 항구 ══════════════ -->
+<section class="tabpage" id="tab-ship">
+  <h1>선박</h1>
+  <p class="sub">
+    아홉 바다의 배 <b>60척</b>을 한자리에 놓고 견준다. 수치의 정본은 각 권역
+    <code>js/regions/&lt;권역&gt;/ships.js</code>이고, 건조 가능 여부와 값은
+    <code>sellsShip</code>·<code>shipPriceAt</code>을 그대로 불러 잰다 —
+    <b>대시보드에서 규칙을 다시 구현하지 않는다.</b>
+  </p>
+
+  <div id="s-regionbar"></div>
+
+  <h2 id="s-s-sum">바다별 선단</h2>
+  <p class="sub">어느 바다가 몇 척을 가졌고 어디까지 큰 배가 있는가. 막대는 척수, 색은 그 바다 최고 등급.</p>
+  <div id="s-summary"></div>
+
+  <h2 id="s-s-list">선박 명부</h2>
+  <div id="s-table"></div>
+
+  <h2 id="s-s-scatter">화물칸과 값</h2>
+  <div id="s-scatter"></div>
+
+  <h2 id="s-s-chain">해금 사슬</h2>
+  <p class="sub">상급선은 선행 선종을 몰아 봐야 열린다(<code>requires</code>). 그 줄기다.</p>
+  <div id="s-chains"></div>
+
+  <h2 id="s-s-stray">전통 조선지가 지켜지는가</h2>
+  <div id="s-stray"></div>
+
+  <h2 id="s-s-ind">공업력 분포</h2>
+  <p class="sub">배를 지을 수 있는지는 도시 공업력이 정한다(<code>industry ≥ SHIPS[].tier</code>).</p>
+  <div id="s-industry"></div>
+</section>
+
 <section class="tabpage" id="tab-port">
   <h1>항구</h1>
   <p class="sub">

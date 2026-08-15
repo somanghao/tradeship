@@ -137,6 +137,8 @@ export const LAYERS = [
       ['dashboard/measure.mjs', '경제 지표 채집'],
       ['dashboard/pirates.mjs', '해적 지표 채집'],
       ['dashboard/ports.mjs', '항구 지표 채집'],
+      ['dashboard/ships.mjs', '선박 계측 — 건조 가능 항구·해금 사슬·공업력 분포(sellsShip을 그대로 부른다)'],
+      ['dashboard/ship-view.js', '선박 탭 그리기 — 바다별 선단·명부·화물칸↔값·전통 조선지 어긋남'],
       ['dashboard/wages.mjs', '보수 지표 채집'],
       ['dashboard/architecture.mjs', '이 파일 — 계층·동적생성·상태 정본'],
       ['dashboard/dash.js', '경제 탭 렌더'],

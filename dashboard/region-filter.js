@@ -45,7 +45,10 @@ export const filterByRegion = (list) => list.filter((x) => inRegion(x.region));
  *   그대로인 것이 자연스럽고, 탭마다 다른 바다를 보고 있으면 비교가 거짓이 된다.
  */
 export function mountRegionBar(host, opts = {}) {
-  const { all = true } = opts;
+  /* `countOf` — 칩에 붙일 숫자를 탭이 정한다. 기본은 그 바다의 항구 수인데,
+     탭마다 세고 싶은 것이 다르다(선박 탭이면 선종 수). 기본값만 두면
+     선박 탭에서 "지중해 28"이 28척으로 읽혀 거짓을 말한다. */
+  const { all = true, countOf = (r) => r.mod.geo.CITIES?.length ?? 0 } = opts;
   if (!host) return;
   host.classList.add('regionbar');
   host.innerHTML = '';
@@ -62,7 +65,7 @@ export function mountRegionBar(host, opts = {}) {
   if (all) host.appendChild(mk(ALL, '전 권역'));
   for (const r of regionList()) {
     // 아직 도시가 없는 권역도 보여준다 — 없다는 사실 자체가 정보다(누가 아직 안 채웠나)
-    const n = r.mod.geo.CITIES?.length ?? 0;
+    const n = countOf(r);
     const b = mk(r.id, r.name, n);
     if (!n) b.classList.add('empty');
     host.appendChild(b);
