@@ -10,8 +10,9 @@ import {
   marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT,
   impactFactor, costFor, tariffRate, shorthanded,
   contractOffer, acceptContract, deliverContract, abandonContract,
-  hasOfficer,
+  hasOfficer, paydayDue, daysToPayday, payrollOwed,
 } from '../state.js';
+import { openPayday } from '../payday.js';
 import { npcsAtPort } from '../world.js';
 import { goodRank, goodBasis } from '../evidence.js';
 import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal } from '../ui.js';
@@ -38,6 +39,9 @@ export const portScene = {
     dockers = pickDockers(city.seed);
     state.known.add(city.id);
     buildUI();
+    // 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
+    // 화면을 세운 뒤에 띄워야 정산이 끝나고 닫혔을 때 뒤에 항구가 있다.
+    if (paydayDue()) openPayday(() => after());
   },
 
   draw(ctx, t) {
@@ -309,6 +313,41 @@ function officerCard() {
   ]);
 }
 
+/* ── 급여 ──────────────────────────────────────────────
+   급여일이 언제 오고 얼마가 쌓였는지를 **상시** 보여준다.
+   정산 모달만 있으면 그날이 닥쳐서야 알게 되고, 그때는 이미 늦다 —
+   "얼마를 벌어서 들어갈 것인가"가 항해 전에 판단되어야 압박이 성립한다. */
+function payrollCard() {
+  const left = daysToPayday();
+  const owed = payrollOwed();
+  const short = owed > state.gold;
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '급여' }),
+      el('span', {
+        text: left > 0 ? `${left}일 뒤 지급` : '오늘이 급여일',
+        style: { fontSize: '11px', letterSpacing: 0, color: left <= 5 ? '#d0a04a' : '#8f8878' },
+      }),
+    ]),
+    el('div.svc', {}, [
+      el('div.ctr-sub', {
+        html: `쌓인 삯 <b>${owed.toLocaleString('ko-KR')}닢</b>`
+            + ` · 선원 ${state.crew}명 · 금고 ${state.gold.toLocaleString('ko-KR')}닢`,
+      }),
+      state.payroll.arrears
+        ? el('div.ctr-sub', {
+            html: `<span style="color:#d05a4a">밀린 삯 ${state.payroll.arrears.toLocaleString('ko-KR')}닢 — `
+                + `참다 못한 무리는 짐을 들고 떠난다.</span>`,
+          })
+        : short
+          ? el('div.ctr-sub', {
+              html: `<span style="color:#d0a04a">지금 금고로는 못 치른다. 팔아서 채워야 한다.</span>`,
+            })
+          : null,
+    ].filter(Boolean)),
+  ]);
+}
+
 /* 이 항구에 지금 들어와 있는 배들 — 세계가 혼자 돌아간다는 것이 보이는 창 */
 function harborCard() {
   const ships = npcsAtPort(city.id);
@@ -368,6 +407,7 @@ function sidePanel() {
       ]),
     ]),
 
+    payrollCard(),
     officerCard(),
     contractCard(),
     harborCard(),

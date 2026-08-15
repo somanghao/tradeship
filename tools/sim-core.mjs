@@ -11,7 +11,7 @@ import {
   state, resetGame, advanceDays, neighborsOf, voyageDays, voyageCost,
   buy, sell, costFor, gainFor, tariffRate, purchaseShip, boardShip, sellsShip,
   cargoFree, repair, hire, shorthanded, shipPriceAt,
-  tavernCrews, recruitBand, ship,
+  tavernCrews, recruitBand, ship, paydayDue, settlePayroll, payrollOwed,
 } from '../js/state.js';
 import { initWorld, worldTick } from '../js/world.js';
 
@@ -164,6 +164,18 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
       sold[gid] = n;
     }
 
+    /* 급여 정산 — **입항해서 팔고 난 뒤**다. 실제 플레이어도 그 순서로 움직인다
+       (짐을 팔아 금고를 채우고 삯을 치른다). 여기를 빼면 급여가 영영 안 나가
+       사실상 공짜가 되어 자산 곡선이 통째로 부풀어 오른다. */
+    let payroll = null;
+    if (paydayDue()) {
+      const owedNow = payrollOwed();
+      const r = settlePayroll();
+      payroll = { owed: owedNow, paid: r.paid, missed: r.missed, deserted: r.deserted.length };
+      // 사람이 떠났으면 다시 채운다 — 배가 묶이면 시뮬이 거기서 멈춘다
+      if (r.deserted.length) hireSpend += manCrew();
+    }
+
     const rec = {
       v, day: state.day, gold: Math.round(state.gold), goldOpen: Math.round(goldOpen),
       ship: state.shipKey, from, to: run.to, days: dd,
@@ -171,7 +183,7 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
       wages: cost.wages, supplies: cost.supplies, fleetCost: cost.fleet,
       hullCost: cost.hull, armsCost: cost.arms, insCost: cost.insurance,
       officerCost: cost.officer, leak: cost.leak,
-      shipSpend, repairSpend, hireSpend,
+      shipSpend, repairSpend, hireSpend, payroll,
       news,
     };
     rows.push(rec);

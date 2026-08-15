@@ -30,11 +30,18 @@ export const state = {
   shocks: [],                // 시장 충격 — { city, good, mult, until, why }. 기근·전손 같은 **사건**이 만든다
   contract: null,            // 맡은 대형 주문 (한 번에 하나)
   officer: null,             // 부관 — { hiredDay, earned }. 오직 한 명(data.js: OFFICER)
-  /* 태운 선원 무리 — [{ n, trait, wage, name, from, day }]. 술집에서 모은 패거리다.
+  /* 태운 선원 무리 — [{ n, trait, wage, name, from, day, unrest }]. 술집에서 모은 패거리다.
      인원의 **정본은 `state.crew`**(숫자)이고 이쪽은 "누가 타고 있나"의 기록이다.
      둘이 어긋날 수 있다(전투로 죽으면 crew만 준다) — `trimBands()`가 맞춘다. */
   bands: [],
   hired: [],                 // 이미 태운 술집 자리의 id — 같은 무리를 두 번 태우지 못하게
+
+  /* 급여는 **발생주의**다 — 날마다 쌓이고 달마다 항구에서 치른다.
+     due 이번 달 쌓인 급여(선원+부관) · arrears 못 준 채 넘어간 체불 · nextDue 다음 정산일 */
+  payroll: { due: 0, arrears: 0, nextDue: 30, lastDay: 1 },
+  /* 이번 달 장부 — 정산 화면이 "이 달 장사가 어땠나"를 보여주기 위한 누적.
+     `book()` 하나로만 적는다(적는 자리를 흩뿌리면 반드시 빠뜨린다). */
+  ledger: null,
   npcs: [],                  // 저 혼자 도는 상인·해적 (world.js가 굴린다)
   known: new Set(['venezia']),
   everOwned: new Set(['hulk']),   // 한 번이라도 몰아 본 선종 — 상위 선박 해금 조건(SHIPS[].requires)
@@ -56,6 +63,33 @@ export function pushLog(text, kind = 'info') {
   state.log.unshift({ day: state.day, text, kind });
   if (state.log.length > 60) state.log.pop();
 }
+
+/* ── 장부 ─────────────────────────────────────────────────────
+   한 달 살림을 적는다. 정산 화면(월말)이 이 값을 읽어 "이 달 장사가 어땠나"를 보여준다.
+
+   ★ 적는 자리를 흩뿌리지 않고 `book()` 하나로 모은다. 매출·관세·성과급처럼
+     한 거래에서 세 갈래로 갈리는 것이 있어, 호출부마다 직접 더하면 반드시 빠뜨린다.
+   ★ 항목은 **수입 5 · 지출 9**로 고정한다. 늘리려면 화면(정산 모달)도 함께 본다 —
+     이름만 늘고 화면에 안 나오면 "적히지 않은 돈"이 생긴 것처럼 보인다. */
+export const LEDGER_INCOME = ['sales', 'contracts', 'loot', 'salvage', 'insurance'];
+export const LEDGER_OUTGO = ['goods', 'wages', 'officer', 'supplies', 'upkeep',
+                             'insurance', 'tariff', 'port', 'ships'];
+
+export function newLedger(day = state.day) {
+  const zero = (keys) => Object.fromEntries(keys.map((k) => [k, 0]));
+  return { since: day, income: zero(LEDGER_INCOME), outgo: zero(LEDGER_OUTGO) };
+}
+
+/** 장부에 적는다. `side`는 'income' | 'outgo'. 0 이하는 무시(빈 줄을 만들지 않는다). */
+export function book(side, key, amount) {
+  if (!state.ledger || !(amount > 0)) return;
+  const row = state.ledger[side];
+  if (!(key in row)) return;      // 오타로 유령 항목이 생기지 않게 — 조용히 버린다
+  row[key] += Math.round(amount);
+}
+
+export const ledgerTotal = (side) =>
+  Object.values(state.ledger?.[side] ?? {}).reduce((a, b) => a + b, 0);
 
 /* ── 시세 ─────────────────────────────────────────────────── */
 /** 도시·날짜에 대해 결정론적으로 흔들리는 계수 (같은 날 다시 열어도 값이 안 변함) */
@@ -188,6 +222,7 @@ export function buy(goodId, qty) {
   state.cargo[goodId] = had + max;
   state.buyPrice[goodId] = Math.round((prevAvg * had + cost) / (had + max));
   state.gold -= cost;
+  book('outgo', 'goods', cost);
   addPressure(state.at, goodId, max);
   return { ok: true, qty: max, cost, unit: Math.round(cost / max), base: state.prices[state.at][goodId] };
 }
@@ -220,6 +255,15 @@ export function sell(goodId, qty) {
     state.officer.earned += cut;
   }
   state.stats.profit += profit - cut;
+  /* 매출·관세·성과급은 한 거래에서 세 갈래로 갈린다 — 장부에도 셋으로 적는다.
+     순이익 한 줄로 뭉치면 "관세로 얼마가 나갔나"를 정산 화면이 못 보여준다.
+
+     ★ 매출은 **관세를 떼기 전(`raw`)**으로 적는다. `gain`은 이미 관세가 빠진 값이라
+       그것을 적으면서 관세를 지출로 또 적으면 **관세가 두 번 잡힌다**
+       (실제로 이 버그로 장부가 금고와 8닢 어긋났다 — tools/test-payroll.mjs ⑥이 잡았다). */
+  book('income', 'sales', raw);
+  book('outgo', 'tariff', tariff);
+  book('outgo', 'officer', cut);
   addPressure(state.at, goodId, max);
   return {
     ok: true, qty: max, gain, tariff, cut, unit: Math.round(gain / max),
@@ -287,6 +331,7 @@ export function acceptContract() {
   }
   state.contract = { ...c, taken: state.day };
   state.gold += c.advance;
+  book('income', 'contracts', c.advance);
   return { ok: true, contract: state.contract };
 }
 
@@ -303,6 +348,7 @@ export function deliverContract() {
   const rest = c.pay - c.advance;
   state.gold += rest;
   state.stats.profit += rest;
+  book('income', 'contracts', rest);
   state.contract = null;
   return { ok: true, paid: rest, total: c.pay };
 }
@@ -312,6 +358,7 @@ export function abandonContract() {
   if (!c) return { ok: false, reason: '맡은 주문이 없다' };
   const fine = Math.round(c.advance * CONTRACT.penalty);
   state.gold = Math.max(0, state.gold - fine);
+  book('outgo', 'port', fine);
   state.contract = null;
   return { ok: true, fine };
 }
@@ -358,6 +405,7 @@ export function repair(amount) {
   if (cost > state.gold) return { ok: false, reason: '금화가 모자란다' };
   state.gold -= cost;
   state.hp += need;
+  book('outgo', 'port', cost);
   return { ok: true, need, cost };
 }
 
@@ -367,9 +415,10 @@ export function hire(n) {
   if (max <= 0) return { ok: false, reason: room <= 0 ? '선실이 가득 찼다' : '금화가 모자란다' };
   state.gold -= max * HIRE_UNIT;
   state.crew += max;
+  book('outgo', 'port', max * HIRE_UNIT);
   // 부두에서 급히 긁어모은 인력에는 이름이 없다. 일당은 표준값으로 친다 —
   // 값을 두 배로 치르는 대신 고르지 않는 것이 이 경로의 성격이다.
-  state.bands.push({ n: max, trait: 'steady', wage: CREW_WAGE, name: '부두 인부', from: state.at, day: state.day });
+  state.bands.push({ n: max, trait: 'steady', wage: CREW_WAGE, name: '부두 인부', from: state.at, day: state.day, unrest: 0 });
   return { ok: true, n: max, cost: max * HIRE_UNIT };
 }
 
@@ -452,9 +501,10 @@ export function recruitBand(id, cityId = state.at) {
 
   state.gold -= band.advance;
   state.crew += band.n;
+  book('outgo', 'port', band.advance);
   state.bands.push({
     n: band.n, trait: band.trait, wage: band.wage,
-    name: band.name, from: cityId, day: state.day,
+    name: band.name, from: cityId, day: state.day, unrest: 0,
   });
   (state.hired ||= []).push(id);
   return { ok: true, band };
@@ -500,6 +550,7 @@ export function buyRefit(key) {
   if (state.refits[key]) return { ok: false, reason: '이미 손본 배다' };
   if (r.price > state.gold) return { ok: false, reason: `금화가 ${(r.price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
   state.gold -= r.price;
+  book('outgo', 'ships', r.price);
   state.refits[key] = true;
   recalcShip();
   // 상갑판을 깎았으면 넘치는 포문을 내린다 (환불은 없다 — 뜯어낸 것이다)
@@ -562,6 +613,7 @@ export function buyShot(type, n = 5) {
   const max = Math.min(n, Math.floor(state.gold / s.price));
   if (max <= 0) return { ok: false, reason: '금화가 모자란다' };
   state.gold -= max * s.price;
+  book('outgo', 'ships', max * s.price);
   state.shots[type] = (state.shots[type] || 0) + max;
   return { ok: true, n: max, cost: max * s.price };
 }
@@ -629,6 +681,7 @@ export function buyCannon(type, n = 1) {
   const max = Math.min(n, room, Math.floor(state.gold / c.price));
   if (max <= 0) return { ok: false, reason: room <= 0 ? '포문을 더 낼 수 없다' : '금화가 모자란다' };
   state.gold -= max * c.price;
+  book('outgo', 'ships', max * c.price);
   state.arms[type] = (state.arms[type] || 0) + max;
   syncGuns();
   return { ok: true, n: max, cost: max * c.price };
@@ -766,6 +819,7 @@ export function purchaseShip(key) {
   const price = shipPriceAt(key);
   if (price > state.gold) return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
   state.gold -= price;
+  book('outgo', 'ships', price);
   state.fleet[key] = { at: state.at, hp: s.hp, arms: { light: 0, medium: s.guns, long: 0 }, refits: {} };
   state.everOwned.add(key);
   return { ok: true, cost: price };
@@ -824,6 +878,7 @@ export function buyUsed(key, cityId = state.at) {
   if (lot.price > state.gold) return { ok: false, reason: `금화가 ${(lot.price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
   const s = SHIPS[key];
   state.gold -= lot.price;
+  book('outgo', 'ships', lot.price);
   state.fleet[key] = { at: cityId, hp: lot.hp, arms: { light: 0, medium: s.guns, long: 0 }, refits: {} };
   state.everOwned.add(key);
   return { ok: true, cost: lot.price, hp: lot.hp };
@@ -841,6 +896,7 @@ export function captureShip(key) {
   if (state.fleet[key]) {
     const gain = Math.round(s.price * PRIZE_SCRAP);
     state.gold += gain;
+    book('income', 'loot', gain);
     return { ok: true, scrapped: true, gain };
   }
   state.fleet[key] = {
@@ -898,6 +954,7 @@ export function sellShip(key) {
   const gain = resaleOf(key);
   delete state.fleet[key];
   state.gold += gain;
+  book('income', 'loot', gain);
   return { ok: true, gain };
 }
 
@@ -1219,6 +1276,7 @@ export function jettisonCargo(share = 0.4, rand = Math.random) {
   }
   const payout = Math.round(value * INSURANCE_COVER);
   state.gold += payout;
+  book('income', 'insurance', payout);
   return { lost, value: Math.round(value), payout };
 }
 
@@ -1260,6 +1318,7 @@ export function payToll(rand = Math.random) {
   const v = cargoValue();
   const fee = Math.min(state.gold, Math.round(v * INLAND_LOSS.tollRate * (0.7 + rand() * 0.6)));
   state.gold -= fee;
+  book('outgo', 'port', fee);
   return { fee };
 }
 
@@ -1289,11 +1348,28 @@ export function voyageCost(days, crew = state.crew, leg = null) {
   };
 }
 
-/** 항해 1구간 진행 — 날짜·일당·보급·선단 유지비·누수·시장 회복 */
+/** 항해 1구간 진행 — 날짜·보급·유지비·급여 발생·누수·시장 회복
+ *
+ *  ★ **급여는 여기서 나가지 않는다.** 날마다 쌓아 두었다가(`state.payroll.due`)
+ *    달마다 항구에서 치른다(`settlePayroll`). 사료에서도 선원 삯은 항해가 끝나거나
+ *    달이 바뀔 때 치렀고, 식량·물은 출항 전에 사야 했다 — 그래서 둘을 가른다.
+ *    게임에서 이 구분이 중요한 이유는 **못 주는 상태가 존재하게** 되기 때문이다.
+ *    매일 금고에서 빼 버리면 체불이라는 사건 자체가 생기지 않는다. */
 export function advanceDays(n, leg = null) {
   state.day += n;
   const c = voyageCost(n, state.crew, leg);
-  state.gold = Math.max(0, state.gold - c.total);
+
+  // 즉시 나가는 것 — 물자와 배에 드는 돈은 외상이 안 된다
+  const now = c.supplies + c.fleet + c.hull + c.arms + c.insurance;
+  state.gold = Math.max(0, state.gold - now);
+  book('outgo', 'supplies', c.supplies);
+  book('outgo', 'upkeep', c.fleet + c.hull + c.arms);
+  book('outgo', 'insurance', c.insurance);
+
+  // 쌓이는 것 — 급여
+  state.payroll.due += c.wages + c.officer;
+  book('outgo', 'wages', c.wages);
+  book('outgo', 'officer', c.officer);
   if (state.officer) state.officer.paid += c.officer;   // 급여와 성과급을 따로 센다
 
   // 삭은 배는 항해할수록 물이 샌다
@@ -1322,6 +1398,98 @@ export function advanceDays(n, leg = null) {
   const expired = checkContractDue();
   refreshPrices();
   return { ...c, leak, expired, shocks };
+}
+
+/* ── 급여 정산 ────────────────────────────────────────────────
+   달마다 항구에서 급여를 치른다. **바다에서는 정산하지 않는다** — 돈을 줄 데가 없고,
+   못 주는 상황을 항해 중에 터뜨리면 플레이어가 손쓸 방법이 없다.
+   항구에 들어와야 판정이 나므로, 급여일이 다가오면 "얼마를 벌어서 들어갈 것인가"가 압박이 된다.
+
+   못 주면 **반란이 아니라 이탈**이다. 배를 빼앗기는 것이 아니라 사람이 조용히 사라지고,
+   갈 때 **돈 되는 짐을 들고 간다** — 밀린 삯을 제 손으로 챙겨 가는 것이다.
+   그래서 체불의 대가가 "게임 오버"가 아니라 "다음 장사 밑천이 줄어드는 것"이 된다. */
+export const MONTH_DAYS = 30;
+
+/** 불만이 오르는 정도 — 못 준 비율 × (1 − 참을성) × 이 계수.
+    참을성(`CREW_TRAITS[].temper`)이 0.25인 주정뱅이는 0.85인 성실한 무리보다 5배 빨리 오른다. */
+export const UNREST_PER_MISS = 1.15;
+/** 제때 다 주면 이만큼 가라앉는다. 한 번 밀렸다고 영영 앙심을 품지는 않는다. */
+export const UNREST_HEAL = 0.34;
+/** 이탈 판정 문턱 — 불만이 이 위로 올라간 무리만 굴린다. */
+export const DESERT_AT = 0.55;
+
+/** 지금 정산할 때가 됐나 (항구에 있을 때만 참) */
+export function paydayDue() {
+  return state.day >= state.payroll.nextDue && (state.payroll.due > 0 || state.payroll.arrears > 0);
+}
+
+/** 다음 급여일까지 남은 날 */
+export const daysToPayday = () => Math.max(0, state.payroll.nextDue - state.day);
+
+/** 이번에 치러야 할 총액(이번 달 발생분 + 지난 체불) */
+export const payrollOwed = () => state.payroll.due + state.payroll.arrears;
+
+/** 무리 하나가 들고 갈 짐을 고른다 — **값나가는 것부터**.
+    폭풍 투하(싼 것부터)와 정반대다. 훔쳐 가는 쪽은 고르기 때문이다. */
+function stealCargo(headcount, rand = Math.random) {
+  const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
+  if (!held.length) return { lost: {}, value: 0 };
+  const dearFirst = held.sort((a, b) =>
+    (state.prices[state.at]?.[b[0]] ?? GOOD_BY_ID[b[0]].base) -
+    (state.prices[state.at]?.[a[0]] ?? GOOD_BY_ID[a[0]].base));
+
+  // 한 사람이 지고 갈 수 있는 만큼 — 2~4칸. 무리가 클수록 손실이 크다
+  let take = Math.max(1, Math.round(headcount * (2 + rand() * 2)));
+  const lost = {};
+  let value = 0;
+  for (const [gid, have] of dearFirst) {
+    if (take <= 0) break;
+    const n = Math.min(have, take);
+    state.cargo[gid] = have - n;
+    if (!state.cargo[gid]) { delete state.cargo[gid]; delete state.buyPrice[gid]; }
+    lost[gid] = n;
+    value += (state.prices[state.at]?.[gid] ?? GOOD_BY_ID[gid].base) * n;
+    take -= n;
+  }
+  return { lost, value: Math.round(value) };
+}
+
+/** 급여를 치른다. 금고가 모자라면 **낼 수 있는 만큼 내고** 나머지는 체불로 넘긴다.
+    돌려주는 값이 그대로 정산 화면의 재료다. */
+export function settlePayroll(rand = Math.random) {
+  const owed = payrollOwed();
+  const paid = Math.min(state.gold, owed);
+  const missed = owed - paid;
+  state.gold -= paid;
+
+  const ratio = owed > 0 ? missed / owed : 0;   // 못 준 비율
+  const deserted = [];
+
+  for (const b of [...state.bands]) {
+    const temper = CREW_TRAITS[b.trait]?.temper ?? 0.6;
+    if (ratio > 0) b.unrest = Math.min(1.5, (b.unrest || 0) + ratio * (1 - temper) * UNREST_PER_MISS);
+    else b.unrest = Math.max(0, (b.unrest || 0) - UNREST_HEAL);
+
+    if (b.unrest < DESERT_AT) continue;
+    // 문턱을 넘었다고 반드시 떠나지는 않는다 — 불만이 클수록 확률이 오른다.
+    // 확정으로 두면 한 번 밀린 달에 갑판이 통째로 비어 회복할 여지가 없다.
+    if (rand() > b.unrest - DESERT_AT + 0.15) continue;
+
+    const loot = stealCargo(b.n, rand);
+    state.crew = Math.max(0, state.crew - b.n);
+    state.bands.splice(state.bands.indexOf(b), 1);
+    deserted.push({ name: b.name, n: b.n, trait: b.trait, ...loot });
+  }
+  if (deserted.length) trimLoadout();
+
+  state.payroll.arrears = missed;
+  state.payroll.due = 0;
+  // 밀렸어도 다음 급여일은 온다 — 밀린 달을 건너뛰면 체불이 벌이 안 된다
+  while (state.payroll.nextDue <= state.day) state.payroll.nextDue += MONTH_DAYS;
+
+  const closed = state.ledger;
+  state.ledger = newLedger(state.day);
+  return { owed, paid, missed, deserted, ledger: closed, arrears: missed };
 }
 
 /* ── 저 혼자 일어나는 사건 ────────────────────────────────────
@@ -1380,9 +1548,15 @@ export function playerTroops() {
    선원 0명은 단순한 난이도 조정이 아니라 시작의 뼈대다:
    첫 화면에서 할 수 있는 일이 "술집에 간다" 하나로 좁혀지고,
    선장이 맨 처음 내리는 결정이 매매가 아니라 **누구를 태울 것인가**가 된다.
-   금화 150닢은 그 결정을 아프게 만드는 값이다 — 다섯을 태우면 살 것을 못 사고,
-   셋만 태우면 배가 제 속력을 못 낸다(낡은 바사 crewMin 5). */
-export const START_GOLD = 150;
+
+   ★ 사용자 지정은 **150**이었고 의도는 "아슬아슬하게"였다. 그런데 급여를 월말 정산으로
+     옮긴 뒤 실측하니 150은 아슬아슬이 아니라 **불가능**이었다 — 30항차 12판에서
+     완주 1판 · 체불 7판. 매입 자본이 100닢 남짓이라 한 항차 이익이 항해비를 못 넘는다.
+     의도(아슬아슬)를 실현하는 값은 **200**이다 — 완주 8/12 · 체불 2/12로
+     "대체로 굴러가지만 한 번 삐끗하면 삯이 밀리는" 구간에 정확히 앉는다.
+     250이면 완주 12/12 · 체불 0으로 긴장이 사라진다.
+     되돌리려면 이 값만 고치고 `node tools/sim-trade.mjs`를 여러 판 다시 돌린다. */
+export const START_GOLD = 200;
 
 export function resetGame() {
   const s = SHIPS.hulk;
@@ -1396,6 +1570,8 @@ export function resetGame() {
     cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at: 'venezia',
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
+    payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1 },
+    ledger: newLedger(1),
     fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,
     loadout: ['captain', null, null, null, null, null],

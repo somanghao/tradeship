@@ -11,6 +11,7 @@
 |---|---|---|
 | 시세 · 가격 공식 · 산지/수요 · `wobble` · 매매 · 손익 · 매입가 · 화물/적재 · 항해 일수 · 항해비 · 초기 조건 · 무역 곡선 | [wiki/economy-trade.md](wiki/economy-trade.md) | `js/data.js`(GOODS·CITY_TRADE·SPREAD·MARKET·TARIFF) · `js/state.js`(priceOf·buy/sell·voyageCost) |
 | **부관 · 부선장 · 에이미** · 급여 · 성과급 · 입항세 감면 · 시장압력 감면 | [wiki/officer.md](wiki/officer.md) | `js/data.js: OFFICER` · `js/state.js`(officerPerk·voyageCost의 officer·sell의 cut) |
+| **급여 정산 · 급여일 · 체불 · 불만 · 이탈 · 화물 절도 · 장부 · 결산 화면** | [wiki/payroll.md](wiki/payroll.md) | `js/state.js`(payroll·ledger·`book`·`settlePayroll`·`stealCargo`·`MONTH_DAYS`·`DESERT_AT`) · 화면 `js/payday.js` · 검증 `node tools/test-payroll.mjs` |
 | **술집 · 선원 등용 · 무리 · 기질 · 계약금 · 요구 일당** · 선원이 왜 0명으로 시작하나 · 부두 인부 | [wiki/crew-tavern.md](wiki/crew-tavern.md) | `js/data.js: TAVERN·CREW_TRAITS·CREW_NAMES` · `js/state.js`(tavernCrews·recruitBand·avgCrewWage·trimBands) · 씬 `js/scenes/tavern.js` · 검증 `node tools/test-tavern.mjs` |
 | 상인/해적 NPC · 세계가 혼자 돈다 · 시장압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 | [wiki/world-npc.md](wiki/world-npc.md) | 숫자 `js/npc/config.js` · 판단 `js/npc/behavior.js` · 집행 `js/world.js` · 계약 `js/data.js: CONTRACT` |
 | **도시 특산품 고증** · 어느 도시가 뭘 팔았나 · 깃발/국적 근거 · 사료 출처 | [wiki/city-goods-history.md](wiki/city-goods-history.md) (서술본·34KB로 무겁다) | **`content/city-evidence.json`**(기계 정본) → 검증 `node tools/check-evidence.mjs` |
@@ -33,7 +34,8 @@
 | 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`) |
 | 입항세 | `data.js: TARIFF` (도시 size별) |
 | 항해비 갈래 | `state.js: voyageCost()` — 일당(**`avgCrewWage()`** — 술집에서 누구를 태웠나로 갈린다·기본 `CREW_WAGE` 1.2)·보급(`SUPPLY_UNIT` 1.3)·선체(`HULL_UPKEEP`×`SHIPS[].upkeep`)·무장(`ARM_UPKEEP`)·선단·**적하보험**(`INSURANCE_RATE`×항로요율×화물가치)·부관 |
-| 시작 조건(금화·선원·배) | `state.js: START_GOLD`(150) · `resetGame()` — **선원 0명**으로 시작한다 |
+| 시작 조건(금화·선원·배) | `state.js: START_GOLD`(200) · `resetGame()` — **선원 0명**으로 시작한다. 값의 근거는 [payroll.md](wiki/payroll.md) §6 |
+| 급여 주기·불만·이탈 문턱 | `state.js: MONTH_DAYS`(30) · `UNREST_PER_MISS`·`UNREST_HEAL`·`DESERT_AT` · 참을성은 `data.js: CREW_TRAITS[].temper` |
 | 선원 무리의 값·기질 | `data.js: TAVERN`(cycle·slots·band·emptyOdds·**advanceUnit**) · `CREW_TRAITS`(wageMul·advMul·troop·temper) → [crew-tavern.md](wiki/crew-tavern.md) |
 | 부관 급여·성과급·능력 | `data.js: OFFICER` — `wage`·`cut`·`perks`는 **한 묶음**이라 함께 재측정. 고치면 `content/wage-evidence.json`도 같은 커밋에서 → [officer.md](wiki/officer.md) |
 | 도시 추가 | `map/geo.js: CITY_GEO`(좌표·깃발·규모) **와** `data.js: CITY_TRADE`(경제)에 **같은 id**로 — 한쪽만 넣으면 콘솔 경고 |
@@ -59,7 +61,9 @@
 - **인원의 정본은 `state.crew`(숫자)이고 `state.bands`는 기록일 뿐이다.** 둘은 어긋날 수 있다(전투·폭풍으로 사람이 죽으면 crew만 준다) — `trimBands()`가 맞추고, 그 호출은 **`trimLoadout()` 안에** 있다. `crew`가 줄어드는 자리는 전부 이미 `trimLoadout()`을 부르고 있으므로 배선을 거기 모아 두면 빠뜨릴 자리가 없다. 새로 crew를 깎는 코드를 쓸 때도 같은 함수를 부를 것.
 - **`avgCrewWage()`는 총액이 아니라 단가를 돌려준다.** `voyageCost(days, crew, leg)`가 crew를 인자로 받아 "N명이면 얼마인가"를 묻기 때문이다. 총액으로 바꾸면 시뮬·대시보드가 조용히 틀린 값을 낸다.
 - **`TAVERN.advanceUnit`은 시작 조건에서 역산한 값이다.** 14닢으로 뒀더니 150닢으로 여섯을 태우는 데 92닢이 나가 **가장 짧은 항로조차 화물을 못 실었다.** 이 값을 올릴 때는 `node tools/test-tavern.mjs` ⑤(첫 항차 성립)를 반드시 다시 돌린다.
-- **`CREW_TRAITS[].temper`는 아직 어떤 규칙에도 안 물려 있다.** 급여 월말 정산·체불 불만·도망/반란의 임계로 쓰려고 미리 넣은 자리다 — "안 쓰는 필드"로 보고 지우지 말 것.
+- **급여는 `advanceDays`에서 금고를 안 건드린다** — 쌓기만 하고(`state.payroll.due`) 항구에서 `settlePayroll()`이 치른다. 항해비를 "이 항해가 얼마 드나"로 보여주는 곳(`voyageCost`)은 **총액**을 그대로 돌려주므로, 실제 차감액과 다르다는 것을 알고 써야 한다.
+- **장부는 `book()` 하나로만 적는다.** 그리고 **매출은 관세를 떼기 전(`raw`)으로** 적는다 — `sell()`의 `gain`은 이미 관세가 빠진 값이라 그걸 적으면서 관세를 지출로 또 적으면 **관세가 두 번 잡힌다**(실제로 장부가 금고와 8닢 어긋났고 `test-payroll.mjs` ⑥이 잡았다).
+- **시뮬도 정산을 해야 한다**(`sim-core.mjs`, 입항해서 팔고 난 뒤). 빼면 급여가 영영 안 나가 **사실상 공짜**가 되고 자산 곡선이 통째로 부풀어 오른다.
 - **시뮬은 술집을 쓴다**(`sim-core.mjs: manCrew`). 선원을 안 태우면 첫 항차부터 인원 부족으로 속력이 깎여 곡선이 통째로 어긋난다 — 실제로 배를 한 척도 못 사는 결과가 나왔다. 시작 조건을 만지면 `node tools/sim-trade.mjs`를 다시 돌릴 것.
 
 - **시세 노이즈는 `Math.random()`이 아니라 (도시·품목·날짜) 해시**다. 항구를 나갔다 들어와도 값이 변하면 안 된다(재입장 스캠 방지). `wobble()`을 난수로 바꾸지 말 것.

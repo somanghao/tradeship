@@ -675,3 +675,62 @@ html, body {
   font-size: 11.5px; color: var(--brass-l); text-align: center;
   padding: 5px 0; background: #d2a52a14; border-radius: 2px;
 }
+
+/* ══ 급여 정산 화면 ═══════════════════════════════════════════
+   모달 하나에 장부(왼쪽)와 선창(오른쪽)을 나란히 둔다 —
+   "얼마 벌었나"와 "무엇이 실려 있나"를 같이 봐야 급여를 낼지 팔지가 정해진다. */
+.modal-box:has(.pay-wrap) { width: min(760px, 94vw); }
+
+.pay-lead { font-size: 13px; color: #c5baa8; line-height: 1.7; margin-bottom: 8px; }
+.pay-lead b { color: var(--brass-l); }
+.pay-warn { color: var(--bad); }
+.pay-danger {
+  font-size: 12px; color: #e0a08e; line-height: 1.65;
+  background: #d05a4a1a; border-left: 2px solid var(--bad);
+  padding: 7px 10px; margin: 8px 0; border-radius: 2px;
+}
+.pay-danger b { color: #f0b8a6; }
+
+.pay-wrap { display: flex; gap: 12px; margin-top: 10px; }
+.pay-pane { flex: 1 1 0; min-width: 0; }
+.pay-pane h4 {
+  font-size: 12px; color: var(--brass-l); letter-spacing: .06em;
+  padding-bottom: 6px; border-bottom: 1px solid #ffffff18; margin-bottom: 7px;
+}
+.pay-sub {
+  font-size: 10.5px; color: #8f8878; letter-spacing: .06em;
+  margin: 9px 0 4px;
+}
+.pay-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  font-size: 12px; padding: 3px 0; color: #b6ac9c;
+}
+.pay-row .k { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-row .v { flex: 0 0 auto; font-variant-numeric: tabular-nums; color: var(--parch); }
+.pay-row.pay-sum {
+  border-top: 1px solid #ffffff14; margin-top: 4px; padding-top: 5px;
+}
+.pay-row.pay-sum .k, .pay-row.pay-sum .v { color: var(--brass-l); }
+.pay-row.pay-net { border-top: 1px solid #ffffff24; margin-top: 5px; padding-top: 6px; }
+.pay-row.pay-net .v { font-size: 13px; font-weight: 700; }
+.pay-row.pay-net.up .v { color: var(--good); }
+.pay-row.pay-net.dn .v { color: var(--bad); }
+.pay-empty { font-size: 11.5px; color: #6f6858; padding: 6px 0; }
+.pay-note { font-size: 10.5px; color: #6f6858; line-height: 1.6; margin-top: 8px; }
+.pay-note b { color: #a89a84; }
+
+.pay-hold {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; padding: 3px 0; color: #b6ac9c;
+}
+.pay-hold .i { flex: 0 0 auto; image-rendering: pixelated; display: flex; }
+.pay-hold .k { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-hold .q { flex: 0 0 auto; color: #8f8878; font-size: 11px; }
+.pay-hold .v { flex: 0 0 auto; color: var(--parch); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+.pay-hold .d { flex: 0 0 auto; font-size: 11px; font-variant-numeric: tabular-nums; min-width: 50px; text-align: right; }
+.pay-hold .d.up { color: var(--good); }
+.pay-hold .d.dn { color: var(--bad); }
+
+.pay-unrest { margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffffff14; }
+
+@media (max-width: 620px) { .pay-wrap { flex-direction: column; } }
