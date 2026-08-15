@@ -4,7 +4,7 @@ import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, SPREAD, CONTRACT, OFFICER,
-  ROUTE_RISK, riskKey,
+  ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
 } from './data.js';
 
 export const state = {
@@ -26,6 +26,7 @@ export const state = {
   loadout: ['captain', 'sailor', null, null, null, null],  // 갑판 배치 6칸
   prices: {},                // cityId -> goodId -> 단가
   impact: {},                // cityId -> goodId -> 최근 거래 압력 (날짜가 지나면 감쇠)
+  shocks: [],                // 시장 충격 — { city, good, mult, until, why }. 기근·전손 같은 **사건**이 만든다
   contract: null,            // 맡은 대형 주문 (한 번에 하나)
   officer: null,             // 부관 — { hiredDay, earned }. 오직 한 명(data.js: OFFICER)
   npcs: [],                  // 저 혼자 도는 상인·해적 (world.js가 굴린다)
@@ -62,13 +63,54 @@ function wobble(cityId, goodId, day) {
   return ((h >>> 0) % 1000) / 1000;
 }
 
+/* ── 시장 충격 ────────────────────────────────────────────────
+   `wobble`(±15%)은 노이즈라 아무리 겹쳐도 ×1.5를 못 넘는다. 그런데 사료가 말하는
+   대박 항차는 노이즈가 아니라 **사건**이었다 — 기근·전쟁·경쟁 선단 전손.
+   그래서 값이 뛰는 자리를 따로 둔다. 충격은 도시·품목 하나에 걸리고 날이 차면 걷힌다.
+   → content/voyage-evidence.json: windfallIsEventDriven */
+
+/** 지금 걸려 있는 충격의 곱 (없으면 1). 겹쳐도 SHOCK.cap을 넘지 않는다. */
+export function shockFactor(cityId, goodId) {
+  let f = 1;
+  for (const s of state.shocks) {
+    if (s.city === cityId && s.good === goodId) f *= s.mult;
+  }
+  return Math.max(SHOCK.floor, Math.min(SHOCK.cap, f));
+}
+
+/** 충격을 건다. 같은 도시·품목에 이미 걸려 있으면 기간만 늘린다(무한 중첩 방지). */
+export function addShock(cityId, goodId, mult, days, why) {
+  const cur = state.shocks.find((s) => s.city === cityId && s.good === goodId && s.why === why);
+  if (cur) { cur.until = Math.max(cur.until, state.day + days); return cur; }
+  const s = { city: cityId, good: goodId, mult, until: state.day + days, why, since: state.day };
+  state.shocks.push(s);
+  return s;
+}
+
+/** 날이 찬 충격을 걷는다 — `advanceDays`가 부른다 */
+export function pruneShocks() {
+  for (let i = state.shocks.length - 1; i >= 0; i--) {
+    if (state.shocks[i].until <= state.day) state.shocks.splice(i, 1);
+  }
+}
+
+/** 화면에 띄울 충격 목록 (도시 이름·품목 이름까지 붙여서) */
+export function activeShocks() {
+  return state.shocks.map((s) => ({
+    ...s,
+    cityName: CITY_BY_ID[s.city]?.name ?? s.city,
+    goodName: GOOD_BY_ID[s.good]?.name ?? s.good,
+    daysLeft: Math.max(0, s.until - state.day),
+  }));
+}
+
 export function priceOf(cityId, goodId) {
   const city = CITY_BY_ID[cityId];
   const good = GOOD_BY_ID[goodId];
   const raw = city.supply[goodId] ?? city.demand[goodId] ?? 1;
   const mul = 1 + (raw - 1) * SPREAD;          // 차익 폭을 SPREAD로 조인다
   const w = 0.86 + wobble(cityId, goodId, state.day) * 0.30;   // ±15%
-  return Math.max(1, Math.round(good.base * mul * w));
+  return Math.max(1, Math.round(good.base * mul * w * shockFactor(cityId, goodId)));
 }
 
 export function refreshPrices() {
@@ -912,8 +954,25 @@ export function routeDangerLabel({ from, to, threat = 0 } = {}) {
   return { text, kind, odds, risk, threat };
 }
 
+/** 이 구간이 뭍인가 — 오스만 내해·육로에는 코르세어가 안 뜬다(`ROUTE_RISK`가 null) */
+export function isInland(from, to) {
+  return from != null && to != null && routeRisk(from, to) === null;
+}
+
 export function rollSeaEvent(opts = {}) {
-  const { rand = Math.random } = opts;
+  const { rand = Math.random, from = null, to = null } = opts;
+
+  // 뭍의 구간 — 해적을 뺀 자리를 노상강도·통행세가 받는다.
+  // 안 그러면 아나톨리아 안쪽 주머니가 **완전 무위험 구간**이 되어
+  // 최적 플레이의 실효 조우율이 10.3%까지 내려간다(node tools/sim-risk.mjs).
+  if (isInland(from, to)) {
+    if (rand() < INLAND_ODDS) {
+      const id = rand() < 0.45 ? 'bandit' : 'toll';
+      return SEA_EVENTS.find((e) => e.id === id);
+    }
+    return SEA_EVENTS.find((e) => e.id === 'calm');
+  }
+
   const p = encounterOdds(opts);
   const flat = SEA_EVENTS.find((e) => e.id === 'pirate').weight / 100;
 
@@ -990,6 +1049,98 @@ export function insuranceFor({ from = state.at, to = null, value = null } = {}) 
   return Math.round((v * risk / 100) * INSURANCE_RATE);
 }
 
+/* ── 공동해손 — 보험이 실제로 보상하는 사건 ────────────────────
+   보험료를 걷으면서 보상하는 사건이 없으면 그것은 보험이 아니라 세금이다.
+   사료에서 보험이 문 것은 전손과 **투하**(jettison)였다 — 폭풍에 배를 살리려
+   짐을 바다에 던지는 것. 그래서 폭풍이 심하면 화물을 잃고, 잃은 값의 일부를 보험이 문다.
+
+   보상률을 요율 계수와 같은 값으로 두는 이유: 게임은 사료 요율의 30%만 걷는다
+   (`INSURANCE_RATE`). 30%만 내고 100%를 받으면 보험이 공짜 이익이 되므로
+   **낸 만큼만 받는다**. 손해는 남지만 파산까지는 안 가는 크기가 된다. */
+export const INSURANCE_COVER = INSURANCE_RATE;
+
+/** 폭풍이 투하까지 갈 확률 — 위험한 항로일수록 높다.
+    바탕은 해상보험 요율이다(그 숫자의 본래 뜻이 '사고 확률의 시장가격'이므로).
+    실효 발생률 목표는 15~25항차에 1건 → content/voyage-evidence.json: lossEventPerVoyages */
+export const JETTISON_BASE = 0.22;
+export const JETTISON_PER_PCT = 0.035;
+
+export function jettisonOdds({ from = state.at, to = null } = {}) {
+  const risk = to == null ? null : routeRisk(from, to);
+  if (!risk) return 0;                       // 내해·육로에는 폭풍 투하가 없다
+  return Math.min(0.55, JETTISON_BASE + risk * JETTISON_PER_PCT);
+}
+
+/** 짐을 던진다. 실은 것의 일부를 값이 **싼 것부터** 버린다 —
+    선장이라면 당연히 그렇게 한다(비단을 먼저 던지지 않는다).
+    돌려주는 값으로 로그·모달을 쓰고, 보상금은 여기서 바로 금고에 넣는다. */
+export function jettisonCargo(share = 0.4, rand = Math.random) {
+  const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
+  if (!held.length) return null;
+
+  const cheapFirst = held.sort((a, b) =>
+    (state.prices[state.at]?.[a[0]] ?? GOOD_BY_ID[a[0]].base) -
+    (state.prices[state.at]?.[b[0]] ?? GOOD_BY_ID[b[0]].base));
+
+  const total = held.reduce((a, [, n]) => a + n, 0);
+  let toss = Math.max(1, Math.round(total * share * (0.7 + rand() * 0.6)));
+  const lost = {};
+  let value = 0;
+  for (const [gid, have] of cheapFirst) {
+    if (toss <= 0) break;
+    const n = Math.min(have, toss);
+    state.cargo[gid] = have - n;
+    if (!state.cargo[gid]) delete state.cargo[gid];
+    lost[gid] = n;
+    value += (state.buyPrice[gid] || GOOD_BY_ID[gid].base) * n;
+    toss -= n;
+  }
+  const payout = Math.round(value * INSURANCE_COVER);
+  state.gold += payout;
+  return { lost, value: Math.round(value), payout };
+}
+
+/* ── 뭍의 사고 ────────────────────────────────────────────────
+   내해·육로 구간의 위험. 바다와 성격이 다르다 —
+     · 노상강도는 **값나가는 것부터** 집어간다(투하와 정반대다. 강도는 고르니까).
+     · 통행세는 화물이 아니라 금화를 문다. 싸우거나 도망칠 여지가 없는 대신 값이 얕다.
+   둘 다 보험이 보상하지 않는다. 해상보험은 바다의 위험만 인수했다. */
+export const INLAND_LOSS = {
+  banditShare: 0.16,      // 실은 것의 이 비율(±)을 뺏긴다
+  tollRate: 0.045,        // 화물가치의 이만큼을 금화로 문다
+};
+
+export function banditRaid(rand = Math.random) {
+  const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
+  if (!held.length) return { lost: {}, value: 0 };
+  // 값비싼 것부터 — 강도는 고른다
+  const dearFirst = held.sort((a, b) =>
+    (state.prices[state.at]?.[b[0]] ?? GOOD_BY_ID[b[0]].base) -
+    (state.prices[state.at]?.[a[0]] ?? GOOD_BY_ID[a[0]].base));
+
+  const total = held.reduce((a, [, n]) => a + n, 0);
+  let take = Math.max(1, Math.round(total * INLAND_LOSS.banditShare * (0.6 + rand() * 0.8)));
+  const lost = {};
+  let value = 0;
+  for (const [gid, have] of dearFirst) {
+    if (take <= 0) break;
+    const n = Math.min(have, take);
+    state.cargo[gid] = have - n;
+    if (!state.cargo[gid]) delete state.cargo[gid];
+    lost[gid] = n;
+    value += (state.buyPrice[gid] || GOOD_BY_ID[gid].base) * n;
+    take -= n;
+  }
+  return { lost, value: Math.round(value) };
+}
+
+export function payToll(rand = Math.random) {
+  const v = cargoValue();
+  const fee = Math.min(state.gold, Math.round(v * INLAND_LOSS.tollRate * (0.7 + rand() * 0.6)));
+  state.gold -= fee;
+  return { fee };
+}
+
 export function armsUpkeep(arms = state.arms) {
   let sum = 0;
   for (const [kind, n] of Object.entries(arms || {})) sum += (ARM_UPKEEP[kind] || 0) * n;
@@ -1041,9 +1192,53 @@ export function advanceDays(n, leg = null) {
     if (!Object.keys(row).length) delete state.impact[cityId];
   }
 
+  // 사건이 만든 시장 충격 — 날이 차면 걷히고, 그 사이 새 사건이 일어난다
+  pruneShocks();
+  const shocks = rollShockEvents(n);
+
   const expired = checkContractDue();
   refreshPrices();
-  return { ...c, leak, expired };
+  return { ...c, leak, expired, shocks };
+}
+
+/* ── 저 혼자 일어나는 사건 ────────────────────────────────────
+   사료가 말하는 대박은 확률이 아니라 사건이다. 기근·봉쇄는 값을 올리고
+   풍작·독점 붕괴는 내린다 — 오르기만 하면 "기다렸다 팔면 된다"가 되어 판단이 사라진다.
+   `rand`를 받는 이유는 검증 스크립트가 시드를 고정해 발생률을 재기 때문이다. */
+export function rollShockEvents(days, rand = Math.random) {
+  const hit = [];
+  for (let d = 0; d < days; d++) {
+    for (const ev of SHOCK.events) {
+      if (rand() >= ev.perDay) continue;
+
+      // 그 사건이 걸릴 수 있는 도시·품목 짝을 모은다.
+      // ★ 후보를 여기서 만드는 이유: 도시나 품목을 늘리면 사건도 저절로 늘어난다.
+      //   목록을 하드코딩하면 콘텐츠를 더할 때마다 여기를 고쳐야 하고, 결국 안 고친다.
+      const pool = [];
+      for (const c of CITIES) {
+        const side = ev.kind === 'demand' ? c.demand : c.supply;
+        for (const gid of Object.keys(side)) {
+          if (ev.goods && !ev.goods.includes(gid)) continue;
+          pool.push([c, gid]);
+        }
+      }
+      if (!pool.length) continue;
+
+      const [city, gid] = pool[Math.floor(rand() * pool.length)];
+      const already = state.shocks.some((sh) => sh.city === city.id && sh.good === gid && sh.why === ev.id);
+      addShock(city.id, gid, ev.mult, ev.days, ev.id);
+      if (already) continue;
+
+      const goodName = GOOD_BY_ID[gid].name;
+      hit.push({
+        kind: ev.id, name: ev.name, tone: ev.tone,
+        city: city.id, cityName: city.name, good: gid, goodName,
+        text: ev.line(city.name, goodName),
+      });
+      pushLog(ev.line(city.name, goodName), ev.tone === 'good' ? 'good' : 'warn');
+    }
+  }
+  return hit;
 }
 
 /* ── 플레이어 백병전 병력 구성 ──────────────────────────────
@@ -1067,7 +1262,7 @@ export function resetGame() {
     guns: s.guns, arms: { ...arms },
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
-    cargo: {}, buyPrice: {}, impact: {}, contract: null, npcs: [], at: 'venezia',
+    cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at: 'venezia',
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,

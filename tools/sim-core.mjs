@@ -20,8 +20,14 @@ export const ORDER = ['galley', 'cocca', 'caravel', 'frigate', 'brig',
   'superfrigate', 'fluyt', 'galleon', 'carrack', 'indiaman'];
 
 /** 목적지 하나에 대해 화물칸을 채우는 최적 조합(그리디).
-    실제 플레이어처럼 여러 품목을 섞는다 — 압력이 품목별로 걸리므로 분산이 이득이다. */
-export function planFor(to, room, budget) {
+    실제 플레이어처럼 여러 품목을 섞는다 — 압력이 품목별로 걸리므로 분산이 이득이다.
+
+    `minMargin`은 **한 칸을 더 실을 최소 수익률**이다(0이면 한계마진이 0이 될 때까지 채운다).
+    기본값 0은 총이익 최대화라 옳지만, 그렇게 채우면 마지막 칸의 마진이 0이라
+    **항차 ROI가 구조적으로 낮게 나온다** — 게다가 항해 중 시세가 밀리면 그 칸들이 먼저 적자로 뒤집힌다.
+    조심스러운 플레이어를 흉내 내거나 ROI 분포를 볼 때 이 값을 올린다.
+    → .claude/docs/wiki/research-voyage-returns.md §7-1 */
+export function planFor(to, room, budget, minMargin = 0) {
   const take = {};
   let spend = 0, gain = 0;
   for (let k = 0; k < room; k++) {
@@ -32,7 +38,7 @@ export function planFor(to, room, budget) {
       const dGain = gainFor(g.id, n, to) - gainFor(g.id, n - 1, to);
       const margin = dGain * (1 - tariffRate(to)) - dCost;
       if (dCost > budget - spend) continue;
-      if (margin <= 0) continue;
+      if (margin <= 0 || margin < dCost * minMargin) continue;
       if (!best || margin > best.margin) best = { id: g.id, margin, dCost, dGain };
     }
     if (!best) break;
@@ -44,14 +50,14 @@ export function planFor(to, room, budget) {
 }
 
 /** 이웃 항구 중 순이익 최대인 곳으로 간다 */
-export function bestRun() {
+export function bestRun(minMargin = 0) {
   let best = null;
   const room = cargoFree();
   if (room <= 0) return null;
   for (const to of neighborsOf(state.at)) {
     const days = voyageDays(state.at, to);
     const cost = voyageCost(days).total;
-    const p = planFor(to, room, state.gold);
+    const p = planFor(to, room, state.gold, minMargin);
     const net = p.gain - p.spend - cost;
     if (!best || net > best.net) best = { to, take: p.take, net, days, spend: p.spend };
   }
@@ -61,7 +67,7 @@ export function bestRun() {
 /** 한 판을 끝까지 돌린다.
     hooks.onVoyage(rec)  — 항차가 끝날 때마다. rec에 그 항차의 수지·NPC 소식이 다 들어있다.
     hooks.onStart()      — 초기화 직후(0항차 시점 스냅샷용). */
-export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
+export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
   resetGame();
   initWorld();
   hooks.onStart?.();
@@ -102,7 +108,7 @@ export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
       repairSpend += g - state.gold;
     }
 
-    const run = bestRun();
+    const run = bestRun(minMargin);
     if (!run || !Object.keys(run.take).length) break;
 
     // 매입

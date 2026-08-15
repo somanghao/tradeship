@@ -13,6 +13,7 @@ import {
   hasOfficer,
 } from '../state.js';
 import { npcsAtPort } from '../world.js';
+import { goodRank, goodBasis } from '../evidence.js';
 import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal } from '../ui.js';
 import { go } from '../main.js';
 
@@ -94,11 +95,20 @@ function marketTable() {
     el('th.num', { text: '거래', style: { width: '150px' } }),
   ])));
 
+  /* ★ 목록 순서 = 근거의 신뢰도 순. GOODS 정의 순서로 쌓으면
+     구색으로 넣은 줄이 사료로 확인된 특산보다 위에 온다.
+     확실한 수요 → 확실한 산지 → 근거가 약한 것 → 교역 대상 아닌 것.
+     같은 등급 안에서는 1에서 먼 것(= 값이 세게 갈린 것)부터. */
+  const ordered = [...GOODS].map((g) => {
+    const side = marketTag(city.id, g.id);
+    const raw = side === 'supply' ? city.supply[g.id] : side === 'demand' ? city.demand[g.id] : 1;
+    return { g, side, rank: goodRank(city.id, g.id, side), strength: Math.abs(raw - 1) };
+  }).sort((a, b) => a.rank - b.rank || b.strength - a.strength);
+
   const tb = el('tbody');
-  for (const g of GOODS) {
+  for (const { g, side: tag } of ordered) {
     const unit = state.prices[city.id][g.id];
     const have = state.cargo[g.id] || 0;
-    const tag = marketTag(city.id, g.id);
     const avg = state.buyPrice[g.id] || 0;
     const diff = have > 0 ? unit - avg : 0;
     const press = impactFactor(city.id, g.id, 0);      // 지금 이 품목에 걸린 시장 압력

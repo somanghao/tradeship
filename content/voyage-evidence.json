@@ -1,0 +1,161 @@
+{
+  "_읽는이에게": "한 항차가 얼마를 벌었나. 코드 정본은 tools/sim-core.mjs가 산출하는 항차별 수지이고, 이 파일은 그 분포가 사료와 어긋나지 않는지를 잰다. 검증은 node tools/check-voyage.mjs. 자매 파일 — 교역품 goods-evidence.json · 선박 asset-evidence.json · 임금 wage-evidence.json · 항로위험 route-evidence.json. 상세 조사는 .claude/docs/wiki/research-voyage-returns.md.",
+  "version": 1,
+  "era": {
+    "label": "대항해시대 (15세기말~16세기)",
+    "note": "게임은 연도를 고정하지 않는다. 여기 실린 사료값도 '어느 해의 수익률'이 아니라 **무엇이 무엇보다 컸나의 순서**로 읽어야 한다."
+  },
+  "howToCompare": {
+    "rule": "절대액은 대조하지 않는다. 세 가지 비율만 본다.",
+    "axis1": "항차 ROI — 투자(매입액+항해비용) 대비 순익의 백분율",
+    "axis2": "꼬리 비율 — p90 ÷ 중앙값. 대박이 전형값의 몇 배인가",
+    "axis3": "사고 빈도 — 전손 1건이 몇 항차에 한 번인가 (해상보험료가 그 시장가격이다)",
+    "whyNotAbsolute": "게임 화폐 ‘닢’은 두카트가 아니고, 게임의 1항차는 사료의 1항차보다 훨씬 짧다(며칠 vs 몇 달). 그래서 맞출 것은 스케일이 아니라 **분포의 모양**이다.",
+    "whyNoMeasuredNumbers": "이 파일에는 게임 실측값을 적지 않는다. 적어 두면 콘텐츠가 바뀔 때마다 조용히 거짓이 된다 — 실측은 check-voyage.mjs가 그때그때 산출해 목표 밴드와 대조한다."
+  },
+  "verdicts": {
+    "confirmed": "사료로 확인됨 (수치가 직접 나온다)",
+    "probable": "개연성 있음 (인접 사례나 비율로 채움)",
+    "corrected": "고증 조사로 바로잡음",
+    "gameplay": "게임이 성립하도록 고증을 의도적으로 덮어씀"
+  },
+  "anchors": {
+    "avgProfitRate": {
+      "label": "베네치아 상인 평균 이익률",
+      "value": 0.20,
+      "kind": "average",
+      "verdict": "confirmed",
+      "note": "당대 총독 Mocenigo의 1423년 연설. 항차별이 아니라 상인 전체의 평균이다.",
+      "sources": [{ "title": "Ashtor, Profits from Trade with the Levant in the 15th Century, BSOAS 38/2 (1975)" }]
+    },
+    "catalanProfitRate": {
+      "label": "카탈루냐 상인 이익률",
+      "value": [0.10, 0.15],
+      "kind": "average",
+      "verdict": "confirmed",
+      "sources": [{ "title": "Ashtor, BSOAS 38/2 (1975)" }]
+    },
+    "spiceGrossProfit": {
+      "label": "15세기 향신료 상인 평균 이익",
+      "value": [0.35, 0.40],
+      "kind": "average",
+      "verdict": "confirmed",
+      "note": "총이익이다. 관세 20% · 제경비 15% · 운임 10% · 보험 5%를 빼면 실수익은 10%대로 내려간다.",
+      "sources": [{ "title": "Ashtor, BSOAS 38/2 (1975), p.270" }]
+    },
+    "spiceLegMultiple": {
+      "label": "후추 알렉산드리아→베네치아 배율 (게임이 다루는 구간)",
+      "value": [1.2, 2.0],
+      "verdict": "confirmed",
+      "note": "‘후추 30배’는 말라바르→북유럽 전 구간 이야기다. 지중해 구간만 떼면 이만큼뿐이다.",
+      "sources": [
+        { "title": "Lane, Pepper Prices Before Da Gama, JEH 1968", "note": "1497년 실측 ×1.35" },
+        { "title": "Ashtor, Profits from Trade with the Levant, p.268", "note": "120kg 61→120두카트 = ×1.97" }
+      ]
+    },
+    "grainLegMultiple": {
+      "label": "밀 산지→소비지 배율",
+      "value": 2.0,
+      "verdict": "probable",
+      "note": "‘바르바리 밀은 이탈리아 밀의 절반값이었다’(Braudel). 평시 기준이고 기근년에는 여기서 다시 ×2가 붙는다.",
+      "sources": [{ "title": "Braudel, The Mediterranean and the Mediterranean World" }]
+    },
+    "insurancePremium": {
+      "label": "해상보험료율 — 위험의 시장가격",
+      "median": 0.05,
+      "mean": 0.0559,
+      "p10": 0.0075,
+      "p90": 0.22,
+      "verdict": "confirmed",
+      "note": "1340~1500 지중해 전역 27,659건 중 요율 기재 2,259건. 중앙값 5%는 '평시 20항차에 1척 전손'을 시장이 값매긴 것이다.",
+      "sources": [{ "title": "Botticini, Buri & Marinacci, The Beauty of Uncertainty, JEEA 21(6) 2023" }]
+    },
+    "totalLossRate": {
+      "label": "전손률",
+      "value": 0.047,
+      "verdict": "confirmed",
+      "note": "카레라 데 인디아스 1540~1650, 11,000척 중 519척. 지중해가 아니라 대서양 항로이므로 상한으로 읽는다.",
+      "sources": [{ "title": "Life and Death in the Spanish Carrera de Indias (Springer, 2021)" }]
+    },
+    "lossCause": {
+      "label": "손실 원인 비율",
+      "value": { "corsair": 0.60, "nature": 0.40 },
+      "verdict": "confirmed",
+      "note": "피렌체 Mercanzia 법정 1379~1430, 원인 확인 68건 중 41건이 코르세어. 카탈루냐 사료(42건 중 자연 12건)로 교차검증됨.",
+      "sources": [{ "title": "Botticini 외, JEEA 2023 · Del Treppo (1972)" }]
+    },
+    "commendaSplit": {
+      "label": "코멘다/콜레간자 이익 분배",
+      "unilateral": { "investor": 0.75, "traveller": 0.25 },
+      "bilateral": { "investor": 0.50, "traveller": 0.50, "travellerCapital": 0.33 },
+      "verdict": "confirmed",
+      "note": "1/4은 고정값이 아니다 — 베네치아 법령이 ‘1/4 또는 계약에 담긴 만큼’이라 명시했고 실제로 다른 비율도 관측된다.",
+      "sources": [{ "title": "Puga & Trefler, NBER WP 18288 / QJE 2014", "note": "1199년 계약 원문 · 381건 데이터셋" }]
+    },
+    "privateTrade": {
+      "label": "선원 사무역 한도 (동지중해 항로)",
+      "value": { "master": 100, "officer": 10, "seaman": 5, "unit": "£ sterling, 1621" },
+      "verdict": "confirmed",
+      "note": "직급 간 20배 격차. 실측 사례에서 사무역은 총수입의 20~46%를 차지했다(Coxere, 1659).",
+      "sources": [{ "title": "Blakemore, Pieces of Eight, Pieces of Eight, Economic History Review" }]
+    },
+    "tonsPerCrew": {
+      "label": "톤/승조원 1인 — 선종 경제의 핵심 축",
+      "galley": 1.2,
+      "cog": 10,
+      "galleon": [5.5, 6.25],
+      "fluyt": 20,
+      "verdict": "probable",
+      "note": "갤리 수치는 적재 250t ÷ 승조원 215명으로 **역산한 값**이고 원문에 그대로 적힌 비율이 아니다. 갤리가 향신료 전용이었던 이유가 이 한 줄에 있다 — 노꾼을 먹이려면 톤당 가치밀도가 원형선의 5~15배여야 했다.",
+      "sources": [
+        { "title": "Lane, Venetian Shipping during the Commercial Revolution, AHR 38 (1933)", "note": "갤리 운임이 원형선의 2배 · 1513/14년 개방 후 1/3로 폭락" },
+        { "title": "플류트 20:1 (1636) · 스페인 갈레온 1인당 5.5~6.25톤(1550s~1630s)" }
+      ]
+    }
+  },
+  "gameTargets": {
+    "voyageRoiMedian": {
+      "value": [0.08, 0.16],
+      "measuredAtMinMargin": 0.15,
+      "basis": "사료 밴드는 10~20%(Mocenigo 20%, 카탈루냐 10~15%). 게임 1항차는 사료보다 짧으므로 밴드 하단을 목표로 둔다.",
+      "verdict": "probable",
+      "★적재규율을 함께 적어야 하는 이유": "항차 ROI는 경제가 아니라 **얼마나 가려 싣느냐**가 정한다. `sim-core.mjs: planFor`의 minMargin이 0이면(총이익 최대화) 마지막 칸의 마진이 0이라 중앙값이 5%로 눌리고, 0.15면 10.1%로 사료 밴드에 들어온다 — 같은 경제, 같은 시드에서. 그래서 목표 밴드는 **minMargin 0.15에서 잰 값**으로만 판정한다. 이 단서 없이 '중앙값이 낮으니 MARKET.impact를 낮추자'로 가면 중앙값은 1%p 오르고 90항차 자산만 34k→100k로 부푼다(실측). 조사 문서 §7-3의 5번 제안은 이 실측으로 **폐기**했다."
+    },
+    "voyageRoiTailRatio": {
+      "value": [2.0, 8.0],
+      "measuredAtMinMargin": 0.15,
+      "basis": "p90 ÷ 중앙값. 사료에 히스토그램이 없어 ‘전형 15% vs 대박 100%’에서 역산한 **추정**이라 밴드를 넓게 잡는다. 가려 실을수록 중앙값이 올라 꼬리비는 낮아진다(minMargin 0에서 4.58 → 0.15에서 2.70).",
+      "verdict": "probable"
+    },
+    "windfallIsEventDriven": {
+      "value": true,
+      "basis": "사료가 지지하는 대박은 확률이 아니라 사건이다 — 기근(제노바 밀 1590→91 ×2) · 경쟁 선단 전손 · 독점 붕괴(톨파 명반 −50%) · 나포. 노이즈에서 나오는 꼬리는 사료와 다르다.",
+      "verdict": "confirmed",
+      "howChecked": "js/data.js: MARKET_SHOCKS가 비어 있지 않고, js/world.js가 NPC 전손·기근을 그 표로 흘려보내는가."
+    },
+    "lossEventPerVoyages": {
+      "value": [15, 25],
+      "basis": "보험료 중앙값 5% ≈ 20항차에 1건. 실측 전손률 4.7% ≈ 21항차에 1척. 두 독립 계열이 같은 값을 준다.",
+      "verdict": "confirmed",
+      "howChecked": "화물 전손 사건의 실효 발생률(교통량 가중)이 1/25 ~ 1/15 사이인가."
+    },
+    "insurancePaysOut": {
+      "value": true,
+      "basis": "보험료를 걷으면서 보상하는 사건이 없으면 그것은 보험이 아니라 세금이다. 사료에서 보험은 전손을 보상했고, 그래서 위험한 항로에 배가 다녔다.",
+      "verdict": "confirmed"
+    },
+    "tonsPerCrewMin": {
+      "target": { "galley": [1.0, 2.0], "cocca": [8, 14], "carrack": [6, 11], "galleon": [4, 7], "fluyt": [16, 22] },
+      "basis": "cargo ÷ crewMin. 선종의 정체성이 이 비율 하나에 들어 있다 — 갤리는 노꾼을 먹이느라 짐을 못 싣고, 플류트는 적은 선원으로 많이 싣는 것이 존재 이유다.",
+      "verdict": "corrected",
+      "note": "플류트는 crewMin 14(→12.1)이던 것을 9(→18.9)로 고쳤다. 12.1은 코카(13.0)와 사실상 같아 선종이 겹쳤다."
+    }
+  },
+  "caveats": [
+    "학계에도 **항차별 수익률 히스토그램은 존재하지 않는다.** Pryor(Speculum 1977)·Gonzalez de Lara의 원 통계표는 페이월로 확보하지 못했다. 그래서 이 파일의 ROI 밴드는 ‘평균값 몇 개 + 정성 서술’에서 짜낸 것이고, 꼬리 비율은 **추정**이다.",
+    "가장 신뢰도 높은 데이터는 수익률이 아니라 **보험료율**이다(원문 표 대조 완료, n=2,259). 수익 쪽을 못 믿겠으면 위험 쪽부터 맞춰라.",
+    "상선 갤리의 1항차 비용은 사료가 충돌한다 — 15세기말 ‘용선 9,200두카트’와 1463년 incanto ‘명목 7두카트’. 전자는 의장 포함 총비용, 후자는 입찰액으로 보이나 원사료 미확인이다. **어느 쪽도 단독으로 쓰지 말 것.**",
+    "‘후추 30배’류의 숫자는 전부 말라바르→북유럽 전 구간이다. 게임이 다루는 지중해 구간은 **1.2~2.0배**뿐이고, 배율의 대부분은 홍해·카이로 육로에서 이미 발생했다.",
+    "16세기는 가격혁명기라 세기 초와 말의 절대가가 3~4배 차이난다. 배율 비교만 유효한 이유가 여기 또 있다."
+  ]
+}

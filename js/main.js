@@ -2,6 +2,7 @@
 
 import { VW, VH } from './sprites/scene.js';
 import { loadAssetPack } from './assets.js';
+import { loadEvidence } from './evidence.js';
 import { state, resetGame } from './state.js';
 import { initWorld } from './world.js';
 import { refreshHUD, refreshLog, clearOverlay, el, overlay } from './ui.js';
@@ -89,6 +90,7 @@ async function boot() {
   // 그림을 갈아 끼운 팩이 있으면 먼저 읽는다. 없는 것이 기본 — 그때는 코드 생성 그대로다.
   // 반드시 첫 스프라이트가 구워지기 전이어야 한다(한 번 구우면 캐시에 박힌다).
   await loadAssetPack();
+  await loadEvidence();   // 시장 목록을 근거 순으로 쌓기 위해 — 없어도 게임은 돈다
 
   const { mapScene } = await import('./scenes/map.js');
   const { portScene } = await import('./scenes/port.js');

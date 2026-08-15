@@ -14,8 +14,9 @@
 
 import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS } from './data.js';
 import {
-  state, neighborsOf, distanceBetween, priceOf, addPressure, tariffRate, pushLog,
+  state, neighborsOf, distanceBetween, priceOf, addPressure, tariffRate, pushLog, addShock,
 } from './state.js';
+import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 
@@ -153,7 +154,18 @@ function raids(news) {
     p.cargo = { ...victim.cargo };
     p.kills++;
     state.npcs = state.npcs.filter((n) => n.id !== victim.id);
-    news.push({ kind: 'raid', who: p.name, victim: victim.name, at: victim.at, to: victim.to, loot });
+
+    /* ★ 그 짐은 목적지에 도착하지 못한다 — 기다리던 항구에서 그 물건이 귀해진다.
+       사료가 말하는 '대박 항차'가 이것이다: 확률적 잭팟이 아니라
+       **남이 망했을 때 마침 그 짐을 싣고 있던 항차**. 노이즈(±15%)로는 만들 수 없는 꼬리다.
+       → content/voyage-evidence.json: windfallIsEventDriven */
+    const shocked = [];
+    for (const gid of Object.keys(victim.cargo || {})) {
+      if (!CITY_BY_ID[victim.to]?.demand?.[gid]) continue;   // 사려던 항구에만 걸린다
+      addShock(victim.to, gid, SHOCK.raidMult, SHOCK.raidDays, 'raid');
+      shocked.push(gid);
+    }
+    news.push({ kind: 'raid', who: p.name, victim: victim.name, at: victim.at, to: victim.to, loot, shocked });
   }
 }
 
@@ -196,7 +208,10 @@ export function newsLines(news, limit = 3) {
     if (e.kind === 'raid') {
       out.push({
         text: `${CITY_BY_ID[e.at].name}~${CITY_BY_ID[e.to].name} 항로에서 ${e.victim}호가 ${e.who}에게 털렸다.`
-            + (e.loot ? ` (${e.loot})` : ''),
+            + (e.loot ? ` (${e.loot})` : '')
+            + (e.shocked?.length
+                ? ` — ${CITY_BY_ID[e.to].name}의 ${e.shocked.map((g) => GOOD_BY_ID[g].name).join('·')} 값이 뛴다.`
+                : ''),
         kind: 'bad',
       });
     }

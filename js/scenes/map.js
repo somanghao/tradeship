@@ -8,6 +8,7 @@ import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
   hasOfficer, officerPerk, routeDangerLabel,
+  jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines, pirateEnemy,
@@ -402,14 +403,66 @@ function resolveEvent(ev, voyage) {
       const lost = Math.random() < 0.35 ? 1 + Math.floor(Math.random() * 2) : 0;
       state.hp = Math.max(1, state.hp - dmg);
       state.crew = Math.max(1, state.crew - lost);
+
+      /* ★ 폭풍이 심하면 배를 살리려 짐을 던진다(공동해손) — 보험이 무는 사건이 이것이다.
+         전에는 보험료만 걷고 보상하는 자리가 없어, 그 항목이 사실상 세금이었다.
+         확률은 항로 위험도에서 나온다(그 숫자의 본래 뜻이 사고 확률의 시장가격이다). */
+      const jet = Math.random() < jettisonOdds({ from: voyage.from.id, to: voyage.to.id })
+        ? jettisonCargo() : null;
+      const jetLine = jet
+        ? `<br><br>파도가 갑판을 쓸자 갑판장이 소리쳤다. <b>짐을 던져라.</b><br>`
+          + Object.entries(jet.lost).map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ')
+          + `를 바다에 버렸다(${jet.value.toLocaleString('ko-KR')}닢어치).`
+          + (jet.payout > 0
+              ? `<br>적하보험이 <b>${jet.payout.toLocaleString('ko-KR')}닢</b>을 물어 준다.`
+              : '')
+        : '';
+      if (jet) {
+        pushLog(`폭풍에 짐을 던졌다 — ${jet.value.toLocaleString('ko-KR')}닢어치. 보험금 ${jet.payout.toLocaleString('ko-KR')}닢.`, 'bad');
+      }
+
       pushLog(`폭풍우에 휩쓸렸다. 선체 ${dmg} 손상${lost ? `, 선원 ${lost}명 실종` : ''}.`, 'bad');
       refreshHUD(); refreshLog();
       modal({
-        title: '폭풍우',
+        title: jet ? '폭풍우 — 짐을 던지다' : '폭풍우',
         body: `검은 구름이 몰려오더니 파도가 갑판을 덮쳤다.<br>`
             + `선체가 <b>${dmg}</b> 손상되었다${lost ? `, 선원 <b>${lost}명</b>이 파도에 휩쓸렸다` : ''}.`
+            + jetLine
             + officerAside('storm'),
         actions: [{ label: '버텨낸다', onClick: finish }],
+        closable: false,
+      });
+      break;
+    }
+    case 'bandit': {
+      // 뭍의 구간 — 코르세어 대신 노상강도. 값나가는 것부터 집어간다.
+      const hit = banditRaid();
+      const line = Object.entries(hit.lost).map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ');
+      pushLog(hit.value
+        ? `산길에서 강도를 만나 ${hit.value.toLocaleString('ko-KR')}닢어치를 빼앗겼다.`
+        : '산길에서 강도를 만났으나 실은 것이 없었다.', 'bad');
+      refreshHUD(); refreshLog();
+      modal({
+        title: '노상강도',
+        body: `좁은 산길에 사내들이 막아섰다. 여기는 바다가 아니라 대포도 소용없다.<br>`
+            + (hit.value
+                ? `${line}을(를) 빼앗겼다 — <b>${hit.value.toLocaleString('ko-KR')}닢</b>어치.<br>`
+                  + `<span style="opacity:.7">해상보험은 바다의 위험만 인수한다. 이 손해는 보상되지 않는다.</span>`
+                : `빈 수레라 가져갈 것이 없었다.`),
+        actions: [{ label: '길을 재촉한다', onClick: finish }],
+        closable: false,
+      });
+      break;
+    }
+    case 'toll': {
+      const { fee } = payToll();
+      pushLog(`통행세로 ${fee.toLocaleString('ko-KR')}닢을 물었다.`, 'warn');
+      refreshHUD(); refreshLog();
+      modal({
+        title: '통행세 징수',
+        body: `길목의 초소가 짐을 헤아린다. 서류를 갖춰도 세는 셈은 그들의 것이다.<br>`
+            + `<b>${fee.toLocaleString('ko-KR')}닢</b>을 물었다.`,
+        actions: [{ label: '치르고 지나간다', onClick: finish }],
         closable: false,
       });
       break;
@@ -546,6 +599,20 @@ function routeCards() {
     ]);
   });
 
+  /* 지금 값이 흔들리는 곳 — 소식을 들어야 달려갈 수 있다.
+     사건형 대박을 넣어 놓고 화면에 안 띄우면 플레이어에겐 없는 것과 같다. */
+  const shocks = activeShocks().sort((a, b) => b.mult - a.mult);
+  const shockRows = shocks.slice(0, 6).map((sh) => el('div.route-row', {
+    title: `${sh.cityName}의 ${sh.goodName} 시세가 평시의 ×${sh.mult.toFixed(2)}
+남은 기간 약 ${sh.daysLeft}일`,
+    onclick: () => { const near = nb.includes(sh.city); if (near) startVoyage(sh.city); },
+  }, [
+    el('span.rn', { text: sh.cityName }),
+    el(`span.rw.${sh.mult >= 1 ? 'bad' : 'good'}`, { text: sh.goodName }),
+    el(`span.rw.${sh.mult >= 1 ? 'bad' : 'good'}`, { text: `×${sh.mult.toFixed(2)}` }),
+    el('span.rd', { text: `${sh.daysLeft}일 남음${nb.includes(sh.city) ? '' : ' · 멀다'}` }),
+  ]));
+
   const cards = [
     el('div.panel', {}, [
       el('h3', {}, el('span', { text: '현재 위치' })),
@@ -569,6 +636,19 @@ function routeCards() {
       el('div.route-list', {}, rows),
     ]),
   ];
+
+  if (shockRows.length) {
+    cards.push(el('div.panel', {}, [
+      el('h3', {}, [
+        el('span', { text: '뱃사람들의 소문' }),
+        el('span', {
+          text: '값이 흔들리는 곳',
+          style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+        }),
+      ]),
+      el('div.route-list', {}, shockRows),
+    ]));
+  }
 
   if (hover && hover !== state.at) {
     const c = CITY_BY_ID[hover];

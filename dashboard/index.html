@@ -170,6 +170,17 @@
     </div>
   </div>
 
+  <div class="grp" data-tab="port">
+    <button class="tab" data-tab="port">항구</button>
+    <div class="subs">
+      <a href="#q-s-list">항구 일람</a>
+      <a href="#q-s-detail">항구 상세</a>
+      <a href="#q-s-industry">공업력</a>
+      <a href="#q-s-estate">부동산</a>
+      <a href="#q-s-evi">근거 현황</a>
+    </div>
+  </div>
+
   <div class="grp" data-tab="wage">
     <button class="tab" data-tab="wage">보수·물가</button>
     <div class="subs">
@@ -362,6 +373,33 @@
 
   <h2 id="w-s-evi">근거 <span class="note">이 수치가 왜 이 값인지 — 행에 올리면 출처가 뜬다</span></h2>
   <div id="w-evi"></div>
+</section>
+
+<!-- ══════════════ 항구 ══════════════ -->
+<section class="tabpage" id="tab-port">
+  <h1>항구</h1>
+  <p class="sub">
+    항구마다 무엇을 팔고 무엇을 사는지, 배를 지을 수 있는지, 살림 규모가 어느 정도인지.
+    <b>교역 항목이 많은 항구가 좋은 항구가 아니다</b> — 목록은 값이 아니라
+    <b>근거의 신뢰도 순</b>으로 쌓는다(확실한 수요 → 확실한 산지 → 근거가 약한 것).
+  </p>
+
+  <div class="cards" id="p2-cards"></div>
+
+  <h2 id="q-s-list">항구 일람 <span class="note">행을 누르면 아래 상세가 바뀐다 · 초록 막대는 근거가 확실한 항목의 비율</span></h2>
+  <div class="panel" style="overflow:auto"><div id="p2-list"></div></div>
+
+  <h2 id="q-s-detail">항구 상세 <span class="note">교역품은 신뢰 등급 3묶음으로 · 행에 올리면 근거와 출처가 뜬다</span></h2>
+  <div class="panel" id="p2-detail"></div>
+
+  <h2 id="q-s-industry">공업력 <span class="note">어떤 배를 지을 수 있는가 — 국적이 아니라 도시 공업력이 정한다</span></h2>
+  <div class="panel"><div id="p2-industry"></div></div>
+
+  <h2 id="q-s-estate">부동산 <span class="note">아직 게임 기능이 아니다 — 거점·창고를 넣을 때 쓸 스케일 기준점</span></h2>
+  <div class="panel" id="p2-estate"></div>
+
+  <h2 id="q-s-evi">근거 현황 <span class="note">어느 항구가 재조사 대상인지</span></h2>
+  <div class="panel" id="p2-evi"></div>
 </section>
 
 </main>

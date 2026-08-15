@@ -1,6 +1,5 @@
 {
   "name": "지중해 항해 지도",
-  "sprites": {
-    "scene:map": "map/mediterranean.webp"
-  }
+  "_왜 비어 있나": "지도 납품물 2차까지 반려. assets/map/에 보관은 하되 여기서 꺼 둔다 — 붙이면 항구 점이 엉뚱한 자리에 찍힌다. 1차는 실제 지중해를 정확히 그려 게임 좌표(도식)와 어긋났고, 2차는 tools/check-map.py는 통과하나 도시·항로 그래프의 볼록껍질을 바다로 칠한 것이라 반도·섬 실루엣이 없다(고유색 8색). 되살리려면 sprites 안에 \"scene:map\": \"map/mediterranean.webp\"를 다시 넣는다.",
+  "sprites": {}
 }

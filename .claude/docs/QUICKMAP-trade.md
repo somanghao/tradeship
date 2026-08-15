@@ -44,7 +44,12 @@
 | 계약 규모·보수·위약금 | `data.js: CONTRACT` — **보수(`value`)를 먼저 정하고 수량을 역산**한다(품목이 비싸다고 계약이 통째로 커지지 않게) |
 | NPC 수·습격률·시장 영향·싣는 양 | `npc/config.js: NPC` (traders·pirates·raidBase·pressure·loadRatio·pickTop) |
 | NPC가 어디로 갈지·무엇을 살지 | `npc/behavior.js: chooseTrade/choosePirateMove` — `ctx`로만 받으므로 통째로 갈아 끼워도 `world.js`는 그대로 |
-| 경제가 실제로 도는지 확인 | 대시보드 `/dashboard/` · 곡선 `node tools/sim-trade.mjs` · 실효 위험 `node tools/sim-risk.mjs` · 화면 없이 계측만 `node -e "import('./dashboard/measure.mjs')…"` |
+| 경제가 실제로 도는지 확인 | 대시보드 `/dashboard/` · 곡선 `node tools/sim-trade.mjs` · 실효 위험 `node tools/sim-risk.mjs` · 항차 수익 분포 `node tools/check-voyage.mjs` · 화면 없이 계측만 `node -e "import('./dashboard/measure.mjs')…"` |
+| 대시보드 탭이 무엇을 보여주나 | 사이드바 4탭. **경제** 시세·현금흐름·물동량·NPC(`dash.js`) · **해적** 조우확률·등급별 발생·현상금·NPC 위치 재생·항로 위험(`pirate-view.js`+`pirates.mjs`) · **항구** 항구별 교역품(근거 신뢰도 순)·공업력·부동산 앵커·근거 현황(`port-view.js`+`ports.mjs`) · **보수** 급여 사다리·사료 대조·에이미 수입·부관 유무 짝비교(`wage-view.js`+`wages.mjs`). 탭 셸은 `app.js`, 공용 그리기는 `shared.mjs` |
+| 대시보드 탭 추가 | `index.html`에 nav `.grp` + `section.tabpage` → `app.js`에 `run*()`/`*Loaded()` 배선 → 계측 `*.mjs`(출력 없는 순수 로직) + 그리기 `*-view.js`로 가른다 |
+| 시장 충격(기근·봉쇄·풍작·나포) | `data.js: SHOCK.events`(종류·확률·문구) · 판정 `state.js: shockFactor/addShock/rollShockEvents` · 나포 배선 `world.js: raids()` · 화면 `scenes/map.js` "뱃사람들의 소문" |
+| 화물을 잃는 사건 | 폭풍 투하 `state.js: jettisonOdds/jettisonCargo` · 보상 `INSURANCE_COVER` · 뭍의 사고 `banditRaid/payToll`(`INLAND_ODDS`) · 빈도 검증 `node tools/sim-risk.mjs` |
+| 게임이 근거 JSON을 읽는 곳 | `js/evidence.js` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓으려고 `content/city-evidence.json`을 읽는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
 
 ## 3. 이 도메인 전용 함정·가드
 
@@ -58,7 +63,8 @@
 - **`ROUTE_RISK`는 두 곳에서 쓰인다.** 해적 조우 확률(`encounterOdds`)과 **적하보험료**(`insuranceFor`)다. 요율을 고치면 위험만 바뀌는 게 아니라 후반 비용 구조가 함께 움직인다 — 한쪽만 보고 조정하지 말 것.
 - **`ROUTE_RISK`를 고치면 `content/route-evidence.json`도 같은 커밋에서.** `node tools/check-routes.mjs`가 불일치·유령 항로뿐 아니라 **"확률이 실제로 갈렸는가"**까지 본다(배선이 끊기면 실패). 요율은 추정이 아니라 당대 인수업자가 매긴 값이라 감으로 바꾸지 말 것.
 - **`SEA_EVENTS`의 weight 합 100을 깨지 말 것.** 항로별 위험은 pirate weight를 갈아 끼우고 **그 차이를 calm에서 덜어와** 유지한다(`state.js: rollSeaEvent`). pirate만 올리면 폭풍·표류물·상선조우의 상대 빈도가 통째로 내려앉는다 — 테스트가 이걸 지킨다.
-- **내해를 안전하게 만들면 최적 항로가 그리로 쏠린다.** 오스만 내해·육로에서 해적을 뺀 것은 고증상 옳지만, 그 결과 최적 플레이 90항차 중 33항차(37%)가 무위험이 되어 실효 조우율이 18%→10.3%로 내려갔다. **`sim-trade.mjs`로는 안 잡힌다**(해상 이벤트를 모델링하지 않는다) — `node tools/sim-risk.mjs`로 교통량 가중 실효 조우율을 따로 본다.
+- **시뮬 수치는 반드시 여러 시드를 평균한다 — 한 판은 판단 근거가 못 된다.** "내해를 안전하게 만들어 실효 조우율이 18%→**10.3%**로 내려갔다(90항차 중 33항차가 무위험)"고 메모리에 적어 두고 대체 이벤트까지 후보로 올렸는데, **시드 20판을 평균하니 18.6%·내해 통과 7%로 종전과 같았다**(2026-08-15 정정). 원인은 `sim-risk.mjs`가 시드 없는 1회 실행이었던 것 — 어느 항로를 탔느냐가 통째로 운이라 10%대와 20%대를 오간다. 지금은 `node tools/sim-risk.mjs [항차] [시드수]`가 평균을 낸다. **`sim-trade.mjs`로는 안 잡힌다**(해상 이벤트를 모델링하지 않는다).
+- **항차 ROI는 경제가 아니라 "얼마나 가려 싣느냐"가 정한다.** `sim-core.mjs: planFor`의 `minMargin`이 0이면(총이익 최대화) 마지막 칸의 마진이 0이라 중앙값이 5%로 눌리고, 0.15면 같은 경제·같은 시드에서 10.1%가 된다. 조사가 "중앙값이 사료(10~20%)의 절반"이라며 `MARKET`을 낮추자고 제안했으나 **실측에서 폐기**했다 — impact를 0.36→0.22로 낮추면 중앙값은 1.7%p 오르고 90항차 자산이 34k→100k로 부푼다. 판정은 `node tools/check-voyage.mjs`가 근거 파일이 정한 minMargin에서만 한다.
 - **`CITY_TRADE`를 고치면 `content/city-evidence.json`도 같은 커밋에서 고친다.** 항목마다 판정(`confirmed`/`probable`/`corrected`/`gameplay`)·근거·출처가 붙어 있고 `node tools/check-evidence.mjs`가 불일치·누락·유령 항목을 잡아 **실패시킨다**. 수치만 바꾸면 "왜 이 값인지"를 아무도 모르게 된다.
 - **`CITY_TRADE` 수치에는 고증 근거가 달려 있다.** 15~16세기 실제 교역을 조사해 맞춰 둔 것이라, 밸런스만 보고 되돌리면 같은 오류가 재발한다(곡물을 북아프리카 수요지로 두는 것이 대표적 — 알제·튀니스는 곡물 **수출**지였다). 게임성 때문에 일부러 고증을 덮어쓴 곳도 문서에 따로 적혀 있으니 고치기 전에 [city-goods-history.md](wiki/city-goods-history.md)를 본다.
 - **품목마다 산지와 수요지가 둘 다 있어야 죽지 않는다.** 산지만 있고 수요가 0이면 그 품목은 중립가로만 팔린다(거래는 되지만 재미가 준다). 반대로 수요만 있고 산지가 0이면 그 칸은 아예 죽는다 — 모피가 그럴 뻔했고 이스탄불(흑해 관문)을 산지로 세워 살렸다. 확인은 대시보드 **물동량** 모드.

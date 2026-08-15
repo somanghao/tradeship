@@ -260,7 +260,11 @@ export const SHIPS = {
     hull: 'fluyt', name: '플류트', origin: '네덜란드(수입선)', originFlag: null, tier: 2, era: 'modern', requires: 'carrack',
     yards: ['genova', 'marseille'],
     price: 2600,
-    hp: 120, crew: 20, crewMax: 30, crewMin: 14, cargo: 170, guns: 6, speed: 1.10,
+    // crewMin 14→9: 플류트의 역사적 정체성이 바로 이 숫자다. 화물톤/승조원 1인이
+    // 사료로 20 안팎(코카 10·갤리 1.2)인데 14명이면 12.1이 되어 **코카(13.0)와 사실상 같아진다**.
+    // 9명이면 18.9로 밴드에 들고, "적은 선원으로 많이 싣는 배"가 비용에서 실제로 드러난다.
+    // → .claude/docs/wiki/research-voyage-returns.md §3-1
+    hp: 120, crew: 20, crewMax: 30, crewMin: 9, cargo: 170, guns: 6, speed: 1.10,
     upkeep: 10, rig: 0.67, tint: 'oak',
     desc: '화물선의 정석. 이만한 짐을 이만큼 적은 선원으로 나르는 배는 없다. 대신 포문이 빈약하다.',
   },
@@ -546,4 +550,58 @@ export const SEA_EVENTS = [
   { id: 'drift',    weight: 7,  name: '표류물 발견' },
   { id: 'merchant', weight: 12, name: '상선 조우' },
   { id: 'pirate',   weight: 18, name: '해적 조우' },
+  /* ── weight 0 = 확률표로는 절대 안 뽑힌다 ──────────────────────
+     `rollSeaEvent`가 **육로·내해 구간에서만** 명시적으로 골라 내보내는 항목이다.
+     weight를 주면 합 100이 무너져 조우 빈도가 통째로 흔들리므로 0으로 둔다.
+     오스만 내해(마르마라해)와 육로 80km 구간에 코르세어를 띄우는 것은 오류라
+     해적을 뺐는데, 그 결과 최적 플레이의 37%가 **무위험 구간**이 됐다.
+     바다의 위험을 뭍의 위험으로 갈음한다. → wiki/research-voyage-returns.md */
+  { id: 'bandit',   weight: 0,  name: '노상강도' },
+  { id: 'toll',     weight: 0,  name: '통행세 징수' },
 ];
+
+/** 육로·내해 구간에서 뭍의 사고가 날 확률.
+    해상 구간의 평균 조우율(18%)보다 낮게 둔다 — 안쪽 시장이 안전한 것 자체는 맞고,
+    다만 **완전 무위험**이어서는 안 된다는 것이 이 값의 취지다. */
+export const INLAND_ODDS = 0.12;
+
+/* ── 시장 충격 ────────────────────────────────────────────────
+   사료가 지지하는 '대박 항차'는 확률이 아니라 **사건**이다 —
+   기근(제노바 밀 1590→91 ×2) · 경쟁 선단 전손 · 독점 붕괴 · 나포.
+   ±15% 노이즈(`wobble`)에서 나오는 꼬리는 사료와 모양이 다르다.
+   그래서 값이 뛰는 자리를 따로 만든다. → content/voyage-evidence.json */
+export const SHOCK = {
+  // 상인 NPC가 털리면 그가 대던 항구에서 그 물건이 귀해진다
+  raidMult: 1.55,
+  raidDays: 12,
+  cap: 2.6,                  // 충격이 겹쳐도 이 이상은 안 오른다
+  floor: 0.45,               // 내려가는 쪽도 바닥이 있다
+
+  /* 저 혼자 일어나는 사건들. 조사가 든 유형 넷 중 나포(raid)는 위에 있고,
+     나머지 셋이 여기 있다. 값이 **내려가는** 사건을 함께 두는 것이 중요하다 —
+     오르기만 하면 "기다렸다 팔면 된다"가 되어 판단이 사라진다.
+     → .claude/docs/wiki/research-voyage-returns.md §4-4 */
+  events: [
+    {
+      id: 'famine', name: '기근', kind: 'demand', tone: 'bad',
+      mult: 2.0, days: 20, perDay: 0.010,
+      goods: ['grain'],
+      // 제노바 밀값이 1590→91년에 두 배가 됐다. **사들이던** 도시에만 건다 —
+      // 산지에 기근을 걸면 살 곳이 사라져 항로가 통째로 죽는다(콘텐츠가 준다).
+      line: (city, good) => `${city}에 흉년이 들었다. ${good}값이 치솟는다.`,
+    },
+    {
+      id: 'blockade', name: '봉쇄', kind: 'demand', tone: 'bad',
+      mult: 1.7, days: 14, perDay: 0.008,
+      goods: ['grain', 'weapon', 'wine', 'oliveoil'],
+      line: (city, good) => `함대가 ${city} 앞바다를 막았다. ${good}이(가) 동난다.`,
+    },
+    {
+      id: 'glut', name: '풍작·독점 붕괴', kind: 'supply', tone: 'good',
+      mult: 0.62, days: 16, perDay: 0.009,
+      goods: null,             // 산지 품목이면 무엇이든
+      // 톨파 명반이 무너졌을 때 값이 절반이 됐다. 싸게 살 기회 — 소식을 듣고 달려가는 재미.
+      line: (city, good) => `${city}에 ${good}이(가) 넘쳐난다. 지금이 살 때다.`,
+    },
+  ],
+};
