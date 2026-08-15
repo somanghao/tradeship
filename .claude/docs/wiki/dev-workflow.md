@@ -53,17 +53,35 @@ const btn  = (t) => [...document.querySelectorAll('#battle-cmd .btn')]
 node tools/test-rules.mjs      # 규칙 전반(경제·개장·나포·유지비·부관·항로위험) 65항목
 node tools/test-world.mjs      # NPC 세계·바람·해류·계약 10항목
 node tools/sim-trade.mjs       # 무역 곡선 — "몇 항차에 어느 배를 사는가"
-node tools/sim-risk.mjs        # 실효 조우율 — 실제로 다니는 항로에 가중한 위험
+node tools/sim-risk.mjs [항차] [시드수]   # 실효 조우율·화물 손실 빈도 (기본 90×20 — ★시드 평균)
 node tools/check-evidence.mjs  # 도시 수치 ↔ content/city-evidence.json 정합 (exit 1)
 node tools/check-routes.mjs    # 항로 요율 ↔ content/route-evidence.json 정합 (exit 1)
 node tools/check-wages.mjs     # 부관·선원 보수 ↔ content/wage-evidence.json 정합 (exit 1)
 node tools/check-prices.mjs    # 물가·자산·유지비 ↔ goods/asset/upkeep-evidence.json 정합 (exit 1)
+node tools/check-voyage.mjs    # 항차 수익 분포·손실 빈도·톤당승조원 ↔ voyage-evidence.json
 python tools/check-map.py      # 납품된 지도 그림 검수 (Pillow 필요 · exit 1)
 ```
 
-**고증 데이터를 만졌으면 `check-*` 넷을 다 돌린다.** 수치만 고치고 근거를 안 고치면
+**고증 데이터를 만졌으면 `check-*`를 다 돌린다.** 수치만 고치고 근거를 안 고치면
 "왜 이 값인지"를 아무도 모르게 되고, 다음 사람이 밸런스만 보고 고증을 되돌린다.
 실제로 급여를 내리자마자 `check-wages`가 "근거 16 ≠ 코드 2.6"으로 즉시 잡았다.
+
+### ★ 무엇이 실패이고 무엇이 경고인가
+
+**실패(exit 1)는 *코드와 근거가 어긋남* 또는 *규칙이 자기모순*일 때만이다.**
+값 불일치 · 유령 항목 · '확인됨' 판정인데 무출처 · 보험료를 걷는데 보상 사건 없음 · 내해 무위험.
+
+**경고는 미조사·짧은 basis·분포 밴드 이탈이다.** 도시·품목·선종을 늘리면 분포는 당연히
+흔들리고 근거는 뒤늦게 채워진다 — 그걸 실패로 잡으면 **검사기가 콘텐츠를 억제하는 장치**가 된다
+(실제로 `check-evidence`가 "근거 없음"을 실패로 잡아, 새 도시를 넣으려면 조사부터
+끝내야 하는 구조였다). → 최상위 원칙은 `claude-memory.md` §절대 원칙.
+
+### ★ 시뮬 수치는 반드시 여러 시드를 평균한다
+
+한 판만 돌리면 **어느 항로를 탔느냐가 통째로 운**이라 실효 조우율이 10%대와 20%대를 오간다.
+실제로 `sim-risk.mjs`가 시드 없는 1회 실행이던 시절 "18%→10.3%로 내려갔다"는 값이
+메모리·QUICKMAP·wiki 4곳에 결론으로 박히고 작업 후보까지 만들어냈다(20판 평균은 18.6%).
+시드 고정 패턴은 `dashboard/wages.mjs: withSeed`.
 
 `js/state.js`·`js/world.js`는 Canvas에 의존하지 않는 순수 로직이라 Node로 그대로 import된다
 (그래서 `world.js`는 `sprites/`를 쓰지 않고 돛 성능도 `data.js: SHIPS[].rig`에서 읽는다).

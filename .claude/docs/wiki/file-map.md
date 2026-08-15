@@ -9,6 +9,7 @@
 |---|---|---|
 | `js/pixel.js` | 픽셀 드로잉 코어 | `PAL`(팔레트), `G`(드로잉 DSL), `bake`(스프라이트 캐시 + 에셋 오버라이드 훅), `blit`, `outline`(자동 외곽선), `rng`, `knownKeys`/`keyOf`(스프라이트 키 목록·역추적) |
 | `js/assets.js` | 그림을 PNG로 갈아 끼우는 계층 | `loadAssetPack(base)`, `overrideFor(key)`, `registerOverride` — `assets/manifest.json`이 있으면 그 키의 스프라이트만 이미지로 대체 |
+| `js/evidence.js` | 게임이 근거 JSON을 읽는 자리 | `loadEvidence()`, `goodRank(city,good,side)` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
 | `js/sprites/char.js` | 병종 캐릭터 48×48 | `unitSprite(key, pose, scheme)`, `UNITS`, `SCHEMES`, `CHAR_FOOT` |
 | `js/sprites/ship.js` | 선박 측면 176×128 / 탑다운 28×28 | `shipSprite(hull, opts)`, `shipTopSprite`, `HULLS`, `TINTS`, `FLAGS`, `WATERLINE`, `SW` |
 | `js/sprites/scene.js` | 배경 + 이펙트 400×225 | `mapSprite`, `portSprite(style,seed)`, `openSeaSprite(mood)`, `blastSprite`, `smokeSprite`, `splashSprite`, `ballSprite`, `cannonSprite(kind,recoil)`, `VW/VH` |
@@ -26,13 +27,15 @@
 | `js/scenes/battle.js` | 전투 — 포격전·백병전 | `battleScene` |
 | `content/city-evidence.json` | 도시 수치의 **근거 정본** — 항목별 `{side, value, verdict, basis, sources[]}` | 서술본은 [city-goods-history.md](city-goods-history.md), 정합 검사는 `tools/check-evidence.mjs` |
 | `content/route-evidence.json` | 항로 위험도의 **근거 정본** — 항로별 `{risk, verdict, basis, sources[]}`. `risk`는 당대 해상보험 요율(%) | 수치 정본은 `map/geo.js: ROUTE_RISK`, 검사는 `tools/check-routes.mjs` |
-| `tools/check-evidence.mjs` | 코드(`CITY_TRADE`·깃발) ↔ 근거 JSON 정합 검사 | 불일치·근거누락·유령항목이면 exit 1 |
+| `tools/check-evidence.mjs` | 코드(`CITY_TRADE`·깃발) ↔ 근거 JSON 정합 검사 | **실패**: 값 불일치·유령항목·'확인됨'인데 무출처. **경고**: 미조사·짧은 basis — 근거가 없다고 실패시키면 콘텐츠를 못 늘린다 |
 | `tools/check-routes.mjs` | `ROUTE_RISK` ↔ `route-evidence.json` 정합 + **"확률이 실제로 갈렸는가"** 검사 | 배선이 끊겨 전 항로가 같은 확률이면 exit 1 |
 | `content/wage-evidence.json` | 부관·선원 보수의 **근거 정본** — 사료 앵커(배율)·발견·판정 | 수치 정본은 `data.js: OFFICER`·`state.js: CREW_WAGE`, 검사는 `tools/check-wages.mjs` |
 | `content/goods-evidence.json` | **교역품 물가**의 근거 — 밀·소금·기름·와인·후추 사료가, 화물 1칸의 실물 정의, **대조 2축의 정본** | 검사 `tools/check-prices.mjs` |
 | `content/asset-evidence.json` | **선박·부동산**의 근거 — 캐랙 건조비·갤리·집세·주택값 + "선원 연봉의 몇 배" 지표 | 부동산은 아직 게임 기능이 아니라 스케일 기준점 |
 | `content/upkeep-evidence.json` | **유지비·위험비용**의 근거 — 선체/무장 유지, 적하보험 요율, 화물 유인 | 임금을 내린 대신 압박을 옮긴 자리 |
+| `content/voyage-evidence.json` | **한 항차가 얼마를 버나**의 근거 — 이익률·보험료율·전손률·코멘다 분배·톤당승조원 + 목표 밴드 | ★게임 실측값은 안 적는다(콘텐츠가 바뀌면 거짓이 된다) — `check-voyage.mjs`가 그때그때 산출해 대조. 조사 원문 [research-voyage-returns.md](research-voyage-returns.md) |
 | `tools/check-prices.mjs` | 교역품 상대가격·임금 사다리·임금 대비 배값·유지비 계수를 근거와 대조 | 절대액이 아니라 **비율**을 지킨다 |
+| `tools/check-voyage.mjs` | 항차 수익 **분포** 검증 | ROI 중앙값·꼬리비·손실 빈도·톤당승조원 ↔ `content/voyage-evidence.json`. 시뮬을 시드 평균으로 돌린다 — 상수 대조가 아니라 분포 대조라 결이 다르다 |
 | `tools/check-wages.mjs` | `OFFICER.wage`·`cut` ↔ `wage-evidence.json` 정합 + 파생 배율 재계산 | 배율을 손으로 적어 둔 값이 굳으면 exit 1 |
 | `tools/check-map.py` | **납품된 지도 그림 검수**(Pillow) — 규격·색수(손실 webp)·도시 16곳 해안선·항로 28개·바다 소음 | 좌표는 `map/geo.js`에서 직접 읽는다 · 기준판은 `assets/map-reference/` |
 | `tools/sim-risk.mjs` | 최적 플레이가 실제로 다니는 항로에 가중한 **실효 조우율** | `sim-core`는 해상 이벤트를 모델링하지 않아 자산 곡선으로는 위험도 변화가 안 잡힌다 — 그 빈자리를 메운다 |
@@ -45,7 +48,9 @@
 | `dashboard/pirate-view.js` | **해적 탭** 렌더 | 조우빈도·등급표·자산별 발생확률·지도(재생)·항로 밀도·명부 |
 | `dashboard/wage-view.js` | **보수 탭** 렌더 | 보수 사다리·사료 대조(배율)·수입 구성·항해비 몫·짝지어 비교·근거표 |
 | `dashboard/shared.mjs` | 세 탭 공용 그리기 도구 | `$`·`el`·`svg`·`node`·`heat`·`TIER_COLOR`·툴팁 — 갈라지면 한 화면으로 안 보인다 |
-| `dashboard/app.js` | 탭 셸 | 왼쪽 사이드바 · 해적·보수 탭은 **처음 열 때만** 계측(무겁다) |
+| `dashboard/ports.mjs` | **항구** 지표 채집(DOM 없음) | `portRows`·`goodsOf`(근거 신뢰도 순 정렬)·`yardOf`(공업력)·`realEstate`(부동산 앵커 배율 환산) |
+| `dashboard/port-view.js` | **항구 탭** 렌더 | 항구 일람·상세(교역품 3묶음)·공업력 비교·부동산·근거 현황 |
+| `dashboard/app.js` | 탭 셸 | 왼쪽 사이드바 · 해적·항구·보수 탭은 **처음 열 때만** 계측(무겁다) |
 | `js/scenes/shipyard.js` | 조선소 — 선박 교체·갑판 배치·무장 → [shipyard.md](shipyard.md) | `shipyardScene` |
 
 기타: `index.html`(셸) · `css/style.css`(UI 테마) · `preview.html`(에셋 미리보기 — 그림마다 `bake` 키를 적어 준다) · `serve.py`(개발 서버 — 캐시 끔 + `.mjs` MIME 등록, `-m http.server` 대신 이걸 쓴다) · `assets/`(에셋 팩 — `README.md`에 교체 절차)
