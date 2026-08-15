@@ -5,7 +5,7 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
-  laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion,
+  laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
   FOES_BY_REGION,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
@@ -216,9 +216,14 @@ export function pressureOf(cityId, goodId) {
   return state.impact[cityId]?.[goodId] || 0;
 }
 
+/* 원양 항로가 닿는 항구 — 정기시가 서고 배후지 전체가 그 물량을 받는다. → data.js: MARKET.gateDepth */
+const OCEAN_GATE = new Set(OCEAN_LANES.flatMap((l) => [l.a, l.b]));
+export const isOceanGate = (cityId) => OCEAN_GATE.has(cityId);
+
 /** n개를 한 번에 거래할 때의 평균 벌점 (0~cap) */
 export function marketDepth(cityId) {
-  return MARKET.depthPerSize * CITY_BY_ID[cityId].size;
+  const base = MARKET.depthPerSize * CITY_BY_ID[cityId].size;
+  return OCEAN_GATE.has(cityId) ? Math.round(base * MARKET.gateDepth) : base;
 }
 
 export function impactFactor(cityId, goodId, n = 0) {
