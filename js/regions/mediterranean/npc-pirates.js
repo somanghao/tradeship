@@ -128,3 +128,18 @@ export const PIRATES = [
     },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   그것이 홍해와 대만 해협까지 나갔다. 여기 옮겨 적어 **이 바다의 것으로 되돌린다.**
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '해적 소함', nation: '해적', hull: 'brig', tint: 'dark', goods: ['salt', 'wine', 'grain'] },
+  { name: '바르바리 코르세어', nation: '바르바리', hull: 'galley', tint: 'oak', goods: ['ivory', 'spice', 'salt'] },
+  { name: '검은 깃발단', nation: '해적', hull: 'carrack', tint: 'dark', goods: ['silk', 'gold', 'spice'] },
+  { name: '프랑스 순찰 프리깃 팡당', nation: '프랑스', hull: 'frigate', tint: 'white', goods: ['wine', 'weapon', 'glass'] },
+  { name: '바르바리 기함 알 사파', nation: '바르바리', hull: 'galleon', tint: 'green', goods: ['gold', 'ivory', 'silk'] },
+];

@@ -131,3 +131,22 @@ export const PIRATES = [
     },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   **바르바리 코르세어와 프랑스 순찰 프리깃**이 나왔다.
+   ★ 이 바다가 이것을 가장 절실히 필요로 했다. 요율 상위 세 구간(계롱~월항 10.5 ·
+   히라도~쌍서 10.0 · 닝보~쌍서 9.5)이 전부 여기인데, 위 명부의 여섯은
+   애써 적어 두고도 화면에 없는 사람이었다. 위험은 권역별인데 그 위험을
+   채우는 얼굴이 전 세계 공용이었던 탓이다.
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '왜구 소선단', nation: '왜구', hull: 'galley', tint: 'oak', goods: ['grain', 'salt', 'tea'] },
+  { name: '왜구 습격선', nation: '왜구', hull: 'galley', tint: 'dark', goods: ['silver', 'silk', 'tea'] },
+  { name: '해상 세력 선단', nation: '해적', hull: 'carrack', tint: 'dark', goods: ['silk', 'porcelain', 'silver'] },
+  { name: '명 수군 순찰선', nation: '명', hull: 'frigate', tint: 'white', goods: ['silk', 'porcelain', 'weapon'] },
+  { name: '왜구 대선단', nation: '왜구', hull: 'galleon', tint: 'green', goods: ['silver', 'silk', 'gold'] },
+];

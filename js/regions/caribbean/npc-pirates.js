@@ -104,3 +104,18 @@ export const PIRATES = [
     },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   부카니에와 과르다코스타가 같은 물에 떠 있던 바다다.
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '부카니에 소선', nation: '해적', hull: 'brig', tint: 'dark', goods: ['salt', 'grain', 'hide'] },
+  { name: '프랑스 해적', nation: '프랑스', hull: 'brig', tint: 'oak', goods: ['sugar', 'hide', 'salt'] },
+  { name: '잉글랜드 사략선', nation: '잉글랜드', hull: 'carrack', tint: 'white', goods: ['silver', 'sugar', 'hide'] },
+  { name: '과르다코스타 순찰선', nation: '스페인', hull: 'frigate', tint: 'white', goods: ['silver', 'pearl', 'sugar'] },
+  { name: '스페인 은함대 호위기함', nation: '스페인', hull: 'galleon', tint: 'green', goods: ['silver', 'gold', 'pearl'] },
+];

@@ -10,12 +10,13 @@ import {
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
 } from './map/geo.js';
-import { ALL_GOODS, ALL_SHIPS, ALL_CITY_TRADE, ALL_CITY_TARIFF } from './regions/index.js';
+import { ALL_GOODS, ALL_SHIPS, ALL_CITY_TRADE, ALL_CITY_TARIFF, FOES_BY_REGION } from './regions/index.js';
 
 export {
   ROUTES, CURRENTS, ROUTE_RISK, riskKey,
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
+  FOES_BY_REGION,
 };
 
 /* 교역품 — **권역마다 갈라져 있다.** 그 물건이 나온 권역의 `js/regions/<권역>/goods.js`가

@@ -99,3 +99,18 @@ export const PIRATES = [
     lines: { hail: '“주석이냐 후추냐. 무거운 쪽을 내려라.”' },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   군도의 습격선과 회사 순찰선이 같은 물에 떠 있던 바다다.
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '이라눈 습격선', nation: '해적', hull: 'galley', tint: 'oak', goods: ['grain', 'salt', 'spice'] },
+  { name: '술루 함대', nation: '술루', hull: 'galley', tint: 'dark', goods: ['spice', 'pepper', 'grain'] },
+  { name: '조호르 함대', nation: '조호르', hull: 'carrack', tint: 'oak', goods: ['pepper', 'spice', 'tin'] },
+  { name: '회사 순찰선', nation: '네덜란드', hull: 'frigate', tint: 'white', goods: ['clove', 'nutmeg', 'pepper'] },
+  { name: '회사 향료 함대', nation: '네덜란드', hull: 'galleon', tint: 'green', goods: ['clove', 'nutmeg', 'spice'] },
+];

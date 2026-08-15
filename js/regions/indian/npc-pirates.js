@@ -122,3 +122,19 @@ export const PIRATES = [
     },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   말라바르 해안에서도 바르바리 배가 나왔다. 여기는 쿤할리 마라칼의 바다이고,
+   그 반대편에는 카르타스를 강요하는 포르투갈 함대가 있었다.
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '말라바르 잡배', nation: '해적', hull: 'galley', tint: 'oak', goods: ['pepper', 'grain', 'salt'] },
+  { name: '마라칼 습격선', nation: '말라바르', hull: 'galley', tint: 'dark', goods: ['pepper', 'spice', 'ginger'] },
+  { name: '구자라트 사략선', nation: '구자라트', hull: 'carrack', tint: 'oak', goods: ['calico', 'indigo', 'pepper'] },
+  { name: '포르투갈 순찰 함대', nation: '포르투갈', hull: 'frigate', tint: 'white', goods: ['pepper', 'calico', 'gold'] },
+  { name: '포르투갈 인도 함대 기함', nation: '포르투갈', hull: 'galleon', tint: 'white', goods: ['gold', 'pepper', 'silk'] },
+];

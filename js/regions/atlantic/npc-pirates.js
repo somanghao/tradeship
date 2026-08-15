@@ -111,3 +111,18 @@ export const PIRATES = [
     },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   **발트해에서 바르바리 코르세어가 나왔다.**
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '던커크 소형 사략선', nation: '던커크', hull: 'brig', tint: 'dark', goods: ['salt', 'grain', 'cloth'] },
+  { name: '젤란트 사략선', nation: '젤란트', hull: 'fluyt', tint: 'oak', goods: ['herring', 'timber', 'cloth'] },
+  { name: '식량형제단 잔당', nation: '해적', hull: 'carrack', tint: 'dark', goods: ['grain', 'fur', 'wax'] },
+  { name: '잉글랜드 사략 선단', nation: '잉글랜드', hull: 'frigate', tint: 'white', goods: ['wine', 'weapon', 'cloth'] },
+  { name: '스페인 은함대 호위기함', nation: '스페인', hull: 'galleon', tint: 'green', goods: ['gold', 'weapon', 'wine'] },
+];

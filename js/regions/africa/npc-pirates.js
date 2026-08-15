@@ -89,3 +89,18 @@ export const PIRATES = [
     },
   },
 ];
+
+
+/* ── 이 바다의 이름 없는 적 ────────────────────────────
+   위의 명부는 **이름을 가진 자들**이고, 이것은 그 밖의 흔한 조우다.
+   전에는 이 자리가 전 세계 공용(`data.js: ENEMIES` 다섯)이라
+   **기니만에서 바르바리 코르세어**가 나왔다.
+   세기·병력·전리품 금액은 그 등급을 그대로 쓰고 **얼굴만** 이 바다 것으로
+   갈아 끼운다 — 밸런스를 흔들지 않으면서 "여기가 어느 바다인가"를 되찾는 방법이다. */
+export const FOES = [
+  { name: '기니 연안 습격선', nation: '해적', hull: 'galley', tint: 'oak', goods: ['salt', 'grain', 'cloth'] },
+  { name: '무어 코르세어', nation: '바르바리', hull: 'galley', tint: 'dark', goods: ['ivory', 'salt', 'gold'] },
+  { name: '포르투갈 사략선', nation: '포르투갈', hull: 'caravel', tint: 'white', goods: ['gold', 'ivory', 'spice'] },
+  { name: '네덜란드 사략 선단', nation: '네덜란드', hull: 'fluyt', tint: 'oak', goods: ['gold', 'ivory', 'spice'] },
+  { name: '오스만 홍해 함대', nation: '오스만', hull: 'galleon', tint: 'green', goods: ['gold', 'ivory', 'spice'] },
+];

@@ -6,6 +6,7 @@ import {
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
   laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion,
+  FOES_BY_REGION,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
   START_GOLD, REPAIR_UNIT, HIRE_UNIT,
@@ -1291,12 +1292,36 @@ export function capLoot(e) {
   };
 }
 
-export function pickEnemy(rand = Math.random) {
+/* 등급은 그대로 두고 **얼굴만** 그 바다 것으로 갈아 끼운다.
+   ★ 이것이 없던 동안 네 명의 테스터가 서로 다른 바다에서 같은 것을 보고했다 —
+     홍해 한복판의 프랑스 순찰 프리깃, 대만 해협의 바르바리 기함, 기니만의 바르바리
+     코르세어, 발트해의 바르바리 배. `ENEMIES` 다섯이 원래 지중해를 그린 것인데
+     그것을 아홉 바다가 공용으로 쓰고 있었다. 위험(보험 요율)은 권역마다 다르게 적어
+     두고도, 그 위험을 채우는 얼굴이 전 세계 하나였던 것이다.
+   수치(hp·포·선원·병력·전리품 금액)는 손대지 않는다 — 밸런스는 이미 맞춰져 있고
+   여기서 바꿔야 할 것은 "누가 왔는가"뿐이다. */
+function localize(base, tier, regionId) {
+  const skin = FOES_BY_REGION[regionId]?.[tier];
+  if (!skin) return base;
+  return {
+    ...base,
+    id: `${base.id}:${regionId}`,
+    name: skin.name,
+    nation: skin.nation ?? base.nation,
+    hull: skin.hull ?? base.hull,
+    tint: skin.tint ?? base.tint,
+    flag: skin.flag ?? base.flag,
+    loot: { ...base.loot, goods: skin.goods ?? base.loot.goods },
+  };
+}
+
+export function pickEnemy(rand = Math.random, regionId = currentRegion()) {
+  const pick = (i) => capLoot(localize(ENEMIES[i], i, regionId));
   // 자산이 커질수록 거물이 붙는다. 낡은 배로 시작하는 초반엔 큰 놈이 아예 붙지 않는다
   // (해적도 털 값이 나오는 배를 고른다).
   const wealth = state.gold + cargoUsed() * 60;
   // 볼품없는 배는 큰 놈이 상대해 주지 않는다 — 낡은 바사를 모는 동안은 잡배만 붙는다
-  if (SHIPS[state.shipKey].leak) return capLoot(rand() < 0.9 ? ENEMIES[0] : ENEMIES[1]);
+  if (SHIPS[state.shipKey].leak) return pick(rand() < 0.9 ? 0 : 1);
   const table = wealth > 30000 ? [0.05, 0.10, 0.25, 0.35, 0.25]
               : wealth > 14000 ? [0.10, 0.25, 0.40, 0.20, 0.05]
               : wealth > 6000  ? [0.30, 0.42, 0.24, 0.04, 0.00]
@@ -1305,9 +1330,9 @@ export function pickEnemy(rand = Math.random) {
   let n = rand();
   for (let i = 0; i < table.length; i++) {
     n -= table[i];
-    if (n <= 0) return capLoot(ENEMIES[i]);
+    if (n <= 0) return pick(i);
   }
-  return capLoot(ENEMIES[0]);
+  return pick(0);
 }
 
 /* ── 항해 비용 ────────────────────────────────────────────────

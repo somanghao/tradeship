@@ -326,6 +326,12 @@ export const ALL_TRADERS = npcOf('traders', 'TRADERS');
 export const ALL_PIRATES = npcOf('pirates', 'PIRATES');
 export const ALL_FIGURES = npcOf('figures', 'FIGURES');
 
+/** 권역별 **이름 없는 적** — 그 바다에 이름난 해적이 떠 있지 않을 때 붙는 얼굴.
+    `data.js: ENEMIES`의 등급(세기·병력·전리품 금액)을 그대로 쓰고 이름·국적·선체만 바꾼다.
+    이것이 없던 동안 홍해에서 프랑스 프리깃이, 대만 해협에서 바르바리 기함이 나왔다. */
+export const FOES_BY_REGION = Object.fromEntries(
+  each('pirates').map(({ r, m }) => [r.id, m.FOES ?? []]).filter(([, v]) => v.length));
+
 /** 도시 id → 권역 id */
 export const REGION_OF_CITY = Object.fromEntries(ALL_CITY_GEO.map((c) => [c.id, c.region]));
 
