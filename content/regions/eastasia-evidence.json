@@ -6,9 +6,9 @@
   "cities": {
     "guangzhou": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "ming",
+        "verdict": "probable",
+        "basis": "명의 항구다 — `ming`(붉은 바탕에 금빛 해)을 단다. ★ 전에는 venice를 빌려 명 연안 다섯 항구가 **베네치아 깃발**을 달고 있었다. 베네치아는 이 게임 안에 실재하는 도시라, 빌린 깃발이 '없는 깃발'이 아니라 '남의 나라 깃발'이 되는 자리였다. sprites/ship.js: FLAGS에 ming이 생겼고 이 권역의 NPC(npc-pirates.js의 정지룡)와 ships.js의 originFlag가 이미 그것을 쓰고 있었으므로 geo.js만 뒤처져 있었다. ※ 근세 동아시아에는 유럽식 국기 제도가 없다. 명에 국기라 할 것은 없었고 도안은 주(朱)를 국성으로 삼은 왕조의 색에서 왔다 — 그래서 판정은 probable이다."
       },
       "tariff": {
         "value": 0.075,
@@ -109,9 +109,9 @@
     },
     "macau": {
       "flag": {
-        "value": "england",
-        "verdict": "gameplay",
-        "basis": "포르투갈 깃발이 FLAGS에 없어 흰 바탕에 푸른 마크인 것을 빌렸다 — 포르투갈 왕기가 흰 바탕에 푸른 방패라 색은 맞는다. art.flagTodo 참조."
+        "value": "portugal",
+        "verdict": "probable",
+        "basis": "포르투갈령 마카오다 — `portugal`(흰 바탕에 그리스도 기사단의 붉은 십자)을 단다. ★ 전에는 england를 빌렸다. 1557년 명이 정주를 허락한 뒤에도 **주권은 명에 있었고** 해마다 은 500냥의 지대를 물었으므로 포르투갈 깃발이 곧 영토 표시는 아니다. 다만 이 항구에 배를 대고 부두를 굴린 것은 포르투갈이고, 이 권역의 npc-traders.js가 마카오의 나우에 이미 portugal을 달고 있다. 명의 주권을 지도 위에 표시할 방법이 없어 운영 주체 쪽을 골랐다 — 그래서 판정은 probable이다."
       },
       "tariff": {
         "value": 0.06,
@@ -221,9 +221,9 @@
     },
     "yuegang": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "ming",
+        "verdict": "probable",
+        "basis": "명의 항구다 — `ming`(붉은 바탕에 금빛 해)을 단다. ★ 전에는 venice를 빌려 명 연안 다섯 항구가 **베네치아 깃발**을 달고 있었다. 베네치아는 이 게임 안에 실재하는 도시라, 빌린 깃발이 '없는 깃발'이 아니라 '남의 나라 깃발'이 되는 자리였다. sprites/ship.js: FLAGS에 ming이 생겼고 이 권역의 NPC(npc-pirates.js의 정지룡)와 ships.js의 originFlag가 이미 그것을 쓰고 있었으므로 geo.js만 뒤처져 있었다. ※ 근세 동아시아에는 유럽식 국기 제도가 없다. 명에 국기라 할 것은 없었고 도안은 주(朱)를 국성으로 삼은 왕조의 색에서 왔다 — 그래서 판정은 probable이다."
       },
       "tariff": {
         "value": 0.085,
@@ -329,9 +329,9 @@
     },
     "quanzhou": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "ming",
+        "verdict": "probable",
+        "basis": "명의 항구다 — `ming`(붉은 바탕에 금빛 해)을 단다. ★ 전에는 venice를 빌려 명 연안 다섯 항구가 **베네치아 깃발**을 달고 있었다. 베네치아는 이 게임 안에 실재하는 도시라, 빌린 깃발이 '없는 깃발'이 아니라 '남의 나라 깃발'이 되는 자리였다. sprites/ship.js: FLAGS에 ming이 생겼고 이 권역의 NPC(npc-pirates.js의 정지룡)와 ships.js의 originFlag가 이미 그것을 쓰고 있었으므로 geo.js만 뒤처져 있었다. ※ 근세 동아시아에는 유럽식 국기 제도가 없다. 명에 국기라 할 것은 없었고 도안은 주(朱)를 국성으로 삼은 왕조의 색에서 왔다 — 그래서 판정은 probable이다."
       },
       "goods": {
         "ceramic": {
@@ -388,9 +388,9 @@
     },
     "fuzhou": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "ming",
+        "verdict": "probable",
+        "basis": "명의 항구다 — `ming`(붉은 바탕에 금빛 해)을 단다. ★ 전에는 venice를 빌려 명 연안 다섯 항구가 **베네치아 깃발**을 달고 있었다. 베네치아는 이 게임 안에 실재하는 도시라, 빌린 깃발이 '없는 깃발'이 아니라 '남의 나라 깃발'이 되는 자리였다. sprites/ship.js: FLAGS에 ming이 생겼고 이 권역의 NPC(npc-pirates.js의 정지룡)와 ships.js의 originFlag가 이미 그것을 쓰고 있었으므로 geo.js만 뒤처져 있었다. ※ 근세 동아시아에는 유럽식 국기 제도가 없다. 명에 국기라 할 것은 없었고 도안은 주(朱)를 국성으로 삼은 왕조의 색에서 왔다 — 그래서 판정은 probable이다."
       },
       "goods": {
         "tea": {
@@ -464,9 +464,9 @@
     },
     "ningbo": {
       "flag": {
-        "value": "venice",
-        "verdict": "gameplay",
-        "basis": "명(明)의 깃발이 sprites/ship.js: FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 — 붉은 바탕에 금색은 주(朱)를 국성으로 삼은 명과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "ming",
+        "verdict": "probable",
+        "basis": "명의 항구다 — `ming`(붉은 바탕에 금빛 해)을 단다. ★ 전에는 venice를 빌려 명 연안 다섯 항구가 **베네치아 깃발**을 달고 있었다. 베네치아는 이 게임 안에 실재하는 도시라, 빌린 깃발이 '없는 깃발'이 아니라 '남의 나라 깃발'이 되는 자리였다. sprites/ship.js: FLAGS에 ming이 생겼고 이 권역의 NPC(npc-pirates.js의 정지룡)와 ships.js의 originFlag가 이미 그것을 쓰고 있었으므로 geo.js만 뒤처져 있었다. ※ 근세 동아시아에는 유럽식 국기 제도가 없다. 명에 국기라 할 것은 없었고 도안은 주(朱)를 국성으로 삼은 왕조의 색에서 왔다 — 그래서 판정은 probable이다."
       },
       "tariff": {
         "value": 0.07,
@@ -634,9 +634,9 @@
     },
     "mapo": {
       "flag": {
-        "value": "hafsid",
-        "verdict": "gameplay",
-        "basis": "조선의 깃발이 FLAGS에 없다. 흰 바탕에 검은 마크인 것을 빌렸다 — 흰옷과 먹빛이라는 조선의 인상과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "joseon",
+        "verdict": "probable",
+        "basis": "조선의 항구다 — `joseon`(흰 바탕에 태극)을 단다. ★ 전에는 hafsid를 빌려 마포와 부산포가 **튀니스 하프스 왕조의 검은 초승달기**를 달고 있었다. 지중해·아프리카 권역에 그 깃발을 단 도시가 실재하므로 가장 크게 어긋난 자리였다. ※ 태극기가 국기가 되는 것은 1882년이라 이 시대의 국기는 아니다. 다만 이 프로젝트는 연도를 고정하지 않고, 태극 문양 자체는 조선 이전부터 관아·왕실이 쓰던 것이라 '조선이 쓴 적 없는 표식'은 아니다 — 그래서 판정은 probable이다."
       },
       "goods": {
         "ginseng": {
@@ -698,9 +698,9 @@
     },
     "busanpo": {
       "flag": {
-        "value": "hafsid",
-        "verdict": "gameplay",
-        "basis": "조선의 깃발이 FLAGS에 없다. 흰 바탕에 검은 마크인 것을 빌렸다 — 흰옷과 먹빛이라는 조선의 인상과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "joseon",
+        "verdict": "probable",
+        "basis": "조선의 항구다 — `joseon`(흰 바탕에 태극)을 단다. ★ 전에는 hafsid를 빌려 마포와 부산포가 **튀니스 하프스 왕조의 검은 초승달기**를 달고 있었다. 지중해·아프리카 권역에 그 깃발을 단 도시가 실재하므로 가장 크게 어긋난 자리였다. ※ 태극기가 국기가 되는 것은 1882년이라 이 시대의 국기는 아니다. 다만 이 프로젝트는 연도를 고정하지 않고, 태극 문양 자체는 조선 이전부터 관아·왕실이 쓰던 것이라 '조선이 쓴 적 없는 표식'은 아니다 — 그래서 판정은 probable이다."
       },
       "tariff": {
         "value": 0.06,
@@ -782,9 +782,9 @@
     },
     "hakata": {
       "flag": {
-        "value": "genoa",
-        "verdict": "gameplay",
-        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+        "value": "japan",
+        "verdict": "probable",
+        "basis": "일본의 항구다 — `japan`(흰 바탕에 붉은 원 = 일장)을 단다. ★ 전에는 genoa(흰 바탕·붉은 십자)를 빌렸는데, 제노바는 이 게임 안에 실재하는 도시다. 일장은 다섯 중 근거가 가장 단단한 쪽이다 — 주인선이 배에 단 기와 막부 문서의 인상이 그대로 흰 바탕에 붉은 원이었다. 다만 '국기'로 정해진 것은 근대라 판정은 probable로 둔다."
       },
       "goods": {
         "sulfur": {
@@ -863,9 +863,9 @@
     },
     "hirado": {
       "flag": {
-        "value": "genoa",
-        "verdict": "gameplay",
-        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+        "value": "japan",
+        "verdict": "probable",
+        "basis": "일본의 항구다 — `japan`(흰 바탕에 붉은 원 = 일장)을 단다. ★ 전에는 genoa(흰 바탕·붉은 십자)를 빌렸는데, 제노바는 이 게임 안에 실재하는 도시다. 일장은 다섯 중 근거가 가장 단단한 쪽이다 — 주인선이 배에 단 기와 막부 문서의 인상이 그대로 흰 바탕에 붉은 원이었다. 다만 '국기'로 정해진 것은 근대라 판정은 probable로 둔다."
       },
       "goods": {
         "silver": {
@@ -948,9 +948,9 @@
     },
     "nagasaki": {
       "flag": {
-        "value": "genoa",
-        "verdict": "gameplay",
-        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+        "value": "japan",
+        "verdict": "probable",
+        "basis": "일본의 항구다 — `japan`(흰 바탕에 붉은 원 = 일장)을 단다. ★ 전에는 genoa(흰 바탕·붉은 십자)를 빌렸는데, 제노바는 이 게임 안에 실재하는 도시다. 일장은 다섯 중 근거가 가장 단단한 쪽이다 — 주인선이 배에 단 기와 막부 문서의 인상이 그대로 흰 바탕에 붉은 원이었다. 다만 '국기'로 정해진 것은 근대라 판정은 probable로 둔다."
       },
       "tariff": {
         "value": 0.055,
@@ -1064,9 +1064,9 @@
     },
     "bonotsu": {
       "flag": {
-        "value": "genoa",
-        "verdict": "gameplay",
-        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+        "value": "japan",
+        "verdict": "probable",
+        "basis": "일본의 항구다 — `japan`(흰 바탕에 붉은 원 = 일장)을 단다. ★ 전에는 genoa(흰 바탕·붉은 십자)를 빌렸는데, 제노바는 이 게임 안에 실재하는 도시다. 일장은 다섯 중 근거가 가장 단단한 쪽이다 — 주인선이 배에 단 기와 막부 문서의 인상이 그대로 흰 바탕에 붉은 원이었다. 다만 '국기'로 정해진 것은 근대라 판정은 probable로 둔다."
       },
       "goods": {
         "sulfur": {
@@ -1161,9 +1161,9 @@
     },
     "sakai": {
       "flag": {
-        "value": "genoa",
-        "verdict": "gameplay",
-        "basis": "일본의 깃발이 FLAGS에 없다. 흰 바탕에 붉은 마크인 것을 빌렸다 — 일장(日章) 그대로라 색만으로도 읽힌다. art.flagTodo 참조."
+        "value": "japan",
+        "verdict": "probable",
+        "basis": "일본의 항구다 — `japan`(흰 바탕에 붉은 원 = 일장)을 단다. ★ 전에는 genoa(흰 바탕·붉은 십자)를 빌렸는데, 제노바는 이 게임 안에 실재하는 도시다. 일장은 다섯 중 근거가 가장 단단한 쪽이다 — 주인선이 배에 단 기와 막부 문서의 인상이 그대로 흰 바탕에 붉은 원이었다. 다만 '국기'로 정해진 것은 근대라 판정은 probable로 둔다."
       },
       "goods": {
         "weapon": {
@@ -1250,9 +1250,9 @@
     },
     "naha": {
       "flag": {
-        "value": "hospitaller",
-        "verdict": "gameplay",
-        "basis": "류큐 왕국의 깃발이 FLAGS에 없다. 붉은 바탕에 흰 마크인 것을 빌렸다 — 좌삼파문(左三巴紋)이 붉은 바탕에 흰 무늬로 그려지던 것과 어긋나지 않는다. art.flagTodo 참조."
+        "value": "ryukyu",
+        "verdict": "probable",
+        "basis": "류큐 왕국의 항구다 — `ryukyu`(붉은 바탕에 흰 좌삼파문)를 단다. ★ 전에는 hospitaller(성 요한 기사단기)를 빌려, 지중해에서 로도스·몰타가 다는 것과 **같은 깃발**을 나하가 달고 있었다. 좌삼파문(左三巴紋)은 류큐 왕부가 쓰던 문양이라 표식 자체는 이 왕국의 것이고, 18px에서는 고리로 낸다. 국기 제도가 아니라 문양에서 온 값이라 판정은 probable이다."
       },
       "tariff": {
         "value": 0.035,
@@ -2151,28 +2151,12 @@
     ],
     "flagTodo": [
       {
-        "key": "ming",
-        "note": "명 — 지금은 venice(붉은 바탕·금색)를 빌렸다. 주(朱)를 국성으로 삼은 왕조라 붉은 바탕은 맞고, 마크는 금색 용이나 '明' 자가 어울린다"
-      },
-      {
-        "key": "joseon",
-        "note": "조선 — 지금은 hafsid(흰 바탕·검은색). 흰 바탕에 먹빛 마크가 인상에 맞는다"
-      },
-      {
-        "key": "japan",
-        "note": "일본 — 지금은 genoa(흰 바탕·붉은색)를 빌렸는데 색만으로는 이미 일장(日章)이다. 마크를 붉은 원으로 바꾸면 그대로 완성된다"
-      },
-      {
-        "key": "ryukyu",
-        "note": "류큐 — 지금은 hospitaller(붉은 바탕·흰색). 좌삼파문(左三巴紋) 세 갈래 소용돌이를 흰색으로 넣으면 된다"
-      },
-      {
-        "key": "portugal",
-        "note": "포르투갈(마카오) — 지금은 england(흰 바탕·푸른색). 흰 바탕에 푸른 방패 다섯과 성곽 테두리"
+        "key": "_done",
+        "note": "★ 끝났다. sprites/ship.js: FLAGS에 ming(붉은 바탕·금빛 해)·joseon(흰 바탕·태극)·japan(일장)·ryukyu(좌삼파문 고리)·portugal(그리스도 기사단 십자)이 모두 있고, geo.js의 도시 열넷이 그것을 단다. 전에는 venice·hafsid·genoa·hospitaller·england를 빌렸는데 그 다섯은 **이 게임 안에 실재하는 남의 나라 깃발**이라(부산포가 튀니스 초승달기를 달고 나하가 몰타와 같은 기사단기를 달았다) 빈자리가 아니라 오류였다. 도안의 한계는 각 도시 flag.basis에 적었다"
       },
       {
         "key": "_ships",
-        "note": "★ 깃발이 생기면 js/regions/eastasia/ships.js의 originFlag를 채운다. 지금은 전부 null인데, 빌린 깃발을 originFlag에 쓰면 **베네치아에서 복선을, 튀니스에서 판옥선을 싸게 짓게 되기 때문**이다(그 깃발을 단 항구는 요구등급 −1). 명=복선·사선, 일본=세키부네·아타케부네·주인선, 조선=판옥선"
+        "note": "ships.js의 originFlag도 채워져 있다 — 명=사선·복선, 일본=세키부네·아타케부네·주인선, 조선=판옥선·거북선. 이제 제 나라 항구에서 요구등급이 1 낮아진다(광저우·취안저우의 복선, 사카이·하카타의 일본 배, 부산포의 판옥선·거북선). 거북선은 이 배선이 있어야 부산포(industry 2)에서 지어진다"
       }
     ],
     "styleTodo": [

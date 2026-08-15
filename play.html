@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>아홉 바다 — 어디서 시작할까</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #14121a; color: #ded2b8; min-height: 100vh;
+    font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif; font-size: 13px;
+  }
+  header { padding: 26px 30px 14px; }
+  h1 { font-size: 22px; margin: 0 0 6px; color: #f4dd86; letter-spacing: .04em; }
+  p.sub { margin: 0; font-size: 12.5px; color: #8b8394; line-height: 1.8; max-width: 860px; }
+  p.sub b { color: #ded2b8; }
+  main { padding: 8px 30px 60px; display: grid; gap: 14px;
+         grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); max-width: 1500px; }
+  .card {
+    background: #1d1a26; border: 1px solid #2e2839; border-radius: 6px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 9px;
+  }
+  .card.home { border-color: #6b5a2e; }
+  .card h2 { font-size: 15px; margin: 0; color: #f4dd86; }
+  .card h2 small { color: #8b8394; font-weight: 400; font-size: 11px; margin-left: 7px; letter-spacing: 0; }
+  .blurb { color: #a49a8c; font-size: 12px; line-height: 1.65; min-height: 40px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { background: #241f31; border: 1px solid #332c42; border-radius: 3px;
+          padding: 2px 7px; font-size: 11px; color: #9a917f; }
+  .chip b { color: #ded2b8; font-weight: 600; }
+  .goods { font-size: 11.5px; color: #8b8394; line-height: 1.7; }
+  .goods b { color: #c7b98f; font-weight: 500; }
+  .row { display: flex; gap: 7px; margin-top: 2px; flex-wrap: wrap; }
+  a.btn, button.btn {
+    background: #2a2338; border: 1px solid #443a58; color: #ded2b8; text-decoration: none;
+    font: inherit; font-size: 12px; padding: 7px 12px; border-radius: 4px; cursor: pointer;
+  }
+  a.btn:hover, button.btn:hover { border-color: #f4dd86; color: #f4dd86; }
+  a.btn.main { background: #3a2f16; border-color: #6b5a2e; color: #f4dd86; font-weight: 600; }
+  .note { color: #6f6880; font-size: 11px; margin-top: 3px; }
+  footer { padding: 0 30px 50px; color: #6f6880; font-size: 11.5px; line-height: 1.9; max-width: 900px; }
+  footer code { color: #9a917f; }
+</style>
+</head>
+<body>
+<header>
+  <h1>아홉 바다 — 어디서 시작할까</h1>
+  <p class="sub">
+    이 게임은 원래 베네치아에서 <b>물 새는 낡은 바사 한 척과 금화 200닢</b>으로 시작한다.
+    그것이 정식 시작이고, 다른 바다는 <b>원양 항로를 건너</b> 닿아야 한다
+    (가장 먼 광저우까지 158일).<br>
+    아래는 <b>그 바다를 바로 열어 보는 문</b>이다 — 시세·특산·배·인물이 제대로 들어갔는지
+    확인하려고 매번 반년을 항해할 수는 없기 때문이다. 시작 지점만 옮길 뿐,
+    <b>게임은 그대로다</b>(주소에 아무것도 안 붙이면 정식 시작이다).
+  </p>
+</header>
+<main id="main"></main>
+<footer id="foot"></footer>
+
+<script type="module">
+import { REGIONS } from './js/regions/index.js';
+import { CITIES, CITY_BY_ID, GOOD_BY_ID, SHIPS } from './js/data.js';
+import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES } from './js/regions/index.js';
+
+const $ = (id) => document.getElementById(id);
+
+/* 그 권역을 대표하는 항구 — 관문(원양 항로가 닿는 곳) 중 가장 큰 곳.
+   없으면 그냥 가장 큰 항구. 여기가 그 바다의 첫인상이 된다. */
+function gateOf(rid) {
+  const list = CITIES.filter((c) => c.region === rid);
+  if (!list.length) return null;
+  return list.slice().sort((a, b) => (b.size ?? 1) - (a.size ?? 1)
+    || (b.industry ?? 0) - (a.industry ?? 0))[0];
+}
+
+/** 그 바다에서만 나는 것 — 다른 바다에 supply가 없는 품목 */
+function signatureGoods(rid) {
+  const here = new Map();
+  const elsewhere = new Set();
+  for (const c of CITIES) {
+    for (const [gid, v] of Object.entries(c.supply ?? {})) {
+      if (c.region === rid) here.set(gid, Math.min(here.get(gid) ?? 9, v));
+      else elsewhere.add(gid);
+    }
+  }
+  return [...here.entries()]
+    .filter(([gid]) => !elsewhere.has(gid))
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 5)
+    .map(([gid]) => GOOD_BY_ID[gid]?.name ?? gid);
+}
+
+/** 그 바다에서 짓는 배 중 가장 큰 것 셋 */
+function shipsOf(rid) {
+  return Object.entries(SHIPS)
+    .filter(([, s]) => s.home === rid)
+    .sort((a, b) => b[1].price - a[1].price)
+    .slice(0, 3)
+    .map(([, s]) => `${s.name} ${s.price.toLocaleString('ko-KR')}닢`);
+}
+
+const cards = [];
+for (const rg of [...REGIONS].sort((a, b) => a.order - b.order)) {
+  const list = CITIES.filter((c) => c.region === rg.id);
+  const gate = gateOf(rg.id);
+  if (!gate) continue;
+
+  const sig = signatureGoods(rg.id);
+  const ships = shipsOf(rg.id);
+  const traders = ALL_TRADERS.filter((t) => t.region === rg.id).length;
+  const pirates = ALL_PIRATES.filter((p) => p.region === rg.id).length;
+  const figures = ALL_FIGURES.filter((f) => f.region === rg.id).length;
+
+  /* 시작 밑천 — 그 바다에 닿을 무렵이면 이만큼은 모았을 규모로 잡는다.
+     지중해만 정식 시작(빈손)이고, 먼 바다일수록 큰 배로 연다. */
+  const far = rg.order >= 5;
+  const preset = rg.home
+    ? ''
+    : `&gold=${far ? 40000 : 12000}&ship=${far ? 'carrack' : 'cocca'}&crew=${far ? 45 : 14}`;
+
+  const el = document.createElement('div');
+  el.className = 'card' + (rg.home ? ' home' : '');
+  el.innerHTML = `
+    <h2>${rg.name}<small>${list.length}항구</small></h2>
+    <div class="blurb">${rg.blurb}</div>
+    <div class="facts">
+      <span class="chip">상단 <b>${traders}</b></span>
+      <span class="chip">해적 <b>${pirates}</b></span>
+      <span class="chip">인물 <b>${figures}</b></span>
+      ${ships.length ? `<span class="chip">선종 <b>${Object.values(SHIPS).filter((s) => s.home === rg.id).length}</b></span>` : ''}
+    </div>
+    ${sig.length ? `<div class="goods"><b>여기서만 나는 것</b> · ${sig.join(' · ')}</div>` : ''}
+    ${ships.length ? `<div class="goods"><b>이 바다의 배</b> · ${ships.join(' · ')}</div>` : ''}
+    <div class="row">
+      <a class="btn main" href="./index.html?start=${gate.id}${preset}" target="_blank">
+        ${rg.home ? '정식으로 시작' : `${gate.name}에서 열기`}</a>
+      <a class="btn" href="./mapcheck.html#${rg.id}" target="_blank">지도</a>
+      <a class="btn" href="./assets/map-briefs/${rg.id}.md" target="_blank">의뢰서</a>
+    </div>
+    <div class="note">${rg.home
+      ? '낡은 바사 · 금화 200닢 · 선원 0명 — 술집부터 간다'
+      : `${gate.name} · 금화 ${(far ? 40000 : 12000).toLocaleString('ko-KR')}닢 · ${SHIPS[far ? 'carrack' : 'cocca'].name} · 선원 ${far ? 45 : 14}명`}</div>`;
+  cards.push(el);
+}
+$('main').replaceChildren(...cards);
+
+$('foot').innerHTML = `
+  <b style="color:#9a917f">직접 주소를 만들려면</b> —
+  <code>index.html?start=&lt;항구id&gt;&amp;gold=&lt;금화&gt;&amp;ship=&lt;선종키&gt;&amp;crew=&lt;인원&gt;</code><br>
+  항구 ${CITIES.length}곳 · 교역품 ${Object.keys(GOOD_BY_ID).length}종 · 선종 ${Object.keys(SHIPS).length}종 ·
+  상단 ${ALL_TRADERS.length} · 해적 ${ALL_PIRATES.length} · 인물 ${ALL_FIGURES.length}<br>
+  <span style="color:#6f6880">시작 조건을 바꾸는 것은 개발·검증용 문이다(<code>js/main.js: applyDebugStart</code>).
+  주소에 아무것도 안 붙이면 평소 게임 그대로다.</span>`;
+</script>
+</body>
+</html>

@@ -8,9 +8,9 @@
   "cities": {
     "arguin": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "포르투갈령이다. FLAGS에 포르투갈 깃발이 아직 없어 가장 가까운 이베리아 깃발을 빌렸다 — 1580~1640년 두 왕관이 한 사람 것이었던 기간을 명분으로 삼는다. art.flagTodo 참조.",
+        "basis": "1445년 엔히크가 세운 포르투갈 상관이다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": []
       },
       "goods": {
@@ -58,9 +58,9 @@
 
     "santiago": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "포르투갈령 카보베르데다. 포르투갈 깃발이 FLAGS에 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조. 1462년 히베이라 그란지 정착 이후 줄곧 포르투갈 왕령이었다.",
+        "basis": "1462년 정착한 포르투갈령 카보베르데다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Cape Verde", "url": "https://en.wikipedia.org/wiki/Cape_Verde" }
         ]
@@ -105,9 +105,9 @@
 
     "axim": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1515년 산투 안토니우 요새가 선 포르투갈령이다. 포르투갈 깃발이 없어 이베리아 깃발로 대신했다 — art.flagTodo 참조.",
+        "basis": "1515년 산투 안토니우 요새 — 포르투갈 왕실 요새다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Portuguese Gold Coast", "url": "https://en.wikipedia.org/wiki/Portuguese_Gold_Coast" }
         ]
@@ -147,9 +147,9 @@
 
     "elmina": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1482년에 선 상 조르즈 다 미나는 포르투갈 왕실 요새다. 포르투갈 깃발이 FLAGS에 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "1482년에 선 상 조르즈 다 미나는 포르투갈 왕실 요새다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Elmina Castle", "url": "https://en.wikipedia.org/wiki/Elmina_Castle" }
         ]
@@ -210,9 +210,9 @@
 
     "gwato": {
       "flag": {
-        "value": "hafsid",
+        "value": "benin",
         "verdict": "gameplay",
-        "basis": "베냉 왕국은 독립 아프리카 왕국이고 무슬림도 유럽도 아니다. FLAGS에 맞는 깃발이 전혀 없어 유럽이 아닌 깃발 중 가장 덜 어긋나는 것을 빌렸다 — art.flagTodo에 '베냉 오바의 깃발'을 적어 뒀다.",
+        "basis": "베냉 왕국의 외항이다 — 무슬림도 유럽도 아닌데 마그레브 이슬람 깃발(hafsid)을 달고 있던 것이 이 권역에서 가장 어긋난 자리였다. FLAGS에 베냉 깃발(오바의 산호빛 바탕에 검은 표범)이 생겨 갈아 끼웠다.",
         "sources": []
       },
       "tariff": {
@@ -263,9 +263,9 @@
 
     "saotome": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1493년 알바루 카미냐가 왕실 하사지로 받아 정착시킨 포르투갈령이다. 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "1493년 왕실 하사지로 정착한 포르투갈령이다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "São Tomé and Príncipe", "url": "https://en.wikipedia.org/wiki/S%C3%A3o_Tom%C3%A9_and_Pr%C3%ADncipe" }
         ]
@@ -307,9 +307,9 @@
 
     "luanda": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1576년 1월 25일 파울루 디아스 지 노바이스가 세운 포르투갈 도시다. 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "1576년에 선 포르투갈 도시다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Luanda", "url": "https://en.wikipedia.org/wiki/Luanda" }
         ]
@@ -352,9 +352,9 @@
 
     "benguela": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1617년 마누엘 세르베이라 페레이라가 상 필리페 지 벵겔라로 세운 포르투갈 도시다. 게임이 연도를 고정하지 않으므로 함께 등장시켰고, 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다.",
+        "basis": "포르투갈령 앙골라의 남쪽 항구다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Benguela", "url": "https://en.wikipedia.org/wiki/Benguela" }
         ]
@@ -396,9 +396,9 @@
 
     "cabo": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "★ 임자가 없는 곳이다. 유럽인의 상설 정착은 1652년에야 생기고 그전까지는 코이코이의 땅이자 지나가는 배의 급수지였다. 깃발 없이 그릴 수 없어 정박하던 유럽 선단의 것으로 뒀다 — 알고 그렇게 둔 것이다.",
+        "basis": "★ 임자가 없는 정박지다. 이 시대에 여기 상설 정착지는 없었고(1652년에야 생긴다), 깃발은 물을 길으러 들르던 인도 항로 선단의 것이다 — 그 선단이 포르투갈 것이었으므로 spain 대신 portugal로 둔다. FLAGS에 \"깃발 없음\"이 생기면 그때 걷어 낸다(art.flagTodo).",
         "sources": [
           { "title": "Cape of Good Hope", "url": "https://en.wikipedia.org/wiki/Cape_of_Good_Hope" }
         ]
@@ -439,9 +439,9 @@
 
     "sofala": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1505년 페루 드 아나이아가 상 카에타누 요새를 세운 뒤 포르투갈령이 됐다(동아프리카 두 번째 포르투갈 요새). 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "1505년 상 카에타누 요새 — 포르투갈 왕실 요새다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Sofala", "url": "https://en.wikipedia.org/wiki/Sofala" }
         ]
@@ -474,9 +474,9 @@
 
     "mocambique": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "1507년 이후 포르투갈의 동아프리카 거점이자 인도 항로 선단의 정박지였다. 포르투갈 깃발이 없어 이베리아 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "인도 항로 선단의 포르투갈 기지다. FLAGS에 포르투갈 깃발이 생겨 빌려 쓰던 spain을 걷어 냈다.",
         "sources": [
           { "title": "Portuguese India Armadas", "url": "https://en.wikipedia.org/wiki/Portuguese_India_Armadas" }
         ]
@@ -524,9 +524,9 @@
 
     "kilwa": {
       "flag": {
-        "value": "hafsid",
+        "value": "swahili",
         "verdict": "gameplay",
-        "basis": "킬와 술탄국은 독립 스와힐리 이슬람 도시국가였다. FLAGS에 스와힐리 깃발이 없어 유럽이 아닌 이슬람 깃발 중 가장 덜 어긋나는 마그레브 깃발을 빌렸다 — art.flagTodo에 적어 뒀다.",
+        "basis": "스와힐리 해안의 술탄국이다. FLAGS에 스와힐리 총칭기(붉은 바탕 흰 초승달)가 생겨, 마그레브의 하프스 왕조 깃발을 빌려 쓰던 것을 걷어 냈다.",
         "sources": [
           { "title": "Kilwa Sultanate", "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate" }
         ]
@@ -572,9 +572,9 @@
 
     "zanzibar": {
       "flag": {
-        "value": "hafsid",
+        "value": "swahili",
         "verdict": "gameplay",
-        "basis": "웅구자의 술탄이 다스린 독립 스와힐리 도시였다. 포르투갈은 1503년경 조공만 받아 갔을 뿐 1591년까지도 요새와 수비대를 두지 않았으므로 포르투갈 깃발을 걸지 않았다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다.",
+        "basis": "스와힐리 해안의 술탄국이다. FLAGS에 스와힐리 총칭기(붉은 바탕 흰 초승달)가 생겨, 마그레브의 하프스 왕조 깃발을 빌려 쓰던 것을 걷어 냈다.",
         "sources": [
           { "title": "Zanzibar", "url": "https://en.wikipedia.org/wiki/Zanzibar" }
         ]
@@ -613,9 +613,9 @@
 
     "mombasa": {
       "flag": {
-        "value": "hafsid",
+        "value": "swahili",
         "verdict": "gameplay",
-        "basis": "1593년 포르투갈이 예수 요새를 세우기 전까지 독립 스와힐리 술탄국이었고, 이 게임은 연도를 고정하지 않으므로 저항하는 도시 쪽을 골랐다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "스와힐리 해안의 술탄국이다. FLAGS에 스와힐리 총칭기(붉은 바탕 흰 초승달)가 생겨, 마그레브의 하프스 왕조 깃발을 빌려 쓰던 것을 걷어 냈다.",
         "sources": [
           { "title": "Mombasa", "url": "https://en.wikipedia.org/wiki/Mombasa" }
         ]
@@ -662,9 +662,9 @@
 
     "malindi": {
       "flag": {
-        "value": "hafsid",
+        "value": "swahili",
         "verdict": "gameplay",
-        "basis": "1500년 포르투갈의 신속국이 됐으나 술탄이 계속 다스린 스와힐리 도시였으므로 포르투갈 깃발을 걸지 않았다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다 — art.flagTodo 참조.",
+        "basis": "스와힐리 해안의 술탄국이다. FLAGS에 스와힐리 총칭기(붉은 바탕 흰 초승달)가 생겨, 마그레브의 하프스 왕조 깃발을 빌려 쓰던 것을 걷어 냈다.",
         "sources": [
           { "title": "Malindi", "url": "https://en.wikipedia.org/wiki/Malindi" }
         ]
@@ -713,9 +713,9 @@
 
     "lamu": {
       "flag": {
-        "value": "hafsid",
+        "value": "swahili",
         "verdict": "gameplay",
-        "basis": "1506년 포르투갈 봉쇄로 연 600메티칼의 조공을 물었으나 술탄이 계속 다스린 스와힐리 도시였고 1580년대에는 반란까지 이끌었다. 스와힐리 깃발이 없어 마그레브 깃발을 빌렸다.",
+        "basis": "스와힐리 해안의 술탄국(라무·파테 군도)이다. FLAGS에 스와힐리 총칭기(붉은 바탕 흰 초승달)가 생겨, 마그레브의 하프스 왕조 깃발을 빌려 쓰던 것을 걷어 냈다.",
         "sources": [
           { "title": "Lamu", "url": "https://en.wikipedia.org/wiki/Lamu" }
         ]
@@ -759,9 +759,9 @@
 
     "mogadishu": {
       "flag": {
-        "value": "hafsid",
+        "value": "swahili",
         "verdict": "gameplay",
-        "basis": "소말리 술탄이 다스린 독립 도시이고 뒤에는 아주란 세력권에 들었다. 포르투갈이 끝내 차지하지 못한 항구라 유럽 깃발이 맞지 않고, 소말리 깃발이 FLAGS에 없어 마그레브 이슬람 깃발을 빌렸다.",
+        "basis": "베나디르 해안의 도시국가다. 스와힐리와 갈라 그릴 만한 도시지만(art.flagTodo의 somali) 아직 그 깃발이 없어, 하프스 왕조를 빌려 쓰던 것보다 훨씬 가까운 스와힐리 총칭기로 옮겼다.",
         "sources": [
           { "title": "Mogadishu", "url": "https://en.wikipedia.org/wiki/Mogadishu" }
         ]
@@ -945,10 +945,11 @@
     "guineiro": { "price": 3400, "verdict": "probable",
       "basis": "카라벨(1,400/90칸)을 기니 항로용으로 키우고 가로돛을 얹은 배로 잡아 브리간틴(4,200/140칸) 바로 아래에 뒀다. 얕은 강어귀에 들어갈 수 있다는 카라벨의 장점을 남기고 포를 여덟 문 물린 것이 이 배의 자리다. 특정 선종의 제원 사료는 없다.",
       "sources": [] },
-    "baghla": { "price": 5200, "verdict": "probable",
-      "basis": "원양 다우이고 티크를 인도에서 실어 와 지었으므로 값이 붙는다. 큰 다우의 승조원이 서른 남짓이었다는 서술에 맞춰 crew 26·crewMin 12로 두었고, 그 결과 화물÷최소승조원이 14.8이 된다 — 코카(13)와 플류트(18.9) 사이로 '적은 사람이 많이 싣는 배'라는 다우의 성격이 수치에서 드러난다. 대신 포는 넷뿐이다.",
+    "baghla": { "price": 5200, "verdict": "corrected",
+      "basis": "★ era를 조사로 바로잡았다(classic → modern). 바갈라의 표지인 **각진 선미와 아치형 선미 창**은 유럽(포르투갈) 선미루를 보고 배운 것이라 15~16세기의 바갈라는 시대착오다 — 이 이름이 문헌에 크게 나타나는 것은 18~19세기이고, 왕립해군의 노예선 단속 기록에서 \"가장 수가 많은 등급\"으로 꼽히는 것도 19세기다. 중동 권역이 같은 근거로 자기 바갈라를 era 'modern'으로 두었는데(js/regions/mideast/ships.js) 이쪽만 'classic'이라 세계에서 같은 배가 두 시대에 걸쳐 있었다. 지우지 않고 계보 뒤로 민다 — 연도를 고정하지 않는 프로젝트이므로 \"없앤다\"가 아니라 \"삼북을 몰아 봐야 열린다\"로 옮겼다. 값(5,200)과 제원은 그대로다: 원양 다우이고 티크를 인도에서 실어 와 지었으므로 값이 붙는다. 큰 다우의 승조원이 서른 남짓이었다는 서술에 맞춰 crew 26·crewMin 12로 두었고, 그 결과 화물÷최소승조원이 14.8이 된다 — 코카(13)와 플류트(18.9) 사이로 '적은 사람이 많이 싣는 배'라는 다우의 성격이 수치에서 드러난다. 대신 포는 넷뿐이다.",
       "sources": [
-        { "title": "Dhow", "url": "https://en.wikipedia.org/wiki/Dhow" }
+        { "title": "Dhow", "url": "https://en.wikipedia.org/wiki/Dhow" },
+        { "title": "Baghlah", "url": "https://en.wikipedia.org/wiki/Baghlah" }
       ] }
   },
 
@@ -970,11 +971,8 @@
       { "ship": "guineiro", "note": "기니 무역선 — 카라벨라 헤돈다. 앞 두 돛대는 가로돛, 뒷돛대만 라틴세일이다. 흘수가 얕아 선체가 납작하다" }
     ],
     "flagTodo": [
-      { "key": "portugal", "note": "★ 가장 급하다. 이 권역의 유럽 항구 9곳이 전부 포르투갈인데 지금은 spain 깃발을 빌려 쓴다. 흰 바탕에 다섯 방패(퀴나스)를 십자로 놓고 붉은 성곽 테두리" },
-      { "key": "swahili", "note": "스와힐리 도시국가(킬와·잔지바르·몸바사·말린디·라무) — 지금은 hafsid를 빌려 쓴다. 실제로는 도시마다 달랐으므로 '해안 술탄국'을 아우르는 흰 초승달·붉은 바탕 정도의 총칭 깃발이면 족하다" },
-      { "key": "benin", "note": "베냉 왕국(그웨이토) — 무슬림도 유럽도 아닌데 hafsid를 빌려 쓰고 있어 가장 어긋난다. 오바의 문양(표범·산호)을 쓴 깃발" },
-      { "key": "somali", "note": "모가디슈 — 아주란·베나디르. swahili로 묶어도 되지만 이 도시는 성격이 뚜렷하므로 갈라도 좋다" },
-      { "key": "none", "note": "희망봉 — 임자가 없는 정박지다. '깃발 없음'을 그릴 수 있으면 spain을 걷어 낸다" }
+      {"key":"somali","note":"모가디슈 — 아주란·베나디르. 지금은 swahili 총칭기로 묶어 두었다(hafsid를 빌리던 것보다는 훨씬 가깝다). 갈라 그리면 더 좋다."},
+      {"key":"none","note":"희망봉 — 임자가 없는 정박지다. 지금은 물을 길으러 들르던 인도 항로 선단의 깃발(portugal)을 달고 있다. \"깃발 없음\"을 그릴 수 있으면 걷어 낸다."}
     ],
     "styleTodo": [
       { "key": "swahili", "note": "산호석을 깎아 쌓은 흰 벽·평지붕·좁고 긴 골목·조각한 나무 대문, 그 사이로 미나레트. 지금은 levant(마그레브 황토벽)를 빌려 쓴다 — 색이 너무 누렇다. 킬와·잔지바르·몸바사·말린디·라무·모가디슈·소팔라·그웨이토 8곳이 이 화풍을 기다린다" },

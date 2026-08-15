@@ -14,7 +14,9 @@
 //
 // ★ 한자 배(코그·홀크·크라벨)의 originFlag는 `hanse`다. 한자는 나라가 아니라 도시 동맹이라
 //   통일기가 없었지만, 배가 단 적백 깃발이 곧 "이 배는 한자 것"이라는 표시였다.
-//   ※ geo.js의 한자 도시 깃발이 아직 hospitaller라 지금은 할인이 붙지 않는다.
+//   ※ 깃발 배선이 끝났다 — geo.js의 한자 도시(함부르크·뤼베크·단치히·리가·레발)가 `hanse`를
+//     달았으므로 이제 그 항구에서 요구 공업력이 1 내려간다. 포르투갈 배(카라벨라 레돈다·나우)도
+//     같은 이유로 originFlag가 `spain`에서 `portugal`로 바뀌어 리스본에서 값이 내린다.
 //
 // ★ 플류트는 이미 지중해 파일에 수입선으로 있다. 여기 다시 정의하지 않는다.
 //   대신 그 조상인 홀크를 두어 계보가 보이게 했다(홀크는 플류트보다 한 칸당 값이 비싸다 —
@@ -54,7 +56,7 @@ export const SHIPS = {
     desc: '코그를 밀어낸 한자의 화물선. 통짜로 휜 선체에 짐이 곱절로 들어간다.',
   },
   redonda: {
-    hull: 'caravel', name: '카라벨라 레돈다', origin: '포르투갈', originFlag: 'spain', tier: 1, era: 'classic',
+    hull: 'caravel', name: '카라벨라 레돈다', origin: '포르투갈', originFlag: 'portugal', tier: 1, era: 'classic',
     yards: ['lisboa', 'sevilla', 'bilbao'],
     price: 1500,
     // 지중해 카라벨(라틴세일뿐, rig 0.00)과 **같은 선체에 돛만 다른 배**다.
@@ -79,7 +81,7 @@ export const SHIPS = {
     desc: '북대서양 겨울을 나려고 지은 바스크의 배. 사람을 많이 먹지만 어지간해선 부서지지 않는다.',
   },
   nau: {
-    hull: 'carrack', name: '나우', origin: '포르투갈', originFlag: 'spain', tier: 2, era: 'classic',
+    hull: 'carrack', name: '나우', origin: '포르투갈', originFlag: 'portugal', tier: 2, era: 'classic',
     yards: ['lisboa', 'sevilla'],
     price: 11000,
     // 인도 항로의 대형 상선. 16세기 표준이 500~600톤이라 260칸(≈520톤)으로 잡았고,

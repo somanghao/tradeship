@@ -22,32 +22,37 @@
            강남·조선·일본이 공유하는 흰 회벽·짙은 기와·층탑은 `jiangnan`(셋의 차이는 지붕 곡선인데
            400×225 원경에서는 갈리지 않아 한 화풍으로 묶었다), 성곽 없이 대나무 울과 초가뿐인
            계롱은 `malay`, 인트라무로스와 마카오는 `colonial`(회벽 능보)이다.
-    flag   명·조선·일본·류큐 깃발도 FLAGS에 없다. 색이 가장 덜 어긋나는 것을 빌렸다 —
-           명=`venice`(붉은 바탕·금색), 조선=`hafsid`(흰 바탕·검은색),
-           일본=`genoa`(흰 바탕·붉은색 = 일장), 류큐=`hospitaller`(붉은 바탕·흰색 = 좌삼파문),
-           포르투갈령 마카오=`england`(흰 바탕·푸른색). art.flagTodo 참조. */
+    flag   ★ 제 깃발을 단다 — 명=`ming` · 조선=`joseon` · 일본=`japan` · 류큐=`ryukyu` ·
+           포르투갈령 마카오=`portugal`. 다섯 모두 `sprites/ship.js: FLAGS`에 있고
+           이 권역의 NPC(npc-traders.js·npc-pirates.js)와 ships.js의 originFlag가 이미 그것을 쓴다.
+           ※ 전에는 venice(명)·hafsid(조선)·genoa(일본)·hospitaller(류큐)·england(마카오)를
+             빌렸는데, 그러면 부산포가 **튀니스 하프스 왕조의 초승달기**를 달고 광저우가
+             베네치아기를 다는 — 이 게임 안에 실재하는 남의 나라 깃발을 다는 — 꼴이 된다.
+           ※ 근세 동아시아에는 유럽식 국기 제도가 없다. 도안은 사서의 국기가 아니라 왕실·
+             선박 문양에서 왔다(명=주색 바탕에 금빛 해 / 조선=태극 / 일본=일장 / 류큐=좌삼파문).
+             그 사실은 sprites/ship.js의 FLAGS 주석과 근거 JSON의 flag.basis에 적혀 있다. */
 export const CITIES = [
   // ── 명 연안 ────────────────────────────────────────────────
   // 광저우 — 시박사 셋 중 남해(동남아) 담당. 해마다 정월과 유월에 열리는 비단 시장에
   // 마카오의 포르투갈 상인이 몇 주씩 들어와 생사·자기·사향·금을 사 갔다.
-  { id: 'guangzhou', name: '광저우',   area: '광동',       style: 'sinic',    x: 36,  y: 162, flag: 'venice',      seed: 7101, size: 3, industry: 3 },
+  { id: 'guangzhou', name: '광저우',   area: '광동',       style: 'sinic',    x: 36,  y: 162, flag: 'ming',        seed: 7101, size: 3, industry: 3 },
   // 마카오 — 1557년 명이 정주를 허락하고 해마다 은 500냥의 지대를 받았다. 명의 주권은
   // 그대로 둔 채 유럽 배가 대는 유일한 부두라, 이 바다에서 광저우 시장과 나가사키를
   // 잇는 매듭이 된다. 대형선 수리·개조가 되는 곳이라 industry 2.
-  { id: 'macau',     name: '마카오',   area: '광동',       style: 'colonial', x: 54,  y: 178, flag: 'england',     seed: 7202, size: 2, industry: 2 },
+  { id: 'macau',     name: '마카오',   area: '광동',       style: 'colonial', x: 54,  y: 178, flag: 'portugal',    seed: 7202, size: 2, industry: 2 },
   // 월항(장주 해징) — 1567년 융경개관으로 **사무역이 합법인 유일한 항구**가 됐다.
   // 배마다 인선(引)을 끊어 주고 수향·육향·가증향 세 갈래로 세를 물렸다. 그 세수가
   // 1567년 3천 냥에서 1594년 2만 9천 냥으로 뛰어 '천자의 남쪽 곳간'이라 불렸다.
-  { id: 'yuegang',   name: '월항',     area: '장주',       style: 'sinic',    x: 62,  y: 140, flag: 'venice',      seed: 7303, size: 2, industry: 2 },
+  { id: 'yuegang',   name: '월항',     area: '장주',       style: 'sinic',    x: 62,  y: 140, flag: 'ming',        seed: 7303, size: 2, industry: 2 },
   // 취안저우(자이툰) — 원대 세계 최대 항구였으나 명대에 진강 토사로 메워지고(1472년
   // 항구가 막혀 류큐 진공선 접수를 푸저우에 넘겼다) 해금까지 겹쳐 이류 항구로 내려앉았다.
   // 그래도 **복선(福船)을 짓던 손**은 남아 industry 3이다 — 시장이 아니라 조선소가 이 도시다.
-  { id: 'quanzhou',  name: '취안저우', area: '복건',       style: 'sinic',    x: 84,  y: 122, flag: 'venice',      seed: 7404, size: 2, industry: 3 },
+  { id: 'quanzhou',  name: '취안저우', area: '복건',       style: 'sinic',    x: 84,  y: 122, flag: 'ming',        seed: 7404, size: 2, industry: 3 },
   // 푸저우 — 1472년 유원역(柔遠驛)을 세워 류큐 진공선을 받았다. 류큐로 나가는 문이다.
-  { id: 'fuzhou',    name: '푸저우',   area: '복건',       style: 'sinic',    x: 94,  y: 100, flag: 'venice',      seed: 7505, size: 2, industry: 2 },
+  { id: 'fuzhou',    name: '푸저우',   area: '복건',       style: 'sinic',    x: 94,  y: 100, flag: 'ming',        seed: 7505, size: 2, industry: 2 },
   // 닝보 — 감합 무역에서 **일본 담당** 시박사. 1523년 오우치·호소카와 두 사절단이
   // 여기서 칼을 뽑은 닝보의 난 뒤로 문이 닫혔고, 그 닫힌 문이 1550년대 왜구를 불렀다.
-  { id: 'ningbo',    name: '닝보',     area: '절강',       style: 'jiangnan', x: 112, y: 74,  flag: 'venice',      seed: 7606, size: 3, industry: 2 },
+  { id: 'ningbo',    name: '닝보',     area: '절강',       style: 'jiangnan', x: 112, y: 74,  flag: 'ming',        seed: 7606, size: 3, industry: 2 },
   // 쌍서(리암포) — 닝보 앞바다 육횡도의 밀무역 섬. 1524~1548년 명·일본·포르투갈 상인이
   // 뒤섞인 무허가 시장이었고 1548년 주환이 배 27척을 가라앉히고 항구를 돌로 메워 없앴다.
   // 검은 깃발로 둔다 — 나라가 없는 항구다. 나포선을 뜯어 파는 곳이라 prizeYard.
@@ -60,30 +65,30 @@ export const CITIES = [
   //   민가 일곱 채짜리 나루였고 벽란도는 고려의 항구라 이 시대에는 이미 쇠했다.
   // 조선은 사무역을 원칙적으로 금했으므로 바깥 배는 여기까지 못 온다 — 부산포에서만
   // 이어지는 **막다른 주머니**로 두고, 강 안쪽이라 바닷배를 못 짓게 industry 0으로 둔다.
-  { id: 'mapo',      name: '마포',     area: '경강',       style: 'jiangnan', x: 176, y: 34,  flag: 'hafsid',      seed: 7808, size: 2, industry: 0 },
+  { id: 'mapo',      name: '마포',     area: '경강',       style: 'jiangnan', x: 176, y: 34,  flag: 'joseon',      seed: 7808, size: 2, industry: 0 },
   // 부산포 — 1426년 삼포를 열어 일본 배를 받았고 왜관이 섰다. 1510년 삼포왜란 뒤
   // 열린 항구가 줄어 결국 부산포 하나만 남는다. 조선이 바깥과 닿는 유일한 부두다.
-  { id: 'busanpo',   name: '부산포',   area: '경상',       style: 'jiangnan', x: 210, y: 52,  flag: 'hafsid',      seed: 7909, size: 2, industry: 2 },
+  { id: 'busanpo',   name: '부산포',   area: '경상',       style: 'jiangnan', x: 210, y: 52,  flag: 'joseon',      seed: 7909, size: 2, industry: 2 },
 
   // ── 일본 ───────────────────────────────────────────────────
   // 하카타 — 견명선(감합선)이 짐을 싣고 떠나던 규슈의 오랜 무역항.
-  { id: 'hakata',    name: '하카타',   area: '지쿠젠',     style: 'jiangnan', x: 252, y: 44,  flag: 'genoa',       seed: 8010, size: 2, industry: 2 },
+  { id: 'hakata',    name: '하카타',   area: '지쿠젠',     style: 'jiangnan', x: 252, y: 44,  flag: 'japan',       seed: 8010, size: 2, industry: 2 },
   // 히라도 — 마쓰우라씨의 항구. 밀무역왕 왕직이 여기에 앉아 명 연안과 규슈를 이었고,
   // 뒤에 포르투갈·네덜란드·영국 상관이 차례로 들어선다. 왜구의 본거지에 가깝다.
-  { id: 'hirado',    name: '히라도',   area: '히젠',       style: 'jiangnan', x: 246, y: 68,  flag: 'genoa',       seed: 8111, size: 2, industry: 1, prizeYard: true },
+  { id: 'hirado',    name: '히라도',   area: '히젠',       style: 'jiangnan', x: 246, y: 68,  flag: 'japan',       seed: 8111, size: 2, industry: 1, prizeYard: true },
   // 나가사키 — 1571년 오무라 스미타다가 포르투갈 배를 받으려고 연 항구. 마카오에서
   // 오는 정기선(나우 두 트라투)의 종착지이자 **일본 은이 배에 실리는 곳**이다.
-  { id: 'nagasaki',  name: '나가사키', area: '히젠',       style: 'jiangnan', x: 268, y: 88,  flag: 'genoa',       seed: 8212, size: 3, industry: 2 },
+  { id: 'nagasaki',  name: '나가사키', area: '히젠',       style: 'jiangnan', x: 268, y: 88,  flag: 'japan',       seed: 8212, size: 3, industry: 2 },
   // 보노쓰 — 사쓰마의 항구. 견명선의 기항지였고 해금 시기에는 밀무역의 출항지였다.
-  { id: 'bonotsu',   name: '보노쓰',   area: '사쓰마',     style: 'jiangnan', x: 290, y: 104, flag: 'genoa',       seed: 8313, size: 1, industry: 1 },
+  { id: 'bonotsu',   name: '보노쓰',   area: '사쓰마',     style: 'jiangnan', x: 290, y: 104, flag: 'japan',       seed: 8313, size: 1, industry: 1 },
   // 사카이 — 회합중(會合衆)이 다스린 상인의 자치 도시. 세토내해 안쪽 끝이라 여기까지
   // 들어오려면 하카타를 거쳐야 하는 **막다른 주머니**다. 대신 이 바다에서 가장 깊은 시장.
-  { id: 'sakai',     name: '사카이',   area: '이즈미',     style: 'jiangnan', x: 336, y: 40,  flag: 'genoa',       seed: 8414, size: 3, industry: 3 },
+  { id: 'sakai',     name: '사카이',   area: '이즈미',     style: 'jiangnan', x: 336, y: 40,  flag: 'japan',       seed: 8414, size: 3, industry: 3 },
 
   // ── 류큐·대만·필리핀 ───────────────────────────────────────
   // 나하 — 만국진량(萬國津梁). 명·일본·조선·시암·말라카·자바를 잇던 중계무역의 왕국.
   // 제 산물이 거의 없는데도 부유했던 항구라 supply가 얕고 demand가 넓다.
-  { id: 'naha',      name: '나하',     area: '류큐',       style: 'sinic',    x: 300, y: 132, flag: 'hospitaller', seed: 8515, size: 2, industry: 2 },
+  { id: 'naha',      name: '나하',     area: '류큐',       style: 'sinic',    x: 300, y: 132, flag: 'ryukyu',      seed: 8515, size: 2, industry: 2 },
   // 계롱(지룽) — 대만 북단. 유럽 세력이 오기 전부터 명·일본 밀무역선이 해금을 피해
   // 만나던 자리이고, 사슴 가죽이 여기서 일본으로 실려 나갔다. 나라가 없어 검은 깃발.
   { id: 'keelung',   name: '계롱',     area: '대만',       style: 'malay',    x: 166, y: 134, flag: 'pirate',      seed: 8616, size: 1, industry: 1, prizeYard: true },

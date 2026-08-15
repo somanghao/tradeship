@@ -44,7 +44,7 @@ export const SHIPS = {
     desc: '양끝이 뾰족한 홍해의 쾌속선. 노와 삼각돛을 함께 써서 무풍에도 나아간다. 짐칸은 좁고 발은 이 바다에서 가장 빠르다.',
   },
   sanbuq: {
-    hull: 'caravel', name: '삼부크', origin: '아라비아', originFlag: 'hafsid', tier: 1, era: 'classic',
+    hull: 'caravel', name: '삼부크', origin: '아라비아', originFlag: 'oman', tier: 1, era: 'classic',
     yards: ['muscat', 'aden', 'mokha'],
     price: 2900,
     // 이 바다의 일꾼. 이븐 바투타가 1330년대 모가디슈에서 봤고 포르투갈인이 '잔부코'라 적은,
@@ -65,7 +65,7 @@ export const SHIPS = {
     desc: '인도 티크로 지어 아랍 선주가 사 가던 원양 다우. 나무 한 그루 없는 해안이 인도 숲에 배를 맡긴 결과다.',
   },
   baghlah: {
-    hull: 'carrack', name: '바갈라', origin: '오만', originFlag: 'hafsid', tier: 2, era: 'modern', requires: 'dhangi',
+    hull: 'carrack', name: '바갈라', origin: '오만', originFlag: 'oman', tier: 2, era: 'modern', requires: 'dhangi',
     yards: ['muscat', 'bahrain'],
     price: 10200,
     // 각진 선미에 창을 낸 큰 다우. 그 선미는 포르투갈 배를 보고 배운 것이라

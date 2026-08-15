@@ -12,9 +12,9 @@
   "cities": {
     "lisboa": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "FLAGS에 포르투갈 깃발이 없다. 흰 바탕 그리스도 기사단 붉은 십자를 낼 키가 없어 이베리아 전체를 'spain'으로 묶었다 — art.flagTodo에 'portugal'을 올려 두었다."
+        "basis": "포르투갈 왕도다. FLAGS에 포르투갈 깃발이 생겨(흰 바탕·그리스도 기사단의 붉은 십자) 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
         "sugar": {
@@ -189,9 +189,9 @@
     },
     "funchal": {
       "flag": {
-        "value": "spain",
+        "value": "portugal",
         "verdict": "gameplay",
-        "basis": "FLAGS에 포르투갈 깃발이 없다. 흰 바탕 그리스도 기사단 붉은 십자를 낼 키가 없어 이베리아 전체를 'spain'으로 묶었다 — art.flagTodo에 'portugal'을 올려 두었다."
+        "basis": "포르투갈령이다(1419년 발견, 엔히크의 하사지). FLAGS에 포르투갈 깃발이 생겨(흰 바탕·그리스도 기사단의 붉은 십자) 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
         "sugar": {
@@ -477,9 +477,9 @@
     },
     "brugge": {
       "flag": {
-        "value": "spain",
+        "value": "burgundy",
         "verdict": "gameplay",
-        "basis": "저지대는 이 시기 합스부르크령이었으므로 'spain'을 그대로 쓴다. 부르고뉴 십자·홀란트 사자 깃발은 아직 FLAGS에 없다 — art.flagTodo 참조."
+        "basis": "부르고뉴령 플랑드르 — 뒤에 합스부르크로 넘어간다. FLAGS에 부르고뉴 깃발(흰 바탕·붉은 옹이십자)이 생겨 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
         "woolcloth": {
@@ -536,9 +536,9 @@
     },
     "antwerpen": {
       "flag": {
-        "value": "spain",
+        "value": "burgundy",
         "verdict": "gameplay",
-        "basis": "저지대는 이 시기 합스부르크령이었으므로 'spain'을 그대로 쓴다. 부르고뉴 십자·홀란트 사자 깃발은 아직 FLAGS에 없다 — art.flagTodo 참조."
+        "basis": "부르고뉴령 브라반트 — 뒤에 합스부르크로 넘어간다. FLAGS에 부르고뉴 깃발(흰 바탕·붉은 옹이십자)이 생겨 빌려 쓰던 spain을 걷어 냈다."
       },
       "tariff": {
         "value": 0.04,
@@ -627,9 +627,9 @@
     },
     "amsterdam": {
       "flag": {
-        "value": "spain",
+        "value": "burgundy",
         "verdict": "gameplay",
-        "basis": "저지대는 이 시기 합스부르크령이었으므로 'spain'을 그대로 쓴다. 부르고뉴 십자·홀란트 사자 깃발은 아직 FLAGS에 없다 — art.flagTodo 참조."
+        "basis": "부르고뉴령 홀란트 — 뒤에 합스부르크로 넘어간다. FLAGS에 부르고뉴 깃발(흰 바탕·붉은 옹이십자)이 생겨 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
         "herring": {
@@ -691,9 +691,9 @@
     },
     "bergen": {
       "flag": {
-        "value": "hospitaller",
+        "value": "denmark",
         "verdict": "gameplay",
-        "basis": "단네브로(붉은 바탕 흰 십자)와 색이 정확히 같은 것이 FLAGS의 'hospitaller'뿐이라 빌려 썼다. 덴마크·노르웨이 깃발은 art.flagTodo 참조."
+        "basis": "노르웨이 왕국이고 이 시기 덴마크와 한 왕 아래 있었다(칼마르 동맹 이래). FLAGS에 단네브로(붉은 바탕 흰 십자)가 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다 — 도시 안의 한자 상관은 깃발이 아니라 입항세(7%)로 표현한다."
       },
       "tariff": {
         "value": 0.07,
@@ -780,9 +780,9 @@
     },
     "hamburg": {
       "flag": {
-        "value": "hospitaller",
+        "value": "hanse",
         "verdict": "gameplay",
-        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+        "basis": "한자 도시다. FLAGS에 한자 깃발(도시 색인 적백 두 줄)이 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다 — 동맹에는 통일기가 없었으므로 배가 달던 적백을 총칭기로 삼는다."
       },
       "goods": {
         "grain": {
@@ -834,9 +834,9 @@
     },
     "lubeck": {
       "flag": {
-        "value": "hospitaller",
+        "value": "hanse",
         "verdict": "gameplay",
-        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+        "basis": "동맹의 수도다. FLAGS에 한자 깃발(도시 색인 적백 두 줄)이 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다."
       },
       "tariff": {
         "value": 0.07,
@@ -920,9 +920,9 @@
     },
     "kobenhavn": {
       "flag": {
-        "value": "hospitaller",
+        "value": "denmark",
         "verdict": "gameplay",
-        "basis": "단네브로(붉은 바탕 흰 십자)와 색이 정확히 같은 것이 FLAGS의 'hospitaller'뿐이라 빌려 썼다. 덴마크·노르웨이 깃발은 art.flagTodo 참조."
+        "basis": "덴마크 왕도다. FLAGS에 단네브로(붉은 바탕 흰 십자)가 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다."
       },
       "tariff": {
         "value": 0.06,
@@ -985,9 +985,9 @@
     },
     "danzig": {
       "flag": {
-        "value": "hospitaller",
+        "value": "hanse",
         "verdict": "gameplay",
-        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+        "basis": "한자 최대 도시다(1466년 이후 폴란드 왕관령이지만 동맹 도시로 남았다). FLAGS에 한자 깃발(적백 두 줄)이 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다."
       },
       "tariff": {
         "value": 0.065,
@@ -1067,9 +1067,9 @@
     },
     "stockholm": {
       "flag": {
-        "value": "france",
+        "value": "sweden",
         "verdict": "gameplay",
-        "basis": "스웨덴의 파란 바탕 금빛 십자와 색이 같은 것이 FLAGS의 'france'(파란 바탕 금빛 문장)라 빌려 썼다. art.flagTodo에 'sweden'을 올려 두었다."
+        "basis": "스웨덴 왕국이다. FLAGS에 스웨덴 깃발(파란 바탕 금빛 십자)이 생겨, 색만 비슷해 빌려 쓰던 france(부르봉 백합)를 걷어 냈다."
       },
       "goods": {
         "iron": {
@@ -1126,9 +1126,9 @@
     },
     "riga": {
       "flag": {
-        "value": "hospitaller",
+        "value": "hanse",
         "verdict": "gameplay",
-        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+        "basis": "리보니아의 한자 도시다. FLAGS에 한자 깃발(적백 두 줄)이 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다."
       },
       "goods": {
         "timber": {
@@ -1207,9 +1207,9 @@
     },
     "reval": {
       "flag": {
-        "value": "hospitaller",
+        "value": "hanse",
         "verdict": "gameplay",
-        "basis": "한자에는 제 깃발이 없었다(나라가 아니라 도시 동맹이다). 도시 문장이 대개 붉은 바탕 흰 문장이라 FLAGS에서 색이 같은 'hospitaller'를 빌렸다 — art.flagTodo에 'hanse'를 올려 두었다."
+        "basis": "에스토니아의 한자 도시다. FLAGS에 한자 깃발(적백 두 줄)이 생겨 빌려 쓰던 hospitaller(성 요한 기사단)를 걷어 냈다."
       },
       "goods": {
         "wax": {
@@ -1910,30 +1910,8 @@
       }
     ],
     "flagTodo": [
-      {
-        "key": "portugal",
-        "note": "포르투갈 — 흰 바탕에 그리스도 기사단의 붉은 십자(돛에 그린 그 문양). 지금은 'spain'을 빌려 써서 이베리아 여덟 항구가 전부 같은 깃발이다"
-      },
-      {
-        "key": "hanse",
-        "note": "한자 — 붉은 바탕에 흰 문장. 나라가 아니라 도시 동맹이라 통일 깃발이 없었으므로 도시별 문장(뤼베크의 쌍두수리, 함부르크의 성문, 단치히의 두 십자와 왕관)을 쓰는 편이 옳다. 지금은 색이 같은 'hospitaller'를 빌려 쓴다"
-      },
-      {
-        "key": "denmark",
-        "note": "덴마크·노르웨이 — 단네브로(붉은 바탕 흰 십자). 지금은 'hospitaller'를 빌려 쓴다"
-      },
-      {
-        "key": "sweden",
-        "note": "스웨덴 — 파란 바탕 금빛 십자. 지금은 색이 같은 'france'를 빌려 쓴다"
-      },
-      {
-        "key": "burgundy",
-        "note": "부르고뉴·합스부르크 네덜란드 — 흰 바탕에 붉은 옹이십자(성 안드레아 십자). 지금은 'spain'을 빌려 쓴다"
-      },
-      {
-        "key": "novgorod",
-        "note": "노브고로드 — 루시의 붉은 바탕 금빛 문장. 지금은 'venice'를 빌려 쓴다"
-      }
+      {"key":"novgorod","note":"루시(노브고로드) — 붉은 바탕 금빛 문장. 이 권역에서 **유일하게 남은** 빌린 깃발이라 지금도 venice를 쓴다. 나머지(portugal·hanse·denmark·sweden·burgundy)는 배선이 끝나 제 깃발을 단다."},
+      {"key":"hanse","note":"한자 깃발은 배선됐지만(적백 두 줄) 도시별 문장 — 뤼베크의 쌍두수리, 함부르크의 성문, 단치히의 두 십자와 왕관 — 을 쓰면 더 좋다. 급하지는 않다."}
     ],
     "styleTodo": [
       {

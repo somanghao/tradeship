@@ -22,10 +22,13 @@
 // 그 넷은 y를 16~18px씩 층지게 내려 표가 서로를 덮지 않게 했다.
 
 /** 도시의 지리·외형. 필드 뜻은 `js/regions/mediterranean/geo.js`가 정본이다.
-    flag  — 이 바다에는 오스만·맘루크·호르무즈 왕국·오만 아랍·사파비가 뒤섞여 있는데
-           `sprites/ship.js: FLAGS`에는 아랍·페르시아 깃발이 아직 없다. 그래서
-           **오스만 세력권은 'ottoman', 걸프·페르시아 쪽은 'hafsid'(흰 바탕)**를 빌려
-           적어도 화면에서 두 세력이 갈라져 보이게 했다. 근거 JSON의 art.flagTodo 참조.
+    flag  — 이 바다에는 오스만·맘루크·호르무즈 왕국·오만 아랍·사파비가 뒤섞여 있다.
+           ★ 배선이 끝난 만큼만 갈랐다 — 오스만 세력권(맘루크 포함)은 'ottoman',
+           **오만 아랍(마스카트·줄파르)과 하드라마우트(시흐르)는 'oman'**(표식 없는 붉은기),
+           **사파비의 수도 이스파한은 'safavid'**(초록 바탕에 해와 사자)다.
+           ※ 아직 안 그려진 것은 **호르무즈 왕국기**다 — 호르무즈·바레인·카티프 셋은
+           그 왕국의 세력권이라 하나로 묶어 'hafsid'(흰 바탕)를 그대로 빌려 쓴다.
+           근거 JSON의 art.flagTodo 참조.
     style — 기본은 'levant'(황토벽·미나레트). 산호석으로 지은 홍해 세 항구(수아킨·마사와·지다)만
            'swahili'(산호석 흰 벽·평지붕)로 갈랐다 — 실제로 같은 재료·같은 인상이다.
            로샨 발코니의 아라비아, 청록 타일의 페르시아 화풍은 아직 없다(styleTodo).
@@ -51,15 +54,15 @@ export const CITIES = [
   // 아덴은 홍해의 문지기다. 사화산 분화구 안에 앉은 항구라 뭍에서 치기 어렵고,
   // 인도양에서 올라온 배는 여기서 계절풍을 갈아탔다. 시흐르는 유향의 적출항.
   { id: 'aden',     name: '아덴',       area: '예멘',         style: 'levant',  x: 112, y: 186, flag: 'ottoman', seed: 4106, size: 3, industry: 2 },
-  { id: 'shihr',    name: '시흐르',     area: '하드라마우트', style: 'levant',  x: 176, y: 190, flag: 'hafsid',  seed: 4107, size: 1, industry: 1 },
+  { id: 'shihr',    name: '시흐르',     area: '하드라마우트', style: 'levant',  x: 176, y: 190, flag: 'oman',  seed: 4107, size: 1, industry: 1 },
 
   // ── 오만·페르시아만 ────────────────────────────────────────
   // 마스카트는 이 바다에서 배를 가장 잘 짓던 곳이다(수르의 조선소). 호르무즈는
   // 물 한 방울 안 나는 민둥섬인데도 해협에 앉았다는 이유만으로 왕국이 됐다 —
   // 먹을 것과 마실 물까지 전부 배로 실어 왔다.
-  { id: 'muscat',   name: '마스카트',   area: '오만',         style: 'levant',  x: 292, y: 168, flag: 'hafsid',  seed: 4108, size: 2, industry: 2 },
+  { id: 'muscat',   name: '마스카트',   area: '오만',         style: 'levant',  x: 292, y: 168, flag: 'oman',  seed: 4108, size: 2, industry: 2 },
   { id: 'hormuz',   name: '호르무즈',   area: '해협',         style: 'levant',  x: 322, y: 134, flag: 'hafsid',  seed: 4109, size: 3, industry: 2 },
-  { id: 'julfar',   name: '줄파르',     area: '오만 해안',    style: 'levant',  x: 300, y: 118, flag: 'hafsid',  seed: 4110, size: 1, industry: 1 },
+  { id: 'julfar',   name: '줄파르',     area: '오만 해안',    style: 'levant',  x: 300, y: 118, flag: 'oman',  seed: 4110, size: 1, industry: 1 },
   { id: 'bahrain',  name: '바레인',     area: '진주 어장',    style: 'levant',  x: 276, y: 102, flag: 'hafsid',  seed: 4111, size: 2, industry: 1 },
   { id: 'qatif',    name: '카티프',     area: '알하사',       style: 'levant',  x: 252, y: 84,  flag: 'hafsid',  seed: 4112, size: 1, industry: 1 },
   { id: 'basra',    name: '바스라',     area: '이라크',       style: 'levant',  x: 238, y: 52,  flag: 'ottoman', seed: 4113, size: 3, industry: 2 },
@@ -71,7 +74,7 @@ export const CITIES = [
   { id: 'damascus', name: '다마스쿠스', area: '샴',           style: 'levant',  x: 118, y: 44,  flag: 'ottoman', seed: 4115, size: 2, industry: 0 },
   { id: 'aleppo',   name: '알레포',     area: '샴',           style: 'levant',  x: 150, y: 30,  flag: 'ottoman', seed: 4116, size: 3, industry: 0 },
   { id: 'baghdad',  name: '바그다드',   area: '이라크',       style: 'levant',  x: 196, y: 40,  flag: 'ottoman', seed: 4117, size: 2, industry: 0 },
-  { id: 'isfahan',  name: '이스파한',   area: '이란고원',     style: 'levant',  x: 300, y: 46,  flag: 'hafsid',  seed: 4118, size: 3, industry: 0 },
+  { id: 'isfahan',  name: '이스파한',   area: '이란고원',     style: 'levant',  x: 300, y: 46,  flag: 'safavid',  seed: 4118, size: 3, industry: 0 },
 ];
 
 /* 항로 — 이 바다는 **한 줄로 이어진 갈고리**다. 홍해를 내려와 바브엘만데브에서 꺾고

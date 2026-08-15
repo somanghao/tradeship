@@ -116,6 +116,8 @@ export const LAYERS = [
       ['tools/check-architecture.mjs', '이 파일 ↔ 실제 파일 (누락·유령)'],
       ['tools/check-world.mjs', '**아홉 바다가 하나로 이어져 있는가** — 도달성·권역 거리·죽은 품목'],
       ['tools/gen-map-brief.mjs', '지도 발주 의뢰서를 게임 데이터에서 뽑는다(손으로 적으면 어긋난다)'],
+      ['tools/playtest.mjs', '**게임을 실제로 클릭해 본다** — 규칙이 맞아도 그 단추를 못 누르면 소용없다'],
+      ['tools/sim-events.mjs', '돌발 이벤트·전투 보상이 성장 단계별로 어느 크기인가'],
       ['tools/check-map.py', '납품된 지도 그림 검수(Pillow)'],
       ['tools/test-rules.mjs', '규칙 테스트'],
       ['tools/test-world.mjs', 'NPC·계약·바람 테스트'],

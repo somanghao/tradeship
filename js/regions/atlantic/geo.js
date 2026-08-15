@@ -17,16 +17,19 @@
     style 'hanseatic'(붉은 벽돌 고딕·계단 박공·창고 도르래)를 한자·저지대에,
           'nordic'(목조 부두·가파른 널지붕·잿빛 하늘)을 노르웨이·스웨덴·루시·잉글랜드에 쓴다.
           이베리아·프랑스는 그대로 'latin' — 마누엘 양식의 흰 회벽(atlanticiberia)은 아직 없다.
-    flag  FLAGS에 포르투갈·한자·러시아 깃발이 없다. 색이 가장 가까운 것을 빌렸다:
-          이베리아·저지대(합스부르크)는 'spain', 한자·덴마크·노르웨이의 붉은 바탕 흰 문장은
-          'hospitaller', 스웨덴의 파란 바탕 금빛 십자는 'france', 루시의 붉은 바탕 금빛
-          문장은 'venice'. 무엇을 그려야 하는지는 근거 JSON의 art.flagTodo에 적었다. */
+    flag  ★ 배선이 끝났다. 전에는 FLAGS에 없어 색이 가까운 것을 빌려 썼지만
+          (이베리아·저지대 'spain' · 한자·덴마크 'hospitaller' · 스웨덴 'france'),
+          지금은 제 깃발을 단다 — 포르투갈 'portugal' · 한자 'hanse' ·
+          덴마크·노르웨이 'denmark' · 스웨덴 'sweden' · 부르고뉴령 저지대 'burgundy'.
+          카스티야(세비야·빌바오)만 그대로 'spain'이다.
+          ※ 아직 안 그려진 것은 **루시** 하나다 — 노브고로드는 색이 가까운 'venice'를
+          그대로 빌려 쓴다(근거 JSON의 art.flagTodo). */
 export const CITIES = [
   // ── 이베리아·대서양 제도 — 대양으로 나가는 문 ──────────────────
   // 푼샬은 이 시대 유럽 최대의 설탕 산지다(1490년대에 키프로스를 제쳤다).
   // 지도 맨 아래 왼쪽 바깥에 홀로 떨어뜨려 "뭍을 떠났다"는 느낌을 준다.
-  { id: 'funchal',    name: '푼샬',       area: '마데이라',     style: 'latin',     x: 24,  y: 194, flag: 'spain',       seed: 3101, size: 2, industry: 1 },
-  { id: 'lisboa',     name: '리스본',     area: '에스트레마두라', style: 'latin',     x: 62,  y: 158, flag: 'spain',       seed: 3202, size: 3, industry: 3 },
+  { id: 'funchal',    name: '푼샬',       area: '마데이라',     style: 'latin',     x: 24,  y: 194, flag: 'portugal',       seed: 3101, size: 2, industry: 1 },
+  { id: 'lisboa',     name: '리스본',     area: '에스트레마두라', style: 'latin',     x: 62,  y: 158, flag: 'portugal',       seed: 3202, size: 3, industry: 3 },
   { id: 'sevilla',    name: '세비야',     area: '안달루시아',   style: 'latin',     x: 88,  y: 178, flag: 'spain',       seed: 3303, size: 3, industry: 2 },
   // 빌바오는 공업력 3이다 — 바스크의 철과 참나무가 한자리에 있어 이베리아 조선의 본산이었다.
   { id: 'bilbao',     name: '빌바오',     area: '비스카야',     style: 'latin',     x: 108, y: 134, flag: 'spain',       seed: 3404, size: 2, industry: 3 },
@@ -42,22 +45,22 @@ export const CITIES = [
   // ── 저지대 — 유럽의 시장 ──────────────────────────────────────
   // 깃발을 'spain'으로 둔 것은 이 시기 저지대가 합스부르크령이었기 때문이다.
   // 브뤼헤는 즈윈이 메워져 쇠락 중이라 규모는 크되 공업력이 낮다.
-  { id: 'brugge',     name: '브뤼헤',     area: '플랑드르',     style: 'hanseatic', x: 166, y: 90,  flag: 'spain',       seed: 3909, size: 3, industry: 1 },
-  { id: 'antwerpen',  name: '안트베르펜', area: '브라반트',     style: 'hanseatic', x: 190, y: 80,  flag: 'spain',       seed: 4010, size: 3, industry: 2 },
-  { id: 'amsterdam',  name: '암스테르담', area: '홀란트',       style: 'hanseatic', x: 178, y: 54,  flag: 'spain',       seed: 4111, size: 2, industry: 3 },
+  { id: 'brugge',     name: '브뤼헤',     area: '플랑드르',     style: 'hanseatic', x: 166, y: 90,  flag: 'burgundy',       seed: 3909, size: 3, industry: 1 },
+  { id: 'antwerpen',  name: '안트베르펜', area: '브라반트',     style: 'hanseatic', x: 190, y: 80,  flag: 'burgundy',       seed: 4010, size: 3, industry: 2 },
+  { id: 'amsterdam',  name: '암스테르담', area: '홀란트',       style: 'hanseatic', x: 178, y: 54,  flag: 'burgundy',       seed: 4111, size: 2, industry: 3 },
 
   // ── 북해·한자 ─────────────────────────────────────────────────
-  { id: 'bergen',     name: '베르겐',     area: '노르웨이',     style: 'nordic',    x: 200, y: 30,  flag: 'hospitaller', seed: 4212, size: 2, industry: 1 },
-  { id: 'hamburg',    name: '함부르크',   area: '엘베',         style: 'hanseatic', x: 224, y: 72,  flag: 'hospitaller', seed: 4313, size: 2, industry: 2 },
+  { id: 'bergen',     name: '베르겐',     area: '노르웨이',     style: 'nordic',    x: 200, y: 30,  flag: 'denmark', seed: 4212, size: 2, industry: 1 },
+  { id: 'hamburg',    name: '함부르크',   area: '엘베',         style: 'hanseatic', x: 224, y: 72,  flag: 'hanse', seed: 4313, size: 2, industry: 2 },
 
   // ── 발트 ──────────────────────────────────────────────────────
-  { id: 'lubeck',     name: '뤼베크',     area: '홀슈타인',     style: 'hanseatic', x: 248, y: 56,  flag: 'hospitaller', seed: 4414, size: 3, industry: 3 },
-  { id: 'kobenhavn',  name: '코펜하겐',   area: '외레순',       style: 'hanseatic', x: 266, y: 36,  flag: 'hospitaller', seed: 4515, size: 2, industry: 2 },
+  { id: 'lubeck',     name: '뤼베크',     area: '홀슈타인',     style: 'hanseatic', x: 248, y: 56,  flag: 'hanse', seed: 4414, size: 3, industry: 3 },
+  { id: 'kobenhavn',  name: '코펜하겐',   area: '외레순',       style: 'hanseatic', x: 266, y: 36,  flag: 'denmark', seed: 4515, size: 2, industry: 2 },
   // 단치히는 한자 최대 도시였다. 비스와 강이 폴란드의 호밀과 숲을 통째로 실어 내린다.
-  { id: 'danzig',     name: '단치히',     area: '프로이센',     style: 'hanseatic', x: 292, y: 66,  flag: 'hospitaller', seed: 4616, size: 3, industry: 3 },
-  { id: 'stockholm',  name: '스톡홀름',   area: '스웨덴',       style: 'nordic',    x: 306, y: 32,  flag: 'france',      seed: 4717, size: 2, industry: 2 },
-  { id: 'riga',       name: '리가',       area: '리보니아',     style: 'hanseatic', x: 330, y: 50,  flag: 'hospitaller', seed: 4818, size: 2, industry: 1 },
-  { id: 'reval',      name: '레발',       area: '에스토니아',   style: 'hanseatic', x: 344, y: 30,  flag: 'hospitaller', seed: 4919, size: 2, industry: 1 },
+  { id: 'danzig',     name: '단치히',     area: '프로이센',     style: 'hanseatic', x: 292, y: 66,  flag: 'hanse', seed: 4616, size: 3, industry: 3 },
+  { id: 'stockholm',  name: '스톡홀름',   area: '스웨덴',       style: 'nordic',    x: 306, y: 32,  flag: 'sweden',      seed: 4717, size: 2, industry: 2 },
+  { id: 'riga',       name: '리가',       area: '리보니아',     style: 'hanseatic', x: 330, y: 50,  flag: 'hanse', seed: 4818, size: 2, industry: 1 },
+  { id: 'reval',      name: '레발',       area: '에스토니아',   style: 'hanseatic', x: 344, y: 30,  flag: 'hanse', seed: 4919, size: 2, industry: 1 },
   // 노브고로드는 **내륙**이다(볼호프 강가). 레발에서만 들어가는 막다른 주머니로 두었다 —
   // 한자의 페터호프가 외지 상인을 막고 있었으니 "관문을 거쳐야 들어간다"가 곧 고증이다.
   { id: 'novgorod',   name: '노브고로드', area: '루시',         style: 'nordic',    x: 378, y: 42,  flag: 'venice',      seed: 5020, size: 2, industry: 0 },

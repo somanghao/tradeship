@@ -395,14 +395,19 @@ export function abandonContract() {
   return { ok: true, fine };
 }
 
-/** 기한이 지났는지 — advanceDays가 부른다 */
+/** 기한이 지났는지 — advanceDays가 부른다.
+    ★ 예전에는 `{ expired: c, fine }`를 돌려주었는데, 부르는 쪽(`advanceDays`)이
+      그것을 다시 `expired`라는 이름으로 감싸 **두 겹**이 됐다. 그래서 화면이
+      `cost.expired.to`를 읽으면 undefined이고, **기한을 넘겨 입항하는 순간 게임이 통째로 죽었다**
+      (`Cannot read properties of undefined (reading 'name')` — 지중해 테스터가 실제로 두 번 겪었고,
+      세이브가 없어 그 판이 끝났다). 계약 객체에 `fine`만 얹어 **한 겹으로** 돌려준다. */
 function checkContractDue() {
   const c = state.contract;
   if (!c || state.day <= c.due) return null;
   const fine = Math.round(c.advance * CONTRACT.penalty);
   state.gold = Math.max(0, state.gold - fine);
   state.contract = null;
-  return { expired: c, fine };
+  return { ...c, fine };
 }
 
 /* ── 부관 ─────────────────────────────────────────────────────
@@ -954,6 +959,33 @@ export function boardShip(key) {
   syncGuns();
   trimLoadout();
   return { ok: true, dropped, short: shorthanded() };
+}
+
+/* ── 개발용 지급 ───────────────────────────────────────────────
+   `?start=…&ship=…&crew=…`로 시작 조건을 바꿀 때 쓴다(`main.js: applyDebugStart`).
+   ★ 규칙을 여기서 다시 쓰지 않는다 — 배는 선단에 넣고 `boardShip`이 하는 일을 그대로 태운다.
+     안 그러면 "테스트에서는 되는데 실제로는 적재·무장이 안 맞는" 상태가 만들어진다. */
+export function grantShip(key) {
+  const s = SHIPS[key];
+  if (!s) return { ok: false, reason: '없는 선종' };
+  state.fleet[key] = state.fleet[key] ?? {
+    at: state.at, hp: maxHullOf(key, {}), refits: {}, arms: { light: 0, medium: 0, long: 0 },
+  };
+  state.fleet[key].at = state.at;
+  state.everOwned.add(key);
+  const r = boardShip(key);
+  if (!r.ok && state.shipKey !== key) return r;
+  // 포문을 빈 채로 두면 전투를 시험할 수 없다 — 중포로 채운다
+  state.arms = { light: 0, medium: SHIPS[key].guns, long: 0 };
+  syncGuns();
+  return { ok: true };
+}
+
+/** 선원을 태운다(계약금 없이). 배의 정원을 넘기지 않는다. */
+export function grantCrew(n) {
+  state.crew = Math.min(SHIPS[state.shipKey].crewMax, Math.max(0, n));
+  trimLoadout();
+  return state.crew;
 }
 
 /** 정박 중인 배를 판다 — 타고 있는 배는 팔 수 없다 */

@@ -13,11 +13,13 @@
 //   도시 위쪽 박스)가 이웃 표식을 덮지 않는 것을 좌표마다 계산해 확인했다.
 //
 // ── 깃발·화풍에 대하여 (읽고 넘어갈 것) ─────────────────────────
-//   `FLAGS`에 아직 포르투갈이 없다. 이 해안의 유럽 요새는 전부 포르투갈 것이었으므로
-//   가장 가까운 이베리아 깃발 `spain`을 빌려 썼다(1580~1640년 두 왕관이 한 사람 것이었던
-//   기간을 근거로 삼는다). 스와힐리·베냉 같은 아프리카 세력은 유럽이 아닌 깃발 중
-//   가장 덜 어긋나는 `hafsid`(마그레브 이슬람)를 빌렸다. 둘 다 근거 JSON의
-//   `art.flagTodo`에 "무엇을 그려야 하는지"를 적어 뒀다 — 그림이 생기면 이 줄만 고치면 된다.
+//   ★ 배선이 끝났다. 전에는 `FLAGS`에 포르투갈이 없어 이베리아 깃발 `spain`을,
+//   스와힐리·베냉 같은 아프리카 세력에는 `hafsid`(마그레브 이슬람)를 빌려 썼다.
+//   지금은 제 깃발을 단다 — 포르투갈 요새 열 곳이 `portugal`, 스와힐리 도시국가 여섯 곳이
+//   `swahili`(붉은 바탕 흰 초승달), 베냉의 그웨이토가 `benin`(오바의 산호빛·검은 표범)이다.
+//   베냉이 이슬람 깃발을 달고 있던 것이 이 권역에서 가장 어긋난 자리였다.
+//   ※ 아직 안 그려진 것 둘은 근거 JSON의 `art.flagTodo`에 남겨 두었다 —
+//     모가디슈의 소말리(베나디르) 깃발과, 임자 없는 희망봉에 쓸 "깃발 없음"이다.
 //   화풍(`STYLES`)은 갖춰졌다 — 산호석 도시는 `swahili`, 흙벽·이엉은 `guinea`,
 //   포르투갈 요새는 `colonial`(회벽 능보)이다. 희망봉만 맞는 화풍이 없어 guinea를 쓴다.
 
@@ -30,59 +32,59 @@ export const CITIES = [
   // 뭍에서 나는 것이 없고, 대상로가 내려놓는 사금과 아우릴 염전의 소금만이 값어치다.
   // ★ 이 항구가 대서양 노예무역의 첫 거점이기도 했다는 사실은 근거 JSON에 적었다 —
   //   사람은 교역품으로 만들지 않는다(goods.js 머리말 참조).
-  { id: 'arguin',     name: '아르갱',   area: '사하라 해안',   style: 'colonial', x: 44,  y: 32,  flag: 'spain',  seed: 4101, size: 1, industry: 1 },
+  { id: 'arguin',     name: '아르갱',   area: '사하라 해안',   style: 'colonial', x: 44,  y: 32,  flag: 'portugal',  seed: 4101, size: 1, industry: 1 },
   // 산티아구(히베이라 그란지) — 1462년 정착. 열대 최초의 유럽 상설 도시이고
   // 기니 해안으로 나가는 배가 모두 여기서 물과 면포를 싣는다.
-  { id: 'santiago',   name: '산티아구', area: '카보베르데',    style: 'colonial', x: 22,  y: 62,  flag: 'spain',  seed: 4102, size: 2, industry: 1 },
+  { id: 'santiago',   name: '산티아구', area: '카보베르데',    style: 'colonial', x: 22,  y: 62,  flag: 'portugal',  seed: 4102, size: 2, industry: 1 },
   // 아심 — 앙코브라 강이 사금을 실어 내리는 자리. 1515년 산투 안토니우 요새.
-  { id: 'axim',       name: '아심',     area: '황금해안',      style: 'colonial', x: 52,  y: 100, flag: 'spain',  seed: 4103, size: 1, industry: 1 },
+  { id: 'axim',       name: '아심',     area: '황금해안',      style: 'colonial', x: 52,  y: 100, flag: 'portugal',  seed: 4103, size: 1, industry: 1 },
   // 엘미나(상 조르즈 다 미나) — 1482년. **이 권역 전체의 이유**다.
   // 16세기 초 이 해안에서 해마다 금 680kg(24,000온스)이 나갔고 그것이 당시 세계 금 공급의 1/10이었다.
-  { id: 'elmina',     name: '엘미나',   area: '황금해안',      style: 'colonial', x: 80,  y: 92,  flag: 'spain',  seed: 4104, size: 2, industry: 1 },
+  { id: 'elmina',     name: '엘미나',   area: '황금해안',      style: 'colonial', x: 80,  y: 92,  flag: 'portugal',  seed: 4104, size: 2, industry: 1 },
   // 그웨이토(우그호톤) — 베냉 왕국의 강어귀 외항. 도시 본체는 뭍 안쪽이라
   // 여기는 오바의 세관이 서는 자리에 가깝다. 유럽선은 여기까지만 들어왔다.
-  { id: 'gwato',      name: '그웨이토', area: '베냉',          style: 'guinea',   x: 118, y: 100, flag: 'hafsid', seed: 4105, size: 2, industry: 1 },
+  { id: 'gwato',      name: '그웨이토', area: '베냉',          style: 'guinea',   x: 118, y: 100, flag: 'benin', seed: 4105, size: 2, industry: 1 },
   // 상투메 — 1493년 정착, 1515년 물레방아 제당소가 들어서면서 섬 전체가 사탕수수밭이 됐다.
   // 1595년 반란 때 불탄 것만 제당소 85곳 중 60곳. 먹을 것은 죄다 배로 들어온다.
-  { id: 'saotome',    name: '상투메',   area: '기니만',        style: 'colonial', x: 124, y: 128, flag: 'spain',  seed: 4106, size: 2, industry: 1 },
+  { id: 'saotome',    name: '상투메',   area: '기니만',        style: 'colonial', x: 124, y: 128, flag: 'portugal',  seed: 4106, size: 2, industry: 1 },
   // 루안다 — 1576년. 콩고 왕국이 화폐로 쓰던 은질부 조개가 앞바다 섬에서 나고,
   // 카탕가의 구리 십자 주괴가 강을 타고 내려온다. 희망봉으로 나가는 서안의 마지막 큰 항구.
-  { id: 'luanda',     name: '루안다',   area: '앙골라',        style: 'colonial', x: 80,  y: 156, flag: 'spain',  seed: 4107, size: 2, industry: 1 },
+  { id: 'luanda',     name: '루안다',   area: '앙골라',        style: 'colonial', x: 80,  y: 156, flag: 'portugal',  seed: 4107, size: 2, industry: 1 },
   // 벵겔라 — 뭍은 사막이고 앞바다는 차가운 벵겔라 해류다. 배후 고원의 상아가 유일한 밑천.
-  { id: 'benguela',   name: '벵겔라',   area: '앙골라',        style: 'guinea',   x: 66,  y: 180, flag: 'spain',  seed: 4108, size: 1, industry: 1 },
+  { id: 'benguela',   name: '벵겔라',   area: '앙골라',        style: 'guinea',   x: 66,  y: 180, flag: 'portugal',  seed: 4108, size: 1, industry: 1 },
   // 희망봉 — ★ 이 시대엔 **도시가 아니다.** 유럽인의 상설 정착은 1652년에야 생긴다.
   //   그 전까지는 배가 물을 긷고 코이코이와 소·양을 물물교환하던 정박지였을 뿐이다.
   //   그래서 size 1 · industry 0(배를 못 짓는다) · 입항세 1%(세관이 없다)로 뒀다.
   //   깃발도 임자가 없어 지나가는 유럽 선단의 것으로 뒀다 — 알고 그렇게 둔 것이다.
-  { id: 'cabo',       name: '희망봉',   area: '아굴라스',      style: 'guinea',   x: 146, y: 200, flag: 'spain',  seed: 4109, size: 1, industry: 0 },
+  { id: 'cabo',       name: '희망봉',   area: '아굴라스',      style: 'guinea',   x: 146, y: 200, flag: 'portugal',  seed: 4109, size: 1, industry: 0 },
 
   // ── 동안: 인도양 · 스와힐리 해안 ─────────────────────────────
   // ★ 이 해안은 포르투갈이 오기 훨씬 전부터 촘촘한 무역망이었다. 킬와·몸바사·말린디는
   //   서로 경쟁하는 도시국가였고, 포르투갈은 그 위에 얹혔을 뿐 시작이 아니다.
   //   blurb와 근거 서술을 그 순서로 적었다.
   // 소팔라 — 무타파(대짐바브웨)의 금이 마니카를 거쳐 바다로 나오는 문. 1505년 상 카에타누 요새.
-  { id: 'sofala',     name: '소팔라',   area: '무타파',        style: 'colonial', x: 228, y: 182, flag: 'spain',  seed: 4110, size: 1, industry: 0 },
+  { id: 'sofala',     name: '소팔라',   area: '무타파',        style: 'colonial', x: 228, y: 182, flag: 'portugal',  seed: 4110, size: 1, industry: 0 },
   // 모잠비크 섬 — 희망봉을 돈 인도 항로 선단이 **처음 닻을 내리는 자리**다.
   // 생산지가 아니라 배를 고치고 겨울을 나는 곳이라 industry를 2로 뒀다.
-  { id: 'mocambique', name: '모잠비크', area: '모잠비크',      style: 'colonial', x: 256, y: 158, flag: 'spain',  seed: 4111, size: 2, industry: 2, prizeYard: true },
+  { id: 'mocambique', name: '모잠비크', area: '모잠비크',      style: 'colonial', x: 256, y: 158, flag: 'portugal',  seed: 4111, size: 2, industry: 2, prizeYard: true },
   // 킬와 — 12세기에 소팔라의 금을 빼앗아 스와힐리 해안의 맹주가 된 술탄국.
   // 1505년 알메이다가 500명을 상륙시켜 무너뜨린 뒤로는 궁전만 남았다.
-  { id: 'kilwa',      name: '킬와',     area: '스와힐리',      style: 'swahili',  x: 282, y: 130, flag: 'hafsid', seed: 4112, size: 2, industry: 1 },
+  { id: 'kilwa',      name: '킬와',     area: '스와힐리',      style: 'swahili',  x: 282, y: 130, flag: 'swahili', seed: 4112, size: 2, industry: 1 },
   // 잔지바르 — 뭍의 물건과 바다 건너 물건이 임자를 바꾸는 중개상의 섬.
   // 포르투갈은 1503년에 조공만 받아 갔을 뿐 요새도 수비대도 두지 않았다(1591년 영국선 기록).
-  { id: 'zanzibar',   name: '잔지바르', area: '스와힐리',      style: 'swahili',  x: 302, y: 112, flag: 'hafsid', seed: 4113, size: 2, industry: 1 },
+  { id: 'zanzibar',   name: '잔지바르', area: '스와힐리',      style: 'swahili',  x: 302, y: 112, flag: 'swahili', seed: 4113, size: 2, industry: 1 },
   // 몸바사 — 이 해안 최대의 항구이자 가장 완강하게 저항한 도시. 1500·1505·1528·1589년에
   // 네 번 불탔고 그때마다 다시 섰다. 다우 건조 전통이 있어 industry 2.
-  { id: 'mombasa',    name: '몸바사',   area: '스와힐리',      style: 'swahili',  x: 320, y: 90,  flag: 'hafsid', seed: 4114, size: 3, industry: 2 },
+  { id: 'mombasa',    name: '몸바사',   area: '스와힐리',      style: 'swahili',  x: 320, y: 90,  flag: 'swahili', seed: 4114, size: 3, industry: 2 },
   // 말린디 — 몸바사의 숙적이라 포르투갈과 손을 잡았다. 1498년 다 가마를 환대한 도시로
   // 그때 인구 5,000~10,000. 유럽 배에 관세가 헐한 것이 이 도시의 성격이다.
-  { id: 'malindi',    name: '말린디',   area: '스와힐리',      style: 'swahili',  x: 338, y: 78,  flag: 'hafsid', seed: 4115, size: 2, industry: 1 },
+  { id: 'malindi',    name: '말린디',   area: '스와힐리',      style: 'swahili',  x: 338, y: 78,  flag: 'swahili', seed: 4115, size: 2, industry: 1 },
   // 라무·파테 군도 — 뱃집의 섬. 못 하나 안 쓰고 야자 노끈으로 판자를 꿰매는
   // 므템베 목수들이 여기 있었다. 1506년 포르투갈 봉쇄로 연 600메티칼의 조공을 물었다.
-  { id: 'lamu',       name: '라무',     area: '스와힐리',      style: 'swahili',  x: 354, y: 54,  flag: 'hafsid', seed: 4116, size: 2, industry: 2 },
+  { id: 'lamu',       name: '라무',     area: '스와힐리',      style: 'swahili',  x: 354, y: 54,  flag: 'swahili', seed: 4116, size: 2, industry: 2 },
   // 모가디슈 — 이븐 바투타가 "지극히 큰 도시"라 적은 곳. 토브 베나디르라 불린 직물을
   // 이집트와 시리아로 내다 팔았다. 이 권역에서 유일하게 **만든 것을 수출하는** 항구다.
-  { id: 'mogadishu',  name: '모가디슈', area: '베나디르',      style: 'swahili',  x: 364, y: 32,  flag: 'hafsid', seed: 4117, size: 3, industry: 1 },
+  { id: 'mogadishu',  name: '모가디슈', area: '베나디르',      style: 'swahili',  x: 364, y: 32,  flag: 'swahili', seed: 4117, size: 3, industry: 1 },
 ];
 
 /* 항로 — ★ 서안과 동안을 **잇지 않았다.** 벵겔라~희망봉에서 서안이 끊기고,
