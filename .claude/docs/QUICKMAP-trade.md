@@ -32,7 +32,8 @@
 | 차익 폭(돈 버는 속도) | `data.js: SPREAD` — 이 한 계수가 무역 곡선 전체를 좌우한다 |
 | 시세 변동폭·주기 | `state.js: wobble()` (3일 주기 ±15%) |
 | 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`) |
-| 입항세 | `data.js: TARIFF` (도시 size별) |
+| 입항세 | **두 겹** — `data.js: TARIFF`(size별 기본율) + `CITY_TARIFF`(그 도시만의 오버라이드). 오버라이드를 적으면 `content/city-evidence.json`의 `cities[id].tariff`에도 같은 값과 근거를 적는다 |
+| 입항세를 읽는 함수 | 항구의 성질 → **`state.js: baseTariff()`** · 지금 실제로 무는 값(부관 특전 포함) → `tariffRate()` |
 | 항해비 갈래 | `state.js: voyageCost()` — 일당(**`avgCrewWage()`** — 술집에서 누구를 태웠나로 갈린다·기본 `CREW_WAGE` 1.2)·보급(`SUPPLY_UNIT` 1.3)·선체(`HULL_UPKEEP`×`SHIPS[].upkeep`)·무장(`ARM_UPKEEP`)·선단·**적하보험**(`INSURANCE_RATE`×항로요율×화물가치)·부관 |
 | 시작 조건(금화·선원·배) | `state.js: START_GOLD`(200) · `resetGame()` — **선원 0명**으로 시작한다. 값의 근거는 [payroll.md](wiki/payroll.md) §6 |
 | 급여 주기·불만·이탈 문턱 | `state.js: MONTH_DAYS`(30) · `UNREST_PER_MISS`·`UNREST_HEAL`·`DESERT_AT` · 참을성은 `data.js: CREW_TRAITS[].temper` |
@@ -58,6 +59,8 @@
 
 ## 3. 이 도메인 전용 함정·가드
 
+- **값은 `data.js`, 규칙은 `state.js`다.** 튜닝 상수(임금·보급·유지비·보험·급여 주기·시작 자금·조우 확률 환산·조선소 계수)는 전부 `data.js` 아래쪽 "튜닝 상수" 절에 있고, `state.js`가 그대로 re-export한다 — **기존 import는 안 깨지지만 새 코드는 `data.js`에서 직접 가져오는 쪽이 뜻이 분명하다.** 밸런스를 만지려고 1,500줄짜리 로직 파일을 열지 말 것.
+- **항구 성질을 적는 표에서는 `tariffRate()`를 쓰면 안 된다** — 부관 특전이 곱해져 **탭을 여는 순서에 따라 값이 달라진다**(6.0%가 3.9%로). `baseTariff()`를 쓴다. 대시보드가 실제로 이 버그를 겪었다.
 - **인원의 정본은 `state.crew`(숫자)이고 `state.bands`는 기록일 뿐이다.** 둘은 어긋날 수 있다(전투·폭풍으로 사람이 죽으면 crew만 준다) — `trimBands()`가 맞추고, 그 호출은 **`trimLoadout()` 안에** 있다. `crew`가 줄어드는 자리는 전부 이미 `trimLoadout()`을 부르고 있으므로 배선을 거기 모아 두면 빠뜨릴 자리가 없다. 새로 crew를 깎는 코드를 쓸 때도 같은 함수를 부를 것.
 - **`avgCrewWage()`는 총액이 아니라 단가를 돌려준다.** `voyageCost(days, crew, leg)`가 crew를 인자로 받아 "N명이면 얼마인가"를 묻기 때문이다. 총액으로 바꾸면 시뮬·대시보드가 조용히 틀린 값을 낸다.
 - **`TAVERN.advanceUnit`은 시작 조건에서 역산한 값이다.** 14닢으로 뒀더니 150닢으로 여섯을 태우는 데 92닢이 나가 **가장 짧은 항로조차 화물을 못 실었다.** 이 값을 올릴 때는 `node tools/test-tavern.mjs` ⑤(첫 항차 성립)를 반드시 다시 돌린다.

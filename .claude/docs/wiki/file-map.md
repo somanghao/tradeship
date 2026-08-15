@@ -7,7 +7,7 @@
 
 | 파일 | 역할 | 핵심 export |
 |---|---|---|
-| `js/pixel.js` | 픽셀 드로잉 코어 | `PAL`(팔레트), `G`(드로잉 DSL), `bake`(스프라이트 캐시 + 에셋 오버라이드 훅), `blit`, `outline`(자동 외곽선), `rng`, `knownKeys`/`keyOf`(스프라이트 키 목록·역추적) |
+| `js/pixel.js` | 픽셀 드로잉 코어 | `PAL`(팔레트), `G`(드로잉 DSL), `bake`(스프라이트 캐시 — **6MB LRU 상한** + 에셋 오버라이드 훅), `cacheStats`, `blit`, `outline`(자동 외곽선), `rng`, `knownKeys`/`keyOf`(스프라이트 키 목록·역추적) |
 | `js/assets.js` | 그림을 PNG로 갈아 끼우는 계층 | `loadAssetPack(base)`, `overrideFor(key)`, `registerOverride` — `assets/manifest.json`이 있으면 그 키의 스프라이트만 이미지로 대체 |
 | `js/evidence.js` | 게임이 근거 JSON을 읽는 자리 | `loadEvidence()`, `goodRank(city,good,side)` — 항구 시장 목록을 **근거 신뢰도 순**으로 쌓는다. 못 읽으면 조용히 원래 순서(`assets.js`와 같은 fail-soft) |
 | `js/sprites/char.js` | 병종 캐릭터 48×48 | `unitSprite(key, pose, scheme)`, `UNITS`, `SCHEMES`, `CHAR_FOOT` |
@@ -15,11 +15,11 @@
 | `js/sprites/scene.js` | 배경 + 이펙트 400×225 | `mapSprite`, `portSprite(style,seed)`, `openSeaSprite(mood)`, `blastSprite`, `smokeSprite`, `splashSprite`, `ballSprite`, `cannonSprite(kind,recoil)`, `VW/VH` |
 | `js/sprites/icons.js` | 교역품 아이콘 16×16 | `iconSprite(kind)`, `ICON_KEYS` |
 | `js/map/geo.js` | 지중해 지리 | `CITY_GEO`(좌표·깃발·규모·**`industry` 공업력**·`prizeYard`), `ROUTES`(항로 그래프), `CURRENTS`(해류), `GEO_BY_ID` |
-| `js/data.js` | 교역품·도시 경제·선박·적 | `GOODS`, `CITY_TRADE`(supply/demand), `CITIES`(=지리+경제 합성), `ROUTES`/`CURRENTS`(geo에서 re-export), `SHIPS`(+`tier`/`originFlag`/`era`/`requires`/`yards`=전통 조선지/`rig`/`crewMin`/`upkeep`), `REFITS`, `SHOTS`, `CANNONS`, `TROOPS`(+`hire`), `RECRUITS`, `ENEMIES`, `SEA_EVENTS`, `MARKET`/`SPREAD`/`TARIFF`/`CONTRACT` |
+| `js/data.js` | 교역품·도시 경제·선박·적 **+ 튜닝 상수 전부**(값의 정본) | `GOODS`, `CITY_TRADE`(supply/demand), `CITIES`(=지리+경제 합성), `ROUTES`/`CURRENTS`(geo에서 re-export), `SHIPS`(+`tier`/`originFlag`/`era`/`requires`/`yards`=전통 조선지/`rig`/`crewMin`/`upkeep`), `REFITS`, `SHOTS`, `CANNONS`, `TROOPS`(+`hire`), `RECRUITS`, `ENEMIES`, `SEA_EVENTS`, `MARKET`/`SPREAD`/`TARIFF`+`CITY_TARIFF`(항구별 입항세)/`CONTRACT`, `TAVERN`/`CREW_TRAITS`, **튜닝 상수**(`START_GOLD`·`CREW_WAGE`·`SUPPLY_UNIT`·`ARM_UPKEEP`·`HULL_UPKEEP`·`MONTH_DAYS`·`UNREST_*`·`DESERT_AT`·`INSURANCE_*`·`JETTISON_*`·`INLAND_LOSS`·`ODDS_*`·`LURE_*`·`ZONE_*`·`SHIP_RESALE`·`YARD_*`·`USED`·`PRIZE_*`·`REPAIR_UNIT`·`HIRE_UNIT`) |
 | `js/world.js` | 저 혼자 도는 세계 — 생성·하루진행·습격·조회 | `initWorld`, `worldTick(days)`, `npcsOnLeg/npcsAtPort/npcPos`, `removeNpc`, `newsLines` |
 | `js/npc/config.js` | NPC 튜닝값(숫자만) | `NPC`(traders·pirates·raidBase·pressure·loadRatio·pickTop), `TRADER_SHIPS`/`PIRATE_SHIPS`, `PURSE` |
 | `js/npc/behavior.js` | NPC 판단(어디로·무엇을) | `chooseTrade`, `choosePirateMove`, `chooseWander` — 게임 모듈을 import하지 않고 `ctx`로만 받는다 |
-| `js/state.js` | 게임 상태 + 규칙 | `state`, `priceOf`, `costFor/gainFor`(시장 깊이), `tariffRate`, `windOf/windFactor/routeFactor`(바람·해류), `voyageCost`, `contractOffer/acceptContract/deliverContract`(대형 주문), `buy/sell`, `repair/hire`, `purchaseShip/boardShip/sellShip`·`sellsShip/tierNeeded/yardCapable/shipPriceAt/buildableAt`(조선소)·`usedListings/buyUsed`(중고선)·`shipLockedBy`(해금), `buyCannon/removeCannon`·`armsFactor/armsAimAt/zoneFactor`(무장), `setSlot/openSlots/trimLoadout`(갑판 배치), `tavernCrews/recruitBand/avgCrewWage/trimBands`(술집·선원 무리), `START_GOLD`, `book/newLedger/ledgerTotal`(장부)·`settlePayroll/paydayDue/payrollOwed`(급여 정산), `voyageDays`, `rollSeaEvent`, `pickEnemy`, `playerTroops`, `resetGame` |
+| `js/state.js` | 게임 상태 + **규칙**(값은 data.js에서 가져와 re-export만 한다) | `state`, `priceOf`, `costFor/gainFor`(시장 깊이), `tariffRate`, `windOf/windFactor/routeFactor`(바람·해류), `voyageCost`, `contractOffer/acceptContract/deliverContract`(대형 주문), `buy/sell`, `repair/hire`, `purchaseShip/boardShip/sellShip`·`sellsShip/tierNeeded/yardCapable/shipPriceAt/buildableAt`(조선소)·`usedListings/buyUsed`(중고선)·`shipLockedBy`(해금), `buyCannon/removeCannon`·`armsFactor/armsAimAt/zoneFactor`(무장), `setSlot/openSlots/trimLoadout`(갑판 배치), `tavernCrews/recruitBand/avgCrewWage/trimBands`(술집·선원 무리), `START_GOLD`, `book/newLedger/ledgerTotal`(장부)·`settlePayroll/paydayDue/payrollOwed`(급여 정산), `voyageDays`, `rollSeaEvent`, `pickEnemy`, `playerTroops`, `resetGame` |
 | `js/ui.js` | DOM 오버레이 헬퍼 | `el`, `modal`, `toast`, `refreshHUD`, `refreshLog`, `iconEl`, `spriteEl`, `spriteElTrim`(여백 크롭), `bar` |
 | `js/main.js` | 캔버스/씬 매니저/루프 | `go(scene)`, `toLogical`, `toScreen`, `viewport`, `register` |
 | `js/scenes/port.js` | 항구 — 시세·매매·정비·조선소 | `portScene` |

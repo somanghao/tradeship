@@ -7,7 +7,7 @@
 // 다만 조선소가 "무엇을 살 것인가"라면 여기는 "누구를 태울 것인가"라서,
 // 값이 두 갈래로 나뉜다(지금 나가는 계약금 · 항해 내내 따라오는 일당).
 
-import { tavernSprite, tavernFrontSprite, TAVERN_SEATS, VH } from '../sprites/scene.js';
+import { tavernSprite, tavernFrontSprite, TAVERN_SEATS, TAV_FRONT, VH } from '../sprites/scene.js';
 import { unitSprite, CHAR_FOOT, CW } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { CITY_BY_ID, TROOPS, CREW_TRAITS } from '../data.js';
@@ -56,8 +56,9 @@ export const tavernScene = {
            seat.x - CW / 2, seat.y - CHAR_FOOT + bob, 1, seat.flip);
     });
 
-    // 테이블 앞면 — 인물 뒤에 그리면 발치에 널빤지가 깔린 꼴이 된다
-    blit(ctx, front, 0, 0, 1);
+    // 테이블 앞면 — 인물 뒤에 그리면 발치에 널빤지가 깔린 꼴이 된다.
+    // 화면 전체가 아니라 테이블 영역만 구운 스프라이트라 그 자리에 얹는다.
+    blit(ctx, front, TAV_FRONT.x, TAV_FRONT.y, 1);
   },
 };
 

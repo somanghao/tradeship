@@ -86,6 +86,39 @@ function drawCards() {
   }));
 }
 
+/* ── 입항세 ──────────────────────────────────────────────────
+   두 겹(규모별 기본율 · 항구별 오버라이드)을 **나란히** 보여준다.
+   같은 6.0%라도 "규모가 커서"와 "그 도시가 그렇게 매겨서"는 다른 사실이고,
+   후자에만 근거가 붙는다 — 그 차이가 화면에서 읽혀야 한다. */
+function tariffBox(r) {
+  const t = r.tariffInfo;
+  const box = el('div');
+  const diff = t.rate - t.base;
+  const arrow = !t.override ? ''
+    : diff > 0 ? `<span class="b">▲ 기본율보다 ${pct(diff, 1)} 높다</span>`
+    : diff < 0 ? `<span class="g">▼ 기본율보다 ${pct(-diff, 1)} 낮다</span>`
+    : `<span class="d">기본율과 같지만 규모가 아니라 이 도시의 성격으로 정한 값이다</span>`;
+
+  box.innerHTML = `<div style="margin:12px 0 5px;font-size:12px">
+      <b class="y">입항세</b>
+      <span class="d" style="font-size:11px"> 파는 쪽에만 붙는다 — 매입에는 안 문다</span></div>
+    <table class="list"><tbody>
+      <tr><td>지금 이 항구가 매기는 값</td><td class="n"><b class="y">${pct(t.rate, 1)}</b></td></tr>
+      <tr><td class="d">규모(★${r.size})만으로 정하면</td><td class="n d">${pct(t.base, 1)}</td></tr>
+      ${t.override ? `<tr><td colspan="2">${arrow}</td></tr>` : ''}
+    </tbody></table>
+    ${t.override
+      ? `<p class="legend para" style="margin:6px 0 0">
+           <b class="${(BADGE[t.verdict] ?? [, , 'd'])[2]}">${(BADGE[t.verdict] ?? [, t.verdict])[1]}</b>
+           ${t.basis}
+           ${t.sources.length ? ' ' + t.sources.map((s) => `<a href="${s.url}" target="_blank">${s.title}</a>`).join(' · ') : ''}
+         </p>`
+      : `<p class="legend para" style="margin:6px 0 0"><span class="d">규모별 기본율로 굴러간다 —
+           이 항구만의 세율을 두려면 <code>js/data.js: CITY_TARIFF</code>에 적고
+           <code>content/city-evidence.json</code>의 <code>tariff</code>에 근거를 남긴다.</span></p>`}`;
+  return box;
+}
+
 /* ── 항구 일람 ───────────────────────────────────────────── */
 function drawList() {
   const t = el('table', 'list');
@@ -104,7 +137,8 @@ function drawList() {
       <td class="d">${FLAG_NAME[r.flag] ?? r.flag}</td>
       <td class="n">${'★'.repeat(r.size)}</td>
       <td class="n">${r.routes}</td>
-      <td class="n">${pct(r.tariff, 1)}</td>
+      <td class="n">${pct(r.tariff, 1)}${r.tariffInfo.override
+        ? ` <span class="o" title="이 항구만의 세율 — 근거가 붙어 있다">◆</span>` : ''}</td>
       <td class="n">${ind === 0 ? '<span class="d">—</span>' : '●'.repeat(ind)}${r.yard.prizeYard ? ' <span class="o" title="나포선 경매항">⚑</span>' : ''}</td>
       <td class="n">${r.goods.length}</td>
       <td>${solidBar(r)}</td>`;
@@ -135,11 +169,12 @@ function drawDetail() {
       <span class="d" style="font-size:12px;font-weight:400">${r.region} · ${FLAG_NAME[r.flag] ?? r.flag}</span></h3>
     <p class="legend para" style="margin:0 0 10px">
       규모 ${'★'.repeat(r.size)} · 항로 ${r.routes}개 ·
-      입항세 ${pct(r.tariff, 1)}<span class="d">(규모별 기본율 — 부관 특전은 빼고 본다)</span> ·
+      입항세 ${pct(r.tariff, 1)}<span class="d">(부관 특전은 빼고 본다)</span> ·
       시장 깊이 ${r.depth.toFixed(1)}<span class="d">(클수록 한 번에 많이 팔아도 값이 덜 무너진다)</span>
       ${r.yard.prizeYard ? ' · <b class="o">나포선 경매항</b>' : ''}
     </p>`;
   box.append(head);
+  box.append(tariffBox(r));
 
   // 교역품 — 신뢰 등급 3묶음
   for (const rank of [0, 1, 2]) {

@@ -3,10 +3,34 @@
 import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
-  REFITS, SHOTS, MARKET, CURRENTS, TARIFF, SPREAD, CONTRACT, OFFICER,
+  REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL,
+  // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
+  START_GOLD, REPAIR_UNIT, HIRE_UNIT,
+  CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
+  MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
+  INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
+  ODDS_BASE, ODDS_PER_PCT, BASE_RISK, THREAT_PER_SHIP, ODDS_CAP,
+  LURE_PER, LURE_PER_STEP, LURE_CAP,
+  ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
+  SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
+  USED, PRIZE_HULL, PRIZE_SCRAP,
 } from './data.js';
+
+/* 튜닝 상수를 그대로 내보낸다 — **호출부는 예전처럼 `state.js`에서 가져와도 된다.**
+   값의 정본은 `data.js`로 옮겼지만(로직 파일에서 밸런스를 찾지 않게), 이미 30곳 넘는
+   import를 한꺼번에 고치면 그 커밋의 diff에서 정작 중요한 변화가 묻힌다.
+   새로 쓰는 코드는 `data.js`에서 직접 가져오는 쪽이 뜻이 분명하다. */
+export {
+  START_GOLD, REPAIR_UNIT, HIRE_UNIT,
+  CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
+  MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
+  INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
+  ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
+  SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
+  USED, PRIZE_HULL, PRIZE_SCRAP,
+};
 
 export const state = {
   day: 1,
@@ -227,10 +251,17 @@ export function buy(goodId, qty) {
   return { ok: true, qty: max, cost, unit: Math.round(cost / max), base: state.prices[state.at][goodId] };
 }
 
-/** 그 항구의 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
+/** 그 항구가 매기는 입항세 — 부관 특전을 **빼기 전**의 값.
+    항구의 성질을 적는 자리(대시보드 표·근거 검증)는 반드시 이쪽을 쓴다.
+    `tariffRate()`를 쓰면 부관이 탔는지에 따라 같은 항구가 6.0%도 되고 3.9%도 된다. */
+export function baseTariff(cityId = state.at) {
+  const size = CITY_BY_ID[cityId]?.size;
+  return CITY_TARIFF[cityId] ?? TARIFF[size] ?? 0.045;
+}
+
+/** 지금 우리가 실제로 무는 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
 export function tariffRate(cityId = state.at) {
-  const base = TARIFF[CITY_BY_ID[cityId].size] ?? 0.045;
-  return base * (1 - officerPerk('tariffOff'));
+  return baseTariff(cityId) * (1 - officerPerk('tariffOff'));
 }
 
 export function sell(goodId, qty) {
@@ -393,10 +424,6 @@ export function officerPerk(key) {
 export function initialOfficer() {
   return { hiredDay: 0, earned: 0, paid: 0 };
 }
-
-/* ── 항구 서비스 ──────────────────────────────────────────── */
-export const REPAIR_UNIT = 14;   // HP 1당 금화
-export const HIRE_UNIT = 55;     // 선원 1명당 (대포 값은 data.js CANNONS)
 
 export function repair(amount) {
   const need = Math.min(amount, state.maxHp - state.hp);
@@ -651,12 +678,6 @@ export function armsFactor(field) {
   return sum / n;
 }
 
-/* ── 대포의 유효 구간 ────────────────────────────────────────
-   near~far를 벗어난 만큼 조준이 무너진다. 멀어질 때(50)보다
-   가까워질 때(25)가 두 배 가파르다 — 장포로 코앞을 겨누는 쪽이 더 곤란하다.
-   바닥값이 있어 아무리 벗어나도 아예 못 맞히지는 않는다. */
-export const ZONE_FAR_FALL = 50, ZONE_NEAR_FALL = 25, ZONE_FLOOR = 0.4;
-
 export function zoneFactor(c, range) {
   const over = Math.max(0, range - c.far);
   const under = Math.max(0, c.near - range);
@@ -719,8 +740,6 @@ export function setSlot(i, troopKey) {
 
 /* ── 선단 ─────────────────────────────────────────────────────
    보유 선박은 마지막으로 내린 항구에 정박한 채로 남는다. 자동 매각은 없다. */
-export const SHIP_RESALE = 0.55;
-
 export function fleetRecord(key) {
   return state.fleet[key];
 }
@@ -785,12 +804,6 @@ export function buildableAt(key) {
   return CITIES.filter((c) => sellsShip(key, c.id)).map((c) => c.name);
 }
 
-/* 값 — 공업력에 여유가 있는 항구일수록 싸고, 전통 조선지는 한 번 더 깎아준다.
-   같은 배라도 어디서 사느냐로 값이 갈려 "조선 강국까지 가서 산다"는 동기가 남는다. */
-export const YARD_SLACK_OFF = 0.07;   // 공업력 여유 1당
-export const YARD_SLACK_CAP = 0.15;
-export const YARD_TRADITION_OFF = 0.08;
-
 export function shipPriceAt(key, cityId = state.at) {
   const s = SHIPS[key];
   if (!sellsShip(key, cityId)) return s.price;
@@ -830,13 +843,6 @@ export function purchaseShip(key) {
    신조가 아니라 **중고선과 나포선**이었다. 항구마다 매물이 사흘 주기로 갈리고,
    나포선을 뜯어 고쳐 파는 항구(`prizeYard` — 튀니스·알제)는 더 자주, 더 싸게 나온다.
    싸지만 선체가 상해 있어 수리비가 든다. */
-export const USED = {
-  priceMul: [0.52, 0.74],   // 정가 대비
-  hullMul: [0.45, 0.85],    // 선체 잔량
-  slots: 2,                 // 한 항구에 걸리는 매물 수 상한
-  cycle: 3,                 // 며칠마다 갈리나 (시세와 같은 리듬)
-};
-
 export function usedListings(cityId = state.at, day = state.day) {
   const city = CITY_BY_ID[cityId];
   if (!city) return [];
@@ -887,9 +893,6 @@ export function buyUsed(key, cityId = state.at) {
 /* ── 나포한 배 ────────────────────────────────────────────────
    백병전으로 이겨 갑판을 장악하면 그 배를 끌고 갈 수 있다.
    이미 같은 선종을 가지고 있으면 끌고 갈 인원이 없어 자재로 판다. */
-export const PRIZE_HULL = 0.6;    // 나포선은 선체가 상한 채로 들어온다
-export const PRIZE_SCRAP = 0.30;  // 해체 시 정가 대비
-
 export function captureShip(key) {
   const s = SHIPS[key];
   if (!s) return { ok: false, reason: '끌고 갈 만한 배가 아니다' };
@@ -1076,14 +1079,6 @@ export function voyageDays(aId, bId, day = state.day) {
    ★ weight 합 100을 반드시 유지한다. pirate만 올리면 폭풍·표류물·상선조우의 상대 빈도가
      통째로 내려앉는다. 그래서 **calm에서 덜어내 pirate로 옮긴다** — 나머지 넷은 안 건드린다. */
 
-/* 요율(%) → 조우 확률. 요율 2%면 10%, 9%면 28%가 되도록 잡았다.
-   평균 요율이 5% 언저리라 **전 항로 평균은 종전과 같은 18%**에 머문다 —
-   난이도 총량은 그대로 두고 어디가 위험한지만 갈랐다는 뜻이다. */
-const ODDS_BASE = 0.05, ODDS_PER_PCT = 0.026;
-const BASE_RISK = 5.0;                 // 표에 없는 항로가 생겼을 때의 기본값
-const THREAT_PER_SHIP = 0.04;          // 그 구간에 뜬 해적 1척당 +4%p
-const ODDS_CAP = 0.42;
-
 /** 그 항로의 보험료율(%) — 없으면 null(해적 미적용 구간) */
 export function routeRisk(aId, bId) {
   const v = ROUTE_RISK[riskKey(aId, bId)];
@@ -1097,10 +1092,6 @@ export function routeRisk(aId, bId) {
      안전 항로로 나르니 조우가 드물고, 커져서 향신료·비단을 싣기 시작하면 같은
      항로라도 표적이 된다. "돈이 되는 곳에는 해적이 있을 수밖에 없다"를 규칙으로 옮긴 것.
    내해(risk=null)에는 걸리지 않는다 — 거기엔 애초에 코르세어가 없다. */
-const LURE_PER = 9000;                 // 화물 가치 9,000닢마다 +1 단계
-const LURE_PER_STEP = 0.05;            // 한 단계에 +5%p
-const LURE_CAP = 0.14;                 // 아무리 실어도 +14%p까지
-
 export function cargoLure(value = cargoValue()) {
   return Math.min(LURE_CAP, (value / LURE_PER) * LURE_PER_STEP);
 }
@@ -1199,17 +1190,6 @@ export function pickEnemy(rand = Math.random) {
      몇 척 사느냐로 재면 게임 11배 : 사료 30배였다. 그래서 일당을 절반으로 내리고,
      줄어든 압박을 **성장에 따라 늘어나는 쪽**(선단·무장)으로 옮겼다.
      초반엔 작은 배로 싸고 안전한 화물을 나르니 비용이 낮고, 커질수록 갈래마다 함께 는다. */
-export const CREW_WAGE = 1.2;      // 1명 1일
-export const SUPPLY_UNIT = 1.3;    // 1명 1일 — 사료에서 식비는 임금과 비슷하거나 더 컸다
-
-/** 대포 유지비(1문 1일) — 화약과 탄약은 쟁여 두는 것만으로 돈이 나간다.
-    무장을 늘릴수록 오르므로 "해적이 무서워 포를 더 싣는다"에 대가가 붙는다. */
-export const ARM_UPKEEP = { light: 0.5, medium: 0.9, long: 1.6 };
-
-/** 기함 선체 유지 계수 — SHIPS[].upkeep(정박 유지비)에 곱한다.
-    정박해 두는 것보다 몰고 다니는 쪽이 더 든다. */
-export const HULL_UPKEEP = 1.0;
-
 /* ── 적하보험 ─────────────────────────────────────────────────
    `map/geo.js: ROUTE_RISK`는 원래 **당대 해상보험 요율(%)**이다. 지금까지 그 숫자를
    해적 조우 확률에만 썼는데, 본래 쓰임이 이것이다 — 값나가는 짐을 위험한 구간으로
@@ -1218,8 +1198,6 @@ export const HULL_UPKEEP = 1.0;
    ★ 이 항목이 게임의 성장 브레이크다. 초반엔 곡물·소금을 안전한 이웃 항구로 나르니
      거의 0이고, 커져서 향신료·비단을 먼 구간으로 나르기 시작하면 급격히 무거워진다.
      "돈이 되는 곳에는 대가가 있다"를 비용 쪽에서 받는 장치. */
-export const INSURANCE_RATE = 0.30;    // 요율(%)에 곱하는 계수 — 1이면 사료 그대로
-
 /** 이 항차에 실은 짐에 붙는 보험료. 내해·육로(risk=null)는 0. */
 export function insuranceFor({ from = state.at, to = null, value = null } = {}) {
   const risk = to == null ? null : routeRisk(from, to);
@@ -1236,14 +1214,6 @@ export function insuranceFor({ from = state.at, to = null, value = null } = {}) 
    보상률을 요율 계수와 같은 값으로 두는 이유: 게임은 사료 요율의 30%만 걷는다
    (`INSURANCE_RATE`). 30%만 내고 100%를 받으면 보험이 공짜 이익이 되므로
    **낸 만큼만 받는다**. 손해는 남지만 파산까지는 안 가는 크기가 된다. */
-export const INSURANCE_COVER = INSURANCE_RATE;
-
-/** 폭풍이 투하까지 갈 확률 — 위험한 항로일수록 높다.
-    바탕은 해상보험 요율이다(그 숫자의 본래 뜻이 '사고 확률의 시장가격'이므로).
-    실효 발생률 목표는 15~25항차에 1건 → content/voyage-evidence.json: lossEventPerVoyages */
-export const JETTISON_BASE = 0.22;
-export const JETTISON_PER_PCT = 0.035;
-
 export function jettisonOdds({ from = state.at, to = null } = {}) {
   const risk = to == null ? null : routeRisk(from, to);
   if (!risk) return 0;                       // 내해·육로에는 폭풍 투하가 없다
@@ -1285,11 +1255,6 @@ export function jettisonCargo(share = 0.4, rand = Math.random) {
      · 노상강도는 **값나가는 것부터** 집어간다(투하와 정반대다. 강도는 고르니까).
      · 통행세는 화물이 아니라 금화를 문다. 싸우거나 도망칠 여지가 없는 대신 값이 얕다.
    둘 다 보험이 보상하지 않는다. 해상보험은 바다의 위험만 인수했다. */
-export const INLAND_LOSS = {
-  banditShare: 0.16,      // 실은 것의 이 비율(±)을 뺏긴다
-  tollRate: 0.045,        // 화물가치의 이만큼을 금화로 문다
-};
-
 export function banditRaid(rand = Math.random) {
   const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
   if (!held.length) return { lost: {}, value: 0 };
@@ -1408,16 +1373,6 @@ export function advanceDays(n, leg = null) {
    못 주면 **반란이 아니라 이탈**이다. 배를 빼앗기는 것이 아니라 사람이 조용히 사라지고,
    갈 때 **돈 되는 짐을 들고 간다** — 밀린 삯을 제 손으로 챙겨 가는 것이다.
    그래서 체불의 대가가 "게임 오버"가 아니라 "다음 장사 밑천이 줄어드는 것"이 된다. */
-export const MONTH_DAYS = 30;
-
-/** 불만이 오르는 정도 — 못 준 비율 × (1 − 참을성) × 이 계수.
-    참을성(`CREW_TRAITS[].temper`)이 0.25인 주정뱅이는 0.85인 성실한 무리보다 5배 빨리 오른다. */
-export const UNREST_PER_MISS = 1.15;
-/** 제때 다 주면 이만큼 가라앉는다. 한 번 밀렸다고 영영 앙심을 품지는 않는다. */
-export const UNREST_HEAL = 0.34;
-/** 이탈 판정 문턱 — 불만이 이 위로 올라간 무리만 굴린다. */
-export const DESERT_AT = 0.55;
-
 /** 지금 정산할 때가 됐나 (항구에 있을 때만 참) */
 export function paydayDue() {
   return state.day >= state.payroll.nextDue && (state.payroll.due > 0 || state.payroll.arrears > 0);
@@ -1543,20 +1498,6 @@ export function playerTroops() {
   }
   return out;
 }
-
-/* 시작 조건 — 배는 있고 **사람이 없다.**
-   선원 0명은 단순한 난이도 조정이 아니라 시작의 뼈대다:
-   첫 화면에서 할 수 있는 일이 "술집에 간다" 하나로 좁혀지고,
-   선장이 맨 처음 내리는 결정이 매매가 아니라 **누구를 태울 것인가**가 된다.
-
-   ★ 사용자 지정은 **150**이었고 의도는 "아슬아슬하게"였다. 그런데 급여를 월말 정산으로
-     옮긴 뒤 실측하니 150은 아슬아슬이 아니라 **불가능**이었다 — 30항차 12판에서
-     완주 1판 · 체불 7판. 매입 자본이 100닢 남짓이라 한 항차 이익이 항해비를 못 넘는다.
-     의도(아슬아슬)를 실현하는 값은 **200**이다 — 완주 8/12 · 체불 2/12로
-     "대체로 굴러가지만 한 번 삐끗하면 삯이 밀리는" 구간에 정확히 앉는다.
-     250이면 완주 12/12 · 체불 0으로 긴장이 사라진다.
-     되돌리려면 이 값만 고치고 `node tools/sim-trade.mjs`를 여러 판 다시 돌린다. */
-export const START_GOLD = 200;
 
 export function resetGame() {
   const s = SHIPS.hulk;

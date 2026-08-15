@@ -110,9 +110,39 @@ const cache = new Map();
 const bakedKeys = new Map();   // key -> {w, h}  미리보기에서 "어떤 키가 있는지" 보여주는 데 쓴다
 const keyByCanvas = new WeakMap();   // 구워진 캔버스 -> key (미리보기가 키를 되짚는 데 쓴다)
 
+/* ── 캐시 상한 ────────────────────────────────────────────────
+   구운 스프라이트는 지우지 않으면 계속 쌓인다. 실측(2026-08-15):
+   실제 플레이 경로(항구→술집→조선소)는 35개 1.3MB로 가볍지만,
+   **항구 16곳을 다 돌면 배경만 5.6MB**(400×225×4 = 352KB씩)이고
+   선박까지 조합이 다 열리면 12.5MB까지 간다.
+
+   그래서 바이트 상한을 두고 **가장 오래 안 쓴 것부터** 버린다(LRU).
+   버려도 다음에 그 씬에 들어갈 때 다시 구우면 되고, 굽는 비용은 한 프레임이면 끝난다.
+   ★ 매 프레임 호출되는 스프라이트는 항상 최근에 쓴 것이라 절대 안 버려진다 —
+     LRU가 이 구조와 맞는 이유다(FIFO였다면 지금 쓰는 배경이 버려질 수 있다). */
+const CACHE_MAX_BYTES = 6 * 1024 * 1024;
+let cacheBytes = 0;
+const byteSize = (cv) => (cv?.width || 0) * (cv?.height || 0) * 4;
+
+function touch(key, cv) {
+  // Map은 삽입 순서를 지킨다 — 다시 넣으면 맨 뒤로 가므로 그것만으로 LRU가 된다
+  cache.delete(key);
+  cache.set(key, cv);
+}
+
+function evict() {
+  for (const [k, cv] of cache) {
+    if (cacheBytes <= CACHE_MAX_BYTES) break;
+    // 에셋 팩으로 갈아 끼운 이미지(HTMLImageElement)는 우리가 만든 게 아니라 버리지 않는다
+    if (!(cv instanceof HTMLCanvasElement)) continue;
+    cache.delete(k);
+    cacheBytes -= byteSize(cv);
+  }
+}
+
 export function bake(key, w, h, draw) {
   const hit = cache.get(key);
-  if (hit) return hit;
+  if (hit) { touch(key, hit); return hit; }
   bakedKeys.set(key, { w, h });
 
   const ov = overrideFor(key);
@@ -133,11 +163,18 @@ export function bake(key, w, h, draw) {
   draw(new G(ctx), ctx);
   cache.set(key, cv);
   keyByCanvas.set(cv, key);
+  cacheBytes += byteSize(cv);
+  if (cacheBytes > CACHE_MAX_BYTES) evict();
   return cv;
 }
 
 /** 캐시 무효화 (에셋 미리보기에서 핫리로드용) */
-export function clearCache() { cache.clear(); }
+export function clearCache() { cache.clear(); cacheBytes = 0; }
+
+/** 지금 캐시가 얼마나 물고 있나 — 진단용 */
+export function cacheStats() {
+  return { count: cache.size, bytes: cacheBytes, maxBytes: CACHE_MAX_BYTES };
+}
 
 /** 지금까지 구워진 스프라이트 키와 규격 — 에셋 팩 manifest를 쓸 때 이 목록을 본다 */
 export function knownKeys() { return [...bakedKeys.entries()].map(([key, s]) => ({ key, ...s })); }

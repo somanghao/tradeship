@@ -9,9 +9,9 @@
 //   ② 배를 지을 수 있는가 (공업력)
 //   ③ 그 도시의 살림 규모는 어느 정도인가 (부동산은 아직 게임 기능이 아니라 스케일 기준점)
 
-import { CITIES, GOOD_BY_ID, SHIPS, TARIFF } from '../js/data.js';
+import { CITIES, GOOD_BY_ID, SHIPS, TARIFF, CITY_TARIFF } from '../js/data.js';
 import { CITY_GEO, GEO_BY_ID, ROUTES } from '../js/map/geo.js';
-import { marketDepth, yardCapable, shipPriceAt, industryOf, tierNeeded } from '../js/state.js';
+import { marketDepth, yardCapable, shipPriceAt, industryOf, tierNeeded, baseTariff } from '../js/state.js';
 
 /* ── 1. 교역품의 신뢰 등급 ───────────────────────────────────
    교역 항목이 많다고 좋은 항구가 아니다. 사료로 확인된 수요 하나가
@@ -109,6 +109,24 @@ export function yardOf(cityId) {
 }
 
 /* ── 3. 항구 한 줄 ───────────────────────────────────────── */
+/* ── 입항세 ──────────────────────────────────────────────────
+   두 겹이다 — 규모별 기본율(`TARIFF`)과 그 도시만의 오버라이드(`CITY_TARIFF`).
+   화면은 **어느 쪽인지**를 보여줘야 한다. 같은 6.0%라도 "규모가 커서"와
+   "그 도시가 그렇게 매겨서"는 다른 사실이고, 후자에는 근거가 붙어 있다. */
+export function tariffOf(cityId, size, EV) {
+  const override = CITY_TARIFF[cityId];
+  const ev = EV?.cities?.[cityId]?.tariff ?? null;
+  return {
+    rate: baseTariff(cityId),
+    base: TARIFF[size] ?? 0.045,
+    override: override != null,
+    ev,
+    verdict: ev?.verdict ?? null,
+    basis: ev?.basis ?? '',
+    sources: ev?.sources ?? [],
+  };
+}
+
 export function portRows(EV) {
   const degree = {};
   for (const [a, b] of ROUTES) {
@@ -132,8 +150,9 @@ export function portRows(EV) {
       routes: degree[g.id] || 0,
       // ★ `state.js: tariffRate()`를 쓰면 안 된다 — 부관 특전(tariffOff)이 곱해져
       //   **탭을 여는 순서에 따라 값이 달라진다**(경제 탭이 먼저 돌면 부관이 승선한 상태라
-      //   6.0%가 3.9%로 나온다). 이 표는 항구의 성질을 적는 자리라 규모별 기본율만 쓴다.
-      tariff: TARIFF[g.size] ?? 0.045,
+      //   6.0%가 3.9%로 나온다). 이 표는 항구의 성질을 적는 자리라 `baseTariff()`를 쓴다.
+      tariff: baseTariff(g.id),
+      tariffInfo: tariffOf(g.id, g.size, EV),
       depth: marketDepth(g.id),
       goods,
       solid,

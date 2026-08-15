@@ -12,7 +12,8 @@
 //   node tools/check-evidence.mjs
 
 import { readFileSync } from 'node:fs';
-import { CITIES, GOOD_BY_ID } from '../js/data.js';
+import { CITIES, GOOD_BY_ID, CITY_TARIFF } from '../js/data.js';
+import { baseTariff } from '../js/state.js';
 import { GEO_BY_ID } from '../js/map/geo.js';
 
 const EV = JSON.parse(readFileSync(new URL('../content/city-evidence.json', import.meta.url), 'utf8'));
@@ -44,7 +45,7 @@ const BASIS_MIN = 40;
    콘텐츠가 안 늘어난다 — 먼저 넣고 나중에 채우는 순서를 막지 않는다.
    금액은 근거에 충실하되, 근거가 콘텐츠를 덜어내는 쪽으로 작동하면 안 된다. */
 
-let checked = 0, sourced = 0, gameplay = 0;
+let checked = 0, sourced = 0, gameplay = 0, tariffN = 0;
 const byVerdict = {};
 
 for (const city of CITIES) {
@@ -60,6 +61,39 @@ for (const city of CITIES) {
   if (!ev.flag) soft('미조사', `${city.name} 깃발`, '깃발 근거가 아직 없다');
   else if (ev.flag.value !== geo.flag) {
     warn('불일치', `${city.name} 깃발`, `코드 '${geo.flag}' ≠ 근거 '${ev.flag.value}'`);
+  }
+
+  /* 입항세 — **항구별로 지정한 곳만** 근거를 요구한다.
+     size 기본율로 굴러가는 도시는 적을 것이 없다(그게 '기본'이라는 뜻이다).
+     반대로 근거에만 있고 코드에 없으면 유령이다 — 누가 CITY_TARIFF에서 지웠다는 뜻. */
+  const tariffCode = CITY_TARIFF[city.id];
+  const tariffEv = ev.tariff;
+  if (tariffCode != null && !tariffEv) {
+    warn('무근거', `${city.name} 입항세`,
+      `CITY_TARIFF에 ${(tariffCode * 100).toFixed(1)}%로 지정해 놓고 근거가 없다`);
+  } else if (tariffCode == null && tariffEv) {
+    warn('유령', `${city.name} 입항세`, '근거에는 있는데 CITY_TARIFF에 없다');
+  } else if (tariffCode != null && tariffEv) {
+    if (Math.abs(tariffEv.value - tariffCode) > 1e-9) {
+      warn('불일치', `${city.name} 입항세`,
+        `코드 ${(tariffCode * 100).toFixed(1)}% ≠ 근거 ${(tariffEv.value * 100).toFixed(1)}%`);
+    }
+    // 실제로 쓰이는 값과도 대조한다 — 배선이 끊기면 데이터만 맞고 게임은 기본율로 돈다
+    if (Math.abs(baseTariff(city.id) - tariffCode) > 1e-9) {
+      warn('배선끊김', `${city.name} 입항세`,
+        `baseTariff()가 ${(baseTariff(city.id) * 100).toFixed(1)}%를 돌려준다 — CITY_TARIFF가 안 읽히고 있다`);
+    }
+    if (!EV.verdicts[tariffEv.verdict]) {
+      warn('빈칸', `${city.name} 입항세`, `모르는 verdict '${tariffEv.verdict}'`);
+    }
+    if (NEEDS_SOURCE.includes(tariffEv.verdict) && !(tariffEv.sources?.length)) {
+      warn('무출처', `${city.name} 입항세`,
+        `'${EV.verdicts[tariffEv.verdict]}' 판정인데 출처가 없다`);
+    }
+    if ((tariffEv.basis || '').length < BASIS_MIN) {
+      soft('짧은근거', `${city.name} 입항세`, `근거가 ${(tariffEv.basis || '').length}자뿐이다`);
+    }
+    tariffN++;
   }
 
   // 교역품
@@ -117,6 +151,9 @@ for (const id of Object.keys(EV.cities)) {
 const pad = (s, n) => String(s).padEnd(n);
 console.log(`\n=== 도시 근거 점검 (${EV.era.label}) ===`);
 console.log(`도시 ${CITIES.length} · 교역 항목 ${checked} · 출처가 달린 항목 ${sourced} · 게임성 예외 ${gameplay}`);
+console.log(`입항세: 기본율(size) ${CITIES.length - tariffN}곳 · 항구별 지정 ${tariffN}곳 — `
+  + CITIES.filter((c) => CITY_TARIFF[c.id] != null)
+      .map((c) => `${c.name} ${(baseTariff(c.id) * 100).toFixed(1)}%`).join(' · '));
 console.log('판정 분포: ' + Object.entries(byVerdict)
   .map(([k, n]) => `${EV.verdicts[k] ?? k} ${n}`).join(' · '));
 

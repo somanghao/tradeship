@@ -859,11 +859,17 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
   });
 }
 
+/* 전경 스프라이트가 놓이는 자리 — 테이블이 차지하는 만큼만 굽는다.
+   ★ 처음엔 화면 전체(400×225 = 352KB)로 구웠는데, 실제로 그리는 것은 테이블 둘뿐이라
+     **95%가 투명 픽셀**이었다. 화면 크기로 굽는 것이 편하다는 이유로 항구 배경 한 장과
+     같은 메모리를 먹고 있었다. 전경·오버레이는 반드시 **그리는 영역만** 굽는다. */
+export const TAV_FRONT = { x: 0, y: TAV_TABLE_Y - 8, w: 200, h: 34 };
+
 /** 테이블 앞면 — **인물을 그린 뒤** 덧그린다. 이게 있어야 "앉아 있는" 것으로 보인다. */
 export function tavernFrontSprite() {
-  return bake('scene:tavern:front', VW, VH, (g) => {
+  return bake('scene:tavern:front', TAV_FRONT.w, TAV_FRONT.h, (g) => {
     for (const [x, w] of TAV_TABLES) {
-      const y = TAV_TABLE_Y;
+      const y = TAV_TABLE_Y - TAV_FRONT.y;    // 스프라이트 안의 좌표로 옮긴다
       // 상판
       g.r(x, y, w, 4, P.woodL);
       g.h(y, x, x + w - 1, P.woodH);
