@@ -25,11 +25,27 @@
 | `js/scenes/map.js` | 지도 — 항로 선택·항해·해상 이벤트·NPC 조우 | `mapScene` |
 | `js/scenes/battle.js` | 전투 — 포격전·백병전 | `battleScene` |
 | `content/city-evidence.json` | 도시 수치의 **근거 정본** — 항목별 `{side, value, verdict, basis, sources[]}` | 서술본은 [city-goods-history.md](city-goods-history.md), 정합 검사는 `tools/check-evidence.mjs` |
+| `content/route-evidence.json` | 항로 위험도의 **근거 정본** — 항로별 `{risk, verdict, basis, sources[]}`. `risk`는 당대 해상보험 요율(%) | 수치 정본은 `map/geo.js: ROUTE_RISK`, 검사는 `tools/check-routes.mjs` |
 | `tools/check-evidence.mjs` | 코드(`CITY_TRADE`·깃발) ↔ 근거 JSON 정합 검사 | 불일치·근거누락·유령항목이면 exit 1 |
+| `tools/check-routes.mjs` | `ROUTE_RISK` ↔ `route-evidence.json` 정합 + **"확률이 실제로 갈렸는가"** 검사 | 배선이 끊겨 전 항로가 같은 확률이면 exit 1 |
+| `content/wage-evidence.json` | 부관·선원 보수의 **근거 정본** — 사료 앵커(배율)·발견·판정 | 수치 정본은 `data.js: OFFICER`·`state.js: CREW_WAGE`, 검사는 `tools/check-wages.mjs` |
+| `content/goods-evidence.json` | **교역품 물가**의 근거 — 밀·소금·기름·와인·후추 사료가, 화물 1칸의 실물 정의, **대조 2축의 정본** | 검사 `tools/check-prices.mjs` |
+| `content/asset-evidence.json` | **선박·부동산**의 근거 — 캐랙 건조비·갤리·집세·주택값 + "선원 연봉의 몇 배" 지표 | 부동산은 아직 게임 기능이 아니라 스케일 기준점 |
+| `content/upkeep-evidence.json` | **유지비·위험비용**의 근거 — 선체/무장 유지, 적하보험 요율, 화물 유인 | 임금을 내린 대신 압박을 옮긴 자리 |
+| `tools/check-prices.mjs` | 교역품 상대가격·임금 사다리·임금 대비 배값·유지비 계수를 근거와 대조 | 절대액이 아니라 **비율**을 지킨다 |
+| `tools/check-wages.mjs` | `OFFICER.wage`·`cut` ↔ `wage-evidence.json` 정합 + 파생 배율 재계산 | 배율을 손으로 적어 둔 값이 굳으면 exit 1 |
+| `tools/check-map.py` | **납품된 지도 그림 검수**(Pillow) — 규격·색수(손실 webp)·도시 16곳 해안선·항로 28개·바다 소음 | 좌표는 `map/geo.js`에서 직접 읽는다 · 기준판은 `assets/map-reference/` |
+| `tools/sim-risk.mjs` | 최적 플레이가 실제로 다니는 항로에 가중한 **실효 조우율** | `sim-core`는 해상 이벤트를 모델링하지 않아 자산 곡선으로는 위험도 변화가 안 잡힌다 — 그 빈자리를 메운다 |
 | `tools/sim-core.mjs` | 무역 시뮬의 몸통(출력 없음) — CLI와 대시보드가 같은 코드를 돌린다 | `runSim({maxVoyages, hooks})`, `planFor`, `bestRun` |
 | `tools/*.mjs` | 브라우저 없는 검증 (규칙 테스트·세계 테스트·무역 곡선 시뮬) | `node tools/sim-trade.mjs` 등 → [dev-workflow.md](dev-workflow.md) |
-| `dashboard/measure.mjs` | 시뮬을 돌리며 지표 채집(DOM 없음 — node로도 검증 가능) | `measure(voyages)`, `statsOf`, `starvedCells`, `allCells` |
-| `dashboard/dash.js` | 경제 대시보드 렌더 | 시세 매트릭스·현금흐름·물동량·NPC — 규칙을 재구현하지 않고 게임 모듈을 그대로 돌린다 |
+| `dashboard/measure.mjs` | 경제 지표 채집(DOM 없음 — node로도 검증 가능) | `measure(voyages)`, `statsOf`, `starvedCells`, `allCells` |
+| `dashboard/wages.mjs` | 보수 지표 채집(DOM 없음) | `measureAll` — 급여 사다리·수입 시계열·**시드 고정 짝지어 비교**(Math.random을 잠시 갈아 끼운다) |
+| `dashboard/pirates.mjs` | 해적 지표 채집(DOM 없음) | `measureAll` — 조우확률(`rollSeaEvent` 실측)·등급분포(`pickEnemy`)·현상금(`pirateEnemy`)·NPC 위치 프레임·항로 위험 |
+| `dashboard/dash.js` | **경제 탭** 렌더 | 시세 매트릭스·현금흐름·물동량·NPC |
+| `dashboard/pirate-view.js` | **해적 탭** 렌더 | 조우빈도·등급표·자산별 발생확률·지도(재생)·항로 밀도·명부 |
+| `dashboard/wage-view.js` | **보수 탭** 렌더 | 보수 사다리·사료 대조(배율)·수입 구성·항해비 몫·짝지어 비교·근거표 |
+| `dashboard/shared.mjs` | 세 탭 공용 그리기 도구 | `$`·`el`·`svg`·`node`·`heat`·`TIER_COLOR`·툴팁 — 갈라지면 한 화면으로 안 보인다 |
+| `dashboard/app.js` | 탭 셸 | 왼쪽 사이드바 · 해적·보수 탭은 **처음 열 때만** 계측(무겁다) |
 | `js/scenes/shipyard.js` | 조선소 — 선박 교체·갑판 배치·무장 → [shipyard.md](shipyard.md) | `shipyardScene` |
 
 기타: `index.html`(셸) · `css/style.css`(UI 테마) · `preview.html`(에셋 미리보기 — 그림마다 `bake` 키를 적어 준다) · `serve.py`(개발 서버 — 캐시 끔 + `.mjs` MIME 등록, `-m http.server` 대신 이걸 쓴다) · `assets/`(에셋 팩 — `README.md`에 교체 절차)
@@ -56,6 +72,9 @@ port ──출항──▶ map ──도시 클릭──▶ (항해 연출)
 | 항로 연결 | `map/geo.js: ROUTES` |
 | NPC 수·습격률·시장 영향 | `npc/config.js: NPC` |
 | 도시 수치의 근거·출처 | `content/city-evidence.json` → `node tools/check-evidence.mjs` |
+| 항로 위험도의 근거·출처 | `content/route-evidence.json` · 수치는 `map/geo.js: ROUTE_RISK` → `node tools/check-routes.mjs` |
+| 부관 보수의 근거·출처 | `content/wage-evidence.json` · 수치는 `data.js: OFFICER` → `node tools/check-wages.mjs` |
+| 그림 발주 사양 | `assets/PORT-BACKGROUND-BRIEF.md`(항구 16장) · `assets/WORLD-MAP-BRIEF.md`(지도 1장) |
 | 그림을 PNG로 교체 | `assets/manifest.json` (키는 `preview.html`에서) → `assets/README.md` |
 | 선박 성능/가격/등급 | `data.js: SHIPS` (`tier`=필요 공업력 · `requires`=해금) |
 | 어느 항구에서 뭘 짓나 | `map/geo.js: industry` (0~3) → [shipyard.md](shipyard.md) |

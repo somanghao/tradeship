@@ -1,11 +1,11 @@
-import { SHIPS, ENEMIES, REFITS, OFFICER } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
   buyShot, useShot, shotStock, maxHullOf, buy, sell, hire, sellsShip, yardsOf,
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
-  hasOfficer, officerOffer, hireOfficer, dismissOfficer, tariffRate, impactFactor,
+  hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf,
   contractOffer,
 } from '../js/state.js';
 
@@ -162,41 +162,33 @@ ok(prizeCheaper > 0, `나포선 개조항(튀니스·알제)에 매물이 걸린
 }
 
 /* ── 부관 에이미 ─────────────────────────────────────────────
-   한 명뿐인 인물이라 "언제 붙고 언제 떨어지나"와 "값과 대가가 맞물리나"를 본다. */
+   등용하는 인물이 아니라 **주어진 동행**이다. 그래서 보는 것이 바뀌었다 —
+   "언제 붙나"가 아니라 "처음부터 붙어 있고 절대 떨어지지 않나". */
 resetGame();
-ok(!hasOfficer(), '시작할 때는 부관이 없다');
-{
-  const o = officerOffer('venezia');
-  ok(o && o.poor, '낡은 바사를 몰면 리알토에서 만나도 따라나서지 않는다');
-  ok(!hireOfficer().ok, '거절당한다 — 물 새는 배에는 안 탄다');
-}
-state.at = 'rodos';
-ok(officerOffer() === null, `${OFFICER.home} 밖(로도스)에서는 만날 수 없다`);
+ok(hasOfficer(), '시작할 때부터 부관이 타고 있다');
+ok(state.officer.hiredDay === 0 && state.officer.paid === 0 && state.officer.earned === 0,
+   '0일차부터 함께 — 장부는 아직 백지다');
+ok(state.gold === 900, '계약금이 없다 — 시작 금화가 그대로 900닢');
 
-// 제대로 된 배로 갈아타면 따라나선다
+// 물 새는 배를 몰아도 떠나지 않는다 (예전엔 이 조건에서 승선을 거절했다)
+ok(ship().leak && hasOfficer(), '물 새는 낡은 바사를 몰아도 함께 있다');
+
+// 어느 항구에 있든 붙어 있다 — 리알토에 앉아 있던 사람이 아니다
+state.at = 'rodos';
+ok(hasOfficer(), `${OFFICER.home} 밖(로도스)에서도 함께 있다`);
 state.at = 'venezia';
+
+// 능력은 첫날부터 걸려 있다
 state.gold = 60000;
 purchaseShip('cocca');
 boardShip('cocca');
 {
-  const tariffBefore = tariffRate('venezia');
   state.impact.venezia = { silk: 200 };
-  const impactBefore = impactFactor('venezia', 'silk', 10);
-  const payBefore = contractOffer('venezia', 12).pay;
-
-  const g0 = state.gold;
-  const r = hireOfficer();
-  ok(r.ok && state.gold === g0 - OFFICER.fee && hasOfficer(),
-     `${OFFICER.name} 고용 — 계약금 ${r.cost.toLocaleString('ko-KR')}닢`);
-  ok(!hireOfficer().ok, '부관은 오직 한 명 — 두 번 고용되지 않는다');
-
-  const tariffAfter = tariffRate('venezia');
-  ok(Math.abs(tariffAfter - tariffBefore * (1 - OFFICER.perks.tariffOff)) < 1e-9,
-     `입항세 ${(tariffBefore * 100).toFixed(2)}% → ${(tariffAfter * 100).toFixed(2)}%`);
-  ok(impactFactor('venezia', 'silk', 10) < impactBefore,
-     `대량거래 벌점 ${(impactBefore * 100).toFixed(1)}% → ${(impactFactor('venezia', 'silk', 10) * 100).toFixed(1)}%`);
-  ok(contractOffer('venezia', 12).pay > payBefore,
-     `계약 보수 ${payBefore.toLocaleString('ko-KR')} → ${contractOffer('venezia', 12).pay.toLocaleString('ko-KR')}닢`);
+  const bare = 0.06;                                   // data.js CITY_TRADE 기준 입항세 원값
+  ok(tariffRate('venezia') < bare,
+     `입항세가 이미 감면돼 있다 — ${(tariffRate('venezia') * 100).toFixed(2)}%`);
+  ok(impactFactor('venezia', 'silk', 10) < 1,
+     `대량거래 벌점도 이미 완화돼 있다 (${(impactFactor('venezia', 'silk', 10) * 100).toFixed(1)}%)`);
   state.impact = {};
 }
 
@@ -206,8 +198,10 @@ boardShip('cocca');
   const c = advanceDays(5);
   ok(c.officer === OFFICER.wage * 5 && state.officer.paid === paid0 + c.officer,
      `급여 5일치 ${c.officer.toLocaleString('ko-KR')}닢이 항해 비용에 실린다 (${OFFICER.wage}닢/일)`);
-  ok(c.total > c.wages + c.supplies + c.fleet - 1 && c.total === c.wages + c.supplies + c.fleet + c.officer,
-     '급여는 선원 일당과 섞이지 않고 따로 잡힌다');
+  ok(c.total === c.wages + c.supplies + c.fleet + c.hull + c.arms + c.officer + c.insurance,
+     '항해비는 여섯 갈래(일당·보급·선단·선체·무장·부관)와 보험료로 나뉘어 잡힌다');
+  ok(c.hull > 0 && c.arms > 0,
+     `선체 유지 ${c.hull}닢 · 무장 유지 ${c.arms}닢 — 배와 대포를 늘릴수록 오른다`);
 }
 
 // 성과급 — 남은 이익에서만 뗀다
@@ -226,14 +220,67 @@ boardShip('cocca');
   ok(r2.ok && r2.cut === 0 && r2.profit < 0, `밑진 거래에서는 몫을 떼지 않는다 (${r2.profit.toLocaleString('ko-KR')}닢)`);
 }
 
-// 내보내면 효과도 함께 사라진다
+// 내보낼 수 없다 — 해고 경로 자체가 없어야 한다
 {
-  const withOfficer = tariffRate('venezia');
-  const g0 = state.gold;
-  const r = dismissOfficer();
-  ok(r.ok && !hasOfficer() && state.gold === g0 - r.pay,
-     `내보냈다 — 퇴직금 ${r.pay.toLocaleString('ko-KR')}닢 (급여 ${r.paid.toLocaleString('ko-KR')} + 성과급 ${r.earned.toLocaleString('ko-KR')}닢을 가져갔다)`);
-  ok(tariffRate('venezia') > withOfficer, '입항세 감면이 사라진다');
-  ok(!dismissOfficer().ok, '없는 부관은 내보낼 수 없다');
-  ok(officerOffer('venezia') && !officerOffer('venezia').poor, '리알토에 가면 다시 만날 수 있다');
+  ok(typeof state.officer === 'object' && state.officer !== null,
+     '게임이 도는 내내 부관 자리가 비지 않는다');
+  ok(state.officer.paid > 0 && state.officer.earned > 0,
+     `장부에 급여 ${state.officer.paid.toLocaleString('ko-KR')} · 성과급 `
+     + `${state.officer.earned.toLocaleString('ko-KR')}닢이 쌓였다`);
+  // 새 판을 시작해도 다시 타고 있다
+  resetGame();
+  ok(hasOfficer() && state.officer.paid === 0, '새 판에서도 처음부터 함께다');
+}
+
+/* ── 항로 위험도 ─────────────────────────────────────────────
+   근거(요율)가 실제로 확률에 걸리는지, 그리고 weight 합이 안 깨지는지를 본다.
+   배선이 끊기면 근거를 아무리 잘 적어도 게임은 예전 그대로 돈다 — 그게 직전까지의 상태였다. */
+resetGame();
+{
+  const safe = encounterOdds({ from: 'napoli', to: 'palermo' });   // 요율 2%
+  const risky = encounterOdds({ from: 'malta', to: 'tunis' });     // 요율 9%
+  ok(risky > safe * 2,
+     `항로마다 위험이 다르다 — 나폴리~팔레르모 ${(safe * 100).toFixed(1)}% vs 몰타~튀니스 ${(risky * 100).toFixed(1)}%`);
+
+  ok(encounterOdds({ from: 'bursa', to: 'iznik' }) === 0,
+     '육로(부르사~이즈니크)에는 해적이 나오지 않는다');
+  ok(routeRisk('istanbul', 'bursa') === null, '오스만 내해는 요율 자체가 없다');
+
+  // 그 구간에 뜬 해적이 확률을 밀어 올린다 — pirateThreat이 드디어 쓰인다
+  const base = encounterOdds({ from: 'palermo', to: 'tunis' });
+  const withThreat = encounterOdds({ from: 'palermo', to: 'tunis', threat: 2 });
+  ok(withThreat > base,
+     `지도에 뜬 해적이 확률을 올린다 — ${(base * 100).toFixed(1)}% → ${(withThreat * 100).toFixed(1)}% (2척)`);
+
+  // 방향이 없다
+  ok(routeRisk('tunis', 'palermo') === routeRisk('palermo', 'tunis'), '항로 위험은 방향과 무관하다');
+}
+
+// weight 합 100 유지 — pirate만 올리면 나머지 이벤트가 통째로 눌린다
+{
+  const count = (opts, n = 40000) => {
+    const t = {};
+    for (let i = 0; i < n; i++) { const e = rollSeaEvent(opts); t[e.id] = (t[e.id] || 0) + 1; }
+    return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v / n]));
+  };
+  const safe = count({ from: 'napoli', to: 'palermo' });
+  const risky = count({ from: 'malta', to: 'tunis' });
+  ok(Math.abs(safe.storm - risky.storm) < 0.02 && Math.abs(safe.merchant - risky.merchant) < 0.02,
+     `위험한 항로에서도 폭풍·상선조우 빈도는 그대로다 (폭풍 ${(safe.storm * 100).toFixed(1)}% vs ${(risky.storm * 100).toFixed(1)}%)`);
+  ok(risky.calm < safe.calm,
+     `늘어난 해적은 calm에서 덜어온다 (평온 ${(safe.calm * 100).toFixed(1)}% → ${(risky.calm * 100).toFixed(1)}%)`);
+  ok(Math.abs(risky.pirate - encounterOdds({ from: 'malta', to: 'tunis' })) < 0.012,
+     `실제 굴림이 계산된 확률과 맞는다 (${(risky.pirate * 100).toFixed(1)}%)`);
+}
+
+// 몰타
+{
+  ok(CITY_BY_ID.malta && CITY_BY_ID.malta.flag === 'hospitaller', '몰타는 기사단령이다');
+  // ★ 연도를 고정하지 않는다(최상위 지침). 실제로는 로도스 함락(1522)의 결과로 기사단이
+  //   몰타로 옮겨가므로 둘은 배타적이지만, 콘텐츠를 덜어내지 않으려고 일부러 공존시켰다.
+  //   이 테스트는 "그렇게 두기로 한 결정"을 지키는 장치다 — 누가 고증을 이유로 되돌리면 여기서 걸린다.
+  ok(CITY_BY_ID.rodos.flag === 'hospitaller',
+     '로도스도 기사단령으로 둔다 — 연표를 지키려고 콘텐츠를 버리지 않는다(의도적 예외)');
+  ok(neighborsOf('malta').length === 2, `몰타는 해협 두 기슭과만 이어진다 (${neighborsOf('malta').map((i) => CITY_BY_ID[i].name).join(', ')})`);
+  ok(CITY_BY_ID.malta.demand.grain > 1.4, '바위섬이라 곡물 수요가 가장 높다');
 }

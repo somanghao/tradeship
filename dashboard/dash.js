@@ -7,6 +7,8 @@
 import { CITIES, GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, MARKET } from '../js/data.js';
 import { state, marketDepth, tariffRate, tierNeeded, sellsShip, shipPriceAt, shipLockedBy } from '../js/state.js';
 import { measure, statsOf, starvedCells, allCells } from './measure.mjs';
+/* 그리기 도구는 `shared.mjs`가 정본 — 해적 탭과 같은 것을 써야 한 화면으로 보인다 */
+import { $, fmt, el, heat, mono, svg, node } from './shared.mjs';
 
 /* 근거 데이터 — 수치가 왜 그 값인지. content/city-evidence.json이 정본이고
    `node tools/check-evidence.mjs`가 코드와의 불일치를 잡는다. 여기서는 읽기만 한다. */
@@ -18,44 +20,6 @@ const VERDICT_STYLE = {
   gameplay:  { mark: '▲', cls: 'o',  label: '게임성 예외' },
 };
 const evidenceOf = (cid, gid) => EV?.cities?.[cid]?.goods?.[gid] ?? null;
-
-const $ = (id) => document.getElementById(id);
-const fmt = (n) => Math.round(n).toLocaleString('en-US');
-const el = (tag, cls, html) => {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (html != null) e.innerHTML = html;
-  return e;
-};
-
-/* ── 색 ──────────────────────────────────────────────────────
-   -1(싸다/유출) … 0 … +1(비싸다/유입). 게임 팔레트에 맞춘 저채도. */
-function heat(t) {
-  const x = Math.max(-1, Math.min(1, t));
-  if (x >= 0) return `rgba(224,${Math.round(140 - 60 * x)},${Math.round(96 - 40 * x)},${0.16 + 0.5 * x})`;
-  return `rgba(${Math.round(110 + 20 * x)},${Math.round(178 + 20 * x)},216,${0.16 + 0.5 * -x})`;
-}
-function mono(t, rgb) {
-  const x = Math.max(0, Math.min(1, t));
-  return `rgba(${rgb},${0.06 + 0.62 * x})`;
-}
-
-/* ── SVG ─────────────────────────────────────────────────── */
-const NS = 'http://www.w3.org/2000/svg';
-function svg(w, h) {
-  const s = document.createElementNS(NS, 'svg');
-  s.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  s.setAttribute('width', '100%');
-  s.style.height = `${h}px`;
-  s.style.display = 'block';
-  return s;
-}
-function node(tag, attrs, text) {
-  const n = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
-  if (text != null) n.textContent = text;
-  return n;
-}
 
 /* ── 현금 흐름 차트 ───────────────────────────────────────── */
 function drawChart(M) {
@@ -131,6 +95,7 @@ function drawBars(M) {
   const s = svg(W, H);
 
   const net = rows.map((r) => r.gain - r.spend - r.wages - r.supplies - r.fleetCost
+    - (r.hullCost || 0) - (r.armsCost || 0) - (r.insCost || 0)
     - (r.officerCost || 0) - r.shipSpend - r.repairSpend - r.hireSpend);
   const lim = Math.max(1, ...net.map((n) => Math.abs(n)));
   const bw = Math.max(1.2, (W - L - R) / rows.length - 1.4);

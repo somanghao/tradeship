@@ -10,7 +10,7 @@ import {
   marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT, HIRE_UNIT,
   impactFactor, costFor, tariffRate,
   contractOffer, acceptContract, deliverContract, abandonContract,
-  hasOfficer, officerOffer, hireOfficer, dismissOfficer,
+  hasOfficer,
 } from '../state.js';
 import { npcsAtPort } from '../world.js';
 import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal } from '../ui.js';
@@ -255,99 +255,47 @@ function contractCard() {
 }
 
 /* ── 부관 ──────────────────────────────────────────────
-   데리고 있으면 살림을, 없으면 본인을 보여준다. 리알토(베네치아) 밖에서는 아예 뜨지 않는다. */
+   에이미는 첫날부터 타고 있다. 등용도 해고도 없으므로 이 카드는 **버튼 없는 살림 창**이다.
+   모든 항구에서 뜬다 — 리알토에만 앉아 있던 사람이 아니라 같이 다니는 사람이기 때문이다. */
 function officerCard() {
-  const portrait = () => el('div', {
-    style: { flex: '0 0 auto', imageRendering: 'pixelated', marginRight: '8px' },
-  }, spriteElTrim(unitSprite(OFFICER.sprite, 'idle'), 2));
-
-  if (hasOfficer()) {
-    const p = OFFICER.perks;
-    return el('div.panel', {}, [
-      el('h3', {}, [
-        el('span', { text: OFFICER.title }),
-        el('span', {
-          text: `${state.day - state.officer.hiredDay}일째`,
-          style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
-        }),
-      ]),
-      el('div.svc', {}, [
-        el('div', { style: { display: 'flex', alignItems: 'flex-start' } }, [
-          portrait(),
-          el('div', {}, [
-            el('div.ctr-line', { html: `<b>${OFFICER.name}</b>` }),
-            el('div.ctr-sub', {
-              text: `입항세 −${Math.round(p.tariffOff * 100)}% · 대량거래 벌점 −${Math.round(p.impactOff * 100)}%`
-                  + ` · 계약 보수 +${Math.round(p.contractUp * 100)}%`,
-            }),
-            el('div.ctr-sub', {
-              html: `급여 <b>${OFFICER.wage}닢/일</b>`
-                  + ` · 성과급 <b>이익의 ${Math.round(OFFICER.cut * 100)}%</b>`,
-            }),
-            el('div.ctr-sub', {
-              html: `<span style="color:#6f6858">지금까지 급여 `
-                  + `${state.officer.paid.toLocaleString('ko-KR')} · 성과급 `
-                  + `${state.officer.earned.toLocaleString('ko-KR')}닢</span>`,
-            }),
-          ]),
-        ]),
-        el('button.btn.sm.dark', {
-          text: `내보낸다 (퇴직금 ${Math.round(OFFICER.fee * OFFICER.severance).toLocaleString('ko-KR')}닢)`,
-          onclick: () => {
-            const r = dismissOfficer();
-            if (!r.ok) return toast(r.reason, 'bad');
-            modal({
-              title: `${OFFICER.name}`,
-              body: `${OFFICER.lines.dismiss}<br><br>`
-                  + `<span style="color:#8f8878">함께한 동안 가져간 몫 ${r.earned.toLocaleString('ko-KR')}닢 · `
-                  + `퇴직금 ${r.pay.toLocaleString('ko-KR')}닢</span>`,
-              actions: [{ label: '보낸다', onClick: () => { after(); } }],
-            });
-          },
-        }),
-      ]),
-    ]);
-  }
-
-  const o = officerOffer();
-  if (!o) return null;
+  const p = OFFICER.perks;
+  const leaky = !!ship().leak;
   return el('div.panel', {}, [
-    el('h3', {}, el('span', { text: '리알토 상관' })),
-    el('div.svc', {}, [
-      el('div', { style: { display: 'flex', alignItems: 'flex-start' } }, [
-        portrait(),
-        el('div', {}, [
-          el('div.ctr-line', { html: `<b>${OFFICER.name}</b> — ${OFFICER.title} 자리를 찾고 있다` }),
-          el('div.ctr-sub', { text: OFFICER.blurb }),
-        ]),
-      ]),
-      el('div.ctr-sub', {
-        html: o.poor
-          ? `<span style="color:#d05a4a">${OFFICER.lines.poor}</span>`
-          : `${OFFICER.lines.greet}`,
-        style: { lineHeight: '1.5' },
-      }),
-      el('div.ctr-sub', {
-        html: `계약금 <b>${o.fee.toLocaleString('ko-KR')}닢</b> · 급여 <b>${OFFICER.wage}닢/일</b>`
-            + ` · 성과급 <b>매각 이익의 ${Math.round(OFFICER.cut * 100)}%</b>`,
-      }),
-      el('button.btn.sm', {
-        text: o.poor ? '지금 배로는 안 된다' : `계약한다 (${o.fee.toLocaleString('ko-KR')}닢)`,
-        disabled: o.poor || o.fee > state.gold,
-        onclick: () => {
-          const r = hireOfficer();
-          if (!r.ok) return toast(r.reason, 'bad');
-          pushLog(`${OFFICER.name}을(를) ${OFFICER.title}으로 맞았다. 계약금 ${r.cost.toLocaleString('ko-KR')}닢.`, 'good');
-          modal({
-            title: `${OFFICER.name}이 승선했다`,
-            body: `${OFFICER.lines.hire}<br><br>`
-                + `<span style="color:#8f8878">세관과 시장, 계약서를 맡는다. 대신 매각 이익의 `
-                + `${Math.round(OFFICER.cut * 100)}%가 그의 몫이다.</span>`,
-            actions: [{ label: '함께 간다', onClick: () => { after(); } }],
-          });
-        },
+    el('h3', {}, [
+      el('span', { text: OFFICER.title }),
+      el('span', {
+        text: `함께 ${state.day - state.officer.hiredDay}일째`,
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
       }),
     ]),
+    el('div.svc', {}, [
+      el('div', { style: { display: 'flex', alignItems: 'flex-start' } }, [
+        el('div', {
+          style: { flex: '0 0 auto', imageRendering: 'pixelated', marginRight: '8px' },
+        }, spriteElTrim(unitSprite(OFFICER.sprite, 'idle'), 2)),
+        el('div', {}, [
+          el('div.ctr-line', { html: `<b>${OFFICER.name}</b>` }),
+          el('div.ctr-sub', {
+            text: `입항세 −${Math.round(p.tariffOff * 100)}% · 대량거래 벌점 −${Math.round(p.impactOff * 100)}%`
+                + ` · 계약 보수 +${Math.round(p.contractUp * 100)}%`,
+          }),
+          el('div.ctr-sub', {
+            html: `급여 <b>${OFFICER.wage}닢/일</b>`
+                + ` · 성과급 <b>이익의 ${Math.round(OFFICER.cut * 100)}%</b>`,
+          }),
+          el('div.ctr-sub', {
+            html: `<span style="color:#6f6858">지금까지 급여 `
+                + `${state.officer.paid.toLocaleString('ko-KR')} · 성과급 `
+                + `${state.officer.earned.toLocaleString('ko-KR')}닢</span>`,
+          }),
+        ]),
+      ]),
+      // 물 새는 배를 몰고 있으면 재촉한다. 떠나겠다는 말이 아니다 — 떠날 수 없는 사람이다
+      leaky ? el('div.ctr-sub', {
+        html: `<span style="color:#d05a4a">${OFFICER.lines.leaky}</span>`,
+        style: { lineHeight: '1.5' },
+      }) : null,
+    ].filter(Boolean)),
   ]);
 }
 

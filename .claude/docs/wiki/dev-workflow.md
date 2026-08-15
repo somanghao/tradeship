@@ -50,10 +50,20 @@ const btn  = (t) => [...document.querySelectorAll('#battle-cmd .btn')]
 ## 검증 도구 (`tools/` — 브라우저 없이 돈다)
 
 ```bash
-node tools/test-rules.mjs    # 경제·개장·나포·유지비 등 규칙 25항목
-node tools/test-world.mjs    # NPC 세계·바람·해류·계약 10항목
-node tools/sim-trade.mjs     # 무역 곡선 — "몇 항차에 어느 배를 사는가"
+node tools/test-rules.mjs      # 규칙 전반(경제·개장·나포·유지비·부관·항로위험) 65항목
+node tools/test-world.mjs      # NPC 세계·바람·해류·계약 10항목
+node tools/sim-trade.mjs       # 무역 곡선 — "몇 항차에 어느 배를 사는가"
+node tools/sim-risk.mjs        # 실효 조우율 — 실제로 다니는 항로에 가중한 위험
+node tools/check-evidence.mjs  # 도시 수치 ↔ content/city-evidence.json 정합 (exit 1)
+node tools/check-routes.mjs    # 항로 요율 ↔ content/route-evidence.json 정합 (exit 1)
+node tools/check-wages.mjs     # 부관·선원 보수 ↔ content/wage-evidence.json 정합 (exit 1)
+node tools/check-prices.mjs    # 물가·자산·유지비 ↔ goods/asset/upkeep-evidence.json 정합 (exit 1)
+python tools/check-map.py      # 납품된 지도 그림 검수 (Pillow 필요 · exit 1)
 ```
+
+**고증 데이터를 만졌으면 `check-*` 넷을 다 돌린다.** 수치만 고치고 근거를 안 고치면
+"왜 이 값인지"를 아무도 모르게 되고, 다음 사람이 밸런스만 보고 고증을 되돌린다.
+실제로 급여를 내리자마자 `check-wages`가 "근거 16 ≠ 코드 2.6"으로 즉시 잡았다.
 
 `js/state.js`·`js/world.js`는 Canvas에 의존하지 않는 순수 로직이라 Node로 그대로 import된다
 (그래서 `world.js`는 `sprites/`를 쓰지 않고 돛 성능도 `data.js: SHIPS[].rig`에서 읽는다).
@@ -61,6 +71,14 @@ node tools/sim-trade.mjs     # 무역 곡선 — "몇 항차에 어느 배를 �
 **경제 수치를 만졌으면 `sim-trade.mjs`를 반드시 다시 돌린다.** `SPREAD` 한 계수만 움직여도
 초반이 통째로 무너지거나 후반이 막힌다 — 실제로 조정 과정에서 "2항차에 카라벨"과
 "5~15항차 내내 굶음"을 오간 끝에 잡은 곡선이다.
+
+⚠️ **`sim-trade.mjs`는 해상 이벤트를 모델링하지 않는다.** 순수 무역만 재므로 항로 위험도를
+바꿔도 자산 곡선이 안 움직인다 — 그것을 "영향 없음"으로 읽으면 안 된다. 위험도를 만졌으면
+**`sim-risk.mjs`**로 교통량 가중 실효 조우율을 따로 본다.
+
+⚠️ **부관·위험도처럼 확률이 걸린 것은 같은 시드로 짝지어(paired) 잰다.** 그냥 두 번 돌리면
+배 구입 타이밍 때문에 기준선이 25%씩 튀어 **효과의 부호가 뒤집힌다**. `Math.random`을
+mulberry32 같은 시드 PRNG로 갈아 끼우고 두 팔을 같은 시드로 돌린 뒤 중앙값·승률을 본다.
 
 ## 자동 검증 (에이전트용)
 

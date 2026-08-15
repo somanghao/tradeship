@@ -218,4 +218,24 @@ export function pirateThreat(aId, bId) {
   return npcsOnLeg(aId, bId, 'pirate').length;
 }
 
+/** 해적 NPC를 전투용 적으로 — 그놈이 그동안 턴 것이 그대로 전리품이 된다.
+    씬(map.js)이 아니라 여기 두는 이유: 이건 연출이 아니라 **규칙**이라
+    대시보드도 같은 값을 읽어야 한다. 씬에 두면 계측이 재구현이 되어 갈라진다. */
+export function pirateEnemy(n) {
+  const s = SHIPS[n.shipKey];
+  const gold = Math.max(200, Math.round(n.gold));
+  return {
+    id: `npc:${n.id}`, name: `${n.name}호`, nation: '해적',
+    hull: s.hull, tint: 'dark', flag: 'pirate',
+    hp: Math.round(s.hp * 0.9), guns: Math.max(4, Math.round(s.guns * 0.8)),
+    crew: Math.max(16, Math.round(s.crewMax * 0.6)),
+    level: 2, prize: n.shipKey,
+    troops: ['pirate', 'corsair', 'pirate', 'swordsman', 'pirate'],
+    loot: {
+      gold: [Math.round(gold * 0.6), gold],
+      goods: Object.keys(n.cargo).length ? Object.keys(n.cargo) : ['salt', 'wine'],
+    },
+  };
+}
+
 void pushLog;

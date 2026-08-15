@@ -320,9 +320,11 @@ const HEADGEAR = {
     g.r(17 + L, 19 + Y, 6, 4, s.cD);                   // 어깨 케이프
   },
 
-  longhair: (g, s, po) => {                            // 어깨까지 내린 적갈색 머리
+  longhair: (g, s, po) => {                            // 어깨까지 내린 금발
     const L = Math.round(po.lean * 0.6), Y = po.headY;
-    const H = '#8a4a2a', HD = '#5c2e18', HL = '#b5673a';
+    // PAL.sand 3톤 그대로 — 금색 계열은 이미 표에 있으므로 새 색을 만들지 않는다.
+    // goldM(#d2a52a)은 금속용이라 머리에 쓰면 투구처럼 보인다.
+    const H = P.sandM, HD = P.sandD, HL = P.sandL;
     // 정수리
     g.h(9 + Y, 21 + L, 26 + L, H);
     g.h(10 + Y, 20 + L, 27 + L, H);
@@ -341,8 +343,10 @@ const HEADGEAR = {
     g.px(29 + L, 14 + Y, HD);
     g.h(24 + Y, 17 + L, 20 + L, HD);                   // 어깨에 닿는 끝단
     g.h(21 + Y, 28 + L, 29 + L, HD);
-    // 금비녀 — 값나가는 것을 몸에 지니는 취향
-    g.px(21 + L, 11 + Y, s.trim);
+    // 비녀 — 값나가는 것을 몸에 지니는 취향.
+    // 머리가 금발이 되면서 금색 비녀가 머리에 묻힌다. 짙은 청록(의상색)으로 받치고
+    // 금은 끝의 반짝임 1px만 남긴다 — 2px짜리 소품은 대비가 없으면 그냥 사라진다.
+    g.px(21 + L, 11 + Y, s.cD);
     g.px(22 + L, 10 + Y, s.trim);
   },
 };

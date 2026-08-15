@@ -111,7 +111,9 @@ async function boot() {
 function titleScreen() {
   const scr = el('div#title-screen', {}, [
     el('h1', { text: '지중해 교역기' }),
-    el('div.sub', { text: '1500년, 베네치아 — 카라벨 한 척과 금화 3,200닢' }),
+    // ★ 연도를 박지 않는다(최상위 지침) · 시작 조건은 state.js: resetGame이 정본이다.
+    //   전에는 "1500년, 카라벨 한 척과 3,200닢"이었는데 둘 다 사실이 아니게 된 지 오래였다.
+    el('div.sub', { text: '베네치아 — 물 새는 낡은 바사 한 척과 금화 900닢' }),
     el('div.keys', {
       html: '항구에서 <b>싸게 사고</b> 다른 도시에서 <b>비싸게 판다</b>.<br>'
           + '바다에는 해적이 있다. <b>포격</b>으로 몰아붙이고 <b>백병전</b>으로 나포하라.',

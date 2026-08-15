@@ -7,10 +7,10 @@ import { CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER } from '../data.
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  hasOfficer, officerPerk,
+  hasOfficer, officerPerk, routeDangerLabel,
 } from '../state.js';
 import {
-  worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines,
+  worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog } from '../ui.js';
 import { go, toLogical, canvas } from '../main.js';
@@ -30,6 +30,8 @@ function startVoyage(toId) {
     // 이 구간에 실제로 떠 있는 배들 — 조우하면 지도에서 보던 그 배가 나온다
     foes: npcsOnLeg(state.at, toId, 'pirate'),
     ships: npcsOnLeg(state.at, toId, 'trader'),
+    // 출항 시점에 굳힌다 — 항해 중에는 세계가 멈춰 있으므로(worldTick은 입항 때 돈다)
+    threat: pirateThreat(state.at, toId),
     t: 0,
     speed: 1 / (VOYAGE_BASE + days * VOYAGE_PER_DAY),   // 거리에 비례한 연출 시간
     eventAt: 0.35 + Math.random() * 0.35,
@@ -61,7 +63,10 @@ export const mapScene = {
 
     if (!sailing.eventDone && sailing.t >= sailing.eventAt) {
       sailing.eventDone = true;
-      const ev = rollSeaEvent();
+      // 항로마다 위험이 다르다 — 보험료율(ROUTE_RISK) + 그 구간에 실제로 뜬 해적 수
+      const ev = rollSeaEvent({
+        from: sailing.from.id, to: sailing.to.id, threat: sailing.threat,
+      });
       if (ev.id !== 'calm') {
         const held = sailing;
         sailing = null;                    // 연출 정지
@@ -246,7 +251,8 @@ function onClick(ev) {
 function arrive(cityId) {
   const days = voyageDays(state.at, cityId);
   const dist = distanceBetween(state.at, cityId);
-  const cost = advanceDays(days);
+  // state.at은 아직 출발 항구다(아래에서 갱신) — 보험료는 이 구간의 요율로 매긴다
+  const cost = advanceDays(days, { from: state.at, to: cityId });
   const news = worldTick(days);              // 그 사이 상인과 해적도 움직였다
   state.stats.distance += Math.round(dist);
   state.at = cityId;
@@ -261,7 +267,10 @@ function arrive(cityId) {
   const c = CITY_BY_ID[cityId];
   pushLog(`${days}일 항해 끝에 ${c.name}에 입항했다.`
         + ` (일당 ${cost.wages} · 보급 ${cost.supplies}`
+        + (cost.hull ? ` · 선체 ${cost.hull}` : '')
+        + (cost.arms ? ` · 무장 ${cost.arms}` : '')
         + (cost.fleet ? ` · 선단 ${cost.fleet}` : '')
+        + (cost.insurance ? ` · 보험 ${cost.insurance}` : '')
         + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢)`, 'good');
   if (cost.leak > 0) pushLog(`항해 중 선체로 물이 새어 ${cost.leak}pt 삭았다. 배를 갈아타야 한다.`, 'bad');
   if (cost.expired) {
@@ -277,23 +286,7 @@ function arrive(cityId) {
    지도 위를 실제로 도는 배들과 바다 한복판에서 마주친다.
    상인과는 흥정하거나(항구를 안 거치고 사고판다) 덮칠 수 있다. */
 
-/** 해적 NPC를 전투용 적으로 — 그놈이 그동안 턴 것이 전리품이 된다 */
-function pirateEnemy(n) {
-  const s = SHIPS[n.shipKey];
-  const gold = Math.max(200, Math.round(n.gold));
-  return {
-    id: `npc:${n.id}`, name: `${n.name}호`, nation: '해적',
-    hull: s.hull, tint: 'dark', flag: 'pirate',
-    hp: Math.round(s.hp * 0.9), guns: Math.max(4, Math.round(s.guns * 0.8)),
-    crew: Math.max(16, Math.round(s.crewMax * 0.6)),
-    level: 2, prize: n.shipKey,
-    troops: ['pirate', 'corsair', 'pirate', 'swordsman', 'pirate'],
-    loot: {
-      gold: [Math.round(gold * 0.6), gold],
-      goods: Object.keys(n.cargo).length ? Object.keys(n.cargo) : ['salt', 'wine'],
-    },
-  };
-}
+/* 해적 NPC → 전투용 적 변환은 규칙이라 `world.js`가 정본이다(대시보드도 같은 값을 읽는다). */
 
 /** 상선 NPC를 전투용 적으로 — 무장이 빈약한 대신 화물이 실려 있다 */
 function merchantEnemy(n) {
@@ -531,15 +524,24 @@ function routeCards() {
     const c = CITY_BY_ID[id];
     const d = voyageDays(state.at, id);
     const w = routeWindLabel(state.at, id);
-    const cost = voyageCost(d);
+    const cost = voyageCost(d, state.crew, { from: state.at, to: id });
+    const threat = pirateThreat(state.at, id);
+    const dg = routeDangerLabel({ from: state.at, to: id, threat });
     return el('div.route-row', {
       title: `일당 ${cost.wages} · 보급 ${cost.supplies}`
+           + (cost.hull ? ` · 선체 ${cost.hull}` : '')
+           + (cost.arms ? ` · 무장 ${cost.arms}` : '')
            + (cost.fleet ? ` · 선단 ${cost.fleet}` : '')
-           + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢`,
+           + (cost.insurance ? ` · 적하보험 ${cost.insurance}` : '')
+           + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢`
+           + `\n해적 조우 ${Math.round(dg.odds * 100)}%`
+           + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
+           + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')',
       onclick: () => startVoyage(id),
     }, [
       el('span.rn', { text: c.name }),
       el(`span.rw.${w.kind || 'calm'}`, { text: w.text }),
+      el(`span.rw.${dg.kind || 'calm'}`, { text: threat ? `${dg.text}·${threat}` : dg.text }),
       el('span.rd', { text: `${d}일 · ${cost.total}닢` }),
     ]);
   });

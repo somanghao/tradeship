@@ -78,7 +78,11 @@ export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
     for (const key of [...ORDER].reverse()) {
       if (ORDER.indexOf(key) <= curRank) continue;
       if (state.fleet[key] || !sellsShip(key)) continue;
-      if (shipPriceAt(key) > state.gold * 0.92) continue;   // 운영자금은 남긴다 (값은 항구마다 다르다)
+      // 운영자금을 남긴다. ★ 0.92는 너무 헐거웠다 — 교역품 값을 사료 비율로 올린 뒤
+      //   화물 한 칸을 채우는 데 드는 자본이 커져서, 배를 사고 나면 실을 것을 못 사
+      //   절반이 파산했다(실측). 배는 화물을 나르는 수단이지 목적이 아니므로
+      //   실제 플레이어처럼 매입 자금을 남겨 둔다.
+      if (shipPriceAt(key) > state.gold * 0.70) continue;
       const before = state.gold;
       if (purchaseShip(key).ok) {
         shipSpend += before - state.gold;
@@ -114,7 +118,7 @@ export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
 
     // 항해 — 일당·보급·선단 유지비가 여기서 나간다
     const dd = voyageDays(state.at, run.to);
-    const cost = advanceDays(dd);
+    const cost = advanceDays(dd, { from: state.at, to: run.to });
     const news = worldTick(dd);        // NPC도 같은 시장에서 사고판다
     state.at = run.to;
     if (state.fleet[state.shipKey]) state.fleet[state.shipKey].at = run.to;
@@ -136,6 +140,7 @@ export function runSim({ maxVoyages = 90, hooks = {} } = {}) {
       ship: state.shipKey, from, to: run.to, days: dd,
       spend, gain, bought, sold,
       wages: cost.wages, supplies: cost.supplies, fleetCost: cost.fleet,
+      hullCost: cost.hull, armsCost: cost.arms, insCost: cost.insurance,
       officerCost: cost.officer, leak: cost.leak,
       shipSpend, repairSpend, hireSpend,
       news,

@@ -1,0 +1,126 @@
+{
+  "_읽는이에게": "교역품 12종의 기준가가 왜 이 값인지. 코드 정본은 js/data.js: GOODS[].base이고 이 파일과 어긋나면 node tools/check-prices.mjs가 실패시킨다. 자매 파일 — 임금 wage-evidence.json · 부동산/선박 asset-evidence.json · 유지비 upkeep-evidence.json.",
+  "version": 1,
+  "era": {
+    "label": "대항해시대 (15세기말~16세기)",
+    "note": "게임은 연도를 고정하지 않는다. 여기 실린 사료값도 '어느 해의 가격표'가 아니라 **무엇이 무엇보다 비쌌나의 순서**로 읽어야 한다."
+  },
+  "howToCompare": {
+    "rule": "게임 화폐 ‘닢’은 실화폐가 아니다. 그래서 절대액은 절대 대조하지 않고 **두 가지 비율만** 본다.",
+    "axis1": "품목 상대가격 — 곡물(밀)을 1로 놓았을 때 몇 배인가",
+    "axis2": "임금 대비 자산가격 — 선원 1명의 연봉으로 무엇을 얼마나 살 수 있나",
+    "whyNotAbsolute": "게임의 절대 스케일은 사료와 다르다(플레이 압박을 위해 압축돼 있다). 예를 들어 곡물 1칸을 밀 2톤으로 보면 1닢≈1.2두카트가 되는데, 그 환율로 선원 일당을 환산하면 사료의 30배가 된다. 스케일이 아니라 **구조**를 맞추는 것이 이 파일의 목적이다."
+  },
+  "cargoUnit": {
+    "rule": "화물 1칸의 실물량은 품목마다 다르다 — 가치 밀도가 다르기 때문이다(실제 교역선도 그랬다).",
+    "grainAnchor": "곡물 1칸 = 밀 약 2톤. 이 정의를 쓰면 게임의 적재량이 실제 선박 톤수와 맞는다 — 코카 78칸≈156톤, 캐랙 240칸≈480톤, 라구사 아르고시 320칸≈640톤.",
+    "spiceCheck": "향신료 1칸은 후추 700~800kg(70kg 자루 10여 개) 규모가 된다. 캐랙 한 척이 후추 180톤을 싣는 셈이라 15세기 베네치아 향신료 갤리의 적재 규모와 어긋나지 않는다.",
+    "goldCheck": "금괴 1칸은 금 20kg 안팎이다. 최고가 품목이 화물칸을 적게 먹는 것은 자연스럽다."
+  },
+  "verdicts": {
+    "confirmed": "사료로 확인됨 (가격·임금이 직접 나온다)",
+    "probable": "개연성 있음 (인접 사례나 비율로 채움)",
+    "corrected": "고증 조사로 바로잡음",
+    "gameplay": "게임이 성립하도록 고증을 의도적으로 덮어씀"
+  },
+  "currency": [
+    {
+      "unit": "베네치아 두카트",
+      "value": "120 솔디",
+      "note": "금 3.5g"
+    },
+    {
+      "unit": "카스티야 두카트",
+      "value": "375 마라베디",
+      "note": "회계 단위"
+    },
+    {
+      "unit": "리라",
+      "value": "20 솔디 = 240 데나리"
+    }
+  ],
+  "anchors": {
+    "wheat": {
+      "label": "밀",
+      "price": "1 staio(약 18kg) = 25.75 솔디",
+      "perDucat": "1두카트로 밀 약 84kg",
+      "verdict": "confirmed",
+      "sources": [
+        {
+          "title": "16세기 초 이탈리아 물가표 (La Bella Donna, Monete e misure)",
+          "note": "레오나르도 시대 생활물가"
+        }
+      ],
+      "goodId": "grain",
+      "ratioToWheat": 1.0
+    },
+    "salt": {
+      "label": "소금",
+      "price": "1 staio = 108~120 솔디",
+      "ratioToWheat": 4.3,
+      "verdict": "confirmed",
+      "note": "소비지 가격이다. 산지(고조·이비사 염전)에서는 훨씬 쌌으므로 게임 기준가는 그 사이에 둔다.",
+      "goodId": "salt"
+    },
+    "oliveoil": {
+      "label": "올리브유",
+      "price": "28.86kg 항아리 = 113.8 솔디",
+      "ratioToWheat": 2.8,
+      "verdict": "confirmed",
+      "goodId": "oliveoil"
+    },
+    "wine": {
+      "label": "와인",
+      "price": "40갤런(약 151L) 통 = 3 리라(60 솔디)",
+      "ratioToWheat": 0.3,
+      "verdict": "confirmed",
+      "note": "산지 벌크 와인이다. 원거리로 나른 상품 와인은 이보다 훨씬 비쌌으므로 게임은 사료 최저선까지 내리지 않는다.",
+      "goodId": "wine"
+    },
+    "cheese": {
+      "label": "치즈(파르메산)",
+      "price": "파운드당 4 솔디",
+      "ratioToWheat": 8.4,
+      "verdict": "confirmed",
+      "note": "게임 품목 아님 — 사치 식료품의 위치를 잡는 참고값"
+    },
+    "pepper": {
+      "label": "후추",
+      "price": "자루(약 70kg) = 30~50 두카트 · 베네치아 도매 40~55두카트/카르고(15세기 중후반)",
+      "ratioToWheat": 30,
+      "verdict": "confirmed",
+      "note": "자루 하나가 장인의 1년 봉급과 맞먹었다. 향신료가 왜 목숨을 걸 값어치였는지가 이 한 줄에 있다.",
+      "sources": [
+        {
+          "title": "Smithsonian, The Spice That Built Venice"
+        },
+        {
+          "title": "Pepper Prices Before Da Gama (JEH)"
+        }
+      ],
+      "goodId": "spice"
+    }
+  },
+  "gameTargets": {
+    "goodsRatioToGrain": {
+      "grain": 1.0,
+      "salt": 2.4,
+      "oliveoil": 2.6,
+      "wine": 1.9,
+      "ceramic": 6.5,
+      "fur": 8.75,
+      "glass": 9.5,
+      "weapon": 8.25,
+      "spice": 16.5,
+      "ivory": 15.0,
+      "silk": 21.0,
+      "gold": 35.0,
+      "_note": "사료 비율을 그대로 쓰지 않고 절반쯤 반영한 값이다. 후추는 무게당 밀의 30배지만 게임에서 그대로 두면 향신료 항로 하나가 경제를 삼킨다(같은 이유로 소금은 4.3→2.4로 완화). 방향은 사료, 폭은 게임."
+    }
+  },
+  "caveats": [
+    "이 파일의 사료값은 2026-08-15 웹 조사에서 모은 것이고, 원 문헌(Hamilton 1934, Lane, Pérez-Mallaína)의 표 자체는 확보하지 못했다. 2차 인용이므로 정밀 수치보다 **순서와 배율**을 신뢰할 것.",
+    "지역차가 크다. 밀·소금·와인은 산지와 소비지의 가격이 몇 배씩 달랐고, 게임은 그 차이를 기준가가 아니라 도시별 supply/demand 배율로 표현한다 — 그래서 기준가는 언제나 '중간값'이다.",
+    "16세기는 가격혁명기라 세기 초와 말의 절대가가 3~4배 차이난다(세비야 물가 336% 상승). 배율 비교만 유효한 또 하나의 이유다."
+  ]
+}

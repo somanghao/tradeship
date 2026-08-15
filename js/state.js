@@ -4,6 +4,7 @@ import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, SPREAD, CONTRACT, OFFICER,
+  ROUTE_RISK, riskKey,
 } from './data.js';
 
 export const state = {
@@ -292,34 +293,10 @@ export function officerPerk(key) {
   return state.officer ? (OFFICER.perks[key] || 0) : 0;
 }
 
-/** 이 항구에서 부관을 만날 수 있는가. `poor`면 만나도 따라나서지 않는다. */
-export function officerOffer(cityId = state.at) {
-  if (state.officer) return null;
-  if (cityId !== OFFICER.home) return null;
-  // 물이 새는 배를 모는 선장에게는 가지 않는다 — 제 몫이 이익에서 나오는 사람이다
-  return { fee: OFFICER.fee, poor: !!ship().leak };
-}
-
-export function hireOfficer() {
-  if (state.officer) return { ok: false, reason: '이미 부관이 있다' };
-  const o = officerOffer();
-  if (!o) return { ok: false, reason: `${CITY_BY_ID[OFFICER.home].name}에 가야 만날 수 있다` };
-  if (o.poor) return { ok: false, reason: '이 배로는 따라나서지 않는다' };
-  if (OFFICER.fee > state.gold) {
-    return { ok: false, reason: `계약금이 ${(OFFICER.fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
-  }
-  state.gold -= OFFICER.fee;
-  state.officer = { hiredDay: state.day, earned: 0, paid: 0 };
-  return { ok: true, cost: OFFICER.fee };
-}
-
-export function dismissOfficer() {
-  if (!state.officer) return { ok: false, reason: '부관이 없다' };
-  const pay = Math.round(OFFICER.fee * OFFICER.severance);
-  const { earned, paid } = state.officer;
-  state.gold = Math.max(0, state.gold - pay);
-  state.officer = null;
-  return { ok: true, pay, earned, paid };
+/** 처음부터 승선해 있는 상태 — `resetGame()`이 이걸로 시작한다.
+    등용/해고 함수는 없다. 만나는 장면도 헤어지는 장면도 없기 때문이다. */
+export function initialOfficer() {
+  return { hiredDay: 0, earned: 0, paid: 0 };
 }
 
 /* ── 항구 서비스 ──────────────────────────────────────────── */
@@ -871,12 +848,83 @@ export function voyageDays(aId, bId, day = state.day) {
   return Math.max(1, Math.round(base / routeFactor(aId, bId, day)));
 }
 
-/* ── 항해 이벤트 ──────────────────────────────────────────── */
-export function rollSeaEvent(rand = Math.random) {
+/* ── 항해 이벤트 ────────────────────────────────────────────
+   조우 확률은 **항로마다 다르다.** 근거는 당대 해상보험 요율(`geo.js: ROUTE_RISK`)이고,
+   거기에 그 구간에 실제로 떠 있는 해적 수를 얹는다.
+
+   ★ weight 합 100을 반드시 유지한다. pirate만 올리면 폭풍·표류물·상선조우의 상대 빈도가
+     통째로 내려앉는다. 그래서 **calm에서 덜어내 pirate로 옮긴다** — 나머지 넷은 안 건드린다. */
+
+/* 요율(%) → 조우 확률. 요율 2%면 10%, 9%면 28%가 되도록 잡았다.
+   평균 요율이 5% 언저리라 **전 항로 평균은 종전과 같은 18%**에 머문다 —
+   난이도 총량은 그대로 두고 어디가 위험한지만 갈랐다는 뜻이다. */
+const ODDS_BASE = 0.05, ODDS_PER_PCT = 0.026;
+const BASE_RISK = 5.0;                 // 표에 없는 항로가 생겼을 때의 기본값
+const THREAT_PER_SHIP = 0.04;          // 그 구간에 뜬 해적 1척당 +4%p
+const ODDS_CAP = 0.42;
+
+/** 그 항로의 보험료율(%) — 없으면 null(해적 미적용 구간) */
+export function routeRisk(aId, bId) {
+  const v = ROUTE_RISK[riskKey(aId, bId)];
+  return v === undefined ? BASE_RISK : v;
+}
+
+/** 이 항로에서 해적을 만날 확률. threat은 `world.js: pirateThreat()`가 준다.
+    (state는 world를 모른다 — 순환 참조를 막으려고 호출자가 넘긴다) */
+/* 화물이 값나갈수록 해적이 꼬인다.
+   ★ 이것이 이 게임의 성장 곡선을 만든다 — 초반엔 곡물·소금처럼 싼 것을 가까운
+     안전 항로로 나르니 조우가 드물고, 커져서 향신료·비단을 싣기 시작하면 같은
+     항로라도 표적이 된다. "돈이 되는 곳에는 해적이 있을 수밖에 없다"를 규칙으로 옮긴 것.
+   내해(risk=null)에는 걸리지 않는다 — 거기엔 애초에 코르세어가 없다. */
+const LURE_PER = 9000;                 // 화물 가치 9,000닢마다 +1 단계
+const LURE_PER_STEP = 0.05;            // 한 단계에 +5%p
+const LURE_CAP = 0.14;                 // 아무리 실어도 +14%p까지
+
+export function cargoLure(value = cargoValue()) {
+  return Math.min(LURE_CAP, (value / LURE_PER) * LURE_PER_STEP);
+}
+
+/** 지금 실은 화물의 시세 가치 — 표적이 되는 정도를 재는 값 */
+export function cargoValue(at = state.at) {
+  let sum = 0;
+  for (const [gid, n] of Object.entries(state.cargo || {})) {
+    if (!n) continue;
+    sum += (state.prices[at]?.[gid] ?? GOOD_BY_ID[gid]?.base ?? 0) * n;
+  }
+  return sum;
+}
+
+export function encounterOdds({ from, to, threat = 0, lure = null } = {}) {
+  if (from == null || to == null) return SEA_EVENTS.find((e) => e.id === 'pirate').weight / 100;
+  const risk = routeRisk(from, to);
+  if (risk === null) return 0;                       // 오스만 내해·육로
+  const bait = lure == null ? cargoLure() : cargoLure(lure);
+  return Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait);
+}
+
+/** 위험도 라벨 — 출항 카드에 띄운다. 확률이 달라져도 못 읽으면 판단이 안 생긴다. */
+export function routeDangerLabel({ from, to, threat = 0 } = {}) {
+  const risk = routeRisk(from, to);
+  if (risk === null) return { text: '내해', kind: 'calm', odds: 0 };
+  const odds = encounterOdds({ from, to, threat });
+  const kind = odds >= 0.28 ? 'bad' : odds >= 0.20 ? 'warn' : odds >= 0.13 ? '' : 'good';
+  const text = odds >= 0.28 ? '매우 위험' : odds >= 0.20 ? '위험' : odds >= 0.13 ? '주의' : '평온';
+  return { text, kind, odds, risk, threat };
+}
+
+export function rollSeaEvent(opts = {}) {
+  const { rand = Math.random } = opts;
+  const p = encounterOdds(opts);
+  const flat = SEA_EVENTS.find((e) => e.id === 'pirate').weight / 100;
+
   const total = SEA_EVENTS.reduce((a, e) => a + e.weight, 0);
   let n = rand() * total;
   for (const e of SEA_EVENTS) {
-    n -= e.weight;
+    // pirate는 항로별 확률로 갈아 끼우고, 그 차이를 calm이 흡수한다
+    const w = e.id === 'pirate' ? p * total
+            : e.id === 'calm'   ? e.weight + (flat - p) * total
+            : e.weight;
+    n -= w;
     if (n <= 0) return e;
   }
   return SEA_EVENTS[0];
@@ -902,27 +950,75 @@ export function pickEnemy(rand = Math.random) {
 }
 
 /* ── 항해 비용 ────────────────────────────────────────────────
-   세 갈래로 나눠 둔다. 뭉뚱그리면 "왜 돈이 안 모이나"를 플레이어가 읽을 수 없다.
+   다섯 갈래로 나눠 둔다. 뭉뚱그리면 "왜 돈이 안 모이나"를 플레이어가 읽을 수 없다.
      · 일당    선원에게 매일 나가는 삯. 큰 배는 사람이 많아 비싸다.
      · 보급    식량과 물. 역시 사람 수 × 날수.
-     · 선단    기함 밖의 배를 정박해 두는 값. */
-export const CREW_WAGE = 2.4;      // 1명 1일
-export const SUPPLY_UNIT = 1.3;    // 1명 1일
+     · 선단    기함 밖의 배를 정박해 두는 값.
+     · 무장    실은 대포를 쓸 수 있게 두는 값 — 화약·탄약·포수.
+     · 부관    에이미의 고정 급여.
 
-export function voyageCost(days, crew = state.crew) {
+   ★ 임금은 사료 대비 과중했다(→ content/asset-evidence.json). 선원 연봉으로 배를
+     몇 척 사느냐로 재면 게임 11배 : 사료 30배였다. 그래서 일당을 절반으로 내리고,
+     줄어든 압박을 **성장에 따라 늘어나는 쪽**(선단·무장)으로 옮겼다.
+     초반엔 작은 배로 싸고 안전한 화물을 나르니 비용이 낮고, 커질수록 갈래마다 함께 는다. */
+export const CREW_WAGE = 1.2;      // 1명 1일
+export const SUPPLY_UNIT = 1.3;    // 1명 1일 — 사료에서 식비는 임금과 비슷하거나 더 컸다
+
+/** 대포 유지비(1문 1일) — 화약과 탄약은 쟁여 두는 것만으로 돈이 나간다.
+    무장을 늘릴수록 오르므로 "해적이 무서워 포를 더 싣는다"에 대가가 붙는다. */
+export const ARM_UPKEEP = { light: 0.5, medium: 0.9, long: 1.6 };
+
+/** 기함 선체 유지 계수 — SHIPS[].upkeep(정박 유지비)에 곱한다.
+    정박해 두는 것보다 몰고 다니는 쪽이 더 든다. */
+export const HULL_UPKEEP = 1.0;
+
+/* ── 적하보험 ─────────────────────────────────────────────────
+   `map/geo.js: ROUTE_RISK`는 원래 **당대 해상보험 요율(%)**이다. 지금까지 그 숫자를
+   해적 조우 확률에만 썼는데, 본래 쓰임이 이것이다 — 값나가는 짐을 위험한 구간으로
+   나르면 인수업자가 그만큼 뗀다.
+
+   ★ 이 항목이 게임의 성장 브레이크다. 초반엔 곡물·소금을 안전한 이웃 항구로 나르니
+     거의 0이고, 커져서 향신료·비단을 먼 구간으로 나르기 시작하면 급격히 무거워진다.
+     "돈이 되는 곳에는 대가가 있다"를 비용 쪽에서 받는 장치. */
+export const INSURANCE_RATE = 0.30;    // 요율(%)에 곱하는 계수 — 1이면 사료 그대로
+
+/** 이 항차에 실은 짐에 붙는 보험료. 내해·육로(risk=null)는 0. */
+export function insuranceFor({ from = state.at, to = null, value = null } = {}) {
+  const risk = to == null ? null : routeRisk(from, to);
+  if (!risk) return 0;
+  const v = value == null ? cargoValue(from) : value;
+  return Math.round((v * risk / 100) * INSURANCE_RATE);
+}
+
+export function armsUpkeep(arms = state.arms) {
+  let sum = 0;
+  for (const [kind, n] of Object.entries(arms || {})) sum += (ARM_UPKEEP[kind] || 0) * n;
+  return sum;
+}
+
+export function voyageCost(days, crew = state.crew, leg = null) {
   const wages = Math.round(crew * CREW_WAGE * days);
   const supplies = Math.round(crew * SUPPLY_UNIT * days);
   const fleet = fleetUpkeep() * days;
+  // 기함 선체 유지 — 삭구·타르·펌프질. 예전에는 "기함은 선원 급여로 갈음한다"며 뺐는데,
+  // 그러면 배를 키워도 고정비가 안 늘어 후반이 너무 풍족해진다(실측 90항차 +65%).
+  // 큰 배를 몰수록 무거워지는 값이라 성장에 브레이크를 거는 자리다.
+  const hull = Math.round((SHIPS[state.shipKey].upkeep || 0) * HULL_UPKEEP * days);
+  const arms = Math.round(armsUpkeep() * days);
+  const insurance = leg ? insuranceFor(leg) : 0;
   // 부관 급여 — 벌든 못 벌든 나간다. 선원 급여와 섞지 않고 따로 세운다:
   // 뭉뚱그리면 "부관을 데리고 있는 값"이 얼마인지 플레이어가 읽을 수 없다.
-  const officer = state.officer ? OFFICER.wage * days : 0;
-  return { wages, supplies, fleet, officer, total: wages + supplies + fleet + officer };
+  const officer = state.officer ? Math.round(OFFICER.wage * days) : 0;
+  return {
+    wages, supplies, fleet, hull, arms, officer, insurance,
+    total: wages + supplies + fleet + hull + arms + officer + insurance,
+  };
 }
 
 /** 항해 1구간 진행 — 날짜·일당·보급·선단 유지비·누수·시장 회복 */
-export function advanceDays(n) {
+export function advanceDays(n, leg = null) {
   state.day += n;
-  const c = voyageCost(n);
+  const c = voyageCost(n, state.crew, leg);
   state.gold = Math.max(0, state.gold - c.total);
   if (state.officer) state.officer.paid += c.officer;   // 급여와 성과급을 따로 센다
 
@@ -971,7 +1067,8 @@ export function resetGame() {
     guns: s.guns, arms: { ...arms },
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
-    cargo: {}, buyPrice: {}, impact: {}, contract: null, officer: null, npcs: [], at: 'venezia',
+    cargo: {}, buyPrice: {}, impact: {}, contract: null, npcs: [], at: 'venezia',
+    officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,
     loadout: ['captain', 'sailor', null, null, null, null],
@@ -981,5 +1078,6 @@ export function resetGame() {
   trimLoadout();
   refreshPrices();
   pushLog('베네치아 부두. 물이 새는 낡은 바사 한 척과 금화 900닢으로 시작한다.', 'warn');
+  pushLog(`${OFFICER.name}이(가) 장부를 안고 갑판에 올라섰다. 급여 ${OFFICER.wage}닢/일.`, 'good');
   pushLog('제대로 된 배를 살 때까지는 짧은 항로만 돌아야 한다.', 'info');
 }

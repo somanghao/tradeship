@@ -1,0 +1,73 @@
+{
+  "_읽는이에게": "배와 부동산의 값, 그리고 '선원 연봉으로 무엇을 몇 개 사나'라는 스케일 지표. 코드 정본은 js/data.js: SHIPS[].price이고 검증은 node tools/check-prices.mjs. 부동산은 아직 게임 기능이 아니라 **스케일 기준점**으로만 쓴다(항구 거점·창고를 넣을 때 여기 값을 앵커로).",
+  "version": 1,
+  "era": {
+    "label": "대항해시대 (15세기말~16세기)",
+    "note": "게임은 연도를 고정하지 않는다. 여기 실린 사료값도 '어느 해의 가격표'가 아니라 **무엇이 무엇보다 비쌌나의 순서**로 읽어야 한다."
+  },
+  "verdicts": {
+    "confirmed": "사료로 확인됨 (가격·임금이 직접 나온다)",
+    "probable": "개연성 있음 (인접 사례나 비율로 채움)",
+    "corrected": "고증 조사로 바로잡음",
+    "gameplay": "게임이 성립하도록 고증을 의도적으로 덮어씀"
+  },
+  "assets": {
+    "carrack": {
+      "label": "캐랙 건조비(스페인, 콘셉시온)",
+      "price": "228,750 마라베디 = 610 두카트",
+      "verdict": "confirmed",
+      "vsSailor": "선원 연봉의 약 30배"
+    },
+    "warGalley": {
+      "label": "전투 갤리 건조비(베네치아)",
+      "price": "약 55,000 두카트",
+      "verdict": "confirmed",
+      "note": "국가 발주에 무장·의장이 포함된 값이라 민간 상선과 같은 축에 두면 안 된다."
+    },
+    "patrolGalley": {
+      "label": "경순찰 갤리",
+      "price": "약 15,000 두카트",
+      "verdict": "confirmed"
+    },
+    "rowRoom": {
+      "label": "코랄 방 한 칸(세비야) 연 임대료",
+      "price": "1,900~2,200 마라베디 = 5~6 두카트",
+      "verdict": "confirmed",
+      "vsSailor": "선원 연수입의 25%"
+    },
+    "townHouse": {
+      "label": "도시 2층 연립주택",
+      "price": "3,000~4,000 두카트",
+      "verdict": "probable",
+      "vsSailor": "선원 연봉의 150~200배 — 평생 못 산다"
+    },
+    "palace": {
+      "label": "대운하 궁전(카 벤드라민 칼레르지)",
+      "price": "약 200,000 두카트",
+      "verdict": "confirmed"
+    },
+    "rentShare": {
+      "label": "가계 지출 중 주거비 비중(톨레도)",
+      "price": "9.5%",
+      "verdict": "confirmed",
+      "note": "노동자 가족의 welfare ratio는 1550~99 평균 0.70 — 생계 바스켓을 겨우 못 채웠다.",
+      "sources": [
+        {
+          "title": "Drelichman, What price a roof? Housing and the cost of living in 16th-century Toledo"
+        }
+      ]
+    }
+  },
+  "gameTargets": {
+    "shipToCrewYear": {
+      "value": 22,
+      "min": 12,
+      "max": 40,
+      "basis": "캐랙 건조비 610두카트 ÷ 선원 연봉 20두카트 ≈ 30배. 게임은 캐랙 가격 ÷ (선원 일당 × 365)로 잰다.",
+      "note": "이 비율이 낮으면 '배가 임금보다 싸다' = 유지비가 과중하다는 뜻이다. 부관 급여가 과하다는 지적이 실제로 여기서 드러났다."
+    }
+  },
+  "caveats": [
+    "절대 스케일을 사료에 맞추려는 시도는 하지 말 것. 곡물 1칸을 밀 2톤으로 보면 게임 임금은 사료의 30배인데, 그렇다고 임금을 1/30로 내리면 항해비가 0이 되어 게임이 성립하지 않는다."
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "지중해 항해 지도",
+  "sprites": {
+    "scene:map": "map/mediterranean.webp"
+  }
+}
