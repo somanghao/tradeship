@@ -457,14 +457,23 @@ function figureCard() {
         style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
       }),
     ]),
-    el('div.svc', {}, people.slice(0, 6).map((f) => el('div.ctr-sub', {
-      title: f.blurb ?? '',
-      style: { cursor: 'pointer' },
-      onclick: () => talkTo(f),
-      text: `${f.name}`
-          + (JOB_LABEL[f.job] ? ` (${JOB_LABEL[f.job]})` : '')
-          + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
-    }))),
+    el('div.svc', {}, [
+      ...people.slice(0, 6).map((f) => el('div.ctr-sub', {
+        title: f.blurb ?? '',
+        style: { cursor: 'pointer' },
+        onclick: () => talkTo(f),
+        text: `${f.name}`
+            + (JOB_LABEL[f.job] ? ` (${JOB_LABEL[f.job]})` : '')
+            + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
+      })),
+      // 잘린 줄이 있으면 잘렸다고 말한다 — 아무 말 없이 여섯에서 끊으면 그 항구가 작아 보인다
+      people.length > 6
+        ? el('div.ctr-sub', {
+            text: `…그 밖에 ${people.length - 6}명이 더 있다.`,
+            style: { color: '#6f6858' },
+          })
+        : null,
+    ].filter(Boolean)),
   ]);
 }
 

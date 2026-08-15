@@ -171,13 +171,25 @@ export function activeShocks() {
   }));
 }
 
+/* ★ 흔들림을 **시황**과 **도시 사정**으로 가른다.
+   전에는 도시마다 ±15%씩 따로 흔들렸다. 그러면 산지·수요 배율이 만드는 사다리가
+   통째로 뒤집힌다 — 실측으로 은은 여덟 칸 중 **네 칸이 역전**이었고(포토시 360 →
+   포르토벨로 327 → 파나마 291, 광산에서 멀어질수록 싸진다), 아프리카 금은
+   "세계에서 가장 싼 엘미나(0.46)"가 아심(0.52)보다 비쌌다. 두 바다의 중심 서사가
+   화면에서 **관측 불가능**했던 것이다.
+
+   시황(기근·전쟁·풍작)은 세계가 함께 겪는다 — 그건 크게 흔들려도 좋다.
+   도시 사이의 값 차이는 **그 도시가 무엇을 캐고 무엇을 원하는가**라는 구조이고,
+   구조는 노이즈로 뒤집히면 안 된다. 그래서 공통 성분을 크게, 도시 성분을 작게 둔다.
+   (품목이 흔들리는 폭 자체는 전과 비슷하다 — 갈라 놓았을 뿐이다.) */
 export function priceOf(cityId, goodId) {
   const city = CITY_BY_ID[cityId];
   const good = GOOD_BY_ID[goodId];
   const raw = city.supply[goodId] ?? city.demand[goodId] ?? 1;
   const mul = 1 + (raw - 1) * SPREAD;          // 차익 폭을 SPREAD로 조인다
-  const w = 0.86 + wobble(cityId, goodId, state.day) * 0.30;   // ±15%
-  return Math.max(1, Math.round(good.base * mul * w * shockFactor(cityId, goodId)));
+  const trend = 0.88 + wobble('~world', goodId, state.day) * 0.24;   // 시황 ±12% (전 세계 공통)
+  const local = 0.965 + wobble(cityId, goodId, state.day) * 0.07;    // 도시 사정 ±3.5%
+  return Math.max(1, Math.round(good.base * mul * trend * local * shockFactor(cityId, goodId)));
 }
 
 export function refreshPrices() {
