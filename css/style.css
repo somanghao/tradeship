@@ -229,6 +229,13 @@ html, body {
 }
 .tag.supply { color: var(--good); }
 .tag.demand { color: var(--warn); }
+/* 같은 산지·수요라도 자리가 다르다 — 이 바다에서 첫째면 채워서, 꼴찌면 옅게.
+   ★ 처음에 `background: currentColor`만 줬다가 **글자가 배경과 같은 색이 되어 안 보였다**.
+     채울 때는 글자를 어둡게 뒤집어야 한다. */
+.tag.deep { font-weight: 700; color: #14111b; }
+.tag.deep.supply { background: var(--good); border-color: var(--good); }
+.tag.deep.demand { background: var(--warn); border-color: var(--warn); }
+.tag.faint { opacity: .5; }
 .qty { color: var(--brass-l); font-weight: 700; }
 .profit-up { color: var(--good); }
 .profit-dn { color: var(--bad); }

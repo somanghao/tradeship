@@ -7,7 +7,7 @@ import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
-  marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT,
+  marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
   impactFactor, costFor, tariffRate, shorthanded,
   contractOffer, acceptContract, deliverContract, abandonContract,
   hasOfficer, paydayDue, daysToPayday, payrollOwed,
@@ -127,8 +127,26 @@ function marketTable() {
     return { g, side, rank: goodRank(city.id, g.id, side), strength: Math.abs(raw - 1) };
   }).sort((a, b) => a.rank - b.rank || b.strength - a.strength);
 
+  /* 딱지 하나 — '산지/수요' 위에 **이 바다에서 몇째인가**를 얹는다.
+     첫째면 진하게, 꼴찌면 옅게. 툴팁이 그 순위를 말로 풀어 준다. */
+  const tagChip = (cid, gid, tag) => {
+    const r = tagRank(cid, gid);
+    const first = r && r.rank === 1 && r.of > 1;
+    const last = r && r.rank === r.of && r.of > 2;
+    const word = tag === 'supply' ? '산지' : '수요';
+    const cls = `span.tag.${tag}${first ? '.deep' : last ? '.faint' : ''}`;
+    const tip = !r || r.of < 2
+      ? (tag === 'supply' ? '이 바다에서 이곳만 난다' : '이 바다에서 이곳만 원한다')
+      : tag === 'supply'
+        ? `이 바다의 ${word} ${r.of}곳 가운데 ${r.rank}번째로 싸다`
+          + (first ? ' — 여기서 싣는 것이 가장 낫다' : '')
+        : `이 바다의 ${word} ${r.of}곳 가운데 ${r.rank}번째로 비싸다`
+          + (first ? ' — 여기서 푸는 것이 가장 낫다' : '');
+    return el(cls, { text: r && r.of > 1 ? `${word} ${r.rank}/${r.of}` : word, title: tip });
+  };
+
   const tb = el('tbody');
-  for (const { g, side: tag } of ordered) {
+  for (const { g, side: tag, strength } of ordered) {
     const unit = state.prices[city.id][g.id];
     const have = state.cargo[g.id] || 0;
     const avg = state.buyPrice[g.id] || 0;
@@ -139,7 +157,12 @@ function marketTable() {
       el('td', {}, el('div.gname', {}, [
         iconEl(g.icon, 1),
         el('span', { text: g.name }),
-        tag && el(`span.tag.${tag}`, { text: tag === 'supply' ? '산지' : '수요' }),
+        /* ★ 딱지에 **정도**를 담는다. 전에는 '산지'냐 '수요'냐만 보여 줬는데,
+           같은 '산지'라도 값이 크게 다르다 — 은 사다리에서 포토시(0.44)와 놈브레데디오스(0.74)가
+           둘 다 '산지'인데 화면 값은 277과 356으로 30% 차이난다. 그래서 아메리카 테스터가
+           "산지 여섯 곳 + 표시 없는 두 곳이라 사다리가 거꾸로 읽힌다"고 적어 왔다.
+           딱지 하나로 여섯 항구를 같아 보이게 하면 이 게임에서 가장 공들인 사다리가 안 보인다. */
+        tag && tagChip(city.id, g.id, tag),
       ])),
       el('td.num', {}, [
         el('span', { text: unit.toLocaleString('ko-KR') }),

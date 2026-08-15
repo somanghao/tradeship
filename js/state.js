@@ -200,6 +200,23 @@ export function refreshPrices() {
   }
 }
 
+/* 이 바다에서 그 품목의 산지(또는 수요지) 가운데 이 도시가 몇째인가.
+   ★ '산지'라는 딱지 하나로는 부족하다. 은 사다리에서 포토시(0.44)와 놈브레데디오스(0.74)가
+     둘 다 '산지'인데 화면 값은 277과 356으로 30% 차이난다. 여섯 항구가 같은 딱지를 달고 있으면
+     이 게임에서 가장 공들인 사다리가 안 보이고, 실제로 테스터가 "사다리가 거꾸로 읽힌다"고 적어 왔다.
+     순위는 플레이어가 실제로 알고 싶은 것을 그대로 답한다 — **여기가 몇 번째로 싼가.** */
+export function tagRank(cityId, goodId) {
+  const side = marketTag(cityId, goodId);
+  if (!side) return null;
+  const rid = regionOf(cityId);
+  const val = (c) => (side === 'supply' ? c.supply[goodId] : c.demand[goodId]);
+  const peers = CITIES.filter((c) => c.region === rid && marketTag(c.id, goodId) === side);
+  // 산지는 쌀수록 앞, 수요지는 비쌀수록 앞
+  peers.sort((a, b) => (side === 'supply' ? val(a) - val(b) : val(b) - val(a)));
+  const i = peers.findIndex((c) => c.id === cityId);
+  return i < 0 ? null : { side, rank: i + 1, of: peers.length };
+}
+
 /** 도시에서 그 품목이 산지인지 수요지인지 */
 export function marketTag(cityId, goodId) {
   const c = CITY_BY_ID[cityId];
