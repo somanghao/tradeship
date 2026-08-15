@@ -39,7 +39,7 @@ export const TRADERS = [
   /* ── 기니만 서안 ──────────────────────────────────────────
      성채 하나가 곧 상관이고 관세청이고 창고였다. 그 성이 엘미나다. */
   {
-    id: 'casadamina', name: '상 조르즈 다 미나 상관', flag: 'spain', ship: 'caravel',
+    id: 'casadamina', name: '상 조르즈 다 미나 상관', flag: 'portugal', ship: 'caravel',
     purse: [4500, 12000], goods: ['gold', 'panos', 'copper', 'kola'],
     scope: 'region', rank: 4, season: null,
     // 이 상관의 일은 **금을 캐는 것이 아니라 금을 사는 것**이다. 그래서 배는 늘
@@ -67,7 +67,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'panosbenim', name: '베냉 무명 무역선', flag: 'spain', ship: 'guineiro',
+    id: 'panosbenim', name: '그웨이토의 무명 중개선', flag: 'benin', ship: 'guineiro',
     purse: [2500, 7000], goods: ['panos', 'ivory', 'melegueta', 'copper'],
     scope: 'region', rank: 3, season: null,
     // ★ 이 배가 이 해안 경제의 요령 그 자체다 — 베냉에서 무명을 사서 **금 사는 데 쓴다.**
@@ -81,7 +81,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'saotome', name: '상투메 농원주 상단', flag: 'spain', ship: 'redonda',
+    id: 'saotome', name: '상투메 농원주 상단', flag: 'portugal', ship: 'redonda',
     purse: [1400, 4200], goods: ['palmoil', 'melegueta', 'copper', 'grain'],
     scope: 'region', rank: 2, season: null,
     // 적도 위의 화산섬 하나에 사탕수수를 심어 놓고, 먹을 것은 전부 배로 들여왔다.
@@ -97,7 +97,7 @@ export const TRADERS = [
   /* ── 스와힐리 해안 ────────────────────────────────────────
      돌집을 짓고 아랍 문자로 장부를 쓰던 항구 도시들. 배는 못 하나 없이 꿰매어 지었다. */
   {
-    id: 'nakhoda', name: '말린디의 나코다 조합', flag: 'hafsid', ship: 'mtepe',
+    id: 'nakhoda', name: '말린디의 나코다 조합', flag: 'swahili', ship: 'mtepe',
     purse: [1400, 4200], goods: ['ivory', 'tortoise', 'ambergris', 'panos', 'grain'],
     scope: 'region', rank: 2, season: 'summer',
     // ★ 여름만인 데는 배 탓이 크다. 므템베는 못을 안 쓰고 야자 노끈으로 꿰맨 배라
@@ -112,7 +112,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'sofalafeitoria', name: '소팔라 요새 상관', flag: 'spain', ship: 'caravel',
+    id: 'sofalafeitoria', name: '소팔라 요새 상관', flag: 'portugal', ship: 'caravel',
     purse: [2500, 7000], goods: ['gold', 'panos', 'glass', 'ivory'],
     scope: 'region', rank: 3, season: null,
     // 내륙 고원(무타파)의 금이 강을 따라 내려와 여기서 배에 오른다. 값으로 치른 것은
@@ -129,7 +129,7 @@ export const TRADERS = [
      ★ 이 권역에서 유일하게 희망봉을 도는 배다. 이 한 척이 있어야
      "서안의 무명이 어떻게 인도까지 갔나"가 세계 안에서 설명된다. */
   {
-    id: 'saorafael', name: '상 하파엘 선단', flag: 'spain', ship: 'nau',
+    id: 'saorafael', name: '상 하파엘 선단', flag: 'portugal', ship: 'nau',
     purse: [10000, 26000], goods: ['ivory', 'gold', 'calico', 'panos', 'pepper'],
     scope: 'ocean', rank: 5, season: 'summer',
     // 여름뿐인 이유는 **바람 창(窓)이 좁아서**다. 희망봉을 돌아 인도양으로 붙으려면

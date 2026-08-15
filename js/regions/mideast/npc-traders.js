@@ -55,7 +55,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'bafaqih', name: '바 파키흐 상단', flag: 'hafsid', ship: 'sanbuq',
+    id: 'bafaqih', name: '바 파키흐 상단', flag: 'ottoman', ship: 'sanbuq',
     purse: [2500, 7000], goods: ['coffee', 'incense', 'dates', 'grain'],
     scope: 'region', rank: 3, season: 'winter',
     // ★ 겨울 상단이다. 커피 열매가 겨울에 익기 때문이다 — 예멘 산지에서 딴 것이
@@ -72,7 +72,8 @@ export const TRADERS = [
   /* ── 페르시아만 ───────────────────────────────────────────
      말과 진주. 둘 다 여기서 나서 여기서 팔리지 않는 물건이다. */
   {
-    id: 'hormuzhorse', name: '호르무즈 왕실 마상', flag: 'hafsid', ship: 'dhangi',
+    // ★ FLAGS에 호르무즈 왕국이 없다. 같은 해협을 낀 아랍의 민무늬 붉은기(oman)를 빌린다.
+    id: 'hormuzhorse', name: '호르무즈 왕실 마상', flag: 'oman', ship: 'dhangi',
     purse: [2800, 8000], goods: ['horse', 'pearl', 'dates'],
     scope: 'region', rank: 3, season: null,
     // 아라비아 군마는 인도 데칸의 술탄들이 부르는 게 값이었다 — 한 필에 은 수백 냥이 오갔고,
@@ -86,7 +87,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'ghaus', name: '진주 채취 선단', flag: 'hafsid', ship: 'jalba',
+    id: 'ghaus', name: '진주 채취 선단', flag: 'oman', ship: 'jalba',
     purse: [1200, 3600], goods: ['pearl', 'dates', 'grain'],
     scope: 'region', rank: 2, season: 'summer',
     // ★ 여름 상단이다. 진주 채취(가우스 알카비르)는 물이 미지근해지는 넉 달 동안만 했다 —
@@ -105,7 +106,7 @@ export const TRADERS = [
      이스파한의 아르메니아 구역(신 줄파)은 사파비 왕이 통째로 옮겨 심은 상인 마을이었다.
      ★ 권역 도시 'julfar'(줄파르, 걸프의 항구)와 이름이 닮았지만 다른 곳이다. */
   {
-    id: 'newjulfa', name: '신 줄파의 아르메니아 상단', flag: 'ottoman', ship: 'baghlah',
+    id: 'newjulfa', name: '신 줄파의 아르메니아 상단', flag: 'safavid', ship: 'baghlah',
     purse: [5000, 14000], goods: ['silk', 'carpet', 'rosewater', 'pearl'],
     scope: 'ocean', rank: 4, season: null,
     // 이 사람들의 재산은 배가 아니라 **친척**이다. 형제가 베네치아에, 사촌이 수라트에,

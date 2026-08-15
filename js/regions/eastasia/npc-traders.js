@@ -43,7 +43,7 @@ export const TRADERS = [
   /* ── 마카오·광저우 ────────────────────────────────────────
      명은 일본 배를 안 받고, 일본은 명 배를 못 부른다. 그 사이에 포르투갈이 앉았다. */
   {
-    id: 'naudotrato', name: '마카오의 대형 나우', flag: 'spain', ship: 'nau',
+    id: 'naudotrato', name: '마카오의 대형 나우', flag: 'portugal', ship: 'nau',
     purse: [11000, 28000], goods: ['silk', 'silver', 'gold', 'musk'],
     scope: 'ocean', rank: 5, season: 'summer',
     // ★ 여름 상단이다. 이 배는 **한 해에 딱 한 번** 뜬다 — 여름 남서 계절풍에 마카오를 떠나
@@ -58,7 +58,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'zhengfujian', name: '월항의 정씨 선주', flag: 'ottoman', ship: 'fuchuan',
+    id: 'zhengfujian', name: '월항의 정씨 선주', flag: 'ming', ship: 'fuchuan',
     purse: [5000, 14000], goods: ['ceramic', 'silk', 'tea', 'silver'],
     scope: 'ocean', rank: 4, season: 'summer',
     // 해금이 풀린 뒤(1567) **딱 한 항구만 바깥으로 열렸다** — 월항이다. 그 좁은 문으로
@@ -77,7 +77,7 @@ export const TRADERS = [
      스스로 나는 것이 유황과 말뿐인 작은 왕국이 어떻게 부자가 되었나 —
      명이 조공선만은 받아 주었기 때문이다. 그 배 한 척이 나라의 밥줄이었다. */
   {
-    id: 'ryukyu', name: '류큐 진공선', flag: 'hafsid', ship: 'sachuan',
+    id: 'ryukyu', name: '류큐 진공선', flag: 'ryukyu', ship: 'sachuan',
     purse: [2500, 7000], goods: ['sulfur', 'lacquer', 'ceramic', 'silk', 'tea'],
     scope: 'region', rank: 3, season: 'winter',
     // ★ 겨울 상단이다. 나하에서 푸저우로 올라가는 진공선은 북동 계절풍 철에 떠났고
@@ -96,7 +96,7 @@ export const TRADERS = [
      일본에서 배를 부린 것은 다이묘가 아니라 상인이었다. 그중 몇은 차를 마시며
      천하인과 겸상을 했다 — 가미야 소탄과 시마이 소시쓰가 그 사람들이다. */
   {
-    id: 'kamiya', name: '가미야 소탄', flag: 'genoa', ship: 'fuchuan',
+    id: 'kamiya', name: '가미야 소탄', flag: 'japan', ship: 'fuchuan',
     purse: [4500, 12000], goods: ['silver', 'silk', 'ceramic', 'sulfur'],
     scope: 'region', rank: 4, season: null,
     // 가미야 집안은 이와미 은광을 여는 데 손을 댄 집이다 — 그 은이 어디로 갔는지가
@@ -111,7 +111,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'shimai', name: '시마이 소시쓰', flag: 'genoa', ship: 'sachuan',
+    id: 'shimai', name: '시마이 소시쓰', flag: 'japan', ship: 'sachuan',
     purse: [2500, 7000], goods: ['silk', 'silver', 'ceramic', 'ginseng', 'copper'],
     scope: 'region', rank: 3, season: null,
     // 시마이는 조선 쪽 길을 쥐고 있었다. 부산포의 왜관을 거쳐 인삼과 무명이 들어오고
@@ -130,7 +130,7 @@ export const TRADERS = [
      막부가 붉은 도장을 찍어 준 배만 바깥으로 나갈 수 있었다.
      그 도장 한 장이 곧 항해권이자 신분증이었다. */
   {
-    id: 'suetsugu', name: '스에쓰구 헤이조', flag: 'genoa', ship: 'shuinsen',
+    id: 'suetsugu', name: '스에쓰구 헤이조', flag: 'japan', ship: 'shuinsen',
     purse: [10000, 26000], goods: ['silk', 'silver', 'deerhide', 'lacquer'],
     scope: 'ocean', rank: 5, season: 'winter',
     // ★ 겨울 상단이다. 주인선은 북동 계절풍이 부는 철에 남쪽으로 내려가 봄에 돌아왔다 —
@@ -145,7 +145,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'chaya', name: '차야 시로지로', flag: 'genoa', ship: 'shuinsen',
+    id: 'chaya', name: '차야 시로지로', flag: 'japan', ship: 'shuinsen',
     purse: [4500, 12000], goods: ['silk', 'deerhide', 'lacquer', 'weapon', 'tea'],
     scope: 'region', rank: 4, season: null,
     // 차야가는 교토의 포목상에서 시작해 도쿠가와의 어용상인이 된 집이다. 그래서 이 배는
@@ -162,7 +162,7 @@ export const TRADERS = [
   /* ── 조선 ─────────────────────────────────────────────────
      나라가 바다를 막아 두어 큰 배가 없다. 대신 뭍의 상인이 배를 빌려 나온다. */
   {
-    id: 'songsang', name: '개성 송상', flag: 'england', ship: 'panokseon',
+    id: 'songsang', name: '개성 송상', flag: 'joseon', ship: 'panokseon',
     purse: [1400, 4200], goods: ['ginseng', 'fur', 'grain', 'copper'],
     scope: 'region', rank: 2, season: null,
     // 송상은 원래 육상(陸商)이다 — 전국에 송방(松房)을 깔고 인삼을 쥔 집단이라,

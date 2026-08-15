@@ -39,7 +39,7 @@ export const TRADERS = [
   /* ── 리스본 ───────────────────────────────────────────────
      후추가 유럽에 닿는 마지막 문. 왕이 직접 사고팔았으니 경쟁자가 없다. */
   {
-    id: 'casadaindia', name: '카사 다 인디아', flag: 'spain', ship: 'nau',
+    id: 'casadaindia', name: '카사 다 인디아', flag: 'portugal', ship: 'nau',
     purse: [10000, 26000], goods: ['spice', 'clove', 'nutmeg', 'sugar'],
     scope: 'ocean', rank: 5, season: null,
     // 왕실 독점 상관이라 값을 흥정하지 않는다 — 정가를 붙여 놓고 사 갈 사람을 기다린다.
@@ -84,10 +84,10 @@ export const TRADERS = [
   },
 
   /* ── 한자 ─────────────────────────────────────────────────
-     같은 붉은-흰 깃발을 셋이 나눠 단다. 도시가 달라도 조합의 규약은 하나였다.
-     ★ FLAGS에 'hanse'가 없어 가장 가까운 붉은바탕-흰마크(hospitaller)를 빌려 쓴다. */
+     같은 적백기를 셋이 나눠 단다. 도시가 달라도 조합의 규약은 하나였다 —
+     동맹에 통일기가 없어 배마다 제 도시의 적백을 달았고, 그것이 곧 한자의 인상이 됐다. */
   {
-    id: 'bergenfahrer', name: '뤼베크 베르겐파러', flag: 'hospitaller', ship: 'cog',
+    id: 'bergenfahrer', name: '뤼베크 베르겐파러', flag: 'hanse', ship: 'cog',
     purse: [2000, 6000], goods: ['stockfish', 'salt', 'grain', 'woolcloth'],
     scope: 'region', rank: 3, season: 'summer',
     // 뤼베크의 소금을 베르겐에 부리고 말린 대구를 실어 온다 — 한자 무역의 원형이다.
@@ -100,7 +100,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'ferber', name: '페르버 상관', flag: 'hospitaller', ship: 'fluyt',
+    id: 'ferber', name: '페르버 상관', flag: 'hanse', ship: 'fluyt',
     purse: [5000, 14000], goods: ['grain', 'timber', 'amber', 'salt'],
     scope: 'region', rank: 4, season: 'summer',
     // 단치히 시장(市長)을 낸 집안이다. 비스와강을 타고 내려온 폴란드 밀이 여기서 배에 올라
@@ -114,7 +114,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'novgorodfahrer', name: '노브고로드 겨울여행단', flag: 'hospitaller', ship: 'crayer',
+    id: 'novgorodfahrer', name: '노브고로드 겨울여행단', flag: 'hanse', ship: 'crayer',
     purse: [1400, 4200], goods: ['fur', 'wax', 'woolcloth', 'salt'],
     scope: 'region', rank: 2, season: 'winter',
     // ★ 이 상단만 겨울에 나온다. 그럴 만한 이유가 있다 —
@@ -134,7 +134,7 @@ export const TRADERS = [
      ★ 퓌거·벨저는 한자가 아니다. 아우크스부르크의 광산자본이 안트베르펜 지점을 통해
      바다로 나온 것이라, 이들이 다루는 것은 옷감이 아니라 **금속**이다. */
   {
-    id: 'fugger', name: '푸거 상관 안트베르펜 지점', flag: 'spain', ship: 'kraweel',
+    id: 'fugger', name: '푸거 상관 안트베르펜 지점', flag: 'burgundy', ship: 'kraweel',
     purse: [11000, 28000], goods: ['iron', 'amber', 'wax', 'linen'],
     scope: 'ocean', rank: 5, season: null,
     // 이 집의 진짜 상품은 헝가리 구리와 티롤 은인데, 그것은 강과 노새로 단치히·안트베르펜까지

@@ -4,7 +4,7 @@ import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { GOODS, GOOD_BY_ID, CITY_BY_ID, SHIPS, OFFICER } from '../data.js';
+import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -13,7 +13,7 @@ import {
   hasOfficer, paydayDue, daysToPayday, payrollOwed,
 } from '../state.js';
 import { openPayday } from '../payday.js';
-import { npcsAtPort } from '../world.js';
+import { npcsAtPort, figuresAt } from '../world.js';
 import { goodRank, goodBasis } from '../evidence.js';
 import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal } from '../ui.js';
 import { go } from '../main.js';
@@ -103,7 +103,25 @@ function marketTable() {
      구색으로 넣은 줄이 사료로 확인된 특산보다 위에 온다.
      확실한 수요 → 확실한 산지 → 근거가 약한 것 → 교역 대상 아닌 것.
      같은 등급 안에서는 1에서 먼 것(= 값이 세게 갈린 것)부터. */
-  const ordered = [...GOODS].map((g) => {
+  /* ★ **그 바다에서 거래되는 것만 목록에 올린다.**
+     교역품이 열둘일 때는 전부 늘어놓아도 됐다. 아홉 권역 77종이 되자
+     베네치아 시장에 담배와 로그우드가 떴다 — 아직 아메리카를 발견하지도 않았는데.
+     그렇다고 그 도시의 supply/demand만 남기면 이웃 항구에서 실어 온 것을 못 판다.
+     그래서 세 갈래를 합친다: **이 도시가 사고파는 것 · 이 바다에서 유통되는 것 ·
+     지금 내가 싣고 있는 것**. 마지막 갈래가 있어야 카리브에서 실어 온 담배를
+     베네치아에서 팔 수 있다 — 그것이 원양 무역의 값어치다. */
+  const tradable = (() => {
+    const live = new Set();
+    for (const c of CITIES) {
+      if (c.region !== city.region) continue;
+      for (const gid of Object.keys(c.supply ?? {})) live.add(gid);
+      for (const gid of Object.keys(c.demand ?? {})) live.add(gid);
+    }
+    for (const [gid, q] of Object.entries(state.cargo)) if (q > 0) live.add(gid);
+    return live;
+  })();
+
+  const ordered = GOODS.filter((g) => tradable.has(g.id)).map((g) => {
     const side = marketTag(city.id, g.id);
     const raw = side === 'supply' ? city.supply[g.id] : side === 'demand' ? city.demand[g.id] : 1;
     return { g, side, rank: goodRank(city.id, g.id, side), strength: Math.abs(raw - 1) };
@@ -362,6 +380,44 @@ function harborCard() {
   ]);
 }
 
+/* 이 항구에 앉아 있는 사람들 — 술집이 "누구를 태울 것인가"를 물었다면
+   이쪽은 "이 항구에 누가 있나"를 보여 준다. 항구에 들어갈 이유를 늘리는 자리다.
+
+   ★ 이들이 파는 것(`service`)은 **아직 규칙에 물려 있지 않다.** 지금은 누가 있고
+     무엇을 해 준다고 말하는지까지다 — 그것만으로도 그 바다의 제도가 드러난다.
+     명의 감합을 파는 관리, 카르타스를 쓰는 서기, 왜관의 통사가 그 예다.
+     값(`fee`)을 실제로 받게 하려면 하루에 몇 번 살 수 있나부터 정해야 한다
+     (`state.hired`가 같은 무리를 두 번 못 태우게 하는 것과 같은 꼴). */
+const SERVICE_LABEL = {
+  'price-tip': '먼 항구 시세', 'route-tip': '항로의 위험', contract: '큰 일감',
+  smuggle: '세관을 피하는 길', loan: '돈을 빌려준다', repair: '수리를 깎아준다',
+  recruit: '사람을 소개한다', permit: '이 바다를 다닐 문서',
+};
+
+function figureCard() {
+  const people = figuresAt(city.id);
+  if (!people.length) return null;
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '항구의 사람들' }),
+      el('span', {
+        text: `${people.length}명`,
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+      }),
+    ]),
+    el('div.svc', {}, people.slice(0, 6).map((f) => el('div.ctr-sub', {
+      title: [
+        f.blurb,
+        f.lines?.greet,
+        SERVICE_LABEL[f.service] ? `— ${SERVICE_LABEL[f.service]}` : null,
+        f.fee ? `값 ${f.fee[0]}~${f.fee[1]}닢` : '값을 받지 않는다',
+      ].filter(Boolean).join('\n'),
+      text: `${f.name}`
+          + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
+    }))),
+  ]);
+}
+
 /* ── 우측: 정비/조선소/출항 ─────────────────────────── */
 function sidePanel() {
   return el('div#port-side', {}, [
@@ -412,6 +468,7 @@ function sidePanel() {
     contractCard(),
     harborCard(),
 
+    figureCard(),
     /* 사람이 하나도 없으면 배는 부두에 묶여 있다.
        ★ crewMin **미달**은 막지 않는다 — 그건 속력이 떨어지는 벌칙이지 금지가 아니고,
          전투로 선원을 잃었을 때 항구에 갇히면 빠져나갈 길이 없어진다.

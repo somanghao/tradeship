@@ -37,7 +37,7 @@ export const TRADERS = [
   /* ── 자바 ─────────────────────────────────────────────────
      쌀이 남아도는 섬. 그 쌀로 향료를 사서 중국 배에 되판다. */
   {
-    id: 'syahbandar', name: '반텐의 샤반다르 상단', flag: 'hafsid', ship: 'jong',
+    id: 'syahbandar', name: '반텐의 샤반다르 상단', flag: 'majapahit', ship: 'jong',
     purse: [4500, 12000], goods: ['pepper', 'grain', 'ceramic', 'silk'],
     scope: 'region', rank: 4, season: null,
     // 샤반다르는 항구를 관리하는 관직이면서 동시에 **가장 큰 상인**이었다.
@@ -55,7 +55,8 @@ export const TRADERS = [
   /* ── 술라웨시 ─────────────────────────────────────────────
      지도에 없는 물길을 아는 사람들. 향료제도에 실제로 발을 들이는 것은 이쪽이다. */
   {
-    id: 'bugis', name: '부기스 자유상인', flag: 'hafsid', ship: 'perahu',
+    // ★ FLAGS에 마카사르·고와가 없어 군도의 총칭기(majapahit)를 빌린다. 반다의 오랑 카야도 같다.
+    id: 'bugis', name: '부기스 자유상인', flag: 'majapahit', ship: 'perahu',
     purse: [2500, 7000], goods: ['sandalwood', 'clove', 'nutmeg', 'birdnest', 'grain'],
     scope: 'region', rank: 3, season: 'winter',
     // ★ 겨울(서계절풍) 상단이다. 마카사르에서 향료제도로 내려가려면 서쪽에서 바람이
@@ -70,7 +71,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'orangkaya', name: '반다의 오랑 카야', flag: 'hafsid', ship: 'korakora',
+    id: 'orangkaya', name: '반다의 오랑 카야', flag: 'majapahit', ship: 'korakora',
     purse: [1200, 3600], goods: ['nutmeg', 'sandalwood'],
     scope: 'region', rank: 2, season: null,
     // 오랑 카야는 반다 섬의 육두구 숲을 나눠 가진 유지들이다. 배는 작고 순회로도 짧지만
@@ -87,7 +88,7 @@ export const TRADERS = [
   /* ── 말라카 해협 ──────────────────────────────────────────
      두 바다 사이의 병목. 여기에 앉으면 지나는 배가 다 손님이다. */
   {
-    id: 'naina', name: '나이나 차투 상단', flag: 'hafsid', ship: 'jong',
+    id: 'naina', name: '나이나 차투 상단', flag: 'malacca', ship: 'jong',
     purse: [5000, 14000], goods: ['calico', 'clove', 'nutmeg', 'tin'],
     scope: 'ocean', rank: 4, season: null,
     // ★ 나이나 차투(Naina Chatu)는 실존 인물이다 — 믈라카의 타밀계 무슬림 대상인으로,
@@ -121,7 +122,7 @@ export const TRADERS = [
   /* ── 화교 선주 ────────────────────────────────────────────
      계절풍을 타고 내려왔다가 반대 바람에 올라간다. 그 왕복 한 번이 한 해다. */
   {
-    id: 'patanilin', name: '파타니의 임씨 선주', flag: 'ottoman', ship: 'fuchuan',
+    id: 'patanilin', name: '파타니의 임씨 선주', flag: 'ming', ship: 'fuchuan',
     purse: [5000, 14000], goods: ['ceramic', 'silk', 'tin', 'birdnest', 'agarwood'],
     scope: 'ocean', rank: 4, season: 'summer',
     // ★ 여름 상단이다. 정크는 여름 남서 계절풍에 남중국해를 **북상**했다 — 향료와 제비집과
@@ -141,7 +142,9 @@ export const TRADERS = [
   /* ── 시암 ─────────────────────────────────────────────────
      왕이 직접 장사하는 나라. 좋은 물건은 시장에 나오기 전에 궁으로 들어간다. */
   {
-    id: 'phrakhlang', name: '아유타야 왕실 상관', flag: 'venice', ship: 'jong',
+    // ★ FLAGS에 시암이 없다. 아유타야기는 **표식 없는 붉은기**였는데 그 정의를 가진 것이
+    //   oman뿐이라 그것을 빌린다(색·모양이 실제와 같고, 두 바다가 달라 헷갈리지 않는다).
+    id: 'phrakhlang', name: '아유타야 왕실 상관', flag: 'oman', ship: 'jong',
     purse: [2500, 7000], goods: ['sappanwood', 'agarwood', 'grain', 'timber', 'ceramic'],
     scope: 'region', rank: 3, season: null,
     // 프라클랑(재무·교역을 겸한 관청)이 값나가는 품목을 먼저 사들여 되팔았다.

@@ -6,7 +6,7 @@
 // 최적에 가까운 플레이를 가정한다(매 항차 이웃 항구 중 최대 순이익 조합 선택).
 // 전투 전리품은 넣지 않는다 — 순수 무역만으로도 너무 빨리 부자가 되는지 보는 것이 목적.
 
-import { GOODS, SHIPS } from '../js/data.js';
+import { GOODS, SHIPS, CITY_BY_ID } from '../js/data.js';
 import {
   state, resetGame, advanceDays, neighborsOf, voyageDays, voyageCost,
   buy, sell, costFor, gainFor, tariffRate, purchaseShip, boardShip, sellsShip,
@@ -28,12 +28,32 @@ export const ORDER = ['galley', 'cocca', 'caravel', 'frigate', 'brig',
     **항차 ROI가 구조적으로 낮게 나온다** — 게다가 항해 중 시세가 밀리면 그 칸들이 먼저 적자로 뒤집힌다.
     조심스러운 플레이어를 흉내 내거나 ROI 분포를 볼 때 이 값을 올린다.
     → .claude/docs/wiki/research-voyage-returns.md §7-1 */
+/* 그 두 항구 사이에서 **실제로 거래되는** 품목.
+   ★ 교역품이 열둘일 때는 전부 훑어도 됐다. 아홉 권역 77종이 되자 시뮬이
+     **어디서도 안 나고 아무도 안 사는 물건**을 사기 시작했다 — 중립가끼리라도
+     시세 노이즈(±15%)가 있어 매 항구 수십 개의 가짜 차익이 생기기 때문이다.
+     그런 거래는 이문이 거의 없으면서 시장 압력만 쌓아, 열 항차 만에 파산했다.
+     실제 플레이어는 그 항구 시장 목록에 있는 것만 본다(`scenes/port.js`가 같은 기준으로 좁힌다) —
+     시뮬도 같은 눈으로 봐야 시뮬이 게임을 흉내 낸 것이 된다. */
+function tradableBetween(from, to) {
+  const live = new Set();
+  for (const id of [from, to]) {
+    const c = CITY_BY_ID[id];
+    if (!c) continue;
+    for (const gid of Object.keys(c.supply ?? {})) live.add(gid);
+    for (const gid of Object.keys(c.demand ?? {})) live.add(gid);
+  }
+  const list = GOODS.filter((g) => live.has(g.id));
+  return list.length ? list : GOODS;
+}
+
 export function planFor(to, room, budget, minMargin = 0) {
   const take = {};
   let spend = 0, gain = 0;
+  const pool = tradableBetween(state.at, to);
   for (let k = 0; k < room; k++) {
     let best = null;
-    for (const g of GOODS) {
+    for (const g of pool) {
       const n = (take[g.id] || 0) + 1;
       const dCost = costFor(g.id, n) - costFor(g.id, n - 1);
       const dGain = gainFor(g.id, n, to) - gainFor(g.id, n - 1, to);
@@ -51,6 +71,10 @@ export function planFor(to, room, budget, minMargin = 0) {
 }
 
 /** 이웃 항구 중 순이익 최대인 곳으로 간다 */
+/* 직전에 있던 항구 — 왕복 갇힘을 막는 데 쓴다 */
+let lastPort = null;
+export const setLastPort = (id) => { lastPort = id; };
+
 export function bestRun(minMargin = 0) {
   let best = null;
   const room = cargoFree();
@@ -59,7 +83,17 @@ export function bestRun(minMargin = 0) {
     const days = voyageDays(state.at, to);
     const cost = voyageCost(days).total;
     const p = planFor(to, room, state.gold, minMargin);
-    const net = p.gain - p.spend - cost;
+    let net = p.gain - p.spend - cost;
+
+    /* ★ 방금 떠나온 항구로 되돌아가는 데 벌점을 준다.
+       세계가 175항구가 되면서 **가까운 두 항구를 왕복하는 것이 국소 최적**이 되는 자리가
+       생겼다(지중해에 알게로~마요르카가 들어오자 시뮬이 거기 갇혀 열 항차 만에 파산했다).
+       두 항구만 오가면 시장 압력이 양쪽에 쌓여 차익이 말라 죽는데, 매 항차 "지금 가장 나은 곳"만
+       보는 탐욕 알고리즘은 그것을 못 본다 — 압력이 걷히는 데 며칠 걸리기 때문이다.
+       실제 상인도 같은 두 항구만 왕복하지는 않는다. 15%면 진짜 좋은 왕복은 여전히 살아남고
+       (알렉산드리아~베네치아 같은 간선), 말라붙은 왕복은 빠져나온다. */
+    if (to === lastPort) net *= net > 0 ? 0.85 : 1.15;
+
     if (!best || net > best.net) best = { to, take: p.take, net, days, spend: p.spend };
   }
   return best;
@@ -146,6 +180,7 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
     }
 
     // 항해 — 일당·보급·선단 유지비가 여기서 나간다
+    setLastPort(state.at);
     const dd = voyageDays(state.at, run.to);
     const cost = advanceDays(dd, { from: state.at, to: run.to });
     const news = worldTick(dd);        // NPC도 같은 시장에서 사고판다

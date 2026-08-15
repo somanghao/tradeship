@@ -1016,6 +1016,22 @@ export const currentRegion = () => regionOf(state.at);
    · 해류: 지중해는 아프리카 연안을 동쪽으로 흐르고 레반트에서 북상해 되돌아온다.
      `CURRENTS`에 실은 구간만 반영한다. */
 const YEAR = 120;   // 1년 = 120일
+export const YEAR_DAYS = YEAR;
+
+/** 그날의 철. 이 게임의 계절은 **바람과 같은 축**이다 —
+    `windOf`가 이미 `day % YEAR`로 여름 북풍과 겨울 남서풍을 가르고 있으므로,
+    계절을 따로 정의하면 "바람은 여름인데 철은 겨울"인 날이 생긴다.
+
+    ★ 계절이 규칙에 물리는 자리는 **NPC의 등장**이다. 바르바리 코르세어는 여름에만 나왔고
+      (겨울 지중해는 배가 안 떴다), 발트는 얼어붙어 한자법이 2/22~11/11만 허용했고,
+      말라바르는 남서 계절풍 넉 달 동안 해안이 통째로 닫혔다. 그래서 같은 달에
+      지중해와 인도양의 위험이 **정반대로** 움직인다 — 플레이어가 지도가 아니라 달력을 본다. */
+export function seasonOf(day = state.day) {
+  return (day % YEAR) < YEAR / 2 ? 'summer' : 'winter';
+}
+
+/** 그 NPC가 지금 철에 바다에 나와 있는가. `season`이 없으면 사철 돈다. */
+export const inSeason = (def, day = state.day) => !def?.season || def.season === seasonOf(day);
 
 /** 그날 바람이 밀어주는 방향(단위벡터) — x 동쪽, y 남쪽 */
 export function windOf(day = state.day) {

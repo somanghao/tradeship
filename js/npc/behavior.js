@@ -50,11 +50,15 @@ export function chooseTrade(npc, ctx) {
   return cands[Math.floor(ctx.rnd() * Math.min(NPC.pickTop, cands.length))];
 }
 
-/** 해적의 한 수: 어느 항구 쪽으로 기울 것인가. 상인이 많은 쪽으로 쏠린다. */
+/** 해적의 한 수: 어느 항구 쪽으로 기울 것인가.
+    상인이 많은 쪽으로 쏠리되, **제 사냥터가 있는 해적은 그쪽으로 더 기운다.**
+    ★ 사냥터(`hunt`)는 그 해적이 실제로 노리던 구간이다 — 바르바로사가 알제 앞바다를,
+      마라카르가 말라바르 해안을 지켰다는 사실이 여기서 항로 위험으로 드러난다.
+      키 계산은 `ctx.huntBonus`가 해 준다(여기는 게임 모듈을 모른다). */
 export function choosePirateMove(npc, ctx) {
   const nb = ctx.neighbors(npc.at);
   if (!nb.length) return null;
-  const weights = nb.map((to) => 1 + ctx.tradersNear(to) * 1.6);
+  const weights = nb.map((to) => 1 + ctx.tradersNear(to) * 1.6 + (ctx.huntBonus?.(npc, to) ?? 0));
   let r = ctx.rnd() * weights.reduce((a, b) => a + b, 0);
   let i = 0;
   for (; i < nb.length; i++) { r -= weights[i]; if (r <= 0) break; }

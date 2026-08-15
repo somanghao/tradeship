@@ -40,7 +40,7 @@ export const TRADERS = [
   /* ── 구자라트 ─────────────────────────────────────────────
      인도양에서 가장 오래된 상인 사회. 힌두 바니아는 장부를, 무슬림 호자는 배를 맡았다. */
   {
-    id: 'bania', name: '캄바트의 바니아 상단', flag: 'hafsid', ship: 'kotia',
+    id: 'bania', name: '캄바트의 바니아 상단', flag: 'gujarat', ship: 'kotia',
     purse: [4500, 12000], goods: ['calico', 'indigo', 'cowrie', 'gold'],
     scope: 'region', rank: 4, season: null,
     // 바니아는 **바다에 안 나가는 상인**이었다. 배는 남에게 맡기고 자기는 장부와 환(換)을 쥔다.
@@ -54,7 +54,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'khoja', name: '호자 나쿠다 상단', flag: 'ottoman', ship: 'ghanjah',
+    id: 'khoja', name: '호자 나쿠다 상단', flag: 'gujarat', ship: 'ghanjah',
     purse: [5000, 14000], goods: ['calico', 'horse', 'pearl', 'indigo'],
     scope: 'ocean', rank: 4, season: 'winter',
     // ★ 겨울 상단이다. 북동 계절풍이 불어야 페르시아만에서 구자라트로 내려올 수 있었고,
@@ -73,7 +73,7 @@ export const TRADERS = [
   /* ── 말라바르 ─────────────────────────────────────────────
      세상의 후추가 나는 몇 뼘. 그래서 여기만은 상인이 셋씩 겹쳐 앉아 있다. */
   {
-    id: 'mappila', name: '마피라 선주단', flag: 'ottoman', ship: 'pattamar',
+    id: 'mappila', name: '마피라 선주단', flag: 'zamorin', ship: 'pattamar',
     purse: [5000, 14000], goods: ['pepper', 'ginger', 'spice', 'grain'],
     scope: 'ocean', rank: 4, season: 'summer',
     // ★ 여름 상단이다. 남서 계절풍이 말라바르에서 아덴 쪽으로 등을 밀어 주는 철에만 홍해로 올라간다.
@@ -88,7 +88,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'cochinfeitoria', name: '코친 왕실 상관', flag: 'spain', ship: 'nau',
+    id: 'cochinfeitoria', name: '코친 왕실 상관', flag: 'portugal', ship: 'nau',
     purse: [10000, 26000], goods: ['pepper', 'cinnamon', 'ginger', 'gold'],
     scope: 'region', rank: 5, season: 'winter',
     // ★ 겨울 상단이다. 리스본으로 돌아가는 배는 **1월 안에 코친을 떠나야** 했다 —
@@ -103,7 +103,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'casado', name: '고아의 카사도', flag: 'spain', ship: 'pattamar',
+    id: 'casado', name: '고아의 카사도', flag: 'portugal', ship: 'pattamar',
     purse: [2500, 7000], goods: ['teak', 'calico', 'horse', 'pepper', 'wine'],
     scope: 'region', rank: 3, season: null,
     // 카사도는 인도에 눌러앉아 결혼한 포르투갈 사람들이다. 본국 함대에 낄 자격은 없고
@@ -120,7 +120,7 @@ export const TRADERS = [
   /* ── 코로만델·실론 ────────────────────────────────────────
      면포와 계피. 서쪽이 후추라면 동쪽은 옷감이다. */
   {
-    id: 'chettiar', name: '체티야르 상단', flag: 'hafsid', ship: 'yathra',
+    id: 'chettiar', name: '체티야르 상단', flag: 'vijayanagara', ship: 'yathra',
     purse: [2500, 7000], goods: ['cinnamon', 'calico', 'pearl', 'grain'],
     scope: 'region', rank: 3, season: null,
     // 체티야르는 상인이면서 **대금업자**였다. 남의 항해에 돈을 대고 이자를 받는 것이 본업이라
@@ -133,7 +133,7 @@ export const TRADERS = [
     },
   },
   {
-    id: 'portogrande', name: '포르투 그란드의 자유상인', flag: 'hafsid', ship: 'balam',
+    id: 'portogrande', name: '포르투 그란드의 자유상인', flag: 'bengal', ship: 'balam',
     purse: [2500, 7000], goods: ['calico', 'saltpetre', 'teak', 'cowrie', 'grain'],
     scope: 'region', rank: 3, season: null,
     // 벵골은 왕실 상관도 술탄의 독점도 닿지 않던 자리라 **면허 없는 사람들이 모였다.**
@@ -149,7 +149,8 @@ export const TRADERS = [
   /* ── 조개만 싣는 배 ───────────────────────────────────────
      ★ 이 배를 만나면 실린 것이 무엇인지 이미 안다. 그것이 이 배를 둔 이유다. */
   {
-    id: 'maldive', name: '몰디브의 카우리 선단', flag: 'hafsid', ship: 'galbat',
+    // ★ FLAGS에 몰디브 술탄국이 없어 이웃 섬나라(kotte)의 기를 빌린다.
+    id: 'maldive', name: '몰디브의 카우리 선단', flag: 'kotte', ship: 'galbat',
     purse: [500, 1600], goods: ['cowrie'],
     scope: 'region', rank: 1, season: null,
     // 카우리 조개는 벵골에서도 서아프리카에서도 **잔돈이었다.** 몰디브 산호초에서만 나는데

@@ -6,12 +6,20 @@ import {
   routeFactor, windFactor, currentFactor,
 } from '../js/state.js';
 import { initWorld, worldTick, npcsOnLeg, npcsAtPort, newsLines } from '../js/world.js';
+import { NPC } from '../js/npc/config.js';
 
 const ok = (c, m) => console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`);
 
 resetGame();
 initWorld();
-ok(state.npcs.length === 13, `세계 시작: 상인 ${state.npcs.filter(n => n.kind === 'trader').length} · 해적 ${state.npcs.filter(n => n.kind === 'pirate').length}`);
+/* ★ 절대수(13척)를 검사하다가 세계가 아홉 바다로 넓어지면서 걸렸다.
+   척수는 이제 **권역 수에 비례해** 정해지므로(`npc/config.js: tradersPerRegion`),
+   여기서 지킬 것은 "몇 척인가"가 아니라 **설정한 만큼 실제로 떴는가**다.
+   숫자를 새 값으로 고쳐 두면 바다를 늘릴 때마다 또 걸린다. */
+ok(state.npcs.length === NPC.traders + NPC.pirates,
+   `세계 시작: 상인 ${state.npcs.filter((n) => n.kind === 'trader').length}/${NPC.traders}`
+   + ` · 해적 ${state.npcs.filter((n) => n.kind === 'pirate').length}/${NPC.pirates}`
+   + ` (권역 수에 비례한다)`);
 
 // 30일을 돌려 본다
 let raids = 0, sold = 0, bought = 0;

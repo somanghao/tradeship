@@ -106,6 +106,7 @@ export const TRADERS = [
      항구가 없는 도시가 바다 장사를 하려면 배를 빌리거나 국가가 갤리를 띄워야 한다.
      피렌체는 후자를 택했고, 그 갤리에 자본을 댄 것이 메디치 은행이다. */
   {
+    // ★ FLAGS에 피렌체가 없다 — 흰 바탕에 붉은 표식(genoa)이 피렌체 백합과 색이 같아 그것을 빌린다.
     id: 'medici', name: '메디치 상관의 갤리', flag: 'genoa', ship: 'greatgalley',
     purse: [9000, 24000], goods: ['woolcloth', 'alum', 'silk', 'wool'],
     scope: 'ocean', rank: 5, season: null,
@@ -141,6 +142,7 @@ export const TRADERS = [
      오스만에 조공을 바치고 중립을 산 작은 공화국. 그 중립이 곧 상품이라,
      전쟁 중에도 이 배들만은 양쪽 항구에 다 들어갔다. */
   {
+    // ★ FLAGS에 라구사가 없다. 흰 바탕 기(genoa)로 대신한다 — 라구사기도 흰 바탕이었다.
     id: 'gozze', name: '고체 선주 조합', flag: 'genoa', ship: 'indiaman',
     purse: [5000, 14000], goods: ['wool', 'woolcloth', 'grain', 'salt'],
     scope: 'ocean', rank: 4, season: null,
