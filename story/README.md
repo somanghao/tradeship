@@ -6,7 +6,8 @@
 |---|---|
 | [SYNOPSIS.md](SYNOPSIS.md) | **시놉시스(확장판·정본)** — 아홉 바다 × 위기·발견·대가 · 6부 구성 · 수첩 액자 |
 | [CHARACTERS.md](CHARACTERS.md) | 인물 — 주인공·동행·게임 실존 NPC의 서사 배역 |
-| [OUTLINE.md](OUTLINE.md) | 40장 장별 개요 — ⚠️ 3부 구버전. 1~26장만 유효 |
+| [OUTLINE.md](OUTLINE.md) | **61장 장별 개요(정본)** — 6부 확장판에 맞춰 27장 이후를 새로 짰다 |
+| [FLEET-LEDGER.md](FLEET-LEDGER.md) | **선단 장부** — 척수·선원수·이름·거점의 정본. 배를 다섯 번 잃고 여섯 번 산다 |
 | [GAME-LINK.md](GAME-LINK.md) | **장면 ↔ 게임 데이터 대응표.** 값을 지어내지 않기 위한 문서 |
 | [regions/](regions/README.md) | **권역별 소재집 450항목**(아홉 바다 × 50) — 발견·위기·보상·성장·인물·이벤트. 인덱스와 관통 검수 결과는 [regions/README.md](regions/README.md) |
 | [TIMELINE.md](TIMELINE.md) | **전 구간 통합 시간축** — D0(절영도)부터 끝까지 누적. 달력 규약(실제 365일 정본 · 게임 `YEAR=120`은 계절 판정 전용 · 환산 ×3.042) · 부 경계 여섯 곳의 상태표 · 결함 63건 · 구간 배분 감축안 |
