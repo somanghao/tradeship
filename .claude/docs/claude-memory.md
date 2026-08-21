@@ -10,7 +10,7 @@
    도메인 파일은 `§1~2 키워드→문서` + `§3 그 도메인 전용 함정`이라 자족적이다.
 3. **"마지막 작업이 뭐였나"는 `git log` + `changelog.md` 맨 위**를 본다 — 이 파일은 *최종상태*만 담는다.
 
-도메인: **art**(픽셀 에셋·지형·배경) / **trade**(경제·물가·NPC·고증) / **combat**(전투·선박·조선소) / **engine**(캔버스·씬·UI·실행)
+도메인: **art**(픽셀 에셋·지형·배경) / **trade**(경제·물가·NPC·고증) / **combat**(전투·선박·조선소) / **engine**(캔버스·씬·UI·실행) / **story**(소설 — 코드 아님)
 
 4. **어느 바다를 건드리든 `js/regions/<권역>/`부터** — `map/geo.js`·`data.js`엔 값이 없다(§핵심 모델).
 
@@ -61,60 +61,63 @@
 | 실행·디버깅 | `wiki/dev-workflow.md` |
 | 변경 이력·경위 | `changelog.md` |
 | 게임 수치 | `js/data.js` (코드가 정본, 문서는 해설) |
-| 도시 특산품이 왜 이 값인가 | `content/regions/<권역>-evidence.json`(권역마다 다르다) · 검증 `node tools/check-evidence.mjs` → 서술본 `wiki/city-goods-history.md` |
-| 항로가 왜 이만큼 위험한가 | `content/regions/<권역>-evidence.json`의 `routes` · 수치 권역 `geo.js: ROUTE_RISK` · 검증 `node tools/check-routes.mjs` |
-| 부관 급여가 사료에 맞나 | `content/wage-evidence.json` (정본) · 검증 `node tools/check-wages.mjs` · 서술본 `wiki/officer.md` |
-| 물가·자산·유지비가 사료에 맞나 | **카테고리마다 파일이 다르다**(`content/{goods,asset,upkeep}-evidence.json`) · 검증 `node tools/check-prices.mjs` → 어느 것을 열지는 `QUICKMAP-trade.md` |
-| 한 항차가 얼마를 버나 (분포) | `content/voyage-evidence.json` (정본) · 검증 `node tools/check-voyage.mjs` · 조사 `wiki/research-voyage-returns.md` |
-| 그림 발주 사양 | `assets/PORT-BACKGROUND-BRIEF.md`(항구 16장) · `assets/map-briefs/<권역>.md`(지도 9장, 데이터에서 뽑는다) · 검수 `python tools/check-map.py --all` |
+| 도시 특산품이 왜 이 값인가 | `content/regions/<권역>-evidence.json` · 검증 `check-evidence.mjs` → 서술본 `wiki/city-goods-history.md` |
+| 항로가 왜 이만큼 위험한가 | 근거 JSON의 `routes` · 수치 권역 `geo.js: ROUTE_RISK` · 검증 `check-routes.mjs` |
+| 부관 급여가 사료에 맞나 | `content/wage-evidence.json` · 검증 `check-wages.mjs` · 서술본 `wiki/officer.md` |
+| 물가·자산·유지비가 사료에 맞나 | **카테고리마다 파일이 다르다**(`content/{goods,asset,upkeep}-evidence.json`) · 검증 `check-prices.mjs` → `QUICKMAP-trade.md` |
+| 한 항차가 얼마를 버나 (분포) | `content/voyage-evidence.json` · 검증 `check-voyage.mjs` · 조사 `wiki/research-voyage-returns.md` |
+| 그림 발주 사양 | **대표 2장뿐** — `assets/BRIEF-MAP.md`(지도·배경) · `BRIEF-NPC.md`(사람). 바다별 목록은 `gen-{map,npc}-brief.mjs`가 갱신한다 |
 | 부관(에이미) | `js/data.js: OFFICER` (정본) → `wiki/officer.md` |
-| 급여 정산·체불·이탈·장부 | `js/state.js`(payroll·settlePayroll) · 화면 `js/payday.js` → `wiki/payroll.md` |
+| 급여 정산·체불·이탈·장부 | `state.js`(payroll·settlePayroll) · 화면 `js/payday.js` → `wiki/payroll.md` |
 | 협업 경계(누가 어느 파일) | 루트 `CONTRIBUTING.md` · `.github/CODEOWNERS` |
 | 그림 교체 절차 | `assets/README.md` |
 | 아직 없는 기능·손대는 순서 | `UNIMPLEMENTED.md` |
 
 ## 현재 상태
 
-- 게임 루프 3파트(무역·항해·전투) + 조선소·술집. 아홉 바다 전부 **실제 클릭 플레이로 검증**했다(테스터 에이전트).
-- **공개 저장소** `https://github.com/somanghao/tradeship` (public, main).
-- **세 영역이 갈라져 있다** — 그림 / NPC / 지도. 경계는 `CONTRIBUTING.md`.
-- 에셋은 **대부분** 코드 생성이고 PNG로 갈아 끼울 수 있다 — `bake` 키를 `assets/manifest.json`에 적으면 그것만 대체된다(키는 `preview.html`). 캐시는 **6MB LRU 상한**.
-- **지도 아홉 장만은 이미 PNG다**(`assets/map/`). 좌표가 데이터인 것처럼 그림도 굳혔다. **좌표를 옮기면 `node tools/gen-map-png.mjs`를 다시 돌린다** — 안 돌리면 항구가 뭍에 앉고 `python tools/check-map.py --all`이 잡는다. 판 번호가 붙어 새로고침만으로 갈린다. 코드 생성은 폴백.
-- **통합 대시보드** `/dashboard/` — 6탭(오버뷰·경제·해적·**선박**·항구·보수). 게임 모듈을 그대로 돌려 계측한다(재구현 아님). 구조 설명의 정본은 `dashboard/architecture.mjs`이고 `check-architecture.mjs`가 **실제 파일·실제 state와 대조**해 낡지 않게 막는다 — **파일을 추가하면 여기 적어야 통과한다.** → `QUICKMAP-trade.md`
-- **값은 `data.js`, 규칙은 `state.js`.** 콘텐츠 수치·도시 경제·**튜닝 상수 전부**(임금·보급·유지비·보험·급여 주기·시작 자금·조우 확률 환산)가 `js/data.js`에 모여 있고, 도시 좌표·항로·해류는 `js/map/geo.js`다. `state.js`는 그것을 그대로 re-export하므로 **기존 import 경로는 그대로 쓴다**. 밸런스를 만지려고 로직 파일을 열 일이 없다.
-- **입항세는 두 겹이다** — 규모별 기본율(`TARIFF`) + 도시별 오버라이드(`CITY_TARIFF`). **비어 있는 도시가 빠진 게 아니라** 기본율로 구르는 것이다. 항구 성질을 읽는 곳은 `baseTariff()`(부관 특전 제외).
-- **데이터는 세 겹이다 — UI ▸ 수치 ▸ 근거.** 권역 `geo.js` ▸ 권역 `trade.js` ▸ `content/regions/<권역>-evidence.json`. **수치를 고치면 근거도 같은 커밋에서** — `check-*`가 어긋나면 실패시킨다(*근거가 아직 없는 것*은 경고일 뿐).
-- 특산품과 깃발은 사료에 맞춰져 있다. 밸런스나 연표만 보고 되돌리면 같은 오류가 재발한다.
-- **부르사·이즈니크는 막다른 주머니**, **몰타**는 해협 병목의 **나포선 경매항** — 의도적 예외다. → `wiki/city-goods-history.md`
-- **시작은 물이 새는 낡은 바사 + 금화 200 + 선원 0명.** 배는 있는데 사람이 없어 **첫 행동이 매매가 아니라 술집행**이다. 항해할 때마다 선체가 삭아 갈아탈 압박이 걸린다.
-- **선원은 술집에서 무리 단위로 모은다** — **값이 두 갈래**라(계약금은 지금, 일당은 내내) 싸게 태운 대가가 나중에 온다. → `wiki/crew-tavern.md`
-- **배는 도시 공업력이 정한다**(`industry ≥ SHIPS[].tier`). 상급선은 선행 선종을 몰아 봐야 열리고, 즉시 손에 넣는 길은 **중고선**뿐. 전투는 **탄종 선택**이 한 축이고 백병전으로 나포한다. → `QUICKMAP-combat.md`
-- **부관은 오직 한 명, 에이미다** — 첫날부터 타고 있는 동행이라 계약금도 해고도 없고, 항해술·전투가 아니라 **오직 돈만** 만진다. → `wiki/officer.md`
-- **세계가 혼자 돈다** — NPC가 사고팔고 습격하며 그 거래가 시세에 압력으로 남는다. 해적은 턴 만큼 부유해진다. → `wiki/world-npc.md`
-- **항로마다 위험이 다르고, 길수록 잦다.** 근거는 **당대 해상보험 요율**(`ROUTE_RISK`) + 그 구간의 해적 수. 판정은 **8일에 한 번씩 넉 장까지**이고 뒤로 갈수록 눅는다(`rollSeaEvent`의 `damp`) — 실주행으로 긴 항로가 짧은 항로의 2.8배. 내해·육로는 **해적 대신 노상강도·통행세**(`INLAND_ODDS`).
-- **바다마다 적의 얼굴이 다르다** — 이름난 해적은 권역 `npc-pirates.js: PIRATES`, 흔한 조우는 같은 파일 `FOES`(티어 1~5). **수치는 `ENEMIES` 등급 그대로 쓰고 이름·국적·선체·깃발만 갈아 끼운다**(`flag`를 빠뜨리면 명 수군이 부르봉 백합기를 단다). 권역을 늘릴 때 `FOES`를 안 적으면 그 바다만 지중해 얼굴이다.
-- **도시 사이의 값 차이는 구조이고 흔들림은 시황이다** — `priceOf`가 공통 시황(±12%)과 도시 사정(±3.5%)을 갈라 곱한다. 도시마다 따로 흔들면 산지→수요 사다리가 통째로 뒤집힌다(실측으로 광산에서 멀어질수록 은이 싸졌다).
-- **경제는 "여러 항차"와 "대형 주문 한 건"이 나란하다.** 곡선은 `node tools/sim-trade.mjs` — **여러 판 평균한다**(1회는 표본오차가 크다). → `wiki/economy-trade.md`
-- **물가와 임금은 당대 사료 비율에 맞춰져 있다**. 대조 축은 둘뿐 — **곡물의 몇 배인가**, **선원 연봉으로 무엇을 몇 개 사나**. ‘닢’은 실화폐가 아니라 절대액 환산은 안 한다.
-- **급여는 발생주의** — 날마다 쌓이고 30일마다 항구에서 치른다(`state.payroll`). 못 주면 **반란이 아니라 이탈**이고 사람이 **값나가는 짐을 들고 간다**. → `wiki/payroll.md`
-- **항해비는 일곱 갈래**(일당·보급·선체·무장·선단·적하보험·부관)라 저마다 다른 성장 요인에 붙는다 — **성장할수록만 무거워진다.**
+- 게임 루프 3파트(무역·항해·전투) + 조선소·술집. 아홉 바다 전부 **실클릭 검증**했다.
+- **공개 저장소** `github.com/somanghao/tradeship` (public, main).
+- 에셋은 **대부분** 코드 생성이고 PNG로 갈아 끼운다 — `bake` 키를 `assets/manifest.json`에(키 목록은 `preview.html`). 캐시 **6MB LRU**. ⚠️ **manifest 키는 코드가 *부르는* 키여야 한다** — 로더의 "갈아 끼웠다"는 적용이 아니다(→ `QUICKMAP-art.md` §3).
+- **지도 아홉 장만은 이미 PNG다**(`assets/map/`, 코드 생성은 폴백). **좌표를 옮기면 `node tools/gen-map-png.mjs`를 다시 돌린다** — 안 돌리면 항구가 뭍에 앉고 `python tools/check-map.py --all`이 잡는다. **아홉 장 모두 코드판이다** — 사람이 그린 지도는 아직 반려 중이다(→ `QUICKMAP-art.md` §3 · `UNIMPLEMENTED.md` F-1). ⚠️ **지금 워킹트리의 아홉 장은 질감 스크립트가 덮은 판이라 육지가 42px 주기로 반복된다 — 커밋 전에 `UNIMPLEMENTED.md` F-8.**
+- **통합 대시보드** `/dashboard/` — 게임 모듈을 그대로 돌려 계측한다(재구현 아님). 구조 정본 `dashboard/architecture.mjs` — `check-architecture.mjs`가 실제 파일·state와 대조하므로 **파일을 추가하면 여기 적어야 통과한다.**
+- **값은 `data.js`, 규칙은 `state.js`.** 콘텐츠 수치·도시 경제·**튜닝 상수 전부**(임금·보급·유지비·보험·급여 주기·시작 자금·조우 확률 환산)가 `js/data.js`, 도시 좌표·항로·해류는 `js/map/geo.js`. `state.js`가 그대로 re-export하므로 **기존 import 경로는 그대로 쓴다.**
+- **입항세는 두 겹** — 기본율(`TARIFF`) + 도시 오버라이드(`CITY_TARIFF`). **비어 있는 도시는 빠진 게 아니라** 기본율로 구른다. 항구 성질은 `baseTariff()`로 읽는다(부관 특전 제외).
+- **데이터는 세 겹 — UI ▸ 수치 ▸ 근거.** 권역 `geo.js` ▸ `trade.js` ▸ `content/regions/<권역>-evidence.json`. **수치를 고치면 근거도 같은 커밋에서**(`check-*`가 실패시킨다. *근거 없음*은 경고일 뿐).
+- 특산품·깃발은 사료에 맞춰져 있다. 밸런스나 연표만 보고 되돌리면 같은 오류가 재발한다.
+- **아홉 바다에서 골라 시작한다**(기본 **부산포** · `data.js: START_PORTS`). 어디서든 **물 새는 낡은 바사 + 금화 200 + 선원 0명**이라 **첫 행동이 술집행**이다.
+- **선원은 술집에서 무리 단위로.** 값이 두 갈래라(계약금은 지금, 일당은 내내) 싸게 태운 대가가 나중에 온다. → `wiki/crew-tavern.md`
+- **배는 도시 공업력이 정한다**(`industry ≥ SHIPS[].tier`). 상급선은 선행 선종을 몰아 봐야 열리고 즉시 얻는 길은 **중고선**뿐. 전투는 **탄종 선택** + 백병전 나포. → `QUICKMAP-combat.md`
+- **부관은 오직 한 명, 에이미** — 첫날부터 탄 동행이라 계약금도 해고도 없고 **오직 돈만** 만진다. → `wiki/officer.md`
+- **세계가 혼자 돈다** — NPC의 거래가 시세에 압력으로 남고, 해적은 턴 만큼 부유해진다. → `wiki/world-npc.md`
+- **항로마다 위험이 다르고, 길수록 잦다.** 근거는 **당대 해상보험 요율**(`ROUTE_RISK`) + 그 구간 해적 수(판정 방식은 `QUICKMAP-trade.md`). 내해·육로는 **노상강도·통행세**(`INLAND_ODDS`).
+- **바다마다 적의 얼굴이 다르다** — 권역 `npc-pirates.js`의 `PIRATES`·`FOES`(티어 1~5). **수치는 `ENEMIES` 등급 그대로, 이름·국적·선체·깃발만 갈아 끼운다** → `QUICKMAP-combat.md` §3
+- **값 차이는 구조이고 흔들림은 시황이다** — `priceOf`가 공통 시황(±12%)과 도시 사정(±3.5%)을 갈라 곱한다. 도시마다 따로 흔들면 산지→수요 사다리가 뒤집힌다(광산에서 멀수록 은이 싸졌다).
+- **경제는 "여러 항차"와 "대형 주문 한 건"이 나란하다.** 곡선은 `node tools/sim-stat.mjs 20`(분포) — **1회 실행으로 판단하지 않는다.** → `wiki/economy-trade.md`
+- **물가·임금은 사료 비율에 맞춘다.** 대조 축은 둘 — **곡물의 몇 배**, **선원 연봉으로 몇 개**. ‘닢’은 실화폐가 아니라 절대액 환산은 안 한다.
+- **급여는 발생주의** — 날마다 쌓여 30일마다 항구에서 치른다(`state.payroll`). 못 주면 **반란이 아니라 이탈**이고 **값나가는 짐을 들고 간다**. → `wiki/payroll.md`
+- **항해비는 일곱 갈래**(일당·보급·선체·무장·선단·보험·부관) — **성장할수록만 무거워진다.**
 - **값나가는 짐은 두 번 대가를 치른다** — 보험료(`INSURANCE_RATE`)와 해적 조우 확률(`cargoLure`)이 함께 오른다.
-- **원양 관문은 배후지를 상대한다** — 대양을 잇는 항구 29곳은 시장 깊이가 `MARKET.gateDepth`배다. 대량거래 벌점은 "한 번에 크게 사고 파는 쪽"을 때리는데 **원양은 그럴 수밖에 없어**(왕복 48~66일) 가장 긴 항로가 가장 안 벌렸다. 깊이를 도시 규모로만 재는 것이 틀렸다.
+- **원양 관문은 배후지를 상대한다** — 대양을 잇는 항구(`OCEAN_LANES`의 양끝)는 시장 깊이가 `MARKET.gateDepth`배. 대량거래 벌점이 "한 번에 크게 사고 파는 쪽"을 때리는데 **원양은 그럴 수밖에 없다**(왕복 48~66일).
 - **큰돈은 확률이 아니라 사건에서 나온다** — `state.shocks`가 시세를 올리거나 **내린다**. 빈도가 `CITIES` 수를 따라가 **바다를 넓혀도 밀도가 그대로다**(`SHOCK.densityBase`). → `wiki/economy-trade.md`
-- **보험은 실제로 보상한다** — 공동해손으로 잃은 값의 30%를 받는다(**낸 만큼만**). 화물 손실 빈도는 사료 밴드 안이다. → `wiki/economy-trade.md`
+- **눌러 보는 검증이 둘** — `tools/playtest.mjs`(절차를 한 방에·`--smoke`) / `tools/playtest-live/`(창을 살려 두고 한 스텝씩 — `start`·`sail`·`click`). 다음 대상은 `wiki/playtest-harness.md` §3-b, 결과는 `wiki/playtest-log.md`.
+- **곡선이 나쁘면 게임보다 `sim-core.mjs`의 *플레이 전략*을 먼저 의심한다** — 수리 전략 하나가 "성장 불가" 신호를 냈다(게임은 멀쩡했다). 지금은 **누수 있는 배는 수리 안 함**.
+- **`START_GOLD`는 난이도 손잡이가 아니다**(200 유지 — 절벽·평탄 구간 `wiki/playtest-log.md` §4-2-b). 초반 압박이 옅은 진짜 원인은 **삭은 배 무한 운항**(`UNIMPLEMENTED.md` C-13).
+- **한글 조사는 `js/josa.js`(leaf)** — `ui.js`가 re-export. `을(를)`·`(으)로`를 손으로 적지 않는다.
+- **보험은 실제로 보상한다** — 공동해손 손실의 30%(**낸 만큼만**). → `wiki/economy-trade.md`
+- **`story/`에 이 세계를 무대로 한 장편소설이 있다.** **게임 데이터를 바꾸지 않는 것이 규약**이고,
+  그 검수가 **게임 후반의 사양서**를 냈다 — A-1 거점 · A-1b 정박 유지비 · A-2 공업력이 값까지 확정.
+  **설계는 끝났고 남은 것은 원고다.** 게임 쪽 미결은 **A-1b 하나**.
+  → `story/GAME-LINK.md` §8 · `story/level/VERDICT.md` §3-2
 
 ## 다음 후보
 
-**목록의 정본은 `UNIMPLEMENTED.md`다** — 항목마다 `없음`/`데이터만`/`절반` 상태와 손대는 순서가 있고,
-해소된 것은 진단을 남긴 채 ✅로 표시된다(재발 대비). 여기서는 **방향만** 적는다.
+**목록의 정본은 `UNIMPLEMENTED.md`다**(상태·순서·✅해소 진단까지). 여기는 **방향과 이어받을 자리**만.
 
 - **★ 콘텐츠 확장 — 사용자가 명시한 방향.** 배·교역품·도시·해적의 *종류*를 늘린다.
   구조는 늘려도 막히지 않는다(사건 후보는 `CITIES`에서 매번 생성 · `check-*`는 미조사를 경고로만).
-- **지금 가장 아픈 것: 원양이 근거리보다 못 번다**(`UNIMPLEMENTED.md` C-7). 대량거래 벌점이
-  스프레드를 먹어서 54일 마닐라 갤리온이 손해다. 사건 판정을 일수에 매단 뒤 더 불리해졌으므로
-  **손댄 쪽이 만든 빚**이다.
-
-보류: 사운드 · 라틴세일 뭉툭(안 거슬려 방치) · 대포를 현측 포문에(포문 수 ≠ 대포 수라 규칙부터).
+- **사람은 이길 수 있는 상대만 싸우고 나머지는 피한다 — 전투 설계·측정의 전제다**(조우 안내가 양쪽 수치·도주 가망을 먼저 보여 준다 · 도주율 정본 `state.js: fleeOdds` → `QUICKMAP-combat.md`).
+- **★ 이어받을 자리 — 지도 질감이 미결이다**(`UNIMPLEMENTED.md` F-8. 워킹트리의 아홉 장이 반복 무늬판).
+  그다음은 하네스 `wiki/playtest-harness.md` §3-b의 1번(급여일)부터.
 
 ## 메모리 트립와이어
 
