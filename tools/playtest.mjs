@@ -65,15 +65,20 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  */
 export async function open(opts = {}) {
   const { port = 8155, headed = false, slow = 0, outDir = join(HERE, '..', '.playtest') } = opts;
+  /* 창을 어느 모니터 어디에 띄울까 — `{ x, y, w, h }`.
+     ★ 아홉 바다를 나란히 놓고 보려면 창이 겹치면 안 된다. 주지 않으면 예전대로 1400×900 뷰포트다. */
+  const pos = opts.pos ?? null;
   const pw = loadPlaywright();
 
   let browser = null;
+  const args = pos ? [`--window-position=${pos.x},${pos.y}`, `--window-size=${pos.w},${pos.h}`] : [];
   for (const t of [{ channel: 'chrome' }, { channel: 'msedge' }, {}]) {
-    try { browser = await pw.chromium.launch({ headless: !headed, ...t }); break; } catch { /* 다음 */ }
+    try { browser = await pw.chromium.launch({ headless: !headed, args, ...t }); break; } catch { /* 다음 */ }
   }
   if (!browser) throw new Error('브라우저를 못 띄웠다 — Chrome을 설치하거나 npx playwright install chromium');
 
-  const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  // pos를 주면 창 크기를 그대로 뷰포트로 쓴다 — 안 그러면 1400×900이 창 밖으로 넘친다
+  const ctx = await browser.newContext(pos ? { viewport: null } : { viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -83,7 +88,16 @@ export async function open(opts = {}) {
      이것이 없어 테스터들이 매번 따로 `page.goto`를 해야 했다. */
   const url = `http://localhost:${port}/index.html${opts.query ? `?${opts.query}` : ''}`;
   await page.goto(url, { waitUntil: 'load' });
-  await page.waitForFunction(() => !!window.__game, null, { timeout: 15000 });
+  /* ★ `__game`이 안 생기면 **왜 안 생겼는지**를 함께 던진다. 전에는 `TimeoutError`만 나와서
+     "브라우저가 안 뜬다"와 "게임 코드가 죽었다"를 구분할 수 없었다 — 모듈 하나가 깨져
+     스크립트가 한 줄도 안 돌 때가 그것이다(그때 화면은 검고 콘솔에만 자국이 남는다). */
+  try {
+    await page.waitForFunction(() => !!window.__game, null, { timeout: 15000 });
+  } catch (e) {
+    const why = errors.length ? errors.slice(0, 3).join(' | ') : '(콘솔에 아무 자국도 없다)';
+    await browser.close().catch(() => {});
+    throw new Error(`window.__game이 안 뜬다 — 게임 코드가 죽었을 수 있다: ${why}`);
+  }
   if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
 
   const read = () => page.evaluate(() => ({
@@ -216,11 +230,25 @@ export async function open(opts = {}) {
       } catch { return false; }
     },
 
-    /** 지도에서 그 항구를 **클릭해** 항해한다. 지도 씬이 아니면 먼저 '출항' 한다. */
-    async sail(cityId, { wait = 12000 } = {}) {
+    /** 지도에서 그 항구를 **클릭해** 항해한다. 지도 씬이 아니면 먼저 '출항' 한다.
+        `name`(그 도시의 한글 이름)을 주면 캔버스 클릭이 안 통할 때 **사이드 카드**로 간다.
+
+        ★ 원양 항로(`OCEAN_LANES`)는 지도에 **선으로 안 그려진다** — 권역마다 좌표계가 따로라
+          그을 좌표가 없기 때문이다(`map.js: oceanRows` 주석). 그래서 캔버스 좌표 클릭으로는
+          영원히 못 탄다. 실제로 원양 라운드가 여덟 번 전부 "미도착·1일차 그대로"를 냈다.
+          사람은 사이드패널의 `.route-row` 카드를 눌러 간다 — 하네스도 그 길을 알아야 한다. */
+    async sail(cityId, { wait = 12000, front = true, name = null } = {}) {
       let s = await read();
       if (s.scene !== 'map') {
-        if (!(await g.click('출항'))) return { ok: false, why: '출항 단추가 없다' };
+        /* ★ **글자로 '출항'을 찾으면 안 된다.** 제목 화면(`#title-screen`)이 닫힌 뒤에도 DOM에
+           남아 있어 그 안의 '출항하기'가 먼저 잡히고, 누르면 아무 일도 안 일어난다 —
+           `click`은 true를 돌려주는데 씬은 그대로라 "지도로 못 갔다"만 반복된다.
+           실측에서 이것 하나로 한 배치의 미도착이 68건까지 갔다.
+           항구의 출항 단추는 `.btn-sail`이다(`port.js`) — 그것을 직접 누른다. */
+        const sailBtn = page.locator('#port-side .btn-sail, .btn-sail').last();
+        let opened = false;
+        try { await sailBtn.click({ timeout: 2500 }); opened = true; } catch { /* 아래 폴백 */ }
+        if (!opened && !(await g.click('출항하기'))) return { ok: false, why: '출항 단추가 없다' };
         await sleep(300 + slow);
         s = await read();
         if (s.scene !== 'map') return { ok: false, why: '지도로 못 갔다' };
@@ -228,12 +256,37 @@ export async function open(opts = {}) {
       if (!s.neighbors.includes(cityId)) {
         return { ok: false, why: `직항이 없다 (이웃: ${s.neighbors.join(',')})` };
       }
+      /** 사이드 카드로 간다 — 이름칸(.rn)이 정확히 그 도시인 행을 누른다.
+          '마카오'가 '마카사르'를 물지 않게 정확 일치로 찾는다. */
+      const clickCard = async () => {
+        if (!name) return false;
+        const row = page.locator('.route-row').filter({
+          has: page.locator('.rn', { hasText: new RegExp(`^${name}$`) }),
+        }).first();
+        try { await row.click({ timeout: 2500 }); await sleep(300 + slow); return true; }
+        catch { return false; }
+      };
+
       const pos = await page.evaluate((id) => window.__game.cityScreenPos(id), cityId);
-      if (!pos) return { ok: false, why: '화면 좌표를 못 얻었다' };
-      /* ★ 창이 다른 창에 가리면 `requestAnimationFrame`이 멈춰 **항해 연출이 진행되지 않는다.**
-         여러 테스터가 헤디드 브라우저를 함께 띄우면 반드시 걸린다(중동 테스터가 잡았다). */
-      await page.bringToFront().catch(() => {});
-      await page.mouse.click(pos.x, pos.y);
+      if (!pos) {
+        // 원양 항로처럼 지도에 없는 곳 — 카드로 간다
+        if (!(await clickCard())) return { ok: false, why: '화면 좌표도 사이드 카드도 못 찾았다' };
+      }
+      /* ★ 창이 다른 창에 **가리면** `requestAnimationFrame`이 멈춰 항해 연출이 진행되지 않는다.
+         여러 테스터가 헤디드 브라우저를 함께 띄우면 반드시 걸린다(중동 테스터가 잡았다).
+         ★ 다만 아홉 창을 **동시에** 굴릴 때는 이것이 해가 된다 — 매 항해마다 아홉이 서로
+           앞으로 튀어나와 포커스를 뺏는다. 창을 겹치지 않게 깔았다면 가려질 일이 없으므로
+           `front:false`로 끈다(`nine-seas.mjs`가 그렇게 쓴다). */
+      if (front) await page.bringToFront().catch(() => {});
+      if (pos) {
+        await page.mouse.click(pos.x, pos.y);
+        /* 좌표를 눌렀는데 배가 안 떴으면(항해 카드가 안 보이면) 카드로 한 번 더 시도한다.
+           도시가 화면 가장자리에 걸리거나 다른 라벨에 가리면 이 일이 난다. */
+        await sleep(400);
+        const sailing = await page.locator('#map-side').getByText('항해 중').first()
+          .isVisible().catch(() => false);
+        if (!sailing) await clickCard();
+      }
 
       const events = [];
       const t0 = Date.now();
@@ -283,13 +336,16 @@ export async function open(opts = {}) {
       }));
     },
 
-    /** 조선소에 걸린 배 — 씬을 열어 두고 부른다 */
+    /** 조선소에 걸린 배 — 씬을 열어 두고 부른다.
+        ★ 셀렉터가 실제 DOM과 어긋나 **아홉 바다 전부에서 "배 목록 0줄"**이 나왔다.
+          조선소가 그리는 것은 `#yard-panel` 안의 `.yard-ship`이다(`js/scenes/shipyard.js`).
+          화면에는 93척이 떠 있는데 측정기만 못 본 것이라, 게임 결함으로 오진할 뻔했다. */
     async shipyard() {
-      return page.$$eval('#port-side, #yard, body', (roots) => {
+      return page.$$eval('#yard-panel, #port-side, #yard, body', (roots) => {
         const out = [];
         const seen = new Set();
         for (const root of roots) {
-          for (const row of root.querySelectorAll('.ship-row, .yard-row, tr')) {
+          for (const row of root.querySelectorAll('.yard-ship, .ship-row, .yard-row, tr')) {
             const t = row.textContent.replace(/\s+/g, ' ').trim();
             if (!t || t.length > 160 || seen.has(t)) continue;
             if (!/닢/.test(t)) continue;
@@ -300,13 +356,15 @@ export async function open(opts = {}) {
       });
     },
 
-    /** 술집 자리 — 무리 이름·인원·값이 담긴 줄 그대로 */
+    /** 술집 자리 — 무리 이름·인원·값이 담긴 줄 그대로.
+        ★ 술집이 그리는 것은 `#tavern-panel` 안의 `.tav-card`다(`js/scenes/tavern.js`).
+          조선소와 같은 이유로 여기도 늘 0줄이었다. */
     async tavern() {
-      return page.$$eval('#tav-list, #port-side, body', (roots) => {
+      return page.$$eval('#tavern-panel, #tav-list, #port-side, body', (roots) => {
         const out = [];
         const seen = new Set();
         for (const root of roots) {
-          for (const row of root.querySelectorAll('.crew-row, .band, .ctr-sub, tr')) {
+          for (const row of root.querySelectorAll('.tav-card, .crew-row, .band, .ctr-sub, tr')) {
             const t = row.textContent.replace(/\s+/g, ' ').trim();
             if (!t || t.length > 160 || seen.has(t)) continue;
             seen.add(t); out.push(t);
@@ -353,7 +411,10 @@ if (process.argv.includes('--smoke')) {
     return true;
   });
   await step('항구로', () => g.back());
-  await step('곡물 매입', () => g.trade('곡물', '사기', 2));
+  /* ★ 한 번만 누른다. 매매는 **10개 단위**라 시작 자금(선원을 태우고 148닢)으로는
+     한 번에 금고가 거의 빈다 — 두 번 누르면 두 번째 단추가 `disabled`라 늘 FAIL이었다.
+     회귀 테스트가 항상 실패하면 신호가 죽는다. */
+  await step('곡물 매입', () => g.trade('곡물', '사기', 1));
   const s0 = await g.snap();
   const to = s0.neighbors.find((n) => n !== s0.at);
   await step(`${to}로 항해`, async () => (await g.sail(to)).ok);

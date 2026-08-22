@@ -70,14 +70,31 @@ export function openPayday(onDone) {
       unrestPane(),
     ].filter(Boolean)),
     closable: false,      // 급여일은 넘길 수 없다 — 안 주는 것도 선택이지 회피가 아니다
-    actions: [{
-      label: short ? `낼 수 있는 만큼 치른다 (−${won(state.gold)}닢)` : `급여를 치른다 (−${won(owed)}닢)`,
-      kind: short ? 'dark' : '',
-      onClick: () => {
-        const r = settlePayroll();
-        report(r, onDone);
+    actions: [
+      {
+        label: short ? `낼 수 있는 만큼 치른다 (−${won(state.gold)}닢)` : `급여를 치른다 (−${won(owed)}닢)`,
+        kind: short ? 'dark' : '',
+        onClick: () => {
+          const r = settlePayroll();
+          report(r, onDone);
+        },
       },
-    }],
+      /* ★ **짐을 팔 기회를 준다.** 무역선은 **입항하는 순간이 언제나 가장 가난한 순간**이다 —
+         금고를 다 털어 물건을 싣고 왔으니까. 그런데 급여일이 입항 즉시라, 잘 굴러가는 상단도
+         서른 날마다 체불로 몰렸다(완주 플레이 ISSUES #12: 청구 427닢·금고 0 → 전액 체불인데
+         그 자리에서 짐을 팔자 3,713닢이었다).
+         회피는 아니다 — **떠나려 하면 다시 뜬다**(`port.js`의 출항 단추가 막는다).
+         이것이 `UNIMPLEMENTED.md` C-8("급여일에 선택이 없다")의 답이기도 하다. */
+      short && Object.keys(state.cargo || {}).length ? {
+        label: '짐을 팔고 오겠다',
+        kind: 'dark',
+        onClick: () => {
+          state.payroll.deferredDay = state.day;
+          pushLog('선원들에게 잠시만 기다리라 했다. 짐을 풀어야 삯이 나온다.', 'warn');
+          onDone?.();
+        },
+      } : null,
+    ].filter(Boolean),
   });
   return m;
 }

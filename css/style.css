@@ -312,6 +312,10 @@ html, body {
 .bar-wrap.left  { left: 16px;  top: 12px; }
 .bar-wrap.right { right: 16px; top: 12px; text-align: right; }
 .bar-name { color: var(--parch); font-weight: 700; margin-bottom: 3px; text-shadow: 0 1px 2px #000; }
+/* 이름난 해적의 얼굴 — 이름표 위, 오른쪽 정렬 안에서 오른쪽에 붙는다 */
+.bar-face { display: flex; justify-content: flex-end; margin-bottom: 2px; }
+/* 원본 48px을 그대로 쓴다 — 40px 같은 어중간한 크기로 줄이면 픽셀이 어긋난다(정수 배율만) */
+.bar-face canvas { image-rendering: pixelated; filter: drop-shadow(0 1px 2px #000); }
 .bar {
   height: 11px; background: #12101a;
   border: 1px solid #000; border-radius: 1px;
@@ -455,8 +459,12 @@ html, body {
 .yard-body .dim { font-size: 11.5px; color: #5d5768; }
 
 /* 선박 탭 */
+/* ★ 좁아지면 단추를 **다음 줄로 내린다**(`wrap`). 전에는 한 줄에 묶여 있어서
+   창을 줄이면 배 이름이 '낡은 바 / 사'로 끊기고 매각 단추가 패널 밖으로 튀어나갔다
+   (정박선과 승선 중인 배가 둘 다 있어 단추가 두 개 쌓일 때). → wiki/playtest-log.md §3-4 */
 .yard-ship {
   display: flex; align-items: center; gap: 9px;
+  flex-wrap: wrap; row-gap: 6px;
   padding: 7px 8px; margin-bottom: 5px;
   background: #ffffff08; border: 1px solid transparent; border-radius: 2px;
   cursor: pointer;
@@ -467,12 +475,13 @@ html, body {
   font-size: 11px; color: var(--brass-l); margin-bottom: 6px;
   padding: 3px 7px; background: #d2a52a14; border-left: 2px solid var(--brass); border-radius: 2px;
 }
-.yard-ship .info { flex: 1 1 auto; min-width: 0; }
-.yard-ship .n { display: flex; align-items: center; gap: 6px; }
-.yard-ship .n b { color: var(--brass-l); font-size: 13px; }
+.yard-ship .info { flex: 1 1 200px; min-width: 0; }
+.yard-ship .n { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+/* 배 이름은 끊지 않는다 — 이름이 두 줄로 갈라지면 무슨 배인지 읽기 전에 눈이 걸린다 */
+.yard-ship .n b { color: var(--brass-l); font-size: 13px; white-space: nowrap; }
 .yard-ship .sp { font-size: 11px; color: #8f8878; margin-top: 2px; line-height: 1.45; }
 .yard-ship .ds { font-size: 11px; color: #6f6858; margin-top: 1px; }
-.yard-ship .acts { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.yard-ship .acts { flex: 0 0 auto; margin-left: auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
 .badge {
   font-size: 10px; padding: 1px 5px; border-radius: 2px;
   border: 1px solid currentColor; color: #8f8878; letter-spacing: .03em;
@@ -616,6 +625,21 @@ html, body {
 #title-screen .sub { color: #9a917f; font-size: 13px; letter-spacing: .05em; }
 #title-screen .keys { color: #6f6858; font-size: 12px; line-height: 1.9; text-align: center; }
 
+/* 시작할 바다 고르기 — 아홉 칸이 한눈에 들어오게 3열로 둔다(스크롤 없이) */
+.sea-pickers { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sea-label { color: #8f8878; font-size: 11.5px; letter-spacing: .08em; }
+.sea-grid { display: grid; grid-template-columns: repeat(3, 168px); gap: 6px; }
+.sea-pick {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 7px 10px; text-align: left; line-height: 1.35;
+}
+.sea-pick b { font-size: 12px; color: var(--parch); }
+.sea-pick .sea-port { font-size: 11px; color: #8f8878; }
+/* 고른 바다 — 테두리와 글씨로만 표시한다(배경을 채우면 아홉 칸이 시끄러워진다) */
+.sea-pick.on { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass-d); }
+.sea-pick.on b { color: var(--brass-l); }
+.sea-hook { color: #6f6858; font-size: 11.5px; min-height: 16px; text-align: center; max-width: 520px; }
+
 /* 항로 행의 순풍/역풍 꼬리표 */
 .route-row .rw {
   font-size: 10.5px; padding: 0 5px; border-radius: 2px;
@@ -633,6 +657,10 @@ html, body {
 .ctr-line { font-size: 13px; color: var(--parch); line-height: 1.6; }
 .ctr-line b { color: var(--brass-l); }
 .ctr-sub { font-size: 11.5px; color: #8f8878; line-height: 1.6; }
+/* 항구의 사람들 — 얼굴 + 이름 한 줄. 초상은 24px로 눌러 담아 목록 높이를 지킨다 */
+.fig-row { display: flex; align-items: center; gap: 7px; }
+.fig-por { flex: 0 0 24px; height: 24px; display: block; overflow: hidden; }
+.fig-por canvas { image-rendering: pixelated; width: 24px; height: auto; margin-top: -2px; }
 
 /* ══ 술집 ══════════════════════════════════════════════════════
    조선소(#yard-panel)와 같은 뼈대를 쓰되 색을 술집 쪽으로 눕힌다 —

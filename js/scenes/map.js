@@ -8,7 +8,7 @@ import { mapSprite } from '../sprites/scene.js';
 import { shipTopSprite } from '../sprites/ship.js';
 import { blit } from '../pixel.js';
 import {
-  CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER,
+  CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER, FLAG_NAME,
   REGION_OF_CITY, REGION_BY_ID, laneOf,
 } from '../data.js';
 import {
@@ -16,9 +16,11 @@ import {
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
+  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy,
 } from '../state.js';
 import {
-  worldTick, npcsOnLeg, npcPos, removeNpc, pirateThreat, newsLines, pirateEnemy,
+  worldTick, npcsOnLeg, tradersNearLeg, strayTrader, npcPos, removeNpc,
+  pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
@@ -62,7 +64,7 @@ function startVoyage(toId) {
     from, to, days,
     // 이 구간에 실제로 떠 있는 배들 — 조우하면 지도에서 보던 그 배가 나온다
     foes: npcsOnLeg(state.at, toId, 'pirate'),
-    ships: npcsOnLeg(state.at, toId, 'trader'),
+    ships: tradersNearLeg(state.at, toId),
     // 출항 시점에 굳힌다 — 항해 중에는 세계가 멈춰 있으므로(worldTick은 입항 때 돈다)
     threat: pirateThreat(state.at, toId),
     t: 0,
@@ -88,6 +90,9 @@ export const mapScene = {
     setInsetRight(268);
     syncBg();
     hover = null;
+    /* ★ 씬에 들어올 때 항해를 지운다 — 항구에서 지도로 올 때는 이것이 맞다.
+       그래서 **전투에서 돌아와 항해를 이어 붙일 때는 `go('map')`을 먼저 부르고
+       그 다음에 `resumeVoyage`를 세워야 한다.** 순서를 뒤집으면 조용히 사라진다. */
     sailing = null;
     pendingArrival = null;
     canvas.addEventListener('mousemove', onMove);
@@ -365,6 +370,18 @@ function quote(line, color = '#c9b98a') {
   return line ? `<br><br><span style="color:${color}">${line}</span>` : '';
 }
 
+/** 상대의 배와 내 배를 나란히 놓고, 도주 가망을 말로 붙인다.
+    사람은 이길 수 있는 상대만 싸우고 나머지는 피하려 한다 — 그 판단의 재료다.
+    수치는 나란히 둘 때만 뜻이 생기고, 확률은 이 게임의 방식대로 말로 옮긴다(`fleeWord`). */
+function foeVersusLine(e) {
+  const odds = fleeOdds({ foeHull: e.hull });
+  const heavier = e.guns > state.guns * 1.6 || e.crew > state.crew * 2;
+  return `<span style="opacity:.9">상대는 <b>선체 ${e.hp} · 선원 ${e.crew} · 포 ${e.guns}문</b>`
+       + `, 내 배는 선체 ${state.hp}/${state.maxHp} · 선원 ${state.crew} · 포 ${state.guns}문.`
+       + `${heavier ? ' <b style="color:#d98a6a">이쪽이 밀린다.</b>' : ''}`
+       + ` 돛을 돌리면 ${fleeWord(odds)}.</span>`;
+}
+
 /* 이름만으로는 급이 안 보인다. 명부의 소개가 있으면 그것을, 없으면 세기를 말로 옮긴다.
    ★ 사다리를 둘로 나눈 이유 — 이 표에는 해적만 있는 게 아니다. 프랑스 순찰 프리깃한테
      "두목급이다. 상선단이 철을 피해 다니는 이름이다"라고 적으면 왕의 배가 산적이 된다. */
@@ -383,7 +400,10 @@ function merchantEnemy(n) {
   const s = SHIPS[n.shipKey];
   const goods = Object.keys(n.cargo);
   const def = defOf(n);
-  return {
+  /* ★ **전리품 상한을 상선에도 건다.** 해적(`pirateEnemy`)에는 `capLoot`이 있는데 상선만 없어서,
+     한 척에 금화 11,557 + 전리품선 매각 13,200이 나왔다 — 같은 판의 88일 무역 이익이 8,000이었다
+     (완주 플레이 ISSUES #22). "옮겨 실을 수 있는 만큼"이라는 규칙은 상대가 상인이어도 같다. */
+  return capLoot({
     id: `npc:${n.id}`,
     // 명부에서 온 상단은 '콘타리니 상관의 상선', 이름 없는 배는 '상선 산타 마리아호'
     name: n.defId ? `${n.name}의 상선` : `상선 ${n.name}호`,
@@ -399,7 +419,7 @@ function merchantEnemy(n) {
       gold: [Math.round(n.gold * 0.5), Math.max(120, n.gold)],
       goods: goods.length ? goods : ['grain', 'salt'],
     },
-  };
+  });
 }
 
 function meetMerchant(n, finish) {
@@ -444,18 +464,30 @@ function meetMerchant(n, finish) {
     onClick: () => {
       /* 이쪽이 먼저 손을 대는 순간이다. 상대의 마지막 말을 여기서 한 번 들려준다 —
          "원로원의 화물이오. 손대면 총독이 안다" 같은 줄이 명부에 이미 적혀 있었다. */
+      /* ★ 덮치는 순간 **그 깃발에 악명이 쌓인다.** 잡히지 않아도 소문은 남는다 —
+         털린 배가 항구에 닿으면 누가 털었는지 말하기 때문이다(ISSUES #22). */
+      const flag = n.flag ?? defOf(n)?.flag ?? null;
+      const lvl = flag ? addInfamy(flag, 1) : 0;
       pushLog(`${who}${josa(who, '을/를')} 덮치기로 했다.`
             + (def?.lines?.refuse ? ` ${def.lines.refuse}` : ''), 'warn');
+      if (lvl) {
+        pushLog(`이 일은 소문이 난다 — ${FLAG_NAME[flag] ?? flag} 쪽 항구에서 값을 치르게 된다 (악명 ${lvl}).`, 'bad');
+      }
       refreshLog();
       go('battle', {
         enemy: merchantEnemy(n),
+        /* ★ **순서가 규약이다 — `go('map')`을 먼저, `finish()`를 나중에.**
+           `map.enter()`가 `sailing = null`로 시작하므로(88행) 반대로 쓰면
+           `finish()`가 되살린 항해를 씬 진입이 곧바로 지운다. 그러면 **남은 항로가
+           통째로 사라지고 출발 항구에 서 있게 된다** — 해적 쪽은 처음부터 이 순서였는데
+           상선 쪽만 뒤집혀 있었다(완주 플레이가 잡았다 · `.playtest/conquest/ISSUES.md` #2). */
         onEnd: (result) => {
           if (result !== 'lose') removeNpc(n.id);
           if (result === 'lose') return;
-          finish();
           go('map');
+          finish();
         },
-        retreatTo: () => { finish(); go('map'); },
+        retreatTo: () => { go('map'); finish(); },
       });
     },
   });
@@ -657,7 +689,12 @@ function resolveEvent(ev0, voyage) {
       /* ★ 이 구간에 상선이 하나도 안 떠 있으면 예전에는 **아무 말도 없이** 지나갔다.
          조우 열두 번 중 한 번이 소리 없이 사라진 셈이라, 플레이어에게는 그냥 멈칫한
          항해였다. 만난 것이 없으면 없는 대로 한 줄은 나와야 한다 — 바다는 넓다는 말이다. */
-      if (!met || caravan) {
+      /* ★ 이 구간에 상선이 하나도 안 떠 있으면 **수평선 너머에서 온 배**를 세운다.
+         전에는 그대로 "돛 하나가 지나갔다"로 끝나서, 실측 열세 번 중 열한 번이
+         만나지 못한 조우였다(→ world.js: strayTrader 주석). 대상(카라반) 구간은 그대로 둔다 —
+         모래길에서 상선을 만들 수는 없다. */
+      const other = met ?? (caravan ? null : strayTrader(voyage.from.id, voyage.to.id));
+      if (!other || caravan) {
         pushLog(caravan
           ? '맞은편에서 오는 대열과 스쳤다. 물자루만 나눠 마시고 각자 길을 갔다.'
           : '멀리 돛 하나가 지나갔다. 깃발만 확인하고 각자 길을 갔다.');
@@ -665,7 +702,7 @@ function resolveEvent(ev0, voyage) {
         finish();
         break;
       }
-      meetMerchant(met, finish);
+      meetMerchant(other, finish);
       break;
     }
     case 'pirate': {
@@ -711,6 +748,11 @@ function resolveEvent(ev0, voyage) {
             + `<span style="opacity:.75">${enemy.blurb ?? rank}`
             + `${enemy.bounty ? ' 목에 값이 걸린 자다.' : ''}</span>`
             + quote(enemy.hail)
+            /* ★ 상대의 배와 도주 가망을 **고르기 전에** 보여 준다. 전에는 전투에 들어가서야
+               선체·포 수가 나왔는데, 사람은 이길 수 있는 상대만 싸우고 나머지는 피하려 한다 —
+               그 판단의 재료를 숨기면 "싸울까 피할까"가 선택이 아니라 도박이 된다.
+               숫자는 내 것과 나란히 두어야 뜻이 생긴다(선체 80 하나로는 세다/약하다를 모른다). */
+            + `<br><br>${foeVersusLine(enemy)}`
             + `<br><br>싸워서 나포하거나, 실은 것을 넘겨주고 달아날 수 있다.`
             + officerAside('pirate'),
         actions: [
@@ -795,6 +837,39 @@ function routeCards() {
      이틀짜리 연안 항해는 애초에 다른 결정이다. */
   const inSea = nb.filter((id) => !laneOf(state.at, id));
   const oceanIds = nb.filter((id) => laneOf(state.at, id));
+
+  /* 날짜·비용 칸. ★ **출항 즉시 나갈 몫**(보급·유지·보험 — 급여는 쌓였다 나중에 나간다)을
+     금고가 못 대면 붉게 짚는다. 전에는 아무 표시가 없었고, 모자란 만큼은 조용히 사라졌다
+     (금화 9닢으로 44닢짜리 항로에 나갔다). → wiki/playtest-log.md §3-3 */
+  const costCell = (d, cost) => {
+    const now = cost.supplies + cost.fleet + cost.hull + cost.arms + cost.insurance;
+    const short = now > state.gold;
+    return el(`span.rd${short ? '.short' : ''}`, {
+      text: `${d}일 · ${cost.total}닢`,
+      style: short ? { color: '#d98a6a' } : null,
+      title: short
+        ? `금고 ${state.gold.toLocaleString('ko-KR')}닢으로는 출항하며 나갈 ${now.toLocaleString('ko-KR')}닢을 못 댄다`
+        : null,
+    });
+  };
+  /* ★ **가기 전에 그곳이 무엇을 내고 무엇을 원하는지 알려 준다.**
+     전에는 도착해서야 값을 알 수 있어 **초행이 늘 손해**였다 — 여덟 항차를 도는 동안
+     금고가 6,661 → 5,448로 줄었고, 실을 것을 짐작으로 고르니 그럴 수밖에 없었다
+     (완주 플레이 ISSUES #16). 시세까지 주면 정보상(`price-tip`)이 파는 것을 공짜로 주는 셈이라
+     **품목만** 준다 — *"저기는 향신료가 난다"*까지가 뱃사람 사이에 도는 이야기의 한계다.
+     값이 얼마인지는 여전히 가 봐야 알고, 그것을 미리 아는 길이 인물에게 사는 소식이다. */
+  const goodsHint = (c) => {
+    const pick = (o, n) => Object.entries(o ?? {})
+      .sort((a, b) => (a[1] - b[1]) * (o === c.supply ? 1 : -1))
+      .slice(0, n).map(([g]) => GOOD_BY_ID[g]?.name).filter(Boolean);
+    const sup = pick(c.supply, 2);
+    const dem = pick(c.demand, 2);
+    return (sup.length ? `
+난다 — ${sup.join(' · ')}` : '')
+         + (dem.length ? `
+원한다 — ${dem.join(' · ')}` : '');
+  };
+
   const rows = inSea.map((id) => {
     const c = CITY_BY_ID[id];
     const d = voyageDays(state.at, id);
@@ -811,13 +886,21 @@ function routeCards() {
            + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢`
            + `\n해적 조우 ${Math.round(dg.odds * 100)}%`
            + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
-           + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')',
+           + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')'
+           + goodsHint(c)
+           + (state.known.has(id) ? '' : '\n★ 아직 못 가 본 항구다 — 시세는 닿아야 안다'),
       onclick: () => startVoyage(id),
     }, [
-      el('span.rn', { text: c.name }),
+      /* 처음 가는 곳은 이름 옆에 표를 단다 — 값을 모르고 들어간다는 것이 곧 위험이다 */
+      el('span.rn', {}, [
+        el('span', { text: c.name }),
+        state.known.has(id) ? null : el('span', {
+          text: ' 초행', style: { color: '#8fb4d8', fontSize: '10.5px' },
+        }),
+      ].filter(Boolean)),
       el(`span.rw.${w.kind || 'calm'}`, { text: w.text }),
       el(`span.rw.${dg.kind || 'calm'}`, { text: threat ? `${dg.text}·${threat}` : dg.text }),
-      el('span.rd', { text: `${d}일 · ${cost.total}닢` }),
+      costCell(d, cost),
     ]);
   });
 
@@ -832,6 +915,10 @@ function routeCards() {
     const cost = voyageCost(d, state.crew, { from: state.at, to: id });
     const threat = pirateThreat(state.at, id);
     const dg = routeDangerLabel({ from: state.at, to: id, threat });
+    /* ★ 대양은 **사람과 배가 성해야** 건넌다(`state.js: oceanReady`).
+       근해는 막지 않는다 — 막으면 항구에 갇혀 빠져나갈 길이 없어진다. 선원 1명·선체 44/231로도
+       원양이 열려 있어서 "백병전에 사람을 갈아 넣는 것이 늘 옳았다"(완주 플레이 ISSUES #24). */
+    const ready = oceanReady();
     return el('div.route-row', {
       title: [
         lane.note,
@@ -839,22 +926,41 @@ function routeCards() {
         `해적 조우 ${Math.round(dg.odds * 100)}%`,
         lane.monsoon ? '★ 계절풍 구간 — 철을 잘못 잡으면 훨씬 오래 걸린다' : null,
         lane.overland ? '★ 육로 환적 — 배가 아니라 짐이 넘어간다' : null,
+        ready.ok ? null : `⚑ ${ready.why}`,
       ].filter(Boolean).join('\n'),
-      onclick: () => startVoyage(id),
+      style: ready.ok ? null : { opacity: 0.55 },
+      onclick: () => {
+        if (!ready.ok) return toast(ready.why, 'bad');
+        startVoyage(id);
+      },
     }, [
       el('span.rn', { text: c.name }),
       el('span.rw', { text: rg?.name ?? '', style: { color: '#8fb4d8' } }),
       el(`span.rw.${dg.kind || 'calm'}`, {
         text: lane.monsoon ? '계절풍' : lane.overland ? '육로' : dg.text,
       }),
-      el('span.rd', { text: `${d}일 · ${cost.total}닢` }),
+      costCell(d, cost),
     ]);
   });
 
   /* 지금 값이 흔들리는 곳 — 소식을 들어야 달려갈 수 있다.
-     사건형 대박을 넣어 놓고 화면에 안 띄우면 플레이어에겐 없는 것과 같다. */
-  const shocks = activeShocks().sort((a, b) => b.mult - a.mult);
-  const shockRows = shocks.slice(0, 6).map((sh) => el('div.route-row', {
+     사건형 대박을 넣어 놓고 화면에 안 띄우면 플레이어에겐 없는 것과 같다.
+
+     ★ **닿을 수 있는 곳을 앞에 세운다.** 사건은 `CITIES` 265곳에 고루 걸리므로 값이 큰 순으로
+       고르면 **거의 언제나 남의 바다**가 뽑힌다 — 실측에서 열한 장이 연속으로 전부 `멀다`였고
+       그중 내 권역은 한 장도 없었다(완주 플레이 ISSUES #3). 항로 카드와 같은 목록의 절반을
+       차지하면서 정보값이 0이면, 그건 화면을 어지럽히는 것이지 소식이 아니다.
+       그래서 **직항 → 같은 바다 → 그 밖** 순으로 세우고, 먼 것은 두 장까지만 남긴다.
+       (먼 소식을 아주 지우지는 않는다 — "저 바다에서 무슨 일이 나고 있다"는 세계가 산다는 감각이다.) */
+  const nbSet = new Set(nb);
+  const hereRegion = curRegion();
+  const reach = (sh) => (nbSet.has(sh.city) ? 0 : REGION_OF_CITY[sh.city] === hereRegion ? 1 : 2);
+  const sorted = activeShocks().sort((a, b) => reach(a) - reach(b) || b.mult - a.mult);
+  const near = sorted.filter((sh) => reach(sh) < 2);
+  const far = sorted.filter((sh) => reach(sh) === 2);
+  const shocks = [...near.slice(0, 5), ...far.slice(0, Math.max(1, 6 - Math.min(near.length, 5)) - 1 + 1)]
+    .slice(0, 6);
+  const shockRows = shocks.map((sh) => el('div.route-row', {
     title: `${sh.cityName}의 ${sh.goodName} 시세가 평시의 ×${sh.mult.toFixed(2)}
 남은 기간 약 ${sh.daysLeft}일`,
     onclick: () => { const near = nb.includes(sh.city); if (near) startVoyage(sh.city); },

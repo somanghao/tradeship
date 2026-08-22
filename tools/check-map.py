@@ -17,6 +17,14 @@ import re
 import sys
 from pathlib import Path
 
+# 검사 결과에 한글과 —·✅ 같은 기호를 쓰는데 Windows 콘솔 기본이 cp949라 출력에서 죽는다.
+# 검수기가 판정이 아니라 인코딩으로 멈추면 아무 소용이 없다.
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 try:
     from PIL import Image
 except ImportError:
@@ -87,6 +95,15 @@ CITIES = [
         r"\{\s*id:\s*'([^']+)',\s*name:\s*'([^']+)'.*?x:\s*(\d+),\s*y:\s*(\d+)", GEO)
 ]
 ROUTES = re.findall(r"\['(\w+)',\s*'(\w+)'\]", GEO.split("export const ROUTES")[1].split("];")[0])
+
+# ★ 내해·육로 항로(`ROUTE_RISK: null`)는 **뭍을 지나는 것이 정상이다** — 노새길·강길·좁은 만이다.
+#   그것을 관통으로 세면 검수기가 고증을 버그로 신고한다(부르사~이즈니크가 오래 그렇게 걸려 있었다).
+INLAND = set()
+if "export const ROUTE_RISK" in GEO:
+    _risk = GEO.split("export const ROUTE_RISK")[1].split("};")[0]
+    for a, b in re.findall(r"'(\w+)\|(\w+)':\s*null", _risk):
+        INLAND.add(frozenset((a, b)))
+ROUTES = [(a, b) for a, b in ROUTES if frozenset((a, b)) not in INLAND]
 BY = {c["id"]: c for c in CITIES}
 
 W, H = 400, 225
@@ -152,7 +169,23 @@ elif sea_ratio > 0.80:
 #   (실제로 멀쩡한 지도가 "바다 한복판 8곳"으로 반려됐다).
 #   그리고 **섬 항구는 물에 둘러싸이는 것이 정상**이므로 따로 센다 — 실패가 아니다.
 #   `mapcheck.html`이 쓰는 것과 같은 기준이다.
-bad_city, isle_city = [], []
+
+def land_reach(x, y, limit=34):
+    """그 자리에서 **가장 가까운 뭍까지 몇 px**인가. 뭍 위면 0, limit 안에 없으면 limit+1."""
+    if not is_sea(x, y):
+        return 0
+    for r in range(1, limit + 1):
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                if max(abs(dx), abs(dy)) != r:      # 링만 훑는다
+                    continue
+                xx, yy = x + dx, y + dy
+                if 0 <= xx < W and 0 <= yy < H and not is_sea(xx, yy):
+                    return r
+    return limit + 1
+
+
+bad_city, isle_city, far_city, reach = [], [], [], []
 for c in CITIES:
     x, y = c["x"], c["y"]
     if not (0 <= x < W and 0 <= y < H):
@@ -171,12 +204,40 @@ for c in CITIES:
         bad_city.append((c, "물이 안 닿는다"))
     elif l == 0:
         isle_city.append(c["name"])
+    d = land_reach(x, y)
+    reach.append(d)
+    if d > 28:
+        far_city.append((c, d))
+
 if isle_city:
     notes.append(f"섬 항구 {len(isle_city)}곳")
+if reach:
+    notes.append(f"뭍까지 평균 {sum(reach) / len(reach):.1f}px")
 if bad_city:
     fail("도시 좌표", f"{len(bad_city)}/{len(CITIES)}곳에 물이 안 닿는다 — " +
          ", ".join(f"{c['name']}({c['x']},{c['y']}) {why}" for c, why in bad_city[:8]) +
          (" …" if len(bad_city) > 8 else ""))
+
+# ★ 아래 두 검사가 없어서 3차 납품이 통과했다(2026-08-17). "물이 안 닿는가"만 보면
+#   바다 한가운데 뜬 도시는 늘 통과한다 — 물은 넘치도록 있으니까. 그때 26곳이 `섬 항구`로
+#   조용히 집계됐고, 실제로는 알렉산드리아가 뭍에서 64px(화면 폭의 16%) 떨어져 있었다.
+#   항구는 "물에 닿는 곳"이 아니라 **뭍과 물이 만나는 곳**이다.
+#   임계는 실측으로 잡았다 — 코드가 그린 아홉 장은 뭍까지 평균 8.5px이고 28px을 넘는 도시가 없었다.
+#   (2026-08-18 재측정: 항구가 264곳으로 늘어 평균이 6.4px로 내려왔다. 권역별 5.1~7.3px.)
+if far_city:
+    fail("항구가 뭍에서 멀다",
+         f"{len(far_city)}곳이 뭍에서 28px 넘게 떨어져 바다 한가운데다 — " +
+         ", ".join(f"{c['name']}({d}px)" for c, d in sorted(far_city, key=lambda t: -t[1])[:8]) +
+         (" …" if len(far_city) > 8 else ""))
+
+# 개별 도시가 아니라 **지도 전체가 좌표계와 어긋난** 경우. 하나둘이 아니라 절반이 뜨면 그림이 다른 세계다.
+if reach:
+    loose = sum(1 for d in reach if d > 12)
+    if loose > len(reach) * 0.5:
+        fail("지형이 좌표계와 다르다",
+             f"{loose}/{len(reach)}곳이 뭍에서 12px 넘게 떨어져 있다 — "
+             "실제 지리대로 그린 그림은 이 게임의 도식 좌표와 맞지 않는다"
+             "(코드가 그린 판은 이 비율이 20% 안쪽이다)")
 
 # ── 5. 항로가 바다 위를 지나는가 ───────────────────────────
 blocked, grazed = [], []
@@ -227,7 +288,12 @@ if tot:
                           f"1px 상인/해적 점이 묻힐 수 있다")
 
 # ── 결과 ───────────────────────────────────────────────────
-print(f"검사 대상: {img_path.relative_to(ROOT)}  ({im.size[0]}×{im.size[1]})")
+# 납품물을 리포 밖(다운로드·후처리 폴더)에 두고 검수하는 일이 잦다 — relative_to는 그때 죽는다
+try:
+    shown = img_path.relative_to(ROOT)
+except ValueError:
+    shown = img_path
+print(f"검사 대상: {shown}  ({im.size[0]}×{im.size[1]})")
 print("           " + " · ".join(notes))
 print()
 for k, m in fails:

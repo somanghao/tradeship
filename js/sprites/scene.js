@@ -136,6 +136,10 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
     } else {
       land = autoLandMap(cities, routes, def.auto);
       isles = scatterIsles(land, cities, routes, { seed: seed ^ 0x15E5, count: def.auto?.isles ?? 14 });
+      /* ★ 흩뿌림은 "어디에 섬이 **있어야** 하는지"를 모른다. 섬 자체가 항구인 곳(쌍서)은
+         좌표로 박는다 — `landmass`에 넣으면 그쪽은 저해상 격자라 작은 섬이 스무딩에 먹혀
+         사라지고, 항구가 바다 한가운데 떠 있게 된다(`check-map.py`가 31px로 잡았다). */
+      isles = [...(def.auto?.pinIsles ?? []), ...isles];
       ranges = autoRanges(land, seed);
     }
 

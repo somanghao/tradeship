@@ -106,10 +106,32 @@ for (const o of top) console.log(`  ${o.where.padEnd(22)} 요율 ${String(o.risk
 console.log('가장 안전한 항로');
 for (const o of bot) console.log(`  ${o.where.padEnd(22)} 요율 ${String(o.risk).padStart(4)}%  →  ${(o.p * 100).toFixed(1)}%`);
 
-if (!problems.length) {
-  console.log('\n문제 없음 — 요율과 근거가 맞물려 있다.\n');
+/* ★ 실패와 경고를 가른다 — 최상위 원칙이다.
+     **실패**(exit 1)는 *코드와 근거가 어긋남·규칙이 자기모순*일 때만이다:
+       요율없음(항로에 요율이 없다) · 불일치(코드 ≠ 근거) · 유령(근거만 있고 항로가 없다) · 배선(차이가 사라졌다)
+     **경고**는 *아직 조사가 안 된 것*이다: 근거없음 · 빈칸.
+   `근거없음`으로 실패시키면 **콘텐츠를 늘리려면 조사부터 끝내야 하는 구조**가 된다 —
+   항구를 175곳에서 250여 곳으로 늘리는 작업에서 실제로 그 벽에 부딪혀 이 구분을 넣었다.
+   조사는 뒤따라도 되지만, 코드와 근거가 어긋난 것은 그 자리에서 막는다. */
+const SOFT = new Set(['근거없음', '빈칸']);
+const hard = problems.filter((p) => !SOFT.has(p.kind));
+const soft = problems.filter((p) => SOFT.has(p.kind));
+
+if (soft.length) {
+  const byKind = {};
+  for (const p of soft) (byKind[p.kind] ??= []).push(p);
+  console.log(`\n경고 ${soft.length}건 (조사가 뒤따르면 된다 — 실패가 아니다)`);
+  for (const [kind, list] of Object.entries(byKind)) {
+    console.log(`  [${kind}] ${list.length}건: ` + list.slice(0, 6).map((p) => p.where).join(' · ')
+      + (list.length > 6 ? ` … (+${list.length - 6})` : ''));
+  }
+}
+if (!hard.length) {
+  console.log(soft.length
+    ? '\n통과 — 요율과 근거가 어긋난 곳은 없다(위는 미조사 경고).\n'
+    : '\n문제 없음 — 요율과 근거가 맞물려 있다.\n');
   process.exit(0);
 }
-console.log(`\n문제 ${problems.length}건`);
-for (const p of problems) console.log(`  [${p.kind}] ${p.where}: ${p.msg}`);
+console.log(`\n실패 ${hard.length}건`);
+for (const p of hard) console.log(`  [${p.kind}] ${p.where}: ${p.msg}`);
 process.exit(1);

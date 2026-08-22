@@ -4,7 +4,16 @@ import { VW, VH } from './sprites/scene.js';
 import { loadAssetPack } from './assets.js';
 import { loadEvidence } from './evidence.js';
 import { state, resetGame, START_GOLD, neighborsOf, grantShip, grantCrew } from './state.js';
-import { CITY_BY_ID, SHIPS, CITIES } from './data.js';
+import { CITY_BY_ID, SHIPS, CITIES, START_PORTS, REGION_BY_ID, ORIGINS, ORIGIN_BY_ID } from './data.js';
+import { savedHead, loadGame, clearSave } from './save.js';
+
+/* ★ **타이틀이 닫히기 전에는 저장하지 않는다.** `boot()`이 타이틀보다 먼저 `go('port')`를
+   부르므로(뒤에 항구가 보여야 타이틀이 그림 위에 얹힌다), 그대로 두면 **부팅할 때마다
+   자동 저장이 새 판으로 옛 판을 덮어쓴다** — 실제로 "이어하기"가 늘 1일차를 가리켰다.
+   판이 실제로 시작된 뒤부터만 저장한다. */
+let started = false;
+export const gameStarted = () => started;
+export const markStarted = () => { started = true; };
 import { initWorld } from './world.js';
 import { refreshHUD, refreshLog, clearOverlay, el, overlay } from './ui.js';
 
@@ -148,6 +157,7 @@ async function boot() {
   go('port', { first: true });
   requestAnimationFrame(frame);
 
+  if (new URLSearchParams(location.search).has('start')) markStarted();
   titleScreen();
   exposeForTest();
 }
@@ -217,7 +227,70 @@ function exposeForTest() {
   };
 }
 
+/* 시작할 바다를 고른다 — 고르면 판을 그 부두에서 다시 만든다.
+   ★ `?start=`로 열었으면 그 도시를 존중하고 고르는 줄을 띄우지 않는다(개발용 문이 이긴다). */
+/* ── 한반도 갈래 고르기 ────────────────────────────────────────
+   ★ 사용자 요청으로 **한반도 출신 다섯 갈래**를 냈다(`data.js: ORIGINS`). 조선은 사무역을
+     금했으므로 이 나라 사람이 바다로 나가려면 **어떤 문으로 나가느냐**가 먼저 정해진다 —
+     역관의 서자 · 재상가의 서자 · 후궁 소생의 종친 · 경강상인의 아들 · 좌수영의 군관.
+   갈래는 시작 부두까지 함께 정한다(부산포 · 마포 · 여수). 다른 여덟 바다에서 시작하려면
+   아래 '어느 바다에서 시작할까'를 쓰면 되고, 그때는 갈래가 풀린다. */
+function originPicker(onPick) {
+  const cur = state.origin ?? null;
+  const rows = ORIGINS.map((o) => {
+    const city = CITY_BY_ID[o.at];
+    return el(`button.btn.dark.sea-pick${cur === o.id ? '.on' : ''}`, {
+      onclick: () => onPick(o.id),
+      title: `${o.line}
+
+좋은 것 — ${o.boon}
+대가 — ${o.cost}`,
+    }, [
+      el('b', { text: o.name }),
+      el('span.sea-port', { text: `${city?.name ?? o.at} · ${o.gold.toLocaleString('ko-KR')}닢`
+                                + (o.crew ? ` · ${o.crew}명` : '') }),
+    ]);
+  });
+  const here = ORIGINS.find((o) => o.id === cur);
+  return el('div.sea-pickers', {}, [
+    el('div.sea-label', { text: '조선에서 누구로 시작할까' }),
+    el('div.sea-grid', {}, rows),
+    el('div.sea-hook', {
+      html: here
+        ? `${here.line}<br><span style="color:#8fbf8a">좋은 것 — ${here.boon}</span>`
+          + `<br><span style="color:#c98a6a">대가 — ${here.cost}</span>`
+        : '고르지 않으면 <b>역관의 서자</b>로 시작한다 — 특전이 가장 얇고 길이 가장 좁다.',
+    }),
+  ]);
+}
+
+function startPicker(onPick) {
+  const debug = new URLSearchParams(location.search).has('start');
+  if (debug) return null;
+  const rows = START_PORTS.map((p) => {
+    const city = CITY_BY_ID[p.at];
+    const region = REGION_BY_ID[p.region];
+    if (!city || !region) return null;
+    return el(`button.btn.dark.sea-pick${state.at === p.at ? '.on' : ''}`, {
+      onclick: () => onPick(p.at),
+      title: p.hook,
+    }, [
+      el('b', { text: region.name }),
+      el('span.sea-port', { text: city.name }),
+    ]);
+  }).filter(Boolean);
+  const here = START_PORTS.find((p) => p.at === state.at);
+  return el('div.sea-pickers', {}, [
+    el('div.sea-label', { text: '어느 바다에서 시작할까' }),
+    el('div.sea-grid', {}, rows),
+    el('div.sea-hook', { text: here?.hook ?? '' }),
+  ]);
+}
+
 function titleScreen() {
+  /* ★ **이어하기가 맨 앞에 온다.** 이 게임의 캠페인은 항차 330~380짜리라 한 세션에 안 끝난다
+     (`story/level/economy.md`). 저장된 판이 있으면 그것부터 묻는 것이 맞다. */
+  const head = savedHead();
   const scr = el('div#title-screen', {}, [
     el('h1', { text: '아홉 바다 교역기' }),
     /* ★ 연도를 박지 않는다(최상위 지침) · 시작 조건은 state.js: resetGame이 정본이다.
@@ -236,12 +309,60 @@ function titleScreen() {
           + '바다에는 해적이 있다. <b>포격</b>으로 몰아붙이고 <b>백병전</b>으로 나포하라.<br>'
           + `아홉 바다에 항구가 <b>${CITIES.length}곳</b> 있다. 먼 바다일수록 값진 것이 난다.`,
     }),
+    /* 갈래 고르기가 먼저다 — 조선에서 시작하는 것이 이 게임의 기본값이기 때문이다.
+       `?start=`로 열었을 때는(개발·검증) 둘 다 감춘다. */
+    new URLSearchParams(location.search).has('start') ? null : originPicker((id) => {
+      markStarted();
+      resetGame(undefined, id);
+      initWorld();
+      go('port', { first: true });
+      refreshHUD();
+      refreshLog();
+      scr.remove();
+    }),
+    startPicker((at) => {
+      markStarted();
+      // 판을 그 부두에서 다시 만든다 — 시작 조건은 resetGame 하나가 정본이다
+      resetGame(at);
+      initWorld();
+      go('port', { first: true });
+      refreshHUD();
+      refreshLog();
+      scr.remove();
+      titleScreen();      // 고른 바다가 반영된 문구로 다시 띄운다
+    }),
+    head ? el('div.sea-pickers', {}, [
+      el('div.sea-label', { text: '이어서 할까' }),
+      el('div.sea-grid', {}, [
+        el('button.btn.dark.sea-pick.on', {
+          onclick: () => {
+            if (!loadGame()) return;
+            markStarted();
+            /* 세계(NPC)는 저장돼 있으므로 다시 만들지 않는다 — 다시 만들면 그 바다에 떠 있던
+               배들이 통째로 갈리고, "지도에서 보던 그 배가 나온다"가 깨진다. */
+            go('port', { first: true });
+            refreshHUD();
+            refreshLog();
+            scr.remove();
+          },
+        }, [
+          el('b', { text: `${head.day}일차 · ${CITY_BY_ID[head.at]?.name ?? head.at}` }),
+          el('span.sea-port', {
+            text: `${SHIPS[head.ship]?.name ?? head.ship} · ${head.gold.toLocaleString('ko-KR')}닢`
+                + (head.origin && ORIGIN_BY_ID[head.origin] ? ` · ${ORIGIN_BY_ID[head.origin].name}` : ''),
+          }),
+        ]),
+      ]),
+      el('div.sea-hook', {
+        text: '아래에서 새로 시작하면 이 판은 지워진다. 저장은 항구에 들어올 때마다 자동으로 된다.',
+      }),
+    ]) : null,
     el('button.btn', {
-      text: '출항하기',
-      onclick: () => scr.remove(),
+      text: head ? '새로 시작한다' : '출항하기',
+      onclick: () => { if (head) clearSave(); markStarted(); scr.remove(); },
       style: { fontSize: '15px', padding: '10px 26px' },
     }),
-  ]);
+  ].filter(Boolean));
   document.getElementById('stage').append(scr);
 }
 

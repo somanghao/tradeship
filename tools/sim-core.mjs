@@ -159,7 +159,17 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0 } = {}) {
         hireSpend += manCrew();     // 새 배를 몰려면 사람이 더 필요하다
       }
     }
-    if (state.hp < state.maxHp * 0.6) {
+    /* 수리 — ★ **물이 새는 배는 고치지 않는다.**
+       전에는 선체가 60% 밑이면 무조건 전액 수리했는데, 시작배(낡은 바사)는 leak 2pt/일이라
+       고쳐도 이틀이면 도로 샌다. 수리 단가 14닢/pt = **하루 28닢**으로, 선원 여섯의
+       급여(9.8닢/일)의 세 배다. 밑 빠진 독에 붓느라 4항차째에 336닢이 날아가고
+       그 뒤로 매입 자본이 회복되지 않아 **20판 중 18판이 배를 한 척도 못 샀다** —
+       게임이 아니라 이 시뮬 전략이 만든 결과였다(수리 임계만 15%로 낮춰도 완주 9/10판).
+       실제 플레이어는 삭은 배를 고치는 대신 갈아탈 돈을 모은다. 누수는 hp를 1 밑으로는
+       깎지 않으므로(`advanceDays`) 항해가 막히지도 않는다.
+       ⇒ 누수 없는 배로 갈아탄 뒤부터 60% 규칙을 쓴다. → wiki/economy-trade.md */
+    const leaky = (SHIPS[state.shipKey]?.leak || 0) > 0;
+    if (!leaky && state.hp < state.maxHp * 0.6) {
       const g = state.gold;
       repair(state.maxHp - state.hp);
       repairSpend += g - state.gold;

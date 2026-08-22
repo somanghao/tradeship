@@ -4,645 +4,1863 @@
   "_읽는이에게": "카리브·누에바에스파냐 권역의 사료 근거. 코드 정본은 js/regions/caribbean/ 아래다. 판정 라벨·시대 전제는 content/evidence-meta.json이 정본이므로 여기 다시 적지 않는다. cities[id]에는 flag·tariff·goods를, routes[\"a|b\"]에는 risk를 적는다. goods/ships는 이 권역이 세계에 처음 들여오는 것만.",
   "_강제노동과_원주민_인구붕괴에_대하여": "★ 다음 사람이 되돌리지 않도록 판단을 여기 남긴다. 이 시대 카리브·누에바에스파냐의 부는 엔코미엔다와 미타의 강제노동, 그리고 원주민 인구의 붕괴 위에 세워졌다. 이스파니올라의 타이노 인구는 1492~1514년에 10만~100만에서 3만 2천으로 줄었고(68~96% 감소), 광산에 들어간 노동자의 3분의 1이 반년마다 죽었다. 쿠바과·마르가리타·리오아차의 진주는 강제로 물에 들여보낸 원주민과 아프리카인 잠수부가 건진 것이고, 무소의 에메랄드는 정복 뒤 엔코미엔다로 캤으며, 카르타헤나는 아시엔토 노예무역의 최대 시장이었다. 포토시 은이 무엇 위에서 나왔는지도 같다. 이것은 전부 사실이고 도시 blurb와 아래 근거 서술에 그대로 적었다. 그러나 **사람을 GOODS에 올리지 않는다.** 화물칸에 싣고 시세 차익을 노리는 대상으로 만드는 순간 게임이 그것을 오락으로 다루게 되기 때문이다. 역사는 서술로 남기고 규칙은 만들지 않는다 — 고증의 누락이 아니라 의도한 설계다. 아프리카 권역이 대서양 노예무역을 두고 같은 결론을 먼저 내렸고 그 선례를 그대로 따랐다. 같은 취지가 js/regions/caribbean/goods.js 머리말에도 있다.",
   "version": 1,
-
   "cities": {
     "veracruz": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1519년 코르테스가 세운 비야 리카 데 라 베라크루스이고 식민기 내내 카스티야 왕관의 누에바에스파냐 유일 합법항이었다.",
-        "sources": [{ "title": "Veracruz (city)", "url": "https://en.wikipedia.org/wiki/Veracruz_(city)" }] },
-      "tariff": { "value": 0.08, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Veracruz (city)",
+            "url": "https://en.wikipedia.org/wiki/Veracruz_(city)"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.08,
+        "verdict": "gameplay",
         "basis": "누에바에스파냐의 유일한 합법 항구라 알모하리파스고(수출입세)를 피할 길이 없었고 아베리아(함대 호송 분담금)까지 얹혔다. 사료의 실제 부담은 이보다 훨씬 무거우나 게임은 매각에만 세를 물어 그대로 옮기면 항구가 죽는다 — 성격이 드러날 만큼만 올렸다.",
-        "sources": [{ "title": "Veracruz (city)", "url": "https://en.wikipedia.org/wiki/Veracruz_(city)" }] },
+        "sources": [
+          {
+            "title": "Veracruz (city)",
+            "url": "https://en.wikipedia.org/wiki/Veracruz_(city)"
+          }
+        ]
+      },
       "goods": {
-        "silver": { "side": "supply", "value": 0.50, "verdict": "confirmed",
+        "silver": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
           "basis": "누에바에스파냐 함대가 해마다 베라크루스로 들어와 멕시코 은을 싣고 나갔다. 광산(사카테카스)에서 한참 떨어진 적출항이라 포르토벨로(0.44)보다는 위에 뒀다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "cochineal": { "side": "supply", "value": 0.46, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "cochineal": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
           "basis": "코치닐은 오아하카·틀락스칼라·푸에블라에서 길러 베라크루스로 모였고, 함대가 은과 함께 싣고 나간 누에바에스파냐 제2의 수출품이었다. 산지의 바닷문이라 배율을 낮게 잡았다.",
           "sources": [
-            { "title": "Cochineal", "url": "https://en.wikipedia.org/wiki/Cochineal" },
-            { "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }
-          ] },
-        "vanilla": { "side": "supply", "value": 0.50, "verdict": "confirmed",
+            {
+              "title": "Cochineal",
+              "url": "https://en.wikipedia.org/wiki/Cochineal"
+            },
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "vanilla": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
           "basis": "바닐라의 산지는 베라크루스 배후의 토토나카판(파판틀라)이고 1185년부터 길렀다. 코르테스가 1520년대에 유럽으로 가져간 뒤 19세기 중반까지 멕시코가 사실상 유일한 산지였으므로 이 항구가 세계 유일의 적출항이다.",
-          "sources": [{ "title": "Vanilla", "url": "https://en.wikipedia.org/wiki/Vanilla" }] },
-        "mercury": { "side": "demand", "value": 1.44, "verdict": "corrected",
+          "sources": [
+            {
+              "title": "Vanilla",
+              "url": "https://en.wikipedia.org/wiki/Vanilla"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "corrected",
           "basis": "아말감 정련으로 은을 뽑으려면 수은이 반드시 있어야 했고, 알마덴 수은은 \"대부분 세비야로 보내진 뒤 아메리카로 갔다\"고 문헌이 적는다. ★ 알마덴 수은을 받은 쪽은 **누에바에스파냐**다 — 페루는 1571년 이후 우앙카벨리카로 돌아섰고 그 광산이 \"알마덴에서 수은을 실어 올 필요를 없앴다\". 그래서 이 권역의 수은 수요 넷 가운데 이 줄이 근거가 가장 단단하다. 다만 베라크루스 반입량을 밝힌 값은 확보하지 못해 probable로 둔다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }, { "title": "Almadén", "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n" }, { "title": "Huancavelica", "url": "https://en.wikipedia.org/wiki/Huancavelica" }] },
-        "cacao": { "side": "demand", "value": 1.28, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            },
+            {
+              "title": "Almadén",
+              "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n"
+            },
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            }
+          ]
+        },
+        "cacao": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
           "basis": "누에바에스파냐는 카카오의 산지가 아니라 **최대 소비지**였다. 아스텍 때부터 마시던 것을 식민기에도 그대로 마셨고 소코누스코·과야킬·베네수엘라에서 사들였으므로 산지가 아니라 수요로 적었다.",
-          "sources": [{ "title": "Cocoa bean", "url": "https://en.wikipedia.org/wiki/Cocoa_bean" }] },
-        "wine": { "side": "demand", "value": 1.32, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Cocoa bean",
+              "url": "https://en.wikipedia.org/wiki/Cocoa_bean"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
           "basis": "유럽이 아메리카로 보낸 것이 기름·포도주·직물·책·연장이었다는 것은 함대 화물 구성에 그대로 적혀 있다. 아메리카에서 포도주 생산이 오래 금지·제한된 것도 이 수요를 떠받쳤다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "hide": { "side": "demand", "value": 1.22, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "hide": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
           "basis": "은광이 가죽을 먹었다. 광석을 지고 올리는 자루, 풀무, 노새 마구가 전부 소가죽이라 앤틸리스의 값싼 가죽이 이 항구를 지나 사카테카스로 올라갔다. 이 권역에서 가죽을 사는 유일한 항구라 품목이 죽지 않게 하려는 목적도 함께 있다 — 물량을 밝힌 사료는 확보하지 못했다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "campeche": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1540년 프란시스코 데 몬테호가 마야의 칸 페치 자리에 산 프란시스코 데 캄페체를 세웠고 이후 유카탄의 스페인 관문이었다.",
-        "sources": [{ "title": "Campeche City", "url": "https://en.wikipedia.org/wiki/Campeche_City" }] },
+        "sources": [
+          {
+            "title": "Campeche City",
+            "url": "https://en.wikipedia.org/wiki/Campeche_City"
+          }
+        ]
+      },
       "goods": {
-        "logwood": { "side": "supply", "value": 0.44, "verdict": "confirmed",
+        "logwood": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
           "basis": "식민 경제의 두 기둥이 로그우드(팔로 데 캄페체)와 소금이었다고 문헌이 직접 적는다. 이 염료목의 이름 자체가 이 도시 이름이므로 세계에서 가장 싼 산지로 두는 것이 맞다.",
           "sources": [
-            { "title": "Campeche City", "url": "https://en.wikipedia.org/wiki/Campeche_City" },
-            { "title": "Haematoxylum campechianum", "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum" }
-          ] },
-        "salt": { "side": "supply", "value": 0.52, "verdict": "confirmed",
+            {
+              "title": "Campeche City",
+              "url": "https://en.wikipedia.org/wiki/Campeche_City"
+            },
+            {
+              "title": "Haematoxylum campechianum",
+              "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum"
+            }
+          ]
+        },
+        "salt": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
           "basis": "같은 문헌이 소금을 로그우드와 나란히 이 도시의 두 기둥으로 적는다. 유카탄 북안의 자연 염전은 마야 시대부터의 산물이다.",
-          "sources": [{ "title": "Campeche City", "url": "https://en.wikipedia.org/wiki/Campeche_City" }] },
-        "indigo": { "side": "supply", "value": 0.58, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Campeche City",
+              "url": "https://en.wikipedia.org/wiki/Campeche_City"
+            }
+          ]
+        },
+        "indigo": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
           "basis": "중앙아메리카 인디고(과테말라·산살바도르)가 유카탄 쪽 항구로도 새어 나갔을 개연성으로 넣었다. 트루히요(0.50)보다 배율을 높인 것은 여기가 산지가 아니라 곁문이기 때문이다. 캄페체발 인디고 선적을 밝힌 문헌은 확보하지 못했다.",
-          "sources": [] },
-        "wine": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 이 항구만의 소비 기록은 확보하지 못했으므로 판정을 내린다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "weapon": { "side": "demand", "value": 1.24, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
           "basis": "1633년과 1663년에 잇달아 약탈당하고 1686년부터 둘레 2,560m·능보 여덟의 성벽을 쌓은 도시다. 화기 수요는 그 연표에서 곧바로 따라온다.",
-          "sources": [{ "title": "Campeche City", "url": "https://en.wikipedia.org/wiki/Campeche_City" }] },
-        "grain": { "side": "demand", "value": 1.22, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Campeche City",
+              "url": "https://en.wikipedia.org/wiki/Campeche_City"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
           "basis": "유카탄은 밀이 아니라 옥수수의 땅이라 유럽식 밀가루는 배로 들어왔다. 다만 이 항구의 곡물 수입량을 밝힌 사료는 확보하지 못했다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "trujillo": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1524년 코르테스가 보낸 크리스토발 데 올리드가 자리를 잡고 프란시스코 데 라스 카사스가 지금 위치로 옮긴 중앙아메리카 본토 최초의 스페인 도시다.",
-        "sources": [{ "title": "Trujillo, Honduras", "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras" }] },
+        "sources": [
+          {
+            "title": "Trujillo, Honduras",
+            "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras"
+          }
+        ]
+      },
       "goods": {
-        "indigo": { "side": "supply", "value": 0.50, "verdict": "probable",
+        "indigo": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
           "basis": "과테말라·산살바도르 인디고가 온두라스 항구로 나갔다는 것은 이 해안 무역의 통설이고, 1622년 아토차호의 화물 목록에도 인디고가 들어 있다. 다만 트루히요발 선적을 직접 밝힌 문헌은 확보하지 못했다.",
-          "sources": [{ "title": "Nuestra Señora de Atocha", "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha" }] },
-        "gold": { "side": "supply", "value": 0.68, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Nuestra Señora de Atocha",
+              "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+            }
+          ]
+        },
+        "gold": {
+          "side": "supply",
+          "value": 0.68,
+          "verdict": "confirmed",
           "basis": "문헌이 '내륙에서 캔 금과 은의 선적항으로 중요해졌다'고 직접 적는다. 광산이 아니라 내륙에서 노새로 내려온 것이 실리는 자리라 배율을 높게 뒀다.",
-          "sources": [{ "title": "Trujillo, Honduras", "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras" }] },
-        "cacao": { "side": "supply", "value": 0.58, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Trujillo, Honduras",
+              "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras"
+            }
+          ]
+        },
+        "cacao": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
           "basis": "소코누스코를 비롯한 중앙아메리카 카카오가 이 해안으로 내려왔을 개연성으로 넣었다. 마라카이보(0.48)보다 배율을 높인 것은 여기가 주산지가 아니라 곁길이기 때문이다.",
-          "sources": [{ "title": "Cocoa bean", "url": "https://en.wikipedia.org/wiki/Cocoa_bean" }] },
-        "weapon": { "side": "demand", "value": 1.34, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Cocoa bean",
+              "url": "https://en.wikipedia.org/wiki/Cocoa_bean"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
           "basis": "1550년경 성채를 세우고도 1633~1797년 사이에 몇 번씩 파괴됐고 결국 왕실이 방어를 포기하고 수도를 내륙 코마야과로 옮겼다. 이 바다에서 화기가 가장 아쉬운 항구다.",
-          "sources": [{ "title": "Trujillo, Honduras", "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras" }] },
-        "wine": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Trujillo, Honduras",
+              "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 변두리 항구라 값이 더 붙는 것으로 봤고, 이 항구만의 기록은 없다.",
-          "sources": [] },
-        "woolcloth": { "side": "demand", "value": 1.24, "verdict": "probable",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
           "basis": "유럽이 아메리카에 보낸 화물의 큰 축이 직물이었다. 다만 온두라스 해안의 모직 수입을 밝힌 사료는 확보하지 못했다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] }
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        }
       }
     },
-
     "havana": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1514년 디에고 벨라스케스가 세우고 1519년에 지금의 북안 항구로 옮긴 카스티야 왕관의 도시이며 서인도 함대의 집결지였다.",
-        "sources": [{ "title": "Havana", "url": "https://en.wikipedia.org/wiki/Havana" }] },
-      "tariff": { "value": 0.075, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Havana",
+            "url": "https://en.wikipedia.org/wiki/Havana"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "gameplay",
         "basis": "아메리카 전역의 배가 여기 모여 함께 대서양을 건넜고 함대 호송 분담금(아베리아)이 이 집결지에서 매겨졌다. 규모 3의 기본율(6%) 위에 함대항의 성격이 드러날 만큼만 얹었다.",
-        "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
+        "sources": [
+          {
+            "title": "Spanish treasure fleet",
+            "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+          }
+        ]
+      },
       "goods": {
-        "tobacco": { "side": "supply", "value": 0.54, "verdict": "probable",
+        "tobacco": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
           "basis": "쿠바 담배가 이 섬의 대표 환금작물이 된 것은 확실하나 확보한 문헌은 그 시점을 18세기로 적는다. 은 함대 시대에도 이미 재배가 있었다는 통설을 따라 넣되 판정은 내린다.",
-          "sources": [{ "title": "Tobacco", "url": "https://en.wikipedia.org/wiki/Tobacco" }] },
-        "sugar": { "side": "supply", "value": 0.60, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
           "basis": "지나는 배를 먹이느라 아바나 배후에 농업과 제조가 함께 커졌다는 서술을 근거로 삼았다. 산토도밍고(0.56)보다 배율을 높인 것은 쿠바 제당이 그때는 아직 작았기 때문이다.",
-          "sources": [{ "title": "Havana", "url": "https://en.wikipedia.org/wiki/Havana" }] },
-        "cochineal": { "side": "demand", "value": 1.34, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Havana",
+              "url": "https://en.wikipedia.org/wiki/Havana"
+            }
+          ]
+        },
+        "cochineal": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
           "basis": "누에바에스파냐 함대가 베라크루스에서 실은 은·코치닐을 아바나로 가져와 티에라피르메 갈레온과 합류한 뒤 함께 건넜다. 즉 여기는 소비지가 아니라 **함대에 실을 것을 사 모으는 집하지**다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "vanilla": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "vanilla": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "코치닐과 같은 이유로 집하 수요를 뒀다. 바닐라가 아바나를 거쳐 유럽으로 갔다는 직접 기록은 확보하지 못했으나 누에바에스파냐발 화물은 전부 이 항구를 지났다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "emerald": { "side": "demand", "value": 1.24, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "emerald": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
           "basis": "1622년 아바나를 떠난 아토차호가 '콜롬비아의 금과 에메랄드'를 싣고 있었다. 카르타헤나에서 실린 에메랄드가 아바나에서 함대와 합류했다는 뜻이므로 집하 수요로 적었다.",
-          "sources": [{ "title": "Nuestra Señora de Atocha", "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha" }] },
-        "logwood": { "side": "demand", "value": 1.22, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Nuestra Señora de Atocha",
+              "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+            }
+          ]
+        },
+        "logwood": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
           "basis": "로그우드는 값이 싸고 부피가 커 함대의 빈 화물칸을 메우기 좋은 화물이었고, 유럽 염색업이 이 붉은 심재를 계속 사들였다. 아바나가 그것을 모아 실었다는 전제로 뒀다 — 이 권역에서 염료목을 사는 유일한 항구라 품목이 죽지 않게 하려는 목적도 함께 있다.",
-          "sources": [{ "title": "Haematoxylum campechianum", "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum" }] }
+          "sources": [
+            {
+              "title": "Haematoxylum campechianum",
+              "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum"
+            }
+          ]
+        }
       }
     },
-
     "santiagocuba": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1515년 디에고 벨라스케스가 세운 쿠바의 일곱 번째 마을이고 1522~1589년에는 섬의 수도였다.",
-        "sources": [{ "title": "Santiago de Cuba", "url": "https://en.wikipedia.org/wiki/Santiago_de_Cuba" }] },
+        "sources": [
+          {
+            "title": "Santiago de Cuba",
+            "url": "https://en.wikipedia.org/wiki/Santiago_de_Cuba"
+          }
+        ]
+      },
       "goods": {
-        "copper": { "side": "supply", "value": 0.54, "verdict": "confirmed",
+        "copper": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
           "basis": "문헌이 엘 코브레의 구리 채굴을 이 지역 식민 경제의 축으로 적는다. 아메리카에서 구리가 나는 몇 안 되는 자리라 배율을 낮게 뒀다.",
-          "sources": [{ "title": "Santiago de Cuba", "url": "https://en.wikipedia.org/wiki/Santiago_de_Cuba" }] },
-        "tobacco": { "side": "supply", "value": 0.50, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santiago de Cuba",
+              "url": "https://en.wikipedia.org/wiki/Santiago_de_Cuba"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
           "basis": "쿠바 동부는 담배 재배의 오랜 중심이다. 다만 확보한 문헌이 쿠바 담배의 상업적 부상을 18세기로 적어 시점 근거가 약하므로 판정을 내린다. 아바나(0.54)보다 낮춘 것은 여기가 밭에 더 가깝기 때문이다.",
-          "sources": [{ "title": "Tobacco", "url": "https://en.wikipedia.org/wiki/Tobacco" }] },
-        "hide": { "side": "supply", "value": 0.52, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
+            }
+          ]
+        },
+        "hide": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
           "basis": "은 함대에서 밀려난 쿠바 동부는 목축과 가죽으로 버텼다. 이스파니올라·자메이카와 같은 구조지만 직접 기록은 확보하지 못했다.",
-          "sources": [] },
-        "wine": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 이 항구만의 기록은 확보하지 못했다.",
-          "sources": [] },
-        "weapon": { "side": "demand", "value": 1.26, "verdict": "confirmed",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
           "basis": "1553년 프랑스, 1603년과 1662년 잉글랜드(크리스토퍼 밍스)에 잇달아 털렸고 그 끝에 산 페드로 데 라 로카 요새가 섰다. 화기 수요는 그 연표에서 나온다.",
-          "sources": [{ "title": "Santiago de Cuba", "url": "https://en.wikipedia.org/wiki/Santiago_de_Cuba" }] },
-        "oliveoil": { "side": "demand", "value": 1.24, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santiago de Cuba",
+              "url": "https://en.wikipedia.org/wiki/Santiago_de_Cuba"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
           "basis": "유럽이 보낸 화물의 첫머리가 기름이었다는 사실에서 왔다. 이 항구만의 소비 기록은 확보하지 못했다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] }
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        }
       }
     },
-
     "tortuga": {
-      "flag": { "value": "pirate", "verdict": "gameplay",
+      "flag": {
+        "value": "pirate",
+        "verdict": "gameplay",
         "basis": "실제로는 1640년 로셰 요새 이후 프랑스 세력권이었고 1664년에는 프랑스 서인도회사가 15,000리브르에 사들였다. 그래도 pirate 깃발을 단 것은 이 섬을 이 바다에서 의미 있게 만든 것이 국적이 아니라 1641년부터 스스로를 그렇게 부른 **해안형제단**이기 때문이다. 알고 그렇게 뒀다.",
-        "sources": [{ "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }] },
-      "tariff": { "value": 0.01, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Tortuga (Haiti)",
+            "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.01,
+        "verdict": "gameplay",
         "basis": "세관이 없는 항구다. 이 바다의 다른 모든 항구가 왕실 세를 무겁게 무는 것과 대비를 만들려고 규모별 기본율(3%)보다 오히려 낮춰 1%로 뒀다 — 밀무역이 실제로 굴러간 이유를 값으로 보이게 하는 장치다.",
-        "sources": [{ "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }] },
+        "sources": [
+          {
+            "title": "Tortuga (Haiti)",
+            "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+          }
+        ]
+      },
       "goods": {
-        "hide": { "side": "supply", "value": 0.46, "verdict": "confirmed",
+        "hide": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
           "basis": "뷰캐니어(buccaneer)라는 말 자체가 야생 소를 잡아 고기를 훈제하는 틀(boucan)에서 나왔다. 약탈은 그다음 일이고 이 섬의 원래 생업이 가죽과 훈제육이었다 — 그래서 내놓을 것이 이것 하나다.",
-          "sources": [{ "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }] },
-        "weapon": { "side": "demand", "value": 1.44, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Tortuga (Haiti)",
+              "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "confirmed",
           "basis": "1640년 로셰 요새로 스페인의 상륙을 물리쳤고 1671년 파나마 원정에는 약 2,000명이 모였다. 화약과 총을 밖에서 사들여야 사는 섬이라 이 권역 최고 배율을 뒀다.",
-          "sources": [{ "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }] },
-        "wine": { "side": "demand", "value": 1.36, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Tortuga (Haiti)",
+              "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
           "basis": "약탈품을 술로 바꾸는 항구라는 것은 널리 알려진 상이나 확보한 문헌에 값이나 물량 기록이 없다. 화기 다음가는 수요로 두는 선에서 그쳤다.",
-          "sources": [] },
-        "grain": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "농사를 짓지 않고 소를 잡아 사는 섬이라 밀가루는 밖에서 왔다. 1664년에야 앙주에서 온 400명이 사탕수수 농장을 열었다는 기록이 그 전까지 자급이 없었다는 뜻이다.",
-          "sources": [{ "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }] }
+          "sources": [
+            {
+              "title": "Tortuga (Haiti)",
+              "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+            }
+          ]
+        }
       }
     },
-
     "jamaica": {
-      "flag": { "value": "spain", "verdict": "gameplay",
+      "flag": {
+        "value": "spain",
+        "verdict": "gameplay",
         "basis": "1655년에 잉글랜드가 가져가지만 은 함대 시대의 자메이카는 왕실이 거의 버려 둔 스페인령이었다. 연표를 고정하지 않는 것이 이 프로젝트의 방침이므로 포트 로열 이전의 스페인령 자메이카로 뒀다 — 알고 그렇게 둔 것이다.",
-        "sources": [] },
-      "tariff": { "value": 0.02, "verdict": "gameplay",
+        "sources": []
+      },
+      "tariff": {
+        "value": 0.02,
+        "verdict": "gameplay",
         "basis": "금도 은도 없어 왕실이 관심을 끊은 섬이라 세관이 눈을 감았다는 전제로 규모별 기본율(3%)보다 낮췄다. 토르투가(1%)와 함께 이 바다에서 싸게 파는 두 출구를 만드는 장치다.",
-        "sources": [] },
+        "sources": []
+      },
       "goods": {
-        "hide": { "side": "supply", "value": 0.48, "verdict": "probable",
+        "hide": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "probable",
           "basis": "스페인이 놓아기른 소가 앤틸리스에서 야생으로 불어났고, 광물이 없는 자메이카는 그 가죽으로 먹고살았다. 이스파니올라와 같은 구조이나 자메이카에 한정한 문헌 근거는 확보하지 못했다.",
-          "sources": [] },
-        "logwood": { "side": "supply", "value": 0.56, "verdict": "probable",
+          "sources": []
+        },
+        "logwood": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
           "basis": "로그우드는 남부 멕시코에서 나 카리브와 중앙아메리카로 퍼졌고, 잉글랜드·네덜란드·프랑스가 스페인 영유권을 무시하고 벌목했다. 자메이카를 그 벌목·집산의 곁문으로 두었다 — 캄페체(0.44)보다 배율을 높인 것은 산지가 아니기 때문이다.",
-          "sources": [{ "title": "Haematoxylum campechianum", "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum" }] },
-        "sugar": { "side": "supply", "value": 0.62, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Haematoxylum campechianum",
+              "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
           "basis": "앤틸리스 전역에 제당이 퍼져 있었으나 스페인령 자메이카의 제당은 작았다. 그래서 산토도밍고(0.56)보다 배율을 높였다. 직접 기록은 확보하지 못했다.",
-          "sources": [] },
-        "wine": { "side": "demand", "value": 1.26, "verdict": "probable",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 밀무역으로 들어오는 항구라 배율을 낮은 쪽에 뒀다.",
-          "sources": [] },
-        "weapon": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "왕실 수비대가 얇은 섬이라 무장은 각자 알아서 갖췄다. 다만 이 섬의 화기 거래를 밝힌 사료는 확보하지 못했다.",
-          "sources": [] },
-        "linen": { "side": "demand", "value": 1.20, "verdict": "probable",
+          "sources": []
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
           "basis": "유럽 직물은 아메리카 어디서나 팔렸고 밀무역선이 실어 오던 대표 화물이 값싼 아마포였다. 직접 근거는 없다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "santodomingo": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1496년 바르톨로메 콜론이 세운 아메리카 최초의 유럽 도시이고 식민기 내내 카스티야 왕관의 아우디엔시아가 앉은 자리였다.",
-        "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
-      "tariff": { "value": 0.06, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Santo Domingo",
+            "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.06,
+        "verdict": "gameplay",
         "basis": "아우디엔시아가 앉은 도시라 세관이 살아 있었다. 규모 2의 기본율(4.5%) 위에 얹되 함대항(베라크루스·카르타헤나 8%)보다는 가볍게 두어 '밀려난 옛 수도'라는 성격이 값에서 읽히게 했다.",
-        "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
+        "sources": [
+          {
+            "title": "Santo Domingo",
+            "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+          }
+        ]
+      },
       "goods": {
-        "hide": { "side": "supply", "value": 0.44, "verdict": "confirmed",
+        "hide": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
           "basis": "멕시코·페루 정복 뒤 밀려난 이스파니올라의 경제가 제당(ingenio)과 소가죽(cuero)에 기댔다고 문헌이 직접 적는다. 이 바다에서 가죽이 가장 싼 자리로 두는 것이 맞다.",
-          "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
-        "sugar": { "side": "supply", "value": 0.56, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Santo Domingo",
+              "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
           "basis": "같은 문헌이 제당소를 가죽과 나란히 이 섬 경제의 두 기둥으로 적는다. 다만 설탕 자체는 지중해 권역이 정의한 품목이라 여기서는 산지 배율로만 적는다.",
-          "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
-        "wine": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santo Domingo",
+              "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 1605~06년 '오소리오의 파괴'로 북안이 비워져 밀무역 공급선이 끊긴 뒤로는 더 아쉬웠을 것이다.",
-          "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
-        "woolcloth": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santo Domingo",
+              "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "왕실이 북안을 통째로 비운 이유가 그 해안이 유럽 직물을 밀수로 들여오고 있었기 때문이다. 즉 이 섬은 직물이 아쉬웠다 — 다만 값의 직접 근거는 없다.",
-          "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
-        "oliveoil": { "side": "demand", "value": 1.24, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santo Domingo",
+              "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
           "basis": "유럽이 보낸 화물의 첫머리가 기름이었다는 사실에서 왔다. 이 도시만의 소비 기록은 확보하지 못했다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "weapon": { "side": "demand", "value": 1.22, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
           "basis": "1586년 드레이크에게 도시를 통째로 내준 일이 이스파니올라에서 스페인 지배가 기울기 시작한 표지로 꼽힌다. 화기 수요는 거기서 나온다.",
-          "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] }
+          "sources": [
+            {
+              "title": "Santo Domingo",
+              "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+            }
+          ]
+        }
       }
     },
-
     "sanjuan": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1508년 폰세 데 레온이 카파라를 세우고 이듬해 지금 자리로 옮긴 카스티야 왕관의 항구이며 아메리카에서 두 번째로 오래된 주교좌가 1511년에 섰다.",
-        "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
-      "tariff": { "value": 0.05, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "San Juan, Puerto Rico",
+            "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.05,
+        "verdict": "gameplay",
         "basis": "생산지가 아닌데도 대양을 건너온 배가 처음 닿는 스페인 항구라 세관이 컸다. 규모 2의 기본율(4.5%)에서 조금만 올려 '요새가 도시보다 큰 항구'의 성격을 냈다.",
-        "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
+        "sources": [
+          {
+            "title": "San Juan, Puerto Rico",
+            "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+          }
+        ]
+      },
       "goods": {
-        "ginger": { "side": "supply", "value": 0.54, "verdict": "confirmed",
+        "ginger": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
           "basis": "문헌이 초기 식민기의 수출품으로 생강·설탕·가죽 셋을 직접 든다. 생강은 이 권역에서 여기서만 나므로 배율을 가장 낮게 뒀다.",
-          "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
-        "sugar": { "side": "supply", "value": 0.58, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "San Juan, Puerto Rico",
+              "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "confirmed",
           "basis": "같은 문헌의 초기 수출품 셋 가운데 하나다. 이스파니올라(0.56)보다 조금 높인 것은 제당 규모가 그쪽이 컸기 때문이다.",
-          "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
-        "hide": { "side": "supply", "value": 0.56, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "San Juan, Puerto Rico",
+              "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+            }
+          ]
+        },
+        "hide": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
           "basis": "같은 문헌의 초기 수출품 셋 가운데 하나다. 섬이 작아 목축 규모가 이스파니올라만 못하므로 배율을 그쪽보다 높였다.",
-          "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
-        "weapon": { "side": "demand", "value": 1.36, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "San Juan, Puerto Rico",
+              "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "confirmed",
           "basis": "1595년 드레이크, 1598년 클리퍼드, 1625년 네덜란드의 헨드릭스가 차례로 덤볐고 엘 모로는 그때마다 버텼다. 은과 금을 지키려고 요새망을 지은 항구라 화기 수요가 높다.",
-          "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
-        "wine": { "side": "demand", "value": 1.32, "verdict": "probable",
+          "sources": [
+            {
+              "title": "San Juan, Puerto Rico",
+              "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 수비대가 큰 항구라 소비도 컸을 것으로 봤다.",
-          "sources": [] },
-        "grain": { "side": "demand", "value": 1.26, "verdict": "probable",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
           "basis": "본토에서 왕실 보조금(시투아도)을 받아 수비대를 먹이던 항구다. 생산이 아니라 지키는 것이 일이었으므로 먹을 것을 사들였다 — 다만 물량 기록은 확보하지 못했다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "nuevacadiz": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1500년 계절 야영지로 시작해 1515년에 상설이 되고 1528년에 시(市)가 된 카스티야 왕관의 진주 정착지다.",
-        "sources": [{ "title": "Nueva Cádiz", "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz" }] },
-      "tariff": { "value": 0.07, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Nueva Cádiz",
+            "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.07,
+        "verdict": "gameplay",
         "basis": "진주에는 왕실 5분의 1세(quinto real)가 따로 붙었다. 사료의 20%를 그대로 옮기면 이 작은 항구가 통째로 죽으므로, 규모 1의 기본율(3%)에서 성격이 드러날 만큼만 올렸다.",
-        "sources": [{ "title": "Nueva Cádiz", "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz" }] },
+        "sources": [
+          {
+            "title": "Nueva Cádiz",
+            "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz"
+          }
+        ]
+      },
       "goods": {
-        "pearl": { "side": "supply", "value": 0.46, "verdict": "confirmed",
+        "pearl": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "confirmed",
           "basis": "스페인이 이 섬에 온 이유가 오로지 풍부한 진주조개밭이었고 1535년 무렵 인구 1,500이 넘는 도시가 그 하나로 섰다. ★ 그 진주를 건진 것은 강제로 물에 들여보낸 원주민과 아프리카인 잠수부다 — 이 파일 머리의 판단을 볼 것.",
-          "sources": [{ "title": "Nueva Cádiz", "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz" }] },
-        "grain": { "side": "demand", "value": 1.44, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Nueva Cádiz",
+              "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "confirmed",
           "basis": "물도 흙도 없는 마른 섬이라 먹을 것과 마실 물까지 배로 실어 왔다. 조개밭이 마르자 1539년에 쉰 명도 안 남았고 1541년 폭풍이 남은 것을 쓸어 갔다 — 자급이 전혀 없던 자리라 이 권역 최고 배율을 뒀다.",
-          "sources": [{ "title": "Nueva Cádiz", "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz" }] },
-        "wine": { "side": "demand", "value": 1.34, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Nueva Cádiz",
+              "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
           "basis": "곡물과 같은 이유다. 아무것도 나지 않는 섬이라 유럽 물건은 값이 무엇이든 팔렸을 것이나 값의 직접 근거는 없다.",
-          "sources": [] },
-        "salt": { "side": "demand", "value": 1.22, "verdict": "probable",
+          "sources": []
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
           "basis": "진주조개를 다루고 물고기를 절이는 데 소금이 들었다. 다만 인접한 과히라 염전(리오아차)이 가까워 배율을 낮은 쪽에 뒀다 — 직접 근거는 없다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "riohacha": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1535년 니콜라우스 페더만이 카보 데 라 벨라에 세운 것을 뒤에 란체리아 강어귀로 옮긴 카스티야 왕관의 정착지다.",
-        "sources": [{ "title": "Riohacha", "url": "https://en.wikipedia.org/wiki/Riohacha" }] },
+        "sources": [
+          {
+            "title": "Riohacha",
+            "url": "https://en.wikipedia.org/wiki/Riohacha"
+          }
+        ]
+      },
       "goods": {
-        "pearl": { "side": "supply", "value": 0.52, "verdict": "confirmed",
+        "pearl": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
           "basis": "문헌이 이 해안을 진주로 이름난 곳으로 적고 그 때문에 해적이 끊이지 않았다고 쓴다. 쿠바과(0.46)보다 배율을 높인 것은 조개밭 규모가 그쪽이 컸기 때문이다. ★ 잠수는 강제된 원주민과 아프리카인의 몫이었다.",
-          "sources": [{ "title": "Riohacha", "url": "https://en.wikipedia.org/wiki/Riohacha" }] },
-        "salt": { "side": "supply", "value": 0.56, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Riohacha",
+              "url": "https://en.wikipedia.org/wiki/Riohacha"
+            }
+          ]
+        },
+        "salt": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
           "basis": "과히라 반도의 마나우레 염전은 이 해안의 오랜 산물이다. 다만 식민기 초에 배로 실어 냈다는 직접 기록은 확보하지 못했다.",
-          "sources": [] },
-        "weapon": { "side": "demand", "value": 1.30, "verdict": "confirmed",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
           "basis": "해적의 습격이 잦아 도시를 강어귀로 옮겨야 했고 1596년에는 드레이크가 금과 진주를 노리고 들이닥쳤다. 화기 수요는 그 연표에서 나온다.",
-          "sources": [{ "title": "Riohacha", "url": "https://en.wikipedia.org/wiki/Riohacha" }] },
-        "wine": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Riohacha",
+              "url": "https://en.wikipedia.org/wiki/Riohacha"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 밀무역선이 실어 오던 대표 화물이기도 하다 — 값의 직접 근거는 없다.",
-          "sources": [] },
-        "woolcloth": { "side": "demand", "value": 1.26, "verdict": "probable",
+          "sources": []
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
           "basis": "이 해안의 실제 경제가 네덜란드·잉글랜드와의 밀무역이었고 그들이 싣고 온 것이 직물이었다. 다만 품목별 물량은 확보하지 못했다.",
-          "sources": [{ "title": "Riohacha", "url": "https://en.wikipedia.org/wiki/Riohacha" }] },
-        "linen": { "side": "demand", "value": 1.22, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Riohacha",
+              "url": "https://en.wikipedia.org/wiki/Riohacha"
+            }
+          ]
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
           "basis": "모직물과 같은 이유다. 값싼 아마포가 밀무역선의 단골 화물이었다는 통설을 따랐고 직접 근거는 없다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "maracaibo": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1529년 벨저가의 암브로시우스 에힝거가 처음 세우고 1574년 페드로 말도나도가 '누에바 사모라 데 라 라구나 데 마라카이보'로 확정한 카스티야 왕관의 도시다.",
-        "sources": [{ "title": "Maracaibo", "url": "https://en.wikipedia.org/wiki/Maracaibo" }] },
+        "sources": [
+          {
+            "title": "Maracaibo",
+            "url": "https://en.wikipedia.org/wiki/Maracaibo"
+          }
+        ]
+      },
       "goods": {
-        "cacao": { "side": "supply", "value": 0.48, "verdict": "confirmed",
+        "cacao": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "confirmed",
           "basis": "베네수엘라는 식민기에 세계 최대의 카카오 산지가 됐고 마라카이보 호수 안쪽이 그 집산지였다. 이 권역에서 카카오가 가장 싼 자리로 두는 것이 맞다.",
-          "sources": [{ "title": "Cocoa bean", "url": "https://en.wikipedia.org/wiki/Cocoa_bean" }] },
-        "tobacco": { "side": "supply", "value": 0.54, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Cocoa bean",
+              "url": "https://en.wikipedia.org/wiki/Cocoa_bean"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
           "basis": "바리나스 담배가 이 호수를 통해 나갔다. 산지 쪽 문헌이 담배가 \"원시적인 바리나스를 세계에 이름난 곳으로 바꿔 놓았다\"고 적고, 그 담배가 \"처음에는 쿠바와 겨룰 수 있었다\"고 하며, 수요가 높아 \"네덜란드가 이끄는 밀무역이 성했다\"고 덧붙인다 — 즉 이 시대의 실제 교역품이 맞다. 마라카이보 선적을 수량으로 밝힌 값만 확보하지 못했다.",
-          "sources": [{ "title": "Tobacco", "url": "https://en.wikipedia.org/wiki/Tobacco" }, { "title": "Barinas (state)", "url": "https://en.wikipedia.org/wiki/Barinas_(state)" }] },
-        "hide": { "side": "supply", "value": 0.58, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
+            },
+            {
+              "title": "Barinas (state)",
+              "url": "https://en.wikipedia.org/wiki/Barinas_(state)"
+            }
+          ]
+        },
+        "hide": {
+          "side": "supply",
+          "value": 0.58,
+          "verdict": "probable",
           "basis": "야노스의 목축이 이 해안으로 가죽을 내보냈다는 통설로 넣었다. 앤틸리스 섬들(0.44~0.48)보다 배율을 높인 것은 여기가 가죽의 주산지가 아니기 때문이다.",
-          "sources": [] },
-        "wine": { "side": "demand", "value": 1.26, "verdict": "probable",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 이 항구만의 기록은 확보하지 못했다.",
-          "sources": [] },
-        "weapon": { "side": "demand", "value": 1.28, "verdict": "confirmed",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "confirmed",
           "basis": "호수로 들어가는 좁은 목이 약점이라 1667년 롤로네, 1669년 모건이 차례로 들어와 털었다. 모건은 정박한 스페인 군함을 부수고 빠져나갔다.",
-          "sources": [{ "title": "Maracaibo", "url": "https://en.wikipedia.org/wiki/Maracaibo" }] },
-        "oliveoil": { "side": "demand", "value": 1.22, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Maracaibo",
+              "url": "https://en.wikipedia.org/wiki/Maracaibo"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
           "basis": "유럽이 보낸 화물의 첫머리가 기름이었다는 사실에서 왔다. 이 항구만의 소비 기록은 확보하지 못했다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] }
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        }
       }
     },
-
     "santamarta": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1525년 7월 29일 로드리고 데 바스티다스가 세웠고 콜롬비아에서 지금까지 남은 가장 오래된 도시이자 남아메리카에서 두 번째로 오래된 도시다.",
-        "sources": [{ "title": "Santa Marta", "url": "https://en.wikipedia.org/wiki/Santa_Marta" }] },
+        "sources": [
+          {
+            "title": "Santa Marta",
+            "url": "https://en.wikipedia.org/wiki/Santa_Marta"
+          }
+        ]
+      },
       "goods": {
-        "gold": { "side": "supply", "value": 0.64, "verdict": "confirmed",
+        "gold": {
+          "side": "supply",
+          "value": 0.64,
+          "verdict": "confirmed",
           "basis": "배후에 금세공으로 이름난 타이로나의 땅이 있었고 이 항구가 내륙으로 들어가는 문이었다. 광산이 아니라 강을 타고 내려온 것이 실리는 자리라 배율을 중간에 뒀다.",
-          "sources": [{ "title": "Santa Marta", "url": "https://en.wikipedia.org/wiki/Santa_Marta" }] },
-        "emerald": { "side": "supply", "value": 0.70, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santa Marta",
+              "url": "https://en.wikipedia.org/wiki/Santa_Marta"
+            }
+          ]
+        },
+        "emerald": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "probable",
           "basis": "무소의 에메랄드는 막달레나 강을 타고 바다로 나왔고 이 항구가 그 강어귀의 문이다. 다만 본선은 카르타헤나(0.62)였으므로 여기는 곁문으로 보아 배율을 높였다. 산타마르타발 에메랄드 선적을 밝힌 문헌은 확보하지 못했다.",
-          "sources": [{ "title": "Muzo", "url": "https://en.wikipedia.org/wiki/Muzo" }] },
-        "weapon": { "side": "demand", "value": 1.32, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Muzo",
+              "url": "https://en.wikipedia.org/wiki/Muzo"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
           "basis": "성벽이 없어 해적의 습격이 되풀이됐고 그 끝에 카르타헤나에 밀렸다. 지키지 못한 항구라 화기 수요를 높게 뒀다.",
-          "sources": [{ "title": "Santa Marta", "url": "https://en.wikipedia.org/wiki/Santa_Marta" }] },
-        "wine": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Santa Marta",
+              "url": "https://en.wikipedia.org/wiki/Santa_Marta"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 이 항구만의 기록은 확보하지 못했다.",
-          "sources": [] },
-        "grain": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": []
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "시에라네바다 기슭의 좁은 만에 앉은 작은 도시라 밀은 밖에서 왔다. 다만 곡물 수입량을 밝힌 사료는 확보하지 못했다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "cartagena": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1533년 6월 1일 페드로 데 에레디아가 원주민 칼라마리 마을 자리에 세웠고 식민기 내내 스페인과 아메리카를 잇는 핵심 항구였다.",
-        "sources": [{ "title": "Cartagena, Colombia", "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia" }] },
-      "tariff": { "value": 0.08, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Cartagena, Colombia",
+            "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.08,
+        "verdict": "gameplay",
         "basis": "티에라피르메 갈레온의 요새항이라 알모하리파스고와 아베리아가 여기서 함께 걷혔다. 사료의 실제 부담은 더 무거우나 게임은 매각에만 세를 물어 그대로 옮기면 이 항구가 죽는다 — 베라크루스와 같은 값으로 맞췄다.",
-        "sources": [{ "title": "Cartagena, Colombia", "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia" }] },
+        "sources": [
+          {
+            "title": "Cartagena, Colombia",
+            "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
+          }
+        ]
+      },
       "goods": {
-        "emerald": { "side": "supply", "value": 0.62, "verdict": "confirmed",
+        "emerald": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "confirmed",
           "basis": "무소는 세계에서 가장 좋은 에메랄드가 나는 곳이고 1559년 정복 뒤 엔코미엔다로 캤다. 그것이 막달레나 강을 타고 내려와 실린 자리가 여기다 — 1622년 아토차호 화물에 '콜롬비아의 금과 에메랄드'가 적혀 있다.",
           "sources": [
-            { "title": "Muzo", "url": "https://en.wikipedia.org/wiki/Muzo" },
-            { "title": "Nuestra Señora de Atocha", "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha" }
-          ] },
-        "gold": { "side": "supply", "value": 0.70, "verdict": "confirmed",
+            {
+              "title": "Muzo",
+              "url": "https://en.wikipedia.org/wiki/Muzo"
+            },
+            {
+              "title": "Nuestra Señora de Atocha",
+              "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+            }
+          ]
+        },
+        "gold": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
           "basis": "막달레나·시누 강을 통해 누에바그라나다 내륙과 이어지는 항구였고 아토차호 화물에도 콜롬비아 금이 실려 있다. 광산에서 먼 적출항이라 산타마르타(0.64)보다 높다.",
-          "sources": [{ "title": "Nuestra Señora de Atocha", "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha" }] },
-        "mercury": { "side": "demand", "value": 1.32, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Nuestra Señora de Atocha",
+              "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
           "basis": "누에바그라나다 안쪽 광산으로 갈 수은이 이 항구를 지났다는 전제로 뒀다. 유럽→아메리카 항로를 살리는 줄이기도 하다 — 다만 카르타헤나발 수은 반입을 밝힌 문헌은 확보하지 못했다.",
-          "sources": [] },
-        "wine": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 함대가 닿는 항구라 수요가 컸을 것이다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "woolcloth": { "side": "demand", "value": 1.26, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
           "basis": "유럽이 아메리카에 보낸 화물의 큰 축이 직물이었다. 내륙 누에바그라나다로 들어가는 문이라 소비권이 넓었을 것이나 직접 근거는 없다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "pearl": { "side": "demand", "value": 1.22, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "pearl": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "confirmed",
           "basis": "티에라피르메 갈레온이 마르가리타 섬에 들러 진주를 실었다고 문헌이 직접 적는다. 즉 진주가 이 함대항에 모여 대서양으로 나갔다는 뜻이라 집하 수요로 적었다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] }
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        }
       }
     },
-
     "nombrededios": {
-      "flag": { "value": "spain", "verdict": "probable",
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
         "basis": "지협의 대서양 쪽 종착지로 카스티야 왕관이 운영하던 항구다. 포르토벨로가 이 항구를 대신했다는 서술로 그 지위를 확인했으나 창건 연도를 밝힌 사료는 확보하지 못했다.",
-        "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
+        "sources": [
+          {
+            "title": "Portobelo, Colón",
+            "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+          }
+        ]
+      },
       "goods": {
-        "silver": { "side": "supply", "value": 0.74, "verdict": "probable",
+        "silver": {
+          "side": "supply",
+          "value": 0.74,
+          "verdict": "probable",
           "basis": "1597년 포르토벨로가 서기 전까지 페루 은이 대서양으로 나오던 문이 여기였다. 지금은 노새 대열이 가끔 들어오는 자리로 두어 포르토벨로보다 배율을 높였다 — 쇠락을 값으로 표현한 것이다. ★ 은 사슬 전체를 지리 순서대로 다시 매기면서 0.52 → 0.74로 옮겼다. 포르토벨로가 0.70이므로 그보다 한 걸음 위라는 관계는 그대로다.",
-          "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
-        "grain": { "side": "demand", "value": 1.36, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Portobelo, Colón",
+              "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
           "basis": "늪과 열병으로 악명 높아 결국 서쪽으로 옮겨 간 자리다. 자급이 없었다는 것은 그 이유에서 따라오지만 곡물 수입량을 밝힌 사료는 확보하지 못했다.",
-          "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
-        "wine": { "side": "demand", "value": 1.34, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Portobelo, Colón",
+              "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
           "basis": "곡물과 같은 이유다. 아무것도 나지 않는 늪가 항구라 유럽 물건은 값이 무엇이든 팔렸을 것이나 직접 근거는 없다.",
-          "sources": [] },
-        "weapon": { "side": "demand", "value": 1.24, "verdict": "probable",
+          "sources": []
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
           "basis": "1572년 드레이크가 이 항구를 덮쳐 은 창고 앞까지 갔다가 총상을 입고 물러났다는 이야기가 널리 알려져 있으나 확보한 문헌으로는 확인하지 못했다. 화기 수요는 그 성격에서 뒀다.",
-          "sources": [] }
+          "sources": []
+        }
       }
     },
-
     "portobelo": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1597년 프란시스코 벨라르데 이 메르카도가 세웠고 놈브레데디오스를 대신해 페루 은의 대서양 쪽 항구가 됐다.",
-        "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
-      "tariff": { "value": 0.09, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Portobelo, Colón",
+            "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.09,
+        "verdict": "gameplay",
         "basis": "페리아(feria)가 서면 함대의 유럽 화물과 페루 은이 마흔 날 사이에 통째로 거래됐고 왕실이 그 자리에서 세를 걷었다. 이 권역에서 가장 무거운 값을 준 것은 그 성격 때문이고, 사료의 실제 부담은 이보다 훨씬 컸다.",
-        "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
+        "sources": [
+          {
+            "title": "Portobelo, Colón",
+            "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+          }
+        ]
+      },
       "goods": {
-        "silver": { "side": "supply", "value": 0.70, "verdict": "confirmed",
+        "silver": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "confirmed",
           "basis": "페루 광산의 은이 배로 파나마까지 올라와 노새로 지협을 넘어 여기서 다시 배를 탔다. ★ 값을 0.44에서 0.70으로 올렸다 — 전에는 '광산 원가에 가장 가까운 적출항'이라며 supply 하한을 주어 세계 최저로 뒀는데, 같은 하한을 남아메리카 권역이 포토시에 주고 있었다. 두 권역이 각자 세계에서 가장 싼 은을 주장한 셈이고, 그 결과 화면에서 **광산에서 멀어질수록 은이 싸졌다**(실측 포토시 360 → 파나마 291). 이 은은 포토시에서 캐어 아리카·카야오를 거쳐 태평양을 올라오고 파나마에서 노새 등에 실려 지협을 넘어온 것이다. 걸음마다 값이 붙는 것이 사료에도 맞다. 세계 최저는 광산인 포토시 하나다(0.44 → 아리카 0.54 → 카야오 0.60 → 파나마 0.66 → 여기 0.70 → 놈브레데디오스 0.74).",
-          "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
-        "mercury": { "side": "demand", "value": 1.46, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Portobelo, Colón",
+              "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "probable",
           "basis": "페루 은광으로 갈 수은이 이 항구를 지나 노새 등으로 지협을 넘었다는 전제로 이 권역 최고 배율을 뒀다. ★ 다만 이것을 '알마덴이 페루를 먹였다'로 읽으면 안 된다 — 문헌은 우앙카벨리카(1571~1790년 140만 플라스크)가 \"알마덴에서 수은을 실어 올 필요를 없앴다\"고 적고, 남아메리카 권역도 그 산지를 mercury 0.46으로 적어 두었다. 이 줄이 뜻하는 것은 우앙카벨리카가 모자라던 해의 보충분이고, 나머지 절반은 유럽→아메리카 항로가 빈 배로 서쪽에 오지 않게 하려는 게임 쪽 필요다. 포르토벨로발 수은 반입량을 밝힌 문헌은 확보하지 못했다.",
-          "sources": [{ "title": "Huancavelica", "url": "https://en.wikipedia.org/wiki/Huancavelica" }] },
-        "wine": { "side": "demand", "value": 1.38, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Huancavelica",
+              "url": "https://en.wikipedia.org/wiki/Huancavelica"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "confirmed",
           "basis": "페리아 때 함대가 부린 유럽 화물이 기름·포도주·직물·책·연장이었고 그것이 여기서 페루 은과 바뀌었다. 마흔 날 동안 아메리카에서 가장 비싼 시장이었다는 성격을 값으로 옮겼다.",
           "sources": [
-            { "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" },
-            { "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }
-          ] },
-        "woolcloth": { "side": "demand", "value": 1.34, "verdict": "confirmed",
+            {
+              "title": "Portobelo, Colón",
+              "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+            },
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
           "basis": "같은 화물 구성의 '직물'에 해당한다. 페리아에서 팔린 유럽 물건은 지협을 넘어 페루 부왕령 전체로 퍼졌으므로 소비권이 이 항구 규모보다 훨씬 넓었다.",
-          "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-        "grain": { "side": "demand", "value": 1.32, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "grain": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "confirmed",
           "basis": "배가 떠나면 열병이 도는 빈 마을로 돌아가는 자리라 자급이 없었다. 1726년 영국 해군의 봉쇄 때 호지어와 그 수병들이 열대병으로 몰사한 것이 이 해안의 성격을 말한다.",
-          "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] }
+          "sources": [
+            {
+              "title": "Portobelo, Colón",
+              "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+            }
+          ]
+        }
       }
     },
-
     "panama": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1519년 8월 15일 페드라리아스 다빌라가 백여 명으로 세우고 1521년에 시(市)가 된, 태평양 최초의 유럽 상설 도시다.",
-        "sources": [{ "title": "Panamá Viejo", "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo" }] },
-      "tariff": { "value": 0.075, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Panamá Viejo",
+            "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.075,
+        "verdict": "gameplay",
         "basis": "지협을 넘기 전에 은이 한 번 더 걷히는 자리다. 규모 2의 기본율(4.5%) 위에 크게 얹어 '두 대양 사이의 세관'이라는 성격을 값으로 냈다 — 사료의 실제 부담은 이보다 무거웠다.",
-        "sources": [{ "title": "Panamá Viejo", "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo" }] },
+        "sources": [
+          {
+            "title": "Panamá Viejo",
+            "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
+          }
+        ]
+      },
       "goods": {
-        "silver": { "side": "supply", "value": 0.66, "verdict": "confirmed",
+        "silver": {
+          "side": "supply",
+          "value": 0.66,
+          "verdict": "confirmed",
           "basis": "페루 원정의 기지이자 금은을 스페인으로 보내던 자리였고, 카야오에서 올라온 은이 여기 내려 카미노 레알·카미노 데 크루세스를 타고 지협을 넘었다. ★ 카야오(0.60)에서 올라온 은이므로 그보다 한 걸음 위인 0.66이고, 지협을 넘은 포르토벨로(0.70)가 다시 그 위다. 전에는 0.46이라 카야오보다 쌌다 — 배로 며칠, 노새로 나흘을 온 은이 광산 쪽보다 싸질 수는 없다.",
-          "sources": [{ "title": "Panamá Viejo", "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo" }] },
-        "pearl": { "side": "supply", "value": 0.54, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Panamá Viejo",
+              "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
+            }
+          ]
+        },
+        "pearl": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
           "basis": "앞바다 진주 군도(Archipiélago de las Perlas)의 이름 자체가 이 만의 진주에서 나왔다. 다만 식민 초기 채취 규모를 밝힌 문헌은 확보하지 못해 마르가리타·과히라보다 배율을 높였다.",
-          "sources": [] },
-        "mercury": { "side": "demand", "value": 1.42, "verdict": "probable",
+          "sources": []
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.42,
+          "verdict": "probable",
           "basis": "페루 은광으로 내려갈 수은이 지협을 넘어 여기서 배를 탔다는 전제로 뒀다. 포르토벨로(1.46) 바로 아래다. 포르토벨로와 같은 단서가 걸린다 — 페루의 정규 수은은 알마덴이 아니라 우앙카벨리카에서 왔으므로 이 줄은 그 산지가 모자라던 해의 보충분이자 서행 화물을 채우는 게임 쪽 필요다. 직접 문헌 근거는 확보하지 못했다.",
-          "sources": [] },
-        "wine": { "side": "demand", "value": 1.34, "verdict": "probable",
+          "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
           "basis": "포르토벨로 페리아에서 산 유럽 물건이 지협을 넘어 여기서 페루행 배에 실렸다. 즉 이 항구는 소비지이자 중계지다 — 값의 직접 근거는 없다.",
-          "sources": [{ "title": "Panamá Viejo", "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo" }] },
-        "woolcloth": { "side": "demand", "value": 1.30, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Panamá Viejo",
+              "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
           "basis": "포도주와 같은 이유다. 1520년부터 백 년 가까이 제노바 상인이 이 태평양 상업을 쥐고 있었다는 것이 중계 규모를 말한다.",
-          "sources": [{ "title": "Panamá Viejo", "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo" }] }
+          "sources": [
+            {
+              "title": "Panamá Viejo",
+              "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
+            }
+          ]
+        }
       }
     },
-
     "acapulco": {
-      "flag": { "value": "spain", "verdict": "confirmed",
+      "flag": {
+        "value": "spain",
+        "verdict": "confirmed",
         "basis": "1530년대 초 코르테스가 항구로 열었고 1573년 왕실이 마닐라 교역 독점을 내린 뒤 누에바에스파냐의 태평양 관문이 됐다.",
-        "sources": [{ "title": "Acapulco", "url": "https://en.wikipedia.org/wiki/Acapulco" }] },
-      "tariff": { "value": 0.085, "verdict": "gameplay",
+        "sources": [
+          {
+            "title": "Acapulco",
+            "url": "https://en.wikipedia.org/wiki/Acapulco"
+          }
+        ]
+      },
+      "tariff": {
+        "value": 0.085,
+        "verdict": "gameplay",
         "basis": "갤리온이 부리는 짐이 죄다 아시아 사치품이라 세가 무거웠고 왕실이 마닐라 교역 자체를 독점·할당으로 묶었다. 규모 1의 기본율(3%)을 크게 넘겨 '갤리온만 상대하는 세관'의 성격을 냈다.",
-        "sources": [{ "title": "Acapulco", "url": "https://en.wikipedia.org/wiki/Acapulco" }] },
+        "sources": [
+          {
+            "title": "Acapulco",
+            "url": "https://en.wikipedia.org/wiki/Acapulco"
+          }
+        ]
+      },
       "goods": {
-        "silver": { "side": "supply", "value": 0.52, "verdict": "confirmed",
+        "silver": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
           "basis": "아카풀코에서 마닐라로 실려 간 화물의 약 8할이 아메리카 것이었고 그 첫째가 은이었다. 동아시아가 은본위로 굴러갔기 때문이다. 멕시코 은이 뭍길로 내려와 실리는 자리라 베라크루스(0.50)보다 조금 높다.",
-          "sources": [{ "title": "Manila galleon", "url": "https://en.wikipedia.org/wiki/Manila_galleon" }] },
-        "vanilla": { "side": "demand", "value": 1.28, "verdict": "probable",
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "vanilla": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
           "basis": "갤리온이 싣고 간 아메리카 화물에 씨앗·고구마·옥수수·토마토·담배가 들어 있었다. 바닐라도 그 흐름에 얹었으나 목록에 직접 나오지는 않아 판정을 내린다.",
-          "sources": [{ "title": "Manila galleon", "url": "https://en.wikipedia.org/wiki/Manila_galleon" }] },
-        "cochineal": { "side": "demand", "value": 1.26, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "cochineal": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "confirmed",
           "basis": "마닐라행 화물 목록에 '은, 코치닐, 씨앗, 고구마, 옥수수, 토마토, 담배'가 직접 적혀 있다. 코치닐이 17세기에 인도까지 팔려 나간 통로가 바로 이 항로다.",
           "sources": [
-            { "title": "Manila galleon", "url": "https://en.wikipedia.org/wiki/Manila_galleon" },
-            { "title": "Cochineal", "url": "https://en.wikipedia.org/wiki/Cochineal" }
-          ] },
-        "cacao": { "side": "demand", "value": 1.24, "verdict": "probable",
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            },
+            {
+              "title": "Cochineal",
+              "url": "https://en.wikipedia.org/wiki/Cochineal"
+            }
+          ]
+        },
+        "cacao": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
           "basis": "갤리온이 아메리카 작물을 태평양 건너로 실어 날랐다는 것은 화물 목록으로 확인되나 카카오가 그 안에 있었는지는 확보한 문헌으로 밝히지 못했다. 누에바에스파냐 자체 소비도 이 항구를 지났을 것이다.",
-          "sources": [{ "title": "Manila galleon", "url": "https://en.wikipedia.org/wiki/Manila_galleon" }] },
-        "tobacco": { "side": "demand", "value": 1.20, "verdict": "confirmed",
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "confirmed",
           "basis": "마닐라행 화물 목록에 '은, 코치닐, 씨앗, 고구마, 옥수수, 토마토, 담배'가 직접 적혀 있다. 담배가 아메리카에서 아시아로 건너간 통로가 바로 이 항로이고, 이 권역에서 담배를 사는 유일한 항구라 품목이 죽지 않는 자리이기도 하다.",
-          "sources": [{ "title": "Manila galleon", "url": "https://en.wikipedia.org/wiki/Manila_galleon" }] }
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        }
       }
     }
   },
-
   "_항로_요율에_대하여": "요율은 당대 해상보험료(%)다. 카리브·누에바에스파냐 항로의 인수업자 요율표를 하나도 확보하지 못했으므로 값은 전부 지중해 앵커(2.0 내해 · 4.0 평범한 연안 · 6~8 외해·병목 · 9~11 사략 소굴)에 이 바다만의 변수 셋을 얹어 정한 것이고 대부분 probable이다. 변수 셋: ① 위험이 사람이다 — 사략선이 은 함대 하나만 보고 이 바다에 들어왔으므로 양단이 다 스페인 항구여도 요율이 안 내려간다 ② 허리케인 — 계절이 정해져 있고 피할 데가 없으며 한 번에 선단을 통째로 지운다 ③ 산호초·얕은 물. 이 권역 평균은 약 7.0으로 지중해(≈5.5)·아프리카(≈6.3)보다 높다.",
-
   "routes": {
-    "havana|veracruz": { "risk": 7.0, "verdict": "probable",
+    "havana|veracruz": {
+      "risk": 7,
+      "verdict": "probable",
       "basis": "누에바에스파냐 함대 자신의 길인데도 유카탄 해협이 좁고 사략선이 그 목을 지켰다. 1568년 산 후안 데 울루아에서 호킨스·드레이크가 걸린 것이 이 해역의 성격을 말한다. 외해·병목 대역(6~8)의 가운데에 뒀다.",
-      "sources": [{ "title": "Veracruz (city)", "url": "https://en.wikipedia.org/wiki/Veracruz_(city)" }] },
-    "campeche|veracruz": { "risk": 5.5, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Veracruz (city)",
+          "url": "https://en.wikipedia.org/wiki/Veracruz_(city)"
+        }
+      ]
+    },
+    "campeche|veracruz": {
+      "risk": 5.5,
+      "verdict": "probable",
       "basis": "멕시코 만 안쪽의 짧은 연안이라 위험의 대부분이 사람이 아니라 얕은 개펄이다. 이 권역에서 가장 낮은 축이지만 지중해 연안(4.0)보다는 높게 뒀다 — 뭍에 기댈 스페인 항구가 드물기 때문이다.",
-      "sources": [] },
-    "campeche|trujillo": { "risk": 7.5, "verdict": "confirmed",
+      "sources": []
+    },
+    "campeche|trujillo": {
+      "risk": 7.5,
+      "verdict": "confirmed",
       "basis": "벨리즈 보초를 끼고 도는 구간이다. 스페인이 영유권만 있고 단속할 힘이 없어 잉글랜드·네덜란드·프랑스가 로그우드를 베던 해안이고, 쫓겨난 벌목꾼이 그대로 뷰캐니어가 되어 스페인 배를 노렸다 — 산호초와 사람이 함께 걸린다.",
-      "sources": [{ "title": "Haematoxylum campechianum", "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum" }] },
-    "havana|trujillo": { "risk": 8.0, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Haematoxylum campechianum",
+          "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum"
+        }
+      ]
+    },
+    "havana|trujillo": {
+      "risk": 8,
+      "verdict": "probable",
       "basis": "케이맨 앞을 지나는 외해 구간이라 며칠 뭍이 안 보인다. 온두라스 배가 아바나에서 본대와 합류하려면 반드시 지나야 하는 길이라 사략선도 그것을 알고 기다렸다. 외해 대역의 위쪽에 뒀다.",
-      "sources": [] },
-    "havana|santiagocuba": { "risk": 6.5, "verdict": "probable",
+      "sources": []
+    },
+    "havana|santiagocuba": {
+      "risk": 6.5,
+      "verdict": "probable",
       "basis": "쿠바를 돌아가는 남안 길이다. 양단이 다 스페인 항구라 지중해 잣대라면 4점대지만, 이 바다에서는 깃발이 같아도 요율이 안 내려간다 — 적선이 아니라 사략선이 상대이기 때문이다.",
-      "sources": [] },
-    "santiagocuba|tortuga": { "risk": 9.5, "verdict": "confirmed",
+      "sources": []
+    },
+    "santiagocuba|tortuga": {
+      "risk": 9.5,
+      "verdict": "confirmed",
       "basis": "윈드워드 해협을 지나며 토르투가 코앞을 스친다. 1641년부터 해안형제단이 자리 잡은 섬이고 1671년 파나마 원정에만 약 2,000명이 모였다. 지중해의 사략 소굴 대역(9~11) 그대로다.",
-      "sources": [{ "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }] },
-    "santodomingo|tortuga": { "risk": 9.5, "verdict": "confirmed",
+      "sources": [
+        {
+          "title": "Tortuga (Haiti)",
+          "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+        }
+      ]
+    },
+    "santodomingo|tortuga": {
+      "risk": 9.5,
+      "verdict": "confirmed",
       "basis": "해안형제단의 앞마당이다. 이스파니올라 북안이 1605~06년 '오소리오의 파괴'로 통째로 비워진 뒤 이 물에는 스페인 배가 기댈 데가 아예 없어졌다. 이 권역에서 가장 높은 요율을 준 두 구간의 하나다.",
       "sources": [
-        { "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" },
-        { "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }
-      ] },
-    "jamaica|santiagocuba": { "risk": 8.0, "verdict": "probable",
+        {
+          "title": "Tortuga (Haiti)",
+          "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+        },
+        {
+          "title": "Santo Domingo",
+          "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+        }
+      ]
+    },
+    "jamaica|santiagocuba": {
+      "risk": 8,
+      "verdict": "probable",
       "basis": "스페인이 거의 버려 둔 자메이카 앞바다라 아군 해안이 있어도 도움이 안 되는 구간이다. 외해 대역의 위쪽에 뒀다 — 다만 이 구간만의 손실 기록은 확보하지 못했다.",
-      "sources": [] },
-    "jamaica|santodomingo": { "risk": 8.0, "verdict": "probable",
+      "sources": []
+    },
+    "jamaica|santodomingo": {
+      "risk": 8,
+      "verdict": "probable",
       "basis": "위와 같은 잣대다. 이스파니올라 남안과 자메이카 사이는 스페인 수비가 얇고 밀무역선이 상시로 드나들던 물이라 요율을 내리지 않았다.",
-      "sources": [] },
-    "jamaica|trujillo": { "risk": 8.5, "verdict": "probable",
+      "sources": []
+    },
+    "jamaica|trujillo": {
+      "risk": 8.5,
+      "verdict": "probable",
       "basis": "모스키토 해안을 따라가는 구간이다. 스페인 항구가 없고 남의 배만 있는 해안이라 난파해도 기댈 데가 없다. 벨리즈 쪽(7.5)보다 한 단계 높게 뒀다.",
-      "sources": [] },
-    "sanjuan|santodomingo": { "risk": 6.0, "verdict": "probable",
+      "sources": []
+    },
+    "sanjuan|santodomingo": {
+      "risk": 6,
+      "verdict": "probable",
       "basis": "모나 해협을 건너는 짧은 구간이고 양단이 다 요새를 갖춘 스페인 항구다. 이 권역에서 뱃길로는 가장 안전한 축이지만, 유럽에서 오는 배가 처음 지나는 길목이라 사략선도 여기서 기다렸다.",
-      "sources": [{ "title": "San Juan, Puerto Rico", "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico" }] },
-    "cartagena|jamaica": { "risk": 9.0, "verdict": "confirmed",
+      "sources": [
+        {
+          "title": "San Juan, Puerto Rico",
+          "url": "https://en.wikipedia.org/wiki/San_Juan,_Puerto_Rico"
+        }
+      ]
+    },
+    "cartagena|jamaica": {
+      "risk": 9,
+      "verdict": "confirmed",
       "basis": "은 함대가 실제로 오르내리던 길이고 그래서 사략선이 매복하던 물이다. 카르타헤나가 은을 실어 나르는 항구라는 이유로 해적의 표적이 됐다는 서술이 그대로 이 구간을 가리킨다. 사략 소굴 대역의 아래쪽에 뒀다.",
-      "sources": [{ "title": "Cartagena, Colombia", "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia" }] },
-    "nuevacadiz|sanjuan": { "risk": 8.5, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Cartagena, Colombia",
+          "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
+        }
+      ]
+    },
+    "nuevacadiz|sanjuan": {
+      "risk": 8.5,
+      "verdict": "probable",
       "basis": "소앤틸리스 열도 바깥을 지나는 구간이다. 대서양을 건너온 프랑스·잉글랜드·네덜란드 배가 카리브로 들어오는 문턱이라 낯선 깃발을 가장 먼저 만나는 물이다. 외해 대역 위쪽에 뒀다.",
-      "sources": [] },
-    "maracaibo|nuevacadiz": { "risk": 7.0, "verdict": "probable",
+      "sources": []
+    },
+    "maracaibo|nuevacadiz": {
+      "risk": 7,
+      "verdict": "probable",
       "basis": "베네수엘라 앞바다의 연안 구간이나 스페인 수비가 얇고 네덜란드 밀무역선이 상시로 드나들었다. 연안이라 외해보다 낮추되 이 바다의 하한선(5.0) 위에 뒀다.",
-      "sources": [] },
-    "maracaibo|riohacha": { "risk": 6.5, "verdict": "confirmed",
+      "sources": []
+    },
+    "maracaibo|riohacha": {
+      "risk": 6.5,
+      "verdict": "confirmed",
       "basis": "마라카이보 호수로 들어가는 좁은 목이 있는 구간이다. 그 목이 약점이라 1667년 롤로네, 1669년 모건이 이 길로 들어와 도시를 털고 정박한 스페인 군함을 부수고 빠져나갔다.",
-      "sources": [{ "title": "Maracaibo", "url": "https://en.wikipedia.org/wiki/Maracaibo" }] },
-    "riohacha|santamarta": { "risk": 5.5, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Maracaibo",
+          "url": "https://en.wikipedia.org/wiki/Maracaibo"
+        }
+      ]
+    },
+    "riohacha|santamarta": {
+      "risk": 5.5,
+      "verdict": "probable",
       "basis": "과히라에서 시에라네바다 기슭으로 붙어 가는 연안이다. 다만 리오아차가 진주 때문에 습격이 잦았고 성벽 없는 산타마르타가 되풀이해 털렸으므로 지중해 연안(4.0)보다는 높게 뒀다.",
-      "sources": [{ "title": "Riohacha", "url": "https://en.wikipedia.org/wiki/Riohacha" }] },
-    "cartagena|santamarta": { "risk": 5.0, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Riohacha",
+          "url": "https://en.wikipedia.org/wiki/Riohacha"
+        }
+      ]
+    },
+    "cartagena|santamarta": {
+      "risk": 5,
+      "verdict": "probable",
       "basis": "카르타헤나의 성벽과 요새가 늘 가까운 짧은 연안이라 이 권역에서 가장 낮은 뱃길 요율을 줬다. 11km 성벽과 산 펠리페 요새가 이 해역 전체의 피난처 구실을 했다는 점을 근거로 삼았다.",
-      "sources": [{ "title": "Cartagena, Colombia", "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia" }] },
-    "cartagena|nombrededios": { "risk": 6.5, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Cartagena, Colombia",
+          "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
+        }
+      ]
+    },
+    "cartagena|nombrededios": {
+      "risk": 6.5,
+      "verdict": "probable",
       "basis": "티에라피르메 갈레온이 카르타헤나와 지협 사이를 오가던 길이다. 은이 실린 배가 다니는 물이라 연안치고 높게 뒀으나, 카르타헤나~자메이카(9.0)만큼 뭍에서 멀지는 않다.",
-      "sources": [{ "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }] },
-    "nombrededios|portobelo": { "risk": 4.0, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Spanish treasure fleet",
+          "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+        }
+      ]
+    },
+    "nombrededios|portobelo": {
+      "risk": 4,
+      "verdict": "probable",
       "basis": "30km 남짓한 연안이고 양단이 다 요새다. 포르토벨로가 놈브레데디오스를 대신했다는 것은 곧 둘이 같은 해안의 이웃이라는 뜻이라 이 권역에서 가장 짧고 안전한 뱃길로 뒀다.",
-      "sources": [{ "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }] },
-    "panama|portobelo": { "risk": null, "verdict": "confirmed",
+      "sources": [
+        {
+          "title": "Portobelo, Colón",
+          "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+        }
+      ]
+    },
+    "panama|portobelo": {
+      "risk": null,
+      "verdict": "confirmed",
       "basis": "배가 아니라 짐이 넘어가는 뭍길이다. 페루 광산의 금은이 배로 파나마까지 올라와 카미노 레알·카미노 데 크루세스를 타고 노새 등으로 지협을 넘어 포르토벨로에서 다시 배를 탔다. 바다가 아니므로 해적 조우를 끄고 뭍의 사고에 맡긴다.",
       "sources": [
-        { "title": "Panamá Viejo", "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo" },
-        { "title": "Portobelo, Colón", "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n" }
-      ] },
-    "acapulco|veracruz": { "risk": null, "verdict": "confirmed",
+        {
+          "title": "Panamá Viejo",
+          "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
+        },
+        {
+          "title": "Portobelo, Colón",
+          "url": "https://en.wikipedia.org/wiki/Portobelo,_Col%C3%B3n"
+        }
+      ]
+    },
+    "acapulco|veracruz": {
+      "risk": null,
+      "verdict": "confirmed",
       "basis": "'중국길'이다. 아카풀코에 닿은 갤리온의 짐을 노새 대열이 멕시코시티까지 나르고 다시 베라크루스로 넘겨 대서양 함대에 실었다고 문헌이 직접 적는다. 뱃길이 아니므로 요율을 null로 두어 해적을 끈다.",
-      "sources": [{ "title": "Manila galleon", "url": "https://en.wikipedia.org/wiki/Manila_galleon" }] },
-    "acapulco|panama": { "risk": 3.5, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Manila galleon",
+          "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+        }
+      ]
+    },
+    "acapulco|panama": {
+      "risk": 3.5,
+      "verdict": "probable",
       "basis": "남해(Mar del Sur)의 연안 항로다. 스페인이 태평양을 제 호수처럼 여겨 배가 사실상 무장을 하지 않고 다녔고, 드레이크가 1579년에 들어와 그 전제를 깨기 전까지는 사략선이 없었다. 이 권역에서 유일하게 지중해 내해 대역(2~3.5)의 값을 준 것은 그래서다 — 다만 요율표를 확보하지는 못했다.",
-      "sources": [] }
+      "sources": []
+    }
   },
-
   "goods": {
     "_읽는이에게": "base는 곡물 20닢 대비 사료 비율이다. 새 품목 7종 모두 '곡물의 몇 배였나'를 밝힌 1차 가격표를 확보하지 못했으므로, 기존 눈금(올리브유 ×2.6 · 도자기 ×6.5 · 무기 ×8.25 · 향신료 ×16.5 · 비단 ×21 · 은 ×24 · 금괴 ×35 · 다이아몬드 ×39) 사이의 어느 칸에 놓이는지를 사료의 성격 서술로 정했다. 이 프로젝트의 관례대로 사료의 실제 배율을 그대로 쓰지 않고 절반 이하로 눌렀다 — 후추가 실제로는 밀의 30배인데 게임에선 16.5배인 것과 같은 완화다. ★ 은(silver)·설탕(sugar)·진주(pearl)·인디고(indigo)는 다른 권역이 먼저 정의한 품목이라 여기서 다시 적지 않고 trade.js의 supply/demand로만 썼다.",
-    "hide": { "base": 64, "verdict": "probable",
+    "hide": {
+      "base": 64,
+      "verdict": "probable",
       "basis": "곡물의 3.2배. 스페인이 놓아기른 소가 앤틸리스에서 야생으로 불어나 재료값이 사실상 0이었고, 이스파니올라·자메이카·토르투가는 이것으로 먹고살았다. 사슴가죽(deerhide 120)의 절반쯤에 두어 '부피만 크고 값이 싼 화물'로 만들었다. ★ 한때 남아메리카 권역도 같은 id를 base 55로 적어 두어 충돌이 있었으나, 그쪽이 정의를 물리고 배율(부에노스아이레스 0.44)로만 말하기로 정리했다. 지금 세계에 hide를 정의하는 곳은 여기 하나뿐이고 중복 경고도 없다.",
-      "sources": [{ "title": "Santo Domingo", "url": "https://en.wikipedia.org/wiki/Santo_Domingo" }] },
-    "logwood": { "base": 72, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Santo Domingo",
+          "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+        }
+      ]
+    },
+    "logwood": {
+      "base": 72,
+      "verdict": "probable",
       "basis": "곡물의 3.6배. 1713~16년에 잉글랜드로 들어간 로그우드가 4,965톤에 연 6만 파운드 아래였다는 기록이 있는데 톤당 12파운드 남짓이라 같은 시기 밀의 두어 배에 지나지 않는다. 다른 식민 수출품에 비해 이문이 얇은 벌크 화물이었다는 서술과도 맞다 — 아시아의 소목(sappanwood 80) 바로 아래에 뒀다.",
-      "sources": [{ "title": "Haematoxylum campechianum", "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum" }] },
-    "tobacco": { "base": 130, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Haematoxylum campechianum",
+          "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum"
+        }
+      ]
+    },
+    "tobacco": {
+      "base": 130,
+      "verdict": "probable",
       "basis": "곡물의 6.5배. 17세기 내내 유럽 수요가 커져 1700년 무렵에는 유럽과 그 식민지의 큰 산업이 됐다는 서술을 근거로 도자기(130)와 같은 칸에 뒀다. 초기에는 사치품 값이었으나 곧 버지니아·브라질이 값을 무너뜨렸으므로 향신료급으로 올리지 않았다. 16~17세기 가격표는 확보하지 못했다.",
-      "sources": [{ "title": "Tobacco", "url": "https://en.wikipedia.org/wiki/Tobacco" }] },
-    "cacao": { "base": 150, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Tobacco",
+          "url": "https://en.wikipedia.org/wiki/Tobacco"
+        }
+      ]
+    },
+    "cacao": {
+      "base": 150,
+      "verdict": "probable",
       "basis": "곡물의 7.5배. 메소아메리카에서 콩 자체가 화폐로 쓰여 타말레 한 개가 한 알, 암칠면조 한 마리가 백 알쯤이었다는 것이 값의 눈금이다. 다만 최대 소비지가 유럽이 아니라 누에바에스파냐 자신이었으므로 유럽 사치품처럼 뛰지 않는다 — 무기(165) 바로 아래에 뒀다.",
-      "sources": [{ "title": "Cocoa bean", "url": "https://en.wikipedia.org/wiki/Cocoa_bean" }] },
-    "cochineal": { "base": 460, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Cocoa bean",
+          "url": "https://en.wikipedia.org/wiki/Cocoa_bean"
+        }
+      ]
+    },
+    "cochineal": {
+      "base": 460,
+      "verdict": "probable",
       "basis": "곡물의 23배. **은 다음가는 누에바에스파냐 제2의 수출품**이었고 1589년부터 암스테르담 거래소에 시세가 실렸으며 17세기에는 인도까지 팔렸다. 무게당 값은 밀의 수백 배지만 그대로 옮기면 이 한 품목이 게임을 삼킨다 — 절반 이하로 눌러 은(480) 바로 아래에 앉혔다. 그 자리 자체가 이 물건의 뜻이다. 1차 가격표는 확보하지 못했다.",
       "sources": [
-        { "title": "Cochineal", "url": "https://en.wikipedia.org/wiki/Cochineal" },
-        { "title": "Spanish treasure fleet", "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet" }
-      ] },
-    "vanilla": { "base": 520, "verdict": "probable",
+        {
+          "title": "Cochineal",
+          "url": "https://en.wikipedia.org/wiki/Cochineal"
+        },
+        {
+          "title": "Spanish treasure fleet",
+          "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+        }
+      ]
+    },
+    "vanilla": {
+      "base": 520,
+      "verdict": "probable",
       "basis": "곡물의 26배. 손으로 수분해야 열매가 열린다는 것을 유럽이 1841년에야 알아낸 탓에 그때까지 파판틀라 바깥에서는 아무도 못 길렀고 멕시코가 19세기 중반까지 사실상 유일한 산지였다. 그 독점을 값으로 옮겨 계피(300) 위, 침향(540) 아래에 뒀다 — 16~17세기 가격표는 확보하지 못했다.",
-      "sources": [{ "title": "Vanilla", "url": "https://en.wikipedia.org/wiki/Vanilla" }] },
-    "emerald": { "base": 720, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Vanilla",
+          "url": "https://en.wikipedia.org/wiki/Vanilla"
+        }
+      ]
+    },
+    "emerald": {
+      "base": 720,
+      "verdict": "probable",
       "basis": "곡물의 36배. 무소는 세계에서 가장 좋은 에메랄드가 나는 곳이고 유럽뿐 아니라 무굴 인도까지 팔렸다. 1622년 아토차호 한 척에서만 지금까지 32kg이 건져졌다. 금괴(700)보다 조금 위, 다이아몬드(780) 아래에 두어 '금보다 비싸지만 최고가는 아닌 보석'으로 앉혔다. 당대 시세표는 확보하지 못했다.",
       "sources": [
-        { "title": "Muzo", "url": "https://en.wikipedia.org/wiki/Muzo" },
-        { "title": "Nuestra Señora de Atocha", "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha" }
-      ] }
+        {
+          "title": "Muzo",
+          "url": "https://en.wikipedia.org/wiki/Muzo"
+        },
+        {
+          "title": "Nuestra Señora de Atocha",
+          "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+        }
+      ]
+    }
   },
-
   "ships": {
     "_읽는이에게": "이 바다의 배는 함대 제도(플로타)를 전제로 갈린다. 스페인은 1566년 프랑스 사략선의 아바나 습격 뒤 페드로 메넨데스 데 아빌레스의 설계로 상선을 혼자 보내지 않고 해마다 두 무리로 묶어 보냈다 — 누에바에스파냐 함대는 베라크루스로, 티에라피르메 갈레온은 카르타헤나·포르토벨로로. 그래서 여기 배는 '혼자서도 살아남는 배'가 아니라 함대 안에서 맡은 일이 있는 배다. ★ 톤수·승조원을 밝힌 사료는 둘이다 — 파타체(약 30톤)와 사브라(80~170톤 · 승조원 ≤60 · 포 ≤10 · 화물 약 100톤 · 아메리카 횡단 30일 이내). 나머지(피라구아·우르카)와 모든 값·체력은 지중해 사다리(코카 1,100/78칸 · 브리간틴 4,200/140칸 · 캐랙 9,800/240칸 · 갈레아스 14,000/110칸)에 맞춘 것이라 전부 probable이다.",
-    "piragua": { "price": 1200, "verdict": "probable",
+    "piragua": {
+      "price": 1200,
+      "verdict": "probable",
       "basis": "통나무를 파낸 카누에 뱃전 판을 덧대고 돛을 올린 배로, 유럽이 가져온 것이 아니라 이 바다가 이미 쓰던 것을 유럽인이 물려받았다. 첫 배 대역(1,100~1,400)의 아래쪽에 두어 카라벨(1,400)보다 싸고 코카(1,100)보다 조금 비싸게 했다. 제원 사료는 확보하지 못했다.",
-      "sources": [] },
-    "patache": { "price": 2400, "verdict": "probable",
+      "sources": []
+    },
+    "patache": {
+      "price": 2400,
+      "verdict": "probable",
       "basis": "돛대 둘에 흘수가 얕고 아주 가벼운 배로 대개 30톤쯤이었으며, 큰 군함에 딸려 해안과 항구를 살피거나 급보를 싣고 달렸다(파타체 데 아비소). 짐배가 아니라 함대의 눈이므로 화물톤/승조원을 7.9로 낮게 잡았다. 값은 중형 대역(2,100~4,200)의 아래쪽이다.",
-      "sources": [{ "title": "Patache", "url": "https://es.wikipedia.org/wiki/Patache" }] },
-    "urca": { "price": 10500, "verdict": "probable",
+      "sources": [
+        {
+          "title": "Patache",
+          "url": "https://es.wikipedia.org/wiki/Patache"
+        }
+      ]
+    },
+    "urca": {
+      "price": 10500,
+      "verdict": "probable",
       "basis": "북방(한자·네덜란드)의 둥근 짐배를 스페인이 인디아스 항로의 화물선으로 사다 쓴 것이다. 화물톤/승조원 15.6은 코카(13.0)와 플류트(18.9) 사이로, '적은 사람으로 많이 싣되 남의 보호를 받는 배'라는 성격을 낸 값이다. 우르카의 제원을 밝힌 문헌은 확보하지 못했다 — 값은 대형 상선 대역(9,800~14,000)의 아래쪽에 뒀다.",
-      "sources": [] },
-    "galizabra": { "price": 13000, "verdict": "probable",
+      "sources": []
+    },
+    "galizabra": {
+      "price": 13000,
+      "verdict": "probable",
       "basis": "1590년대에 스페인이 함대가 늦어 은이 묶이면 작고 빠르고 무장한 배 몇 척에 은만 실어 대열을 기다리지 않고 먼저 보냈다는 관행에서 왔다. ★ 뒤늦게 모선인 사브라(zabra)의 제원을 찾았고 게임 수치가 그것과 맞물린다 — 배수 80~170톤, 승조원 최대 예순, 포 최대 열(무적함대의 산티아고는 포 19문·승조원 100, 훌리아는 포 13문·승조원 57), **화물 약 100톤**, 아메리카~스페인을 30일 안에 건널 수 있었다. 게임의 화물 105칸이 그 100톤과 거의 그대로 맞고, 포 20문은 산티아고의 19문에 기댄 상한이며, 속력 1.42(이 권역 최고)가 '30일 이내 횡단'에 해당한다. 값만은 사료가 없어 대형 상선 대역에 맞춘 것이다.",
-      "sources": [{ "title": "Zabra (es)", "url": "https://es.wikipedia.org/wiki/Zabra" }] }
+      "sources": [
+        {
+          "title": "Zabra (es)",
+          "url": "https://es.wikipedia.org/wiki/Zabra"
+        }
+      ]
+    }
   },
-
   "art": {
     "iconTodo": [
-      { "good": "cochineal", "note": "코치닐 — 말린 연지벌레를 빻은 검붉은 가루가 담긴 자루. 자루 아가리에서 흘러나온 가루가 붉어야 한다. 지금은 spice 아이콘을 빌려 쓴다(바닐라와 겹치므로 우선순위가 높다)" },
-      { "good": "vanilla", "note": "바닐라 — 검게 마른 길쭉한 꼬투리를 노끈으로 묶은 다발. 지금은 spice 아이콘을 빌려 쓴다" },
-      { "good": "cacao", "note": "카카오 — 럭비공 모양 붉은 꼬투리 하나와 그 옆에 쏟아진 갈색 콩. ★ 이 시대엔 화폐이기도 했으므로 콩이 낱알로 보이는 것이 중요하다. 지금은 salt(자루) 아이콘을 빌려 쓴다" },
-      { "good": "tobacco", "note": "담배 — 넓은 잎을 여러 장 겹쳐 노끈으로 묶은 다발(마노호). 말아 놓은 잎이 아니라 널찍한 생잎 다발이다. 지금은 grain 아이콘을 빌려 쓴다" },
-      { "good": "logwood", "note": "로그우드(팔로 데 캄페체) — 껍질을 벗겨 짧게 자른 붉은 심재 통나무 두어 토막. 자른 면이 피처럼 붉다. 지금은 wine 아이콘을 빌려 쓴다(아시아의 소목 sappanwood과 같은 관례)" },
-      { "good": "hide", "note": "소가죽 — 말려 굳힌 소가죽을 접어 묶은 뭉치. 털 있는 모피(fur)와 달리 판판하고 뻣뻣해야 구별이 된다. 지금은 fur 아이콘을 빌려 쓴다" },
-      { "good": "emerald", "note": "에메랄드 — 육각기둥 원석 서너 개. 다이아몬드·진주·호박이 모두 glass 아이콘을 쓰고 있어 이 넷이 화면에서 구별이 안 된다 — 색으로라도 갈라야 한다" }
+      {
+        "good": "cochineal",
+        "note": "코치닐 — 말린 연지벌레를 빻은 검붉은 가루가 담긴 자루. 자루 아가리에서 흘러나온 가루가 붉어야 한다. 지금은 spice 아이콘을 빌려 쓴다(바닐라와 겹치므로 우선순위가 높다)"
+      },
+      {
+        "good": "vanilla",
+        "note": "바닐라 — 검게 마른 길쭉한 꼬투리를 노끈으로 묶은 다발. 지금은 spice 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "cacao",
+        "note": "카카오 — 럭비공 모양 붉은 꼬투리 하나와 그 옆에 쏟아진 갈색 콩. ★ 이 시대엔 화폐이기도 했으므로 콩이 낱알로 보이는 것이 중요하다. 지금은 salt(자루) 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "tobacco",
+        "note": "담배 — 넓은 잎을 여러 장 겹쳐 노끈으로 묶은 다발(마노호). 말아 놓은 잎이 아니라 널찍한 생잎 다발이다. 지금은 grain 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "logwood",
+        "note": "로그우드(팔로 데 캄페체) — 껍질을 벗겨 짧게 자른 붉은 심재 통나무 두어 토막. 자른 면이 피처럼 붉다. 지금은 wine 아이콘을 빌려 쓴다(아시아의 소목 sappanwood과 같은 관례)"
+      },
+      {
+        "good": "hide",
+        "note": "소가죽 — 말려 굳힌 소가죽을 접어 묶은 뭉치. 털 있는 모피(fur)와 달리 판판하고 뻣뻣해야 구별이 된다. 지금은 fur 아이콘을 빌려 쓴다"
+      },
+      {
+        "good": "emerald",
+        "note": "에메랄드 — 육각기둥 원석 서너 개. 다이아몬드·진주·호박이 모두 glass 아이콘을 쓰고 있어 이 넷이 화면에서 구별이 안 된다 — 색으로라도 갈라야 한다"
+      }
     ],
     "hullTodo": [
-      { "ship": "piragua", "note": "피라구아 — 통나무를 파낸 단일 선체에 뱃전 판(워시스트레이크)을 덧대 건현을 올린 배. 갑판이 없고 돛대 하나에 작은 스프릿세일, 양현에 노가 늘어선다. 지금은 caravel 선체를 빌려 쓰는데 카라벨의 높은 선미루가 전혀 어울리지 않는다" },
-      { "ship": "patache", "note": "파타체 — 두대박이에 흘수가 얕은 작은 배. 브리간틴과 스쿠너의 중간쯤이라 뒷돛대에 세로돛이 서고 앞돛대에 가로돛이 선다(rig 0.50의 근거). 지금은 brig 선체" },
-      { "ship": "urca", "note": "우르카 — 배가 불룩하고 고물이 둥근 북방식 짐배. 갑판이 좁고 뱃전이 안으로 오므라들어(텀블홈) 갑판세를 덜 물게 생겼다. 지금은 fluyt 선체를 빌려 쓰는데 성격이 가까워 급하지 않다" },
-      { "ship": "galizabra", "note": "갈리사브라 — 갈레온을 작게 줄이고 선루를 깎아 낸 배. 낮고 길고 포문이 촘촘하다. 지금은 frigate 선체를 빌려 쓰는데 그 선체에 갤리의 노가 그려져 있으면 어긋난다(rig 0.85)" }
+      {
+        "ship": "piragua",
+        "note": "피라구아 — 통나무를 파낸 단일 선체에 뱃전 판(워시스트레이크)을 덧대 건현을 올린 배. 갑판이 없고 돛대 하나에 작은 스프릿세일, 양현에 노가 늘어선다. 지금은 caravel 선체를 빌려 쓰는데 카라벨의 높은 선미루가 전혀 어울리지 않는다"
+      },
+      {
+        "ship": "patache",
+        "note": "파타체 — 두대박이에 흘수가 얕은 작은 배. 브리간틴과 스쿠너의 중간쯤이라 뒷돛대에 세로돛이 서고 앞돛대에 가로돛이 선다(rig 0.50의 근거). 지금은 brig 선체"
+      },
+      {
+        "ship": "urca",
+        "note": "우르카 — 배가 불룩하고 고물이 둥근 북방식 짐배. 갑판이 좁고 뱃전이 안으로 오므라들어(텀블홈) 갑판세를 덜 물게 생겼다. 지금은 fluyt 선체를 빌려 쓰는데 성격이 가까워 급하지 않다"
+      },
+      {
+        "ship": "galizabra",
+        "note": "갈리사브라 — 갈레온을 작게 줄이고 선루를 깎아 낸 배. 낮고 길고 포문이 촘촘하다. 지금은 frigate 선체를 빌려 쓰는데 그 선체에 갤리의 노가 그려져 있으면 어긋난다(rig 0.85)"
+      }
     ],
     "flagTodo": [],
     "styleTodo": [
-      { "key": "colonial", "note": "★ 이미 생겼다 — 아바나·카르타헤나·산후안·산토도밍고·산티아고데쿠바·베라크루스·산타마르타·자메이카에 붙여 두었다. '도시가 아니라 요새 하나'라는 이 바다의 성격에 그대로 들어맞는다. 다만 고아·코친·마닐라와 같은 화풍을 쓰므로, 카리브 항구를 갈라 보이게 하려면 물가까지 내려온 이중 성벽(카르타헤나 11km)과 산호석 능보를 더 두껍게 그리는 변주가 있으면 좋겠다" },
-      { "key": "tropicalport", "note": "볕에 구운 낮은 항구 — 회칠한 흙벽이나 널벽에 야자잎 지붕, 성벽이 없고 부두가 나무이며 해변에 피라구아가 끌어올려져 있다. 캄페체·트루히요·리오아차·누에바카디스·마라카이보·놈브레데디오스·아카풀코가 이쪽인데 지금은 levant(마그레브 황토벽·미나레트)를 빌려 써서 미나레트가 선다 — 이 바다에 이슬람 첨탑은 없다. 우선순위가 가장 높다. 새로 그리기 전까지의 임시 대안으로는 guinea(붉은 흙벽·야자 이엉·끌어올린 카누)가 levant보다 낫다" }
+      {
+        "key": "colonial",
+        "note": "★ 이미 생겼다 — 아바나·카르타헤나·산후안·산토도밍고·산티아고데쿠바·베라크루스·산타마르타·자메이카에 붙여 두었다. '도시가 아니라 요새 하나'라는 이 바다의 성격에 그대로 들어맞는다. 다만 고아·코친·마닐라와 같은 화풍을 쓰므로, 카리브 항구를 갈라 보이게 하려면 물가까지 내려온 이중 성벽(카르타헤나 11km)과 산호석 능보를 더 두껍게 그리는 변주가 있으면 좋겠다"
+      },
+      {
+        "key": "tropicalport",
+        "note": "볕에 구운 낮은 항구 — 회칠한 흙벽이나 널벽에 야자잎 지붕, 성벽이 없고 부두가 나무이며 해변에 피라구아가 끌어올려져 있다. 캄페체·트루히요·리오아차·누에바카디스·마라카이보·놈브레데디오스·아카풀코가 이쪽인데 지금은 levant(마그레브 황토벽·미나레트)를 빌려 써서 미나레트가 선다 — 이 바다에 이슬람 첨탑은 없다. 우선순위가 가장 높다. 새로 그리기 전까지의 임시 대안으로는 guinea(붉은 흙벽·야자 이엉·끌어올린 카누)가 levant보다 낫다"
+      }
     ]
   },
-
   "openQuestions": [
     "★ 사람을 교역품(GOODS)으로 만들지 않았다. 이 판단의 전문은 이 파일 맨 위 _강제노동과_원주민_인구붕괴에_대하여 절에 있다 — 되돌리기 전에 반드시 읽을 것. 역사는 누에바카디스·리오아차·카르타헤나·산토도밍고의 근거 서술과 blurb에 적었고, 사고파는 규칙만 만들지 않았다.",
     "은(silver)을 이 권역의 goods로 만들지 않았다. 동아시아 권역이 base 480으로 먼저 정의했기 때문이다. 대신 포르토벨로 0.44(배율 하한)·파나마 0.46·베라크루스 0.50·아카풀코 0.52로 두어 **세계에서 가장 싼 은**이 여기 있게 했다. 은의 수요는 이 권역 안에 하나도 없다 — 은이 떠나는 바다라는 설계 그대로이고, 사는 쪽은 원양 항로 건너편(동아시아·인도양)에 있다.",
@@ -653,6 +1871,7 @@
     "관세(TARIFF_OVERRIDE) 열 곳이 전부 gameplay다. 알모하리파스고·아베리아·왕실 5분의 1세의 실제 요율표를 확보하지 못했고, 확보한다 해도 사료의 합산 부담(20%대)을 그대로 옮기면 게임이 매각에만 세를 물기 때문에 그 항구가 통째로 죽는다. 값은 성격이 드러날 만큼만 올린 것이다.",
     "허리케인을 요율에 녹여 두었지만 **계절 개념으로는 넣지 못했다.** 카리브의 허리케인은 지중해 폭풍과 달리 철이 정해져 있고(늦여름~가을) 한 번에 선단을 통째로 지운다 — 1622년 9월 아바나를 떠난 지 이틀 만에 여덟 척이 가라앉았고 아토차호는 265명 중 다섯만 살았다. 지금은 그 위험이 모든 달에 고르게 퍼져 있다. 계절 규칙이 생기면 이 권역이 가장 먼저 쓸 자리다.",
     "산후안데울루아를 따로 만들지 않았다. 베라크루스 앞바다의 요새섬이라 같은 항구로 보는 것이 맞다고 판단했고, 1568년 호킨스·드레이크 사건은 베라크루스의 서술에 담았다.",
-    "쿠마나·코로를 넣지 않았다. 마르가리타(누에바카디스)와 마라카이보가 이미 그 해안의 진주와 카카오를 맡고 있어 성격이 겹친다. 넣는다면 대략 x 360·y 138 언저리에 자리가 남아 있다."
+    "쿠마나·코로를 넣지 않았다. 마르가리타(누에바카디스)와 마라카이보가 이미 그 해안의 진주와 카카오를 맡고 있어 성격이 겹친다. 넣는다면 대략 x 360·y 138 언저리에 자리가 남아 있다.",
+    "상인 NPC(npc-traders.js: TRADERS) 여덟을 채웠다(2026-08-22 — 그전까지 빈 배열이라 이 바다엔 상선이 한 척도 안 떴다). 제도와 항로는 사료를 따랐다: 서인도 함대(flota)의 여름 출항(허리케인 철 회피)·포르토벨로 장(feria)이 함대가 와야 서던 것·마닐라 갈레온이 왕이 정한 두 척뿐이던 것·리오아차의 rescate(구조를 명목으로 한 밀무역)·쿠마나의 진주 잠수·오악사카 코치닐의 산지 은닉. purse와 rank는 **게임 밸런스 값**이고 개별 금액의 사료 대조는 아직 안 했다."
   ]
 }

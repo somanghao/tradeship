@@ -66,11 +66,15 @@ const routesOf = (rid) => ROUTES.filter(([a, b]) =>
   REGION_OF_CITY[a] === rid && REGION_OF_CITY[b] === rid && !isOceanLane(a, b));
 
 /* ── 판정 ─────────────────────────────────────────────────────
-   외주 지도가 두 번 반려된 항목을 그대로 잰다:
-     ① 항구가 물가인가 — 점 주위 반경 3px 안에 바다와 육지가 **둘 다** 있어야 물가다
-     ② 항로가 바다를 지나는가 — 선을 따라 짚어 육지 비율을 잰다
-     ③ 육지/바다 비율 — 한쪽이 8할을 넘으면 지도로 안 읽힌다
-     ④ 이름표 겹침 — 이름표 상자가 남의 항구 표식을 덮는가
+   외주 지도가 세 번 반려된 항목을 그대로 잰다(`tools/check-map.py`와 같은 기준):
+     ① 항구가 물가인가 — 점 주위 반경 6px 안에 바다와 육지가 **둘 다** 있어야 물가다
+     ② 항구가 바다 한가운데 뜨지 않았나 — 가장 가까운 뭍까지 28px 이내 (★3차 반려 사유)
+     ③ 지형이 좌표계와 같은가 — 뭍까지 12px 넘는 항구가 절반을 넘으면 다른 세계를 그린 것이다
+     ④ 항로가 바다를 지나는가 — 선을 따라 짚어 육지 비율을 잰다
+     ⑤ 육지/바다 비율 — 한쪽이 8할을 넘으면 지도로 안 읽힌다
+     ⑥ 이름표 겹침 — 이름표 상자가 남의 항구 표식을 덮는가
+   ★ ②③이 없던 때 3차 납품이 통과했다 — "물이 닿는가"만 보면 바다 한복판은 늘 통과한다.
+     그때 알렉산드리아가 뭍에서 64px 떨어진 채 `섬 항구`로 조용히 집계됐다.
    바다인지 육지인지는 **색으로** 가른다(파란 계열이면 바다). 생성기 내부를 다시 구현하지
    않으려는 것이다 — 화면에 실제로 보이는 것으로 재야 검수가 된다. */
 function analyze(img, cities, routes) {
@@ -94,6 +98,21 @@ function analyze(img, cities, routes) {
      반경을 3px로 잡았더니 항로 회랑 안이라 전부 바다로 나와 판정이 무의미했다.
      섬 항구는 물에 둘러싸이는 것이 정상이므로 따로 센다(실패가 아니다). */
   const dry = [], isle = [];
+
+  /* 그 자리에서 가장 가까운 뭍까지 몇 px인가. 뭍 위면 0, limit 안에 없으면 limit+1.
+     `check-map.py: land_reach`와 같은 방식이다(정사각 링을 넓혀 가며 훑는다). */
+  const landReach = (x, y, limit = 34) => {
+    if (!isSea(x, y)) return 0;
+    for (let r = 1; r <= limit; r++) {
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        if (!isSea(x + dx, y + dy)) return r;
+      }
+    }
+    return limit + 1;
+  };
+
+  const far = [], reach = [];
   for (const c of cities) {
     let s = 0, l = 0;
     for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) {
@@ -102,7 +121,12 @@ function analyze(img, cities, routes) {
     }
     if (s === 0) dry.push(`${c.name}`);
     else if (l === 0) isle.push(`${c.name}`);
+    const d = landReach(c.x, c.y);
+    reach.push(d);
+    if (d > 28) far.push(`${c.name} ${d}px`);
   }
+  const avgReach = reach.length ? reach.reduce((a, b) => a + b, 0) / reach.length : 0;
+  const loose = reach.filter((d) => d > 12).length;
 
   const blocked = [];
   for (const [a, b] of routes) {
@@ -131,7 +155,7 @@ function analyze(img, cities, routes) {
       }
     }
   }
-  return { seaPct: sea / (VW * VH), dry, isle, blocked, clash };
+  return { seaPct: sea / (VW * VH), dry, isle, blocked, clash, far, loose, n: cities.length, avgReach };
 }
 
 function draw() {
@@ -200,6 +224,12 @@ function draw() {
     parts.push(v.dry.length
       ? line('bad', `물이 안 닿는 항구 ${v.dry.length}곳: ${v.dry.slice(0, 4).join(' · ')}`)
       : line('ok', `항구 전부 물가${v.isle.length ? ` (섬 ${v.isle.length}곳 포함)` : ''}`));
+    parts.push(v.far.length
+      ? line('bad', `바다 한가운데 뜬 항구 ${v.far.length}곳(28px 초과): ${v.far.slice(0, 4).join(' · ')}`)
+      : line('ok', `뭍까지 평균 ${v.avgReach.toFixed(1)}px`));
+    parts.push(v.loose > v.n * 0.5
+      ? line('bad', `${v.loose}/${v.n}곳이 뭍에서 12px 넘게 떨어졌다 — 지형이 좌표계와 다르다`)
+      : line('ok', `좌표계 일치 (12px 초과 ${v.loose}/${v.n})`));
     parts.push(v.blocked.length
       ? line('warn', `육지를 많이 지나는 항로 ${v.blocked.length}: ${v.blocked.slice(0, 3).join(' · ')}`)
       : line('ok', '항로 전부 바다'));

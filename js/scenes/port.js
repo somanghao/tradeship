@@ -2,21 +2,28 @@
 
 import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
-import { unitSprite } from '../sprites/char.js';
+import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER } from '../data.js';
+import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
   impactFactor, costFor, tariffRate, shorthanded,
   contractOffer, acceptContract, deliverContract, abandonContract,
-  hasOfficer, paydayDue, daysToPayday, payrollOwed,
+  hasOfficer, paydayDue, paydayDeferred, daysToPayday, payrollOwed, regionOf,
+  priceOf, voyageDays, neighborsOf,
+  buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp,
+  hasHolding, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
+  storeGoods, takeGoods, holdingUpkeepDue, settleHolding,
+  portDayCost, waitDays, dischargeCrew, recallCrew, settleYard,
+  endingProgress, markEnded,
 } from '../state.js';
 import { openPayday } from '../payday.js';
+import { autoSave } from '../save.js';
 import { npcsAtPort, figuresAt } from '../world.js';
 import { goodRank, goodBasis } from '../evidence.js';
 import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal, josa, npcTitle } from '../ui.js';
-import { go } from '../main.js';
+import { go, gameStarted } from '../main.js';
 
 let bg, city, dockers;
 
@@ -39,9 +46,18 @@ export const portScene = {
     dockers = pickDockers(city.seed);
     state.known.add(city.id);
     buildUI();
+    /* ★ **항구가 곧 세이브 포인트다.** 바다 위 상태(`sailing`)는 씬의 모듈 변수라 어차피
+       담기지 않으므로, 저장 시점을 항구로 못박는 것이 그 사실과 맞아떨어진다.
+       단 **타이틀이 닫히기 전에는 저장하지 않는다** — 부팅 순서상 여기가 먼저 불린다. */
+    /* 거점 유지비는 **그 항구에 들어올 때** 문다 — 연 6%를 30일마다. 못 내면 압류된다. */
+    settleHolding(city.id);
+    settleYard(city.id);     // 부두 공사가 끝났으면 여기서 올라간다
+    if (gameStarted()) autoSave();
     // 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
     // 화면을 세운 뒤에 띄워야 정산이 끝나고 닫혔을 때 뒤에 항구가 있다.
-    if (paydayDue()) openPayday(() => after());
+    /* 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
+       "짐을 팔고 오겠다"로 미뤄 둔 날이면 다시 띄우지 않는다(→ payday.js) — 대신 **떠날 때 막는다.** */
+    if (paydayDue() && !paydayDeferred()) openPayday(() => after());
   },
 
   draw(ctx, t) {
@@ -56,7 +72,7 @@ export const portScene = {
 
     // 부두 위 사람들
     for (const d of dockers) {
-      blit(ctx, unitSprite(d.key, 'idle'), d.x, 150, 1, d.flip);
+      blit(ctx, unitSprite(d.key, 'idle', null, regionOf(state.at)), d.x, 150, 1, d.flip);
     }
 
     // 부관은 배 곁에 선다 — 사이드패널을 열지 않아도 함께 있다는 것이 보인다
@@ -82,6 +98,14 @@ function marketPanel() {
         style: { fontSize: '11px', color: '#9a917f', letterSpacing: 0 },
         text: `적재 ${cargoUsed()}/${state.cargoCap}`,
       }),
+      /* ★ 악명은 **값이 오르는 자리에서 보여야** 뜻이 있다. 상선을 턴 값이 여기서 돌아온다
+         (`state.js: infamyTariffUp`). 아무 데도 안 뜨면 "왜 세가 비싸졌지"를 알 길이 없다. */
+      infamyHere() > 0 ? el('span', {
+        style: { fontSize: '11px', color: '#c98a6a', letterSpacing: 0 },
+        title: `이 항구의 깃발 쪽 배를 턴 일이 소문났다.
+입항세가 ${Math.round(infamyTariffUp() * 100)}% 무겁다. 날이 지나면 잊힌다.`,
+        text: `악명 ${infamyHere()} · 세 +${Math.round(infamyTariffUp() * 100)}%`,
+      }) : null,
     ]),
     body,
   ]);
@@ -182,10 +206,12 @@ function marketTable() {
       el('td.num', {}, el('div.trade-btns', {}, [
         el('button.btn.sm.dark', {
           text: '사기', disabled: costFor(g.id, 1) > state.gold || cargoFree() <= 0,
+          title: '10개 · Shift 전량 · Ctrl 1개 (금화·빈 칸이 모자라면 살 수 있는 만큼만)',
           onclick: (e) => doBuy(g.id, e.shiftKey ? 999 : e.ctrlKey ? 1 : 10),
         }),
         el('button.btn.sm', {
           text: '팔기', disabled: have <= 0,
+          title: '10개 · Shift 전량 · Ctrl 1개',
           onclick: (e) => doSell(g.id, e.shiftKey ? 999 : e.ctrlKey ? 1 : 10),
         }),
       ])),
@@ -193,10 +219,13 @@ function marketTable() {
     tb.append(tr);
   }
   tbl.append(tb);
+  /* ★ 위에 붙인다(`bottom`이었다). 품목이 20줄을 넘는 항구에서는 맨 아래 안내가
+     스크롤 밖으로 밀려, 처음 켠 사람은 한 번 누를 때 몇 개가 실리는지 모른 채 누른다 —
+     실제 플레이에서 세 번 눌러 18개가 실리고 금고가 바닥났다. → wiki/playtest-log.md §3-2 */
   tbl.append(el('caption', {
     text: `기본 10개 단위 · Shift=전량 · Ctrl=1개 · 한 번에 많이 거래할수록 단가가 불리해진다 · 입항세 ${Math.round(tariffRate(city.id) * 100)}%`,
     style: {
-      captionSide: 'bottom', fontSize: '11px', color: '#6f6858',
+      captionSide: 'top', fontSize: '11px', color: '#6f6858',
       padding: '6px 8px', textAlign: 'left',
     },
   }));
@@ -295,6 +324,29 @@ function contractCard() {
         text: `보수 ${o.pay.toLocaleString('ko-KR')}닢 · 선금 ${o.advance.toLocaleString('ko-KR')}닢 · `
             + `물건은 직접 마련해야 한다`,
       }),
+      /* ★ **얼마가 드는지를 고르기 전에 보여 준다.** 전에는 "물건은 직접 마련해야 한다"까지만
+         적혀 있어서, 조달비가 전 재산의 두 배인 주문을 받아 놓고 기한을 넘겨 위약금을 무는 일이
+         생겼다(완주 플레이 1일차: 소금 30개 1,320닢 ↔ 금고 200 + 선금 598).
+         막지는 않는다 — 짐을 팔아 마련하거나 이미 실어 둔 것으로 채울 수도 있다.
+         값을 숨기면 선택이 아니라 도박이 된다(해적 조우 카드와 같은 원칙). */
+      (() => {
+        const here = Math.round(priceOf(state.at, o.goodId) * o.qty);
+        const have = state.cargo[o.goodId] || 0;
+        const need = Math.max(0, o.qty - have);
+        const cost = Math.round(here * (need / o.qty));
+        const purse = state.gold + o.advance;
+        const short = cost - purse;
+        const direct = neighborsOf(state.at).includes(o.to);
+        const legs = voyageDays(state.at, o.to);
+        return el('div.ctr-sub', {
+          style: short > 0 ? { color: '#c98a6a' } : null,
+          text: (have ? `실은 것 ${have}개 · ` : '')
+              + (need ? `여기서 ${need}개를 사면 약 ${cost.toLocaleString('ko-KR')}닢` : '실은 것으로 채운다')
+              + ` (금고 ${state.gold.toLocaleString('ko-KR')} + 선금 ${o.advance.toLocaleString('ko-KR')})`
+              + (short > 0 ? ` · ${short.toLocaleString('ko-KR')}닢 모자란다` : '')
+              + ` · ${CITY_BY_ID[o.to].name}${direct ? '' : '(직항 아님)'} 편도 ${legs}일`,
+        });
+      })(),
       el('button.btn.sm', {
         text: `수주 (선금 +${o.advance.toLocaleString('ko-KR')})`,
         onclick: () => {
@@ -410,6 +462,166 @@ function payrollCard() {
 }
 
 /* 이 항구에 지금 들어와 있는 배들 — 세계가 혼자 돌아간다는 것이 보이는 창 */
+/* ── 끝 ────────────────────────────────────────────────────────
+   ★ **무엇을 해야 끝나는지 보이지 않으면 그것은 목표가 아니라 우연이다.**
+   조선 항구에서만 뜬다 — 이 끝은 조선의 항구를 깨우는 일이기 때문이다(`story/ENDING.md`). */
+function endingCard() {
+  if (city.flag !== 'joseon') return null;
+  const p = endingProgress();
+  if (p.done && markEnded()) {
+    /* 한 번만 축하한다. 게임은 계속된다 — 끝을 본 뒤에도 배는 뜬다. */
+    setTimeout(() => modal({
+      title: '여덟 항구와 한 척',
+      body: '염포의 부두에서 쇠를 덧댄 배가 내려왔다.<br>'
+          + '달천에서 온 철과 여수에서 온 나무가 한 배에 들었고, '
+          + '구리는 아홉 바다를 건너온 것이었다.<br><br>'
+          + '<b>이 배는 벌지 못한다.</b> 화물칸이 좁고 유지비가 무겁다 — '
+          + '어느 항로에서도 값을 돌려받지 못한다.<br>'
+          + '그래도 부두에 서 있는 동안 이 나라의 배는 한 척 늘었다.<br><br>'
+          + '<span style="opacity:.75">수첩 아홉 장 가운데 여섯은 심겼고 셋은 끝내 뒤집혔다. '
+          + '그 셋을 적어 두는 것까지가 이 기록이다.</span>',
+      actions: [{ label: '수첩을 덮는다' }],
+    }), 400);
+  }
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: p.done ? '끝 — 여덟 항구와 한 척' : '나라에 부두를 낸다' }),
+      el('span', { text: p.done ? `${state.ended}일차` : `${p.steps.filter((x) => x.now >= x.need).length}/3`,
+                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, p.steps.map((st) => el('div.ctr-sub', {
+      style: st.now >= st.need ? { color: '#8fbf8a' } : null,
+      text: `${st.now >= st.need ? '✓' : '·'} ${st.label} (${st.now}/${st.need}) — ${st.detail}`,
+    }))),
+  ]);
+}
+
+/* ── 정박 (A-1b) ───────────────────────────────────────────────
+   ★ **정박 중인 날이 공짜였다.** 날은 항해할 때만 갔으므로 항구에 서 있는 동안은
+   급여도 보급도 유지비도 나가지 않았다 — 소설의 *"아덴 억류·반다 반년·아바나 한 해 대기"*가
+   게임에서는 **아무 대가가 없는 일**이었다. 기다리는 것이 값을 가져야 "언제 떠나나"가 판단이 된다. */
+function waitCard() {
+  const ashore = state.holdings?.[city.id]?.ashore ?? 0;
+  const c3 = portDayCost(3), c10 = portDayCost(10);
+  const rows = [
+    svcRow(`사흘 머문다 (−${c3.now.toLocaleString('ko-KR')}닢 · 삯 ${(c3.wages + c3.officer).toLocaleString('ko-KR')} 쌓임)`,
+      '시세가 회복하고 매물과 일감이 갈린다', '기다린다', false, () => {
+        const r = waitDays(3);
+        toast(`사흘이 지났다 — ${state.day}일차`, 'warn');
+        refreshHUD(); refreshLog(); after();
+        void r;
+      }),
+    svcRow(`열흘 머문다 (−${c10.now.toLocaleString('ko-KR')}닢 · 삯 ${(c10.wages + c10.officer).toLocaleString('ko-KR')} 쌓임)`,
+      '계절이 바뀌기를, 함대가 오기를 기다린다', '기다린다', false, () => {
+        waitDays(10);
+        toast(`열흘이 지났다 — ${state.day}일차`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }),
+  ];
+  /* 사람을 내려놓는 선택지는 **창고가 있어야** 생긴다(A-1과 짝) — 재우고 먹일 데가 있어야 하니까. */
+  if (storeCap(city.id) > 0 || ashore > 0) {
+    if (state.crew > 0) {
+      rows.push(svcRow(`선원 ${state.crew}명을 내려놓는다`, '삯이 멎는다. 배는 뜨지 못한다', '내린다', false, () => {
+        const r = dischargeCrew();
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${r.n}명을 내려놓았다`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
+    }
+    if (ashore > 0) {
+      const cost = Math.round(55 * 0.5 * Math.min(ashore, state.crewMax - state.crew));
+      rows.push(svcRow(`뭍에 ${ashore}명이 있다`, `다시 태우는 값은 새로 뽑는 값의 절반 (−${cost.toLocaleString('ko-KR')}닢)`,
+        '태운다', false, () => {
+          const r = recallCrew();
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${r.n}명을 다시 태웠다`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+  }
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '정박' }),
+      el('span', { text: `${state.day}일차`, style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
+/* ── 거점 (A-1) ────────────────────────────────────────────────
+   ★ **후반에 금화가 갈 곳**이자 *"짐을 쪼갠다"*를 처음 전략으로 만드는 자리다 —
+   창고에 둔 짐은 시장을 누르지 않는다(`state.js: storeGoods`). 값과 효과는 `data.js: HOLDINGS`. */
+function holdingCard() {
+  const mine = HOLDING_KEYS.filter((k) => hasHolding(k, city.id));
+  const next = HOLDING_KEYS.filter((k) => !hasHolding(k, city.id));
+  const cap = storeCap(city.id);
+  const used = storedUsed(city.id);
+  const stored = state.stored?.[city.id] ?? {};
+
+  const rows = [];
+  if (mine.length) {
+    rows.push(el('div.ctr-line', {
+      html: `<b>${mine.map((k) => HOLDINGS[k].name).join(' · ')}</b>`
+          + (cap ? ` <span style="opacity:.7">창고 ${used}/${cap}칸</span>` : ''),
+    }));
+    const due = holdingUpkeepDue(city.id);
+    if (due > 0) {
+      rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+        text: `유지비 ${due.toLocaleString('ko-KR')}닢이 밀려 있다 — 못 내면 빼앗긴다` }));
+    }
+  }
+
+  /* 창고에 맡기고 찾는다 — 시장 행마다 단추를 다는 대신 **한 칸씩** 옮긴다.
+     "무엇을 얼마나"까지 고르게 하려면 화면이 커지는데, 이 게임의 사이드패널은 이미 길다. */
+  if (cap > 0) {
+    const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
+    for (const [gid, n] of held.slice(0, 4)) {
+      rows.push(svcRow(`${GOOD_BY_ID[gid].name} ${n}개`, '배에 실려 있다', '맡긴다',
+        used >= cap, () => {
+          const r = storeGoods(gid, n, city.id);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${GOOD_BY_ID[gid].name} ${r.n}개를 창고에 넣었다`, 'good');
+          after();
+        }));
+    }
+    for (const [gid, n] of Object.entries(stored).slice(0, 4)) {
+      rows.push(svcRow(`${GOOD_BY_ID[gid].name} ${n}개`, '창고에 있다 — 시장을 누르지 않는다', '찾는다',
+        cargoFree() <= 0, () => {
+          const r = takeGoods(gid, n, city.id);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${GOOD_BY_ID[gid].name} ${r.n}개를 실었다`, 'good');
+          after();
+        }));
+    }
+  }
+
+  for (const k of next) {
+    const h = HOLDINGS[k];
+    const can = canBuyHolding(k, city.id);
+    const price = holdingPrice(k, city.id);
+    rows.push(svcRow(`${h.name} — ${price.toLocaleString('ko-KR')}닢`, h.desc,
+      can.ok ? '세운다' : (can.reason.length > 10 ? '못 세운다' : can.reason),
+      !can.ok, () => {
+        const r = buyHolding(k, city.id);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${h.name}${josa(h.name, '을/를')} 세웠다`, 'good');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+  if (!rows.length) return null;
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '거점' }),
+      el('span', {
+        text: mine.length ? `${mine.length}개 · 연 6%` : '금화가 갈 곳',
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+      }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
 function harborCard() {
   const ships = npcsAtPort(city.id);
   if (!ships.length) return null;
@@ -452,20 +664,65 @@ const JOB_LABEL = {
    툴팁은 읽히지 않는다 — 그 자리에 사람이 있다는 것조차 모르고 지나간다.
    그래서 줄을 눌러 **말을 걸 수 있게** 한다. 거래는 아직 없다(값이 규칙에 안 물렸다).
    지금 여기서 일어나는 일은 하나뿐이고 그것으로 충분하다 — 그 사람이 말을 한다. */
+/* 산 것을 화면 말로 옮긴다 — 정보형은 **표가 곧 상품**이라 여기서 줄을 만든다. */
+function serviceResult(r, f) {
+  if (r.kind === 'price-tip') {
+    if (!r.tips?.length) return '“여기서 실어 나갈 만한 것이 지금은 안 보이오. 값만 받은 셈이 됐소.”';
+    return '<b>여기서 싣고 나가면 값이 오르는 곳</b><br>'
+      + r.tips.map((t) => `${t.goodName} — ${t.toName} <b>+${t.gain}%</b>`
+          + ` <span style="opacity:.7">(${t.buyAt.toLocaleString('ko-KR')} → ${t.sellAt.toLocaleString('ko-KR')}닢 · ${t.days}일)</span>`).join('<br>');
+  }
+  if (r.kind === 'route-tip') {
+    if (!r.tips?.length) return '“나가는 길이 없소.”';
+    return '<b>여기서 나가는 길</b><br>'
+      + r.tips.map((t) => `${t.toName} — 조우 <b>${Math.round(t.odds * 100)}%</b>`
+          + ` <span style="opacity:.7">(${t.risk == null ? '내해·육로' : `요율 ${t.risk}%`} · ${t.days}일)</span>`).join('<br>');
+  }
+  return r.line ?? '';
+}
+
 function talkTo(f) {
   const job = JOB_LABEL[f.job] ?? f.job ?? '';
-  modal({
-    title: f.name,
-    body: `<span style="color:#8f8878">${[job, city.name].filter(Boolean).join(' · ')}</span><br><br>`
+  const fee = figureFee(f);
+  const head = `<span style="color:#8f8878">${[job, city.name].filter(Boolean).join(' · ')}</span><br><br>`
         + (f.blurb ? `${f.blurb}<br>` : '')
         + (f.lines?.greet ? `<br><span style="color:#c9b98a">${f.lines.greet}</span>` : '')
-        + (f.lines?.offer ? `<br><span style="color:#c9b98a">${f.lines.offer}</span>` : '')
+        + (f.lines?.offer ? `<br><span style="color:#c9b98a">${f.lines.offer}</span>` : '');
+
+  /* ★ 오래도록 이 모달은 **값까지 띄워 놓고 단추가 '자리를 뜬다' 하나**였다.
+     소설이 이 바다들을 "제도를 인물로 보여 준다"로 설계했는데 그 문지기가 안 눌리면
+     제도가 통째로 안 굴러간다 — 그래서 여기에 사는 자리를 낸다(UNIMPLEMENTED B-1). */
+  const actions = [];
+  if (SERVICE_LABEL[f.service]) {
+    actions.push({
+      label: fee ? `${SERVICE_LABEL[f.service]} 사기 (${fee.toLocaleString('ko-KR')}닢)`
+                 : `${SERVICE_LABEL[f.service]} 받기`,
+      onClick: () => {
+        const r = buyService(f);
+        if (!r.ok) return toast(r.reason, 'bad');
+        pushLog(`${city.name}에서 ${f.name}에게 ${SERVICE_LABEL[f.service]}${josa(SERVICE_LABEL[f.service], '을/를')} 샀다`
+              + (r.fee ? ` (−${r.fee.toLocaleString('ko-KR')}닢).` : '.'), 'good');
+        refreshHUD();
+        modal({
+          title: f.name,
+          body: (f.lines?.done ? `<span style="color:#c9b98a">${f.lines.done}</span><br><br>` : '')
+              + serviceResult(r, f),
+          actions: [{ label: '알겠다', onClick: () => after() }],
+        });
+      },
+    });
+  }
+  actions.push({ label: '자리를 뜬다' });
+
+  modal({
+    title: f.name,
+    body: head
         + (SERVICE_LABEL[f.service]
             ? `<br><br><span style="opacity:.75">파는 것 — ${SERVICE_LABEL[f.service]}`
-              + (f.fee ? ` · 값 ${f.fee[0]}~${f.fee[1]}닢` : ' · 값은 받지 않는다')
+              + (f.fee ? ` · 오늘 값 ${fee.toLocaleString('ko-KR')}닢` : ' · 값은 받지 않는다')
               + `</span>`
             : ''),
-    actions: [{ label: '자리를 뜬다' }],
+    actions,
   });
 }
 
@@ -481,14 +738,19 @@ function figureCard() {
       }),
     ]),
     el('div.svc', {}, [
-      ...people.slice(0, 6).map((f) => el('div.ctr-sub', {
+      // 얼굴을 앞에 세운다 — 그림이 오면 `figure:<id>:idle`로 갈리고, 없으면 직업 실루엣이다(BRIEF-NPC §4 ②)
+      ...people.slice(0, 6).map((f) => el('div.ctr-sub.fig-row', {
         title: f.blurb ?? '',
         style: { cursor: 'pointer' },
         onclick: () => talkTo(f),
-        text: `${f.name}`
-            + (JOB_LABEL[f.job] ? ` (${JOB_LABEL[f.job]})` : '')
-            + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
-      })),
+      }, [
+        el('span.fig-por', {}, spriteElTrim(figureSprite(f.id, f.job), 2)),
+        el('span', {
+          text: `${f.name}`
+              + (JOB_LABEL[f.job] ? ` (${JOB_LABEL[f.job]})` : '')
+              + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
+        }),
+      ])),
       // 잘린 줄이 있으면 잘렸다고 말한다 — 아무 말 없이 여섯에서 끊으면 그 항구가 작아 보인다
       people.length > 6
         ? el('div.ctr-sub', {
@@ -517,7 +779,7 @@ function sidePanel() {
     el('div.panel', {}, [
       el('h3', {}, el('span', { text: '선박 정비' })),
       el('div.svc', {}, [
-        svcRow(`선체 수리 (${REPAIR_UNIT}닢/pt)`, `${state.hp}/${state.maxHp}`,
+        svcRow(`선체 수리 (${repairUnit()}닢/pt${repairUnit() < REPAIR_UNIT ? ' · 깎았다' : ''})`, `${state.hp}/${state.maxHp}`,
           '전부 수리', state.hp >= state.maxHp, () => {
             const r = repair(state.maxHp - state.hp);
             if (!r.ok) return toast(r.reason, 'bad');
@@ -548,6 +810,9 @@ function sidePanel() {
     payrollCard(),
     officerCard(),
     contractCard(),
+    endingCard(),
+    waitCard(),
+    holdingCard(),
     harborCard(),
 
     figureCard(),
@@ -561,7 +826,13 @@ function sidePanel() {
        나가는 유일한 길이라, 안 보이면 항구에 갇힌 것처럼 읽힌다. */
     el('button.btn.btn-sail', {
       text: state.crew > 0 ? '⚓  출항하기' : '⚓  선원이 없다 — 술집으로',
-      onclick: () => go(state.crew > 0 ? 'map' : 'tavern'),
+      /* ★ 미뤄 둔 급여일은 **출항이 걷는다.** 짐을 팔 기회는 주되 회피는 안 된다 —
+         그것이 "안 주는 것도 선택이지 회피가 아니다"라는 급여일의 규칙이다. */
+      onclick: () => {
+        if (state.crew <= 0) return go('tavern');
+        if (paydayDue()) return openPayday(() => after());
+        go('map');
+      },
     }),
   ]);
 }

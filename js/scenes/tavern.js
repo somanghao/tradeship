@@ -13,9 +13,9 @@ import { blit } from '../pixel.js';
 import { CITY_BY_ID, TROOPS, CREW_TRAITS } from '../data.js';
 import {
   state, ship, tavernCrews, recruitBand, avgCrewWage, shorthanded,
-  pushLog, hire, HIRE_UNIT, CREW_WAGE,
+  pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf,
 } from '../state.js';
-import { el, overlay, toast, refreshHUD, refreshLog, spriteElTrim } from '../ui.js';
+import { el, overlay, toast, refreshHUD, refreshLog, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
 
 const PANEL = { x: 196, y: 8, w: 194, h: VH - 16 };
@@ -52,7 +52,8 @@ export const tavernScene = {
       // 이미 태운 무리는 자리를 비운다 — 배로 갔기 때문이다
       if (state.hired.includes(b.id)) return;
       const bob = i === hover ? Math.round(Math.sin(t * 4) * 1) : 0;
-      blit(ctx, unitSprite(b.troop, 'idle'),
+      // 이 바다 사람들이다 — 그림이 있는 권역은 그 얼굴로 뜬다(assets/npc/char-sailor-<권역>.png)
+      blit(ctx, unitSprite(b.troop, 'idle', null, regionOf(state.at)),
            seat.x - CW / 2, seat.y - CHAR_FOOT + bob, 1, seat.flip);
     });
 
@@ -127,7 +128,7 @@ function bandCard(b, i) {
     onmouseleave: () => { hover = -1; },
   }, [
     el('div.tav-row', {}, [
-      el('div.tav-por', {}, spriteElTrim(unitSprite(b.troop, 'idle'), 2)),
+      el('div.tav-por', {}, spriteElTrim(unitSprite(b.troop, 'idle', null, regionOf(state.at)), 2)),
       el('div.tav-info', {}, [
         el('div.tav-name', {}, [
           el('b', { text: b.name }),
@@ -214,7 +215,7 @@ function doRecruit(b) {
 
   // 인원이 최소선을 채우는 순간을 짚어 준다 — 이 게임의 첫 관문이기 때문이다
   if (!shorthanded() && state.crew - b.n < (ship().crewMin || 0)) {
-    pushLog(`${ship().name}을(를) 몰 사람이 모였다. 이제 출항할 수 있다.`, 'good');
+    pushLog(`${ship().name}${josa(ship().name, '을/를')} 몰 사람이 모였다. 이제 출항할 수 있다.`, 'good');
   }
   after();
 }

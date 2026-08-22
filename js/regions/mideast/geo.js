@@ -20,6 +20,24 @@
 // 이름표 겹침은 좌표를 정한 뒤 계산했다(한글 글자당 6px · 도시 위쪽에 박스째).
 // 가장 붐비는 곳은 카티프·바레인·줄파르·호르무즈가 줄지어 선 페르시아만 안쪽이라
 // 그 넷은 y를 16~18px씩 층지게 내려 표가 서로를 덮지 않게 했다.
+//
+// ── 18곳 → 28곳으로 늘리며 어디를 채웠나 ─────────────────────
+// 지중해가 28곳인데 이 바다가 18곳이라, 갈고리의 **양쪽 끝과 빈 구간**을 채웠다.
+//   ① **홍해 북단이 통째로 비어 있었다**(x 42~84 · y 0~60). 실제로는 거기가 가장 붐비는
+//      물목이었다 — 오스만의 홍해 함대는 수에즈에서 지었고, 상이집트의 밀과 예멘의 커피는
+//      쿠세이르에서 나일을 건넜고, 시나이의 우물은 엘토르에 있었다. 셋을 그 빈자리에 넣었다.
+//   ② **아라비아 남안**은 아덴에서 마스카트까지 두 점(아덴·시흐르)뿐이라 사흘씩 뭍이 안 보였다.
+//      유향의 본산 도파르(살랄라)와, 그 앞바다의 소코트라를 넣어 징검다리를 놓았다.
+//   ③ **오만 해안**은 마스카트 한 점이 조선소·대추야자·구리를 다 짊어지고 있었다.
+//      수르(다우 조선소)와 소하르(바티나의 구리)로 갈랐다.
+//   ④ **페르시아 쪽 물가에 항구가 하나도 없었다** — 이스파한이 호르무즈에 낙타로만 붙어 있었다.
+//      곰브룬(반다르아바스)과 반다르콩을 넣어 이란 남안을 바다에 붙였다.
+// ★ 소코트라는 아프리카 권역이 "홍해·아라비아 교역권이라 중동이 가져갈 것"이라며 비워 둔
+//   자리다(`content/regions/africa-evidence.json`). 마흐라 술탄국의 섬이라 깃발도 'oman'이다.
+// ★ 좌표는 새로 넣은 열 곳 모두 기존 도시와 **20px 이상** 떨어뜨렸고(가장 가까운 쌍이
+//   소하르~호르무즈 16px), 이름표 박스도 28곳 전부를 다시 계산해 겹치는 쌍이 없다.
+// ★ `assets/map/mideast.png`는 아직 18곳 시절 그림이다 — `tools/gen-map-png.mjs`를
+//   다시 돌려야 새 항구 앞바다가 열린다(다른 권역과 함께 뽑히므로 이 작업에서는 안 돌렸다).
 
 /** 도시의 지리·외형. 필드 뜻은 `js/regions/mediterranean/geo.js`가 정본이다.
     flag  — 이 바다에는 오스만·맘루크·호르무즈 왕국·오만 아랍·사파비가 뒤섞여 있다.
@@ -36,6 +54,20 @@
            아니다. 게다가 아라비아에는 배를 지을 나무가 없어 티크를 인도에서 실어 왔다 —
            "최상급 배는 여기서 못 짓는다"가 이 바다의 성격이다. */
 export const CITIES = [
+  // ── 홍해 북단(수에즈 만·이집트 쪽 물가) ────────────────────
+  // 수에즈는 항구라기보다 **조선소**다. 오스만은 여기서 홍해 함대를 지어 인도양으로 내려보냈고
+  // (1538년 아덴·디우 원정), 그 배의 나무·못·대포는 한 조각도 이 땅에서 안 났다 —
+  // 아나톨리아에서 배로 알렉산드리아까지, 거기서 낙타로 카이로를 거쳐 사막을 넘어 왔다.
+  // 그 사실이 이 항구의 성격 전부다(그래서 아래 trade.js에서 목재를 세계에서 가장 비싸게 산다).
+  { id: 'suez',     name: '수에즈',     area: '이집트',       style: 'levant',  x: 44,  y: 24,  flag: 'ottoman', seed: 4119, size: 2, industry: 2 },
+  // 엘토르(알투르)는 시나이 서안의 **우물**이다. 홍해 북쪽은 물이 없어 배가 여기서 물을 실었고,
+  // 시나이 수도원으로 오르는 순례자가 여기서 내렸다. 대추야자밭과 사브카(염전)가 딸려 있다.
+  { id: 'tur',      name: '엘토르',     area: '시나이',       style: 'levant',  x: 60,  y: 34,  flag: 'ottoman', seed: 4120, size: 1, industry: 1 },
+  // 쿠세이르는 **나일이 홍해에 가장 가까워지는 자리**다. 케나에서 사막을 닷새 걸어 여기 닿으면
+  // 상이집트의 밀이 배에 올라 지다로 건너가 메카를 먹였고, 예멘에서 올라온 커피는 반대로
+  // 여기서 낙타에 올라 나일로 넘어갔다. 상이집트·마그레브 순례자의 승선항이기도 했다.
+  { id: 'qusayr',   name: '쿠세이르',   area: '상이집트',     style: 'levant',  x: 44,  y: 78,  flag: 'ottoman', seed: 4121, size: 1, industry: 1 },
+
   // ── 홍해 서안(아프리카 쪽) ─────────────────────────────────
   // 수아킨은 산호섬 위에 통째로 지어진 항구다. 산호 미로를 지나야 들어가는 자리라
   // 적이 못 들어오는 대신 큰 배도 못 들어온다. 마사와는 에티오피아 고원의 바깥문.
@@ -48,6 +80,11 @@ export const CITIES = [
   // 거기서 짐을 내려 작은 배나 낙타로 넘겼다. 이 사실이 이 권역의 뼈대다.
   { id: 'yanbu',    name: '얀부',       area: '히자즈',       style: 'levant',  x: 62,  y: 66,  flag: 'ottoman', seed: 4103, size: 1, industry: 1 },
   { id: 'jeddah',   name: '지다',       area: '히자즈',       style: 'swahili', x: 76,  y: 108, flag: 'ottoman', seed: 4104, size: 3, industry: 1 },
+  // 루하이야(알루하이야)는 모카 북쪽 티하마 평야의 커피 적출항이다. 예멘 커피는 고원에서
+  // 바이트알파키흐 시장으로 내려와 모카·루하이야로 갈렸는데, **홍해를 거슬러 올라가는 배는
+  // 모카까지 내려가지 않고 여기서 실었다** — 북풍이 부는 바다에서 하루 이틀이 큰 차이였다.
+  // 산호석으로 지은 흰 도시라 style도 지다·수아킨과 같다.
+  { id: 'luhayya',  name: '루하이야',   area: '예멘 티하마',  style: 'swahili', x: 82,  y: 142, flag: 'ottoman', seed: 4122, size: 1, industry: 1 },
   { id: 'mokha',    name: '모카',       area: '예멘',         style: 'levant',  x: 86,  y: 168, flag: 'ottoman', seed: 4105, size: 2, industry: 1 },
 
   // ── 아덴만·하드라마우트 ────────────────────────────────────
@@ -56,12 +93,42 @@ export const CITIES = [
   { id: 'aden',     name: '아덴',       area: '예멘',         style: 'levant',  x: 112, y: 186, flag: 'ottoman', seed: 4106, size: 3, industry: 2 },
   { id: 'shihr',    name: '시흐르',     area: '하드라마우트', style: 'levant',  x: 176, y: 190, flag: 'oman',  seed: 4107, size: 1, industry: 1 },
 
+  // ── 도파르·마흐라(향의 해안) ───────────────────────────────
+  // 소코트라는 **알로에와 용혈수의 섬**이다(포르투갈이 1507년에 요새를 세운 그 섬).
+  // 마흐라 술탄국이 대륙의 키슌에서 다스렸고, 인도양을 건너는 배가 계절풍을 기다리며
+  // 물을 싣던 자리다. 밭이 없어 곡물은 전부 들여왔다.
+  { id: 'socotra',  name: '소코트라',   area: '마흐라',       style: 'swahili', x: 140, y: 208, flag: 'oman',  seed: 4123, size: 1, industry: 1 },
+  // 살랄라(자파르)는 **유향나무가 자라는 땅의 심장**이다. 뒤편 네지드 언덕의 보스웰리아가
+  // 여기로 내려왔고, 이븐 바투타는 "자파르에서 말이 인도로 실려 나간다"고 적었다.
+  // 계절풍이 유일하게 비를 뿌리는 아라비아라 소와 낙타를 길렀다.
+  // ★ 유향 최저가(0.48)는 시흐르에 이미 근거와 함께 배정돼 있어 건드리지 않았다 —
+  //   여기는 0.50으로 반 칸 위에 둔다. 자세한 이유는 trade.js의 salalah 주석에.
+  { id: 'salalah',  name: '살랄라',     area: '도파르',       style: 'levant',  x: 208, y: 192, flag: 'oman',  seed: 4124, size: 2, industry: 1 },
+
   // ── 오만·페르시아만 ────────────────────────────────────────
   // 마스카트는 이 바다에서 배를 가장 잘 짓던 곳이다(수르의 조선소). 호르무즈는
   // 물 한 방울 안 나는 민둥섬인데도 해협에 앉았다는 이유만으로 왕국이 됐다 —
   // 먹을 것과 마실 물까지 전부 배로 실어 왔다.
   { id: 'muscat',   name: '마스카트',   area: '오만',         style: 'levant',  x: 292, y: 168, flag: 'oman',  seed: 4108, size: 2, industry: 2 },
+  // 수르는 그 조선소가 실제로 있던 마을이다 — 마스카트 blurb이 말하는 "수르의 조선소"가
+  // 여기다. 다우를 짜 매던 곳이라 이 권역의 상한(2)을 그대로 주었고, 대신 **나무가 없다** —
+  // 말라바르에서 티크를 실어 와야 배를 짓는다(trade.js에서 티크를 세계에서 가장 비싸게 산다).
+  { id: 'sur',      name: '수르',       area: '오만 동안',    style: 'levant',  x: 300, y: 186, flag: 'oman',  seed: 4125, size: 1, industry: 2 },
+  // 소하르는 바티나 해안의 옛 큰 항구다(10세기에는 "중국으로 가는 복도"라 불렸다).
+  // 이 시대에는 호르무즈 왕국에 조공을 바치는 작은 항구로 내려앉았지만, 뒤편 산의
+  // **구리**(옛 이름 마간 = 구리의 땅)와 대추야자밭은 그대로 있었다.
+  { id: 'sohar',    name: '소하르',     area: '바티나',       style: 'levant',  x: 313, y: 150, flag: 'oman',  seed: 4126, size: 2, industry: 1 },
   { id: 'hormuz',   name: '호르무즈',   area: '해협',         style: 'levant',  x: 322, y: 134, flag: 'hafsid',  seed: 4109, size: 3, industry: 2 },
+  // 곰브룬 = 반다르아바스. **호르무즈가 무너지고 그 자리를 물려받은 항구**다(사파비 아바스 1세).
+  // 이란 고원의 생사가 여기로 내려와 유럽 상관에 넘어갔고, 시라즈의 포도주도 여기서 실렸다.
+  // 이름을 '곰브룬'으로 둔 것은 당대 유럽 상인들이 그렇게 불렀기 때문이고, 이름표가
+  // 호르무즈와 겹치지 않는 길이이기도 하다. 깃발은 사파비다 — 이 바다에서 페르시아가
+  // 처음으로 물가에 서는 자리다.
+  { id: 'gombroon', name: '곰브룬',     area: '이란 남안',    style: 'levant',  x: 352, y: 130, flag: 'safavid', seed: 4127, size: 2, industry: 1 },
+  // 반다르콩은 라리스탄의 항구다. 호르무즈·곰브룬의 세관을 피한 짐이 여기로 새 나갔고
+  // (관세를 거의 안 물렸다 — trade.js의 TARIFF_OVERRIDE 참조), 라르·케르만에서 내려온
+  // 융단과 앞바다의 진주가 여기서 다우에 올랐다.
+  { id: 'kung',     name: '반다르콩',   area: '라리스탄',     style: 'levant',  x: 306, y: 98,  flag: 'safavid', seed: 4128, size: 1, industry: 1 },
   { id: 'julfar',   name: '줄파르',     area: '오만 해안',    style: 'levant',  x: 300, y: 118, flag: 'oman',  seed: 4110, size: 1, industry: 1 },
   { id: 'bahrain',  name: '바레인',     area: '진주 어장',    style: 'levant',  x: 276, y: 102, flag: 'hafsid',  seed: 4111, size: 2, industry: 1 },
   { id: 'qatif',    name: '카티프',     area: '알하사',       style: 'levant',  x: 252, y: 84,  flag: 'hafsid',  seed: 4112, size: 1, industry: 1 },
@@ -85,20 +152,47 @@ export const CITIES = [
      아덴~몸바사 · 호르무즈~캄베이 · 호르무즈~모잠비크)은 여기가 아니라
      `js/regions/index.js: OCEAN_LANES`에 이미 그어져 있다. */
 export const ROUTES = [
+  // 수에즈 만 — 홍해의 막다른 북쪽 끝. 폭이 좁고 산호가 양안을 메워 낮에만 다녔다.
+  ['suez', 'tur'],
+  ['tur', 'qusayr'],
+  // 쿠세이르에서 건너가는 두 선 — 상이집트의 밀이 성지로 넘어가던 길이다
+  ['qusayr', 'yanbu'],
+  ['qusayr', 'jeddah'],
   // 홍해 — 얀부·지다는 아라비아 쪽 성지 항로, 수아킨·마사와는 건너편 아프리카 쪽
   ['yanbu', 'jeddah'],
   ['jeddah', 'suakin'],
+  ['jeddah', 'luhayya'],
   ['jeddah', 'mokha'],
   ['suakin', 'massawa'],
+  ['massawa', 'luhayya'],
   ['massawa', 'mokha'],
+  ['luhayya', 'mokha'],
   // 바브엘만데브 — 홍해가 대양으로 나가는 유일한 문
   ['mokha', 'aden'],
   // 남아라비아 해안 — 뭍이 사흘씩 안 보이는 구간
   ['aden', 'shihr'],
   ['shihr', 'muscat'],
+  // 소코트라 — 대륙에서 떨어진 섬. 아덴과 마흐라 해안 양쪽에 붙는다.
+  ['aden', 'socotra'],
+  ['shihr', 'socotra'],
+  // 향의 해안 — 시흐르에서 도파르로, 도파르에서 오만 동안으로. 시흐르~마스카트의
+  // 긴 외해 구간(8.0)을 피해 가는 대신 남서 계절풍철엔 파도가 부두를 덮는 길이다.
+  ['shihr', 'salalah'],
+  ['salalah', 'sur'],
+  ['sur', 'muscat'],
+  // 오만 바티나 해안 — 마스카트에서 해협까지 뭍을 끼고 올라간다
+  ['muscat', 'sohar'],
+  ['sohar', 'hormuz'],
+  ['sohar', 'julfar'],
   // 호르무즈 해협 — 페르시아만으로 들어가는 유일한 문
   ['muscat', 'hormuz'],
+  ['hormuz', 'gombroon'],
+  ['hormuz', 'kung'],
   ['hormuz', 'julfar'],
+  // 걸프 안의 이란 쪽 물가 — 곰브룬에서 콩까지가 페르시아의 해안선이다.
+  // 만의 표층류가 이란 쪽을 타고 반시계로 도니 실제 뱃길도 이렇게 갈렸다.
+  ['gombroon', 'sohar'],
+  ['bahrain', 'kung'],
   ['julfar', 'bahrain'],
   ['bahrain', 'qatif'],
   ['bahrain', 'basra'],
@@ -108,6 +202,12 @@ export const ROUTES = [
   // 올라가던 옛 길이다. 다마스쿠스~얀부는 시리아 하지 대상로(다르브 알하지 앗샤미)로,
   // 해마다 순례 행렬이 오가던 길이라 짐도 같이 움직였다.
   ['jeddah', 'cairo'],
+  // 수에즈~카이로 사흘 길. ★ 이 선 때문에 **카이로만 두 문을 갖는 도시가 된다**(다른
+  //   뭍의 시장은 항구 하나에 붙은 막다른 주머니다). 예외를 둔 이유는 수에즈 조선소가
+  //   그 길로만 살았기 때문이다 — 나무·못·대포·밀이 전부 카이로에서 낙타로 넘어왔다.
+  //   덕분에 홍해 북단이 "지다까지 내려가지 않고도 닿는 뒷문"이 되어 항로가 한 줄에서
+  //   고리로 바뀐다(지다 → 카이로 → 수에즈 → 엘토르 → 쿠세이르 → 지다).
+  ['suez', 'cairo'],
   ['yanbu', 'damascus'],
   ['damascus', 'aleppo'],
   ['aleppo', 'baghdad'],
@@ -128,19 +228,50 @@ export const ROUTES = [
 
    null = 해적 개념이 없는 구간(육로 대상로). 대신 뭍의 사고가 난다. */
 export const ROUTE_RISK = {
+  // 수에즈 만 — 폭이 20해리도 안 되는 물길인데 양안이 암초다. 뭍이 늘 보이지만
+  // 밤에 못 다니고 맞바람이라 며칠씩 갇힌다. 내해로 쳐 이 바다의 아래쪽에 둔다.
+  'suez|tur': 4.0,
+  'qusayr|tur': 4.5,
+  // 쿠세이르에서 아라비아 쪽으로 홍해를 가로지르는 두 선 — 중앙의 산호 사주를 넘는다.
+  // 지다행이 더 길어 반 칸 높다.
+  'qusayr|yanbu': 5.5,
+  'jeddah|qusayr': 6.0,
   // 홍해 — 산호초와 무풍. 짧은 뜀뛰기라 뭍은 늘 가깝지만 좌초가 잦다.
   'jeddah|yanbu': 4.5,
   'jeddah|suakin': 5.5,
+  'jeddah|luhayya': 6.0,
   'jeddah|mokha': 6.0,
   'massawa|suakin': 5.0,
+  'luhayya|massawa': 5.5,
+  'luhayya|mokha': 4.5,
   'massawa|mokha': 5.5,
   // 바브엘만데브 — 좁은 물목에 페림섬의 여울, 조류가 세다
   'aden|mokha': 7.0,
   // 아덴만·아라비아해 — 여기서부터 대양이다. 소코트라 앞은 배를 터는 자들이 있었다.
   'aden|shihr': 6.5,
   'muscat|shihr': 8.0,
+  // 소코트라 — 뭍에서 떨어진 섬이라 계절풍이 바뀌는 철엔 표류가 잦다. 아덴만 바깥의
+  // 외해값(6.5)에 섬으로 들어가는 몫을 얹었고, 마흐라 해안 쪽이 더 길어 반 칸 높다.
+  'aden|socotra': 7.0,
+  'shihr|socotra': 7.5,
+  // 향의 해안 — 도파르까지는 뭍을 끼고 가지만 남서 계절풍철엔 항구가 통째로 닫힌다.
+  // 살랄라~수르는 쿠리아무리아·마시라의 무인 해안을 닷새 지나는 구간이라 시흐르~마스카트와
+  // 같은 자리에 둔다(8.0). "긴 외해를 한 번에 건너느냐, 나눠 가느냐"의 선택이 된다.
+  'salalah|shihr': 6.5,
+  'salalah|sur': 8.0,
+  'muscat|sur': 4.5,
+  // 오만 바티나 해안 — 뭍을 끼고 가는 짧은 뜀뛰기. 이 바다에서 가장 순한 구간이다.
+  'muscat|sohar': 4.0,
+  'hormuz|sohar': 5.0,
+  'julfar|sohar': 4.5,
   // 호르무즈 해협 — 모두가 지나야 하는 문. 조류가 세고 통항료를 뜯긴다.
   'hormuz|muscat': 6.5,
+  // 해협 안의 이란 쪽 — 곰브룬은 호르무즈 앞바다를 건너면 되고(반나절),
+  // 콩까지는 라리스탄 연안을 하루씩 짚어 올라간다.
+  'gombroon|hormuz': 4.0,
+  'hormuz|kung': 5.5,
+  'gombroon|sohar': 6.0,
+  'bahrain|kung': 5.5,
   // 페르시아만 안쪽 — 얕고 좁다. 진주 어장의 모래톱이 해마다 자리를 옮긴다.
   'hormuz|julfar': 5.0,
   'bahrain|julfar': 5.5,
@@ -149,6 +280,7 @@ export const ROUTE_RISK = {
   'basra|qatif': 5.0,
   // 대상로 — 배가 다니는 길이 아니다
   'cairo|jeddah': null,
+  'cairo|suez': null,
   'damascus|yanbu': null,
   'aleppo|damascus': null,
   'aleppo|baghdad': null,
@@ -163,12 +295,24 @@ export const ROUTE_RISK = {
    페르시아만 안쪽은 샤티알아랍의 강물과 샤말이 함께 아래로 밀어내므로
    바스라에서 나오기는 쉽고 올라가기는 어렵다. */
 export const CURRENTS = {
+  'suez|tur':       { from: 'suez',    push: 0.11 },   // 수에즈 만은 일 년 내내 북풍 — 올라가는 배가 가장 고생한다
+  'qusayr|tur':     { from: 'tur',     push: 0.09 },
+  'qusayr|yanbu':   { from: 'qusayr',  push: 0.06 },   // 가로지르는 길이라 항상풍의 몫이 작다
+  'jeddah|qusayr':  { from: 'qusayr',  push: 0.07 },
   'jeddah|yanbu':   { from: 'yanbu',   push: 0.10 },   // 홍해 북쪽의 항상풍 — 내려가는 길만 쉽다
+  'jeddah|luhayya': { from: 'jeddah',  push: 0.08 },
+  'luhayya|mokha':  { from: 'luhayya', push: 0.06 },
   'jeddah|mokha':   { from: 'jeddah',  push: 0.08 },
   'massawa|suakin': { from: 'suakin',  push: 0.07 },
   'aden|mokha':     { from: 'aden',    push: 0.06 },   // 증발한 만큼 바깥 물이 홍해로 빨려 든다
+  'aden|socotra':   { from: 'aden',    push: 0.06 },   // 남서 계절풍철엔 아덴만의 물이 동쪽으로 쏟아져 나간다
   'muscat|shihr':   { from: 'shihr',   push: 0.08 },   // 남서 계절풍철의 남아라비아 연안류
+  'salalah|shihr':  { from: 'shihr',   push: 0.07 },   // 같은 연안류 — 서에서 동으로 민다
+  'salalah|sur':    { from: 'salalah', push: 0.08 },
+  'muscat|sur':     { from: 'sur',     push: 0.06 },   // 라스알하드를 돌아 해협 쪽으로
   'hormuz|muscat':  { from: 'muscat',  push: 0.07 },   // 해협을 통해 만 안으로 드는 표층류
+  'hormuz|sohar':   { from: 'sohar',   push: 0.05 },
+  'hormuz|kung':    { from: 'hormuz',  push: 0.06 },   // 만 안으로 든 물은 이란 쪽을 타고 북서로 흐른다
   'hormuz|julfar':  { from: 'hormuz',  push: 0.05 },   // 만 안의 반시계 순환
   'bahrain|julfar': { from: 'julfar',  push: 0.06 },
   'bahrain|basra':  { from: 'basra',   push: 0.06 },   // 강물과 샤말이 함께 아래로 민다

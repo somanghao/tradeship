@@ -3,6 +3,7 @@
   "_이것은 무엇인가": "좌표(js/regions/*/geo.js)가 데이터인 것처럼, 그 좌표로 그린 지도도 파일로 굳혀 둔다. 매 부팅마다 다시 그릴 이유가 없다 — 좌표가 고정이면 그림도 고정이다. 이 PNG는 tools/gen-map-png.mjs가 게임 코드 그대로 뽑은 것이라 화면과 어긋날 수 없다.",
   "_좌표를 옮기면": "tools/gen-map-png.mjs 를 다시 돌린다. 안 돌리면 항구 점이 뭍에 앉는다 — tools/check-map.py --all 이 그것을 잡는다(항로가 육지를 가로지르는가/항구에 물이 닿는가).",
   "_사람이 그린 지도가 오면": "같은 파일 이름으로 덮는다. 코드는 한 줄도 안 고친다. 검수는 같은 tools/check-map.py --all.",
+  "_키는 코드가 부르는 것이어야 한다": "여기 적기만 하면 로더는 '갈아 끼웠다'고 말하지만, 아무 데서도 굽지 않는 키는 화면에 안 나온다. 인물 키의 <id>는 npc-figures.js의 id(예 eas-ningbo-kanhe), 해적은 npc-pirates.js의 id(예 wangzhi)다. 그 화면에서 실제로 구워진 키는 preview.html이나 pixel.js: knownKeys()로 확인한다.",
   "sprites": {
     "scene:map:mediterranean": "map/mediterranean.png",
     "scene:map:atlantic": "map/atlantic.png",
@@ -12,7 +13,18 @@
     "scene:map:seasia": "map/seasia.png",
     "scene:map:eastasia": "map/eastasia.png",
     "scene:map:caribbean": "map/caribbean.png",
-    "scene:map:southamerica": "map/southamerica.png"
+    "scene:map:southamerica": "map/southamerica.png",
+    "scene:port:latin:1101": "ports/venezia.webp",
+    "scene:port:hellenic:2111": "ports/istanbul.webp",
+    "scene:port:levant:2313": "ports/alexandria.webp",
+    "scene:port:hellenic:2010": "ports/rodos.webp",
+    "scene:port:levant:1808": "ports/algiers.webp",
+    "scene:port:latin:2616": "ports/malta.webp",
+    "char:sailor:idle:eastasia": "npc/char-sailor-eastasia.png",
+    "char:sailor:idle:mediterranean": "npc/char-sailor-mediterranean.png",
+    "figure:eas-ningbo-kanhe:idle": "npc/figure-shibakan-idle.png",
+    "pirate:wangzhi:idle": "npc/pirate-wangzhi-idle.png",
+    "char:amy:idle:teal": "npc/char-amy-idle.png"
   },
-  "version": "20260815164241"
+  "version": "20260818131234"
 }

@@ -4,12 +4,13 @@ import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
-  ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS,
+  ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
+  HOLDINGS, HOLDING_KEYS, HOLDING, YARD_UPGRADE, YARD, ENDING,
   laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
   FOES_BY_REGION,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL, PIRATE_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
-  START_GOLD, REPAIR_UNIT, HIRE_UNIT,
+  START_GOLD, START_PORTS, DEFAULT_START, REPAIR_UNIT, HIRE_UNIT,
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
   MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
@@ -20,13 +21,14 @@ import {
   USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW,
   SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR, SPOILS_GOODS_PER_CREW, SPOILS_GOODS_CAP,
 } from './data.js';
+import { josa } from './josa.js';   // leaf 유틸 — 화면 헬퍼(ui.js)가 아니라 모듈 방향을 안 깬다
 
 /* 튜닝 상수를 그대로 내보낸다 — **호출부는 예전처럼 `state.js`에서 가져와도 된다.**
    값의 정본은 `data.js`로 옮겼지만(로직 파일에서 밸런스를 찾지 않게), 이미 30곳 넘는
    import를 한꺼번에 고치면 그 커밋의 diff에서 정작 중요한 변화가 묻힌다.
    새로 쓰는 코드는 `data.js`에서 직접 가져오는 쪽이 뜻이 분명하다. */
 export {
-  START_GOLD, REPAIR_UNIT, HIRE_UNIT,
+  START_GOLD, START_PORTS, DEFAULT_START, REPAIR_UNIT, HIRE_UNIT,
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
   MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
@@ -71,6 +73,37 @@ export const state = {
      `book()` 하나로만 적는다(적는 자리를 흩뿌리면 반드시 빠뜨린다). */
   ledger: null,
   npcs: [],                  // 저 혼자 도는 상인·해적 (world.js가 굴린다)
+
+  /* ── 항구 인물에게 산 것 ──────────────────────────────────
+     명부(`npc-figures.js`)의 71명이 `service`를 하나씩 갖고 있는데, 오래도록 **화면에
+     값까지 띄워 놓고 살 수는 없었다**(모달의 단추가 '자리를 뜬다' 하나였다).
+     소설이 이 바다들을 *"제도를 인물로 보여 준다"*로 설계했으므로 그 문지기가 눌리지 않으면
+     제도가 통째로 안 굴러간다 — `UNIMPLEMENTED.md` B-1이 그것이다.
+     ★ 여기 담기는 것은 **기한이 있는 혜택**뿐이다. 사람은 명부에 있고, 산 것만 여기 쌓인다. */
+  /* ── 악명 ────────────────────────────────────────────────
+     ★ 상선을 덮치는 것이 **무역보다 스무 배** 남는데 대가가 없었다 — 한 척에 금화 11,557 +
+     전리품선 매각 13,200인데, 같은 판의 88일 무역 이익이 8,000이었다(완주 플레이 ISSUES #22).
+     그러면 최적 전략이 *"무역선을 사서 상선만 턴다"*가 되고, 그건 이 게임이 만들려는 이야기가 아니다.
+     명부에는 이미 거절 대사가 있었다 — 「스피놀라 명반선」의 *"산 조르조 은행이 이 배를 보증했소.
+     털면 제노바 전체와 싸우는 것이오"* — 그런데 **털어도 아무 일도 안 났다.**
+     깃발마다 쌓이고, 그 깃발의 항구에서 **세가 오르고** 그 세력이 **나를 사냥한다**. */
+  infamy: {},                // 깃발 → 악명 점수
+
+  /* ── 거점과 보관 화물 (A-1) ────────────────────────────────
+     `holdings[cityId] = { rental:true, warehouse:true, … , paid: 마지막 유지비 낸 날 }`
+     `stored[cityId]  = { goodId: 수량 }` — **여기 있는 짐은 시장을 누르지 않는다.** */
+  holdings: {},
+  stored: {},
+  /* 공업력 승급(A-2) — `yards[cityId] = { boost, building: { to, until } }` */
+  yards: {},
+  ended: 0,                  // 끝을 본 날 (0이면 아직)
+  boons: {
+    permit: {},              // 권역 → 만료일. 그 바다에서 세를 덜 문다(감합·카르타스)
+    smuggle: {},             // 도시 → 만료일. 그 항구에서 세관을 피한다
+    repair: {},              // 도시 → 만료일. 그 항구 선장인이 수리를 깎아준다
+    reroll: {},              // 도시 → 갈아 준 주문의 slot. 큰 일감을 다시 물어온다
+    loan: null,              // { principal, owed, due } — 갚을 때까지 하나만
+  },
   known: new Set(['venezia']),
   everOwned: new Set(['hulk']),   // 한 번이라도 몰아 본 선종 — 상위 선박 해금 조건(SHIPS[].requires)
   log: [],
@@ -239,14 +272,17 @@ export const isOceanGate = (cityId) => OCEAN_GATE.has(cityId);
 
 /** n개를 한 번에 거래할 때의 평균 벌점 (0~cap) */
 export function marketDepth(cityId) {
-  const base = MARKET.depthPerSize * CITY_BY_ID[cityId].size;
-  return OCEAN_GATE.has(cityId) ? Math.round(base * MARKET.gateDepth) : base;
+  let base = MARKET.depthPerSize * CITY_BY_ID[cityId].size;
+  // 상관을 연 항구는 소화하는 물량이 는다 — 내 이름으로 사고파는 자리가 생겼기 때문이다
+  if (hasHolding('factory', cityId)) base *= 1 + (HOLDINGS.factory.depthUp ?? 0);
+  return OCEAN_GATE.has(cityId) ? Math.round(base * MARKET.gateDepth) : Math.round(base);
 }
 
 export function impactFactor(cityId, goodId, n = 0) {
   const p = pressureOf(cityId, goodId) + Math.max(0, n - 1) / 2;
   const raw = Math.min(MARKET.cap, (MARKET.impact * p) / marketDepth(cityId));
-  return raw * (1 - officerPerk('impactOff'));   // 부관이 물량을 나눠 넘긴다
+  // 부관이 물량을 나눠 넘기고, 경강상인은 나눠 넘길 자리를 안다
+  return raw * (1 - Math.min(0.75, officerPerk('impactOff') + originPerk('impactOff')));
 }
 
 export function addPressure(cityId, goodId, n) {
@@ -299,7 +335,441 @@ export function baseTariff(cityId = state.at) {
 
 /** 지금 우리가 실제로 무는 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
 export function tariffRate(cityId = state.at) {
-  return baseTariff(cityId) * (1 - officerPerk('tariffOff'));
+  /* 부관이 깎고, **문서와 밀수가 또 깎는다.** 셋은 곱이 아니라 합으로 두되 바닥을 둔다 —
+     감합·카르타스를 쥐고 밀수업자까지 끼면 세가 0이 되어 제도가 사라지기 때문이다.
+     제도는 피해 갈 수 있어야 하지만 **없어지면 안 된다**(그것이 이 세계의 이야기다). */
+  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + boonTariffOff(cityId);
+  /* 악명은 **깎는 것들과 반대 방향**으로 붙는다 — 문서를 쥐고도 털고 다니면 그 문서가 무색해진다. */
+  const rate = baseTariff(cityId) * Math.max(BOON.tariffFloor, 1 - off) * (1 + infamyTariffUp(cityId));
+  /* 상관은 **비율이 아니라 자릿수**를 깎는다(−1.5%p) — 제 이름으로 통관하기 때문이다.
+     그래도 바닥(1%)은 있다. 제도는 피해 갈 수 있되 없어지지 않는다. */
+  /* 부두를 넓힌 항구는 세가 조금 오른다 — 늘어난 것을 관이 안 볼 리 없다(등급당 +0.5%p) */
+  const yardUp = yardBoost(cityId) * YARD.tariffPerBoost;
+  if (!hasHolding('factory', cityId)) return rate + yardUp;
+  return Math.max(HOLDING.tariffFloorPt, rate - (HOLDINGS.factory.tariffCut ?? 0)) + yardUp;
+}
+
+/** 문서(permit)와 밀수(smuggle)가 깎아 주는 몫 — 기한이 지난 것은 안 센다. */
+export function boonTariffOff(cityId = state.at) {
+  const b = state.boons ?? {};
+  let off = 0;
+  const rid = REGION_OF_CITY[cityId];
+  if (rid && (b.permit?.[rid] ?? 0) > state.day) off += BOON.permitTariffOff;
+  if ((b.smuggle?.[cityId] ?? 0) > state.day) off += BOON.smuggleTariffOff;
+  return off;
+}
+
+/* ── 거점 (A-1) ────────────────────────────────────────────────
+   후반에 금화가 갈 곳. **자산이면서 고정비**라, 사고 나면 더 벌어야 지킬 수 있다. */
+
+/** 이 항구에 그 거점이 있나 */
+export const hasHolding = (kind, cityId = state.at) => !!state.holdings?.[cityId]?.[kind];
+
+/** 그 거점의 값 — 도시 규모(또는 공업력)에 따라 다르다 */
+export function holdingPrice(kind, cityId = state.at) {
+  const h = HOLDINGS[kind];
+  const c = CITY_BY_ID[cityId];
+  if (!h || !c) return Infinity;
+  if (h.priceByIndustry != null) return h.priceBase + industryOf(cityId) * h.priceByIndustry;
+  return h.priceBase + (c.size ?? 1) * (h.priceBySize ?? 0);
+}
+
+/** 살 수 있나 — 앞 단계가 있어야 하는 것들이 있다(창고 없이 상관을 열 수 없다) */
+export function canBuyHolding(kind, cityId = state.at) {
+  const h = HOLDINGS[kind];
+  if (!h) return { ok: false, reason: '그런 거점은 없다' };
+  if (hasHolding(kind, cityId)) return { ok: false, reason: '이미 있다' };
+  if (h.requires && !hasHolding(h.requires, cityId)) {
+    const need = HOLDINGS[h.requires].name;
+    return { ok: false, reason: `${need}${josa(need, '이/가')} 먼저다` };
+  }
+  if (kind === 'dock' && industryOf(cityId) >= HOLDING.industryCap) {
+    return { ok: false, reason: `이 항구는 이미 공업력 ${HOLDING.industryCap}이다` };
+  }
+  const price = holdingPrice(kind, cityId);
+  if (price > state.gold) return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  return { ok: true, price };
+}
+
+export function buyHolding(kind, cityId = state.at) {
+  const r = canBuyHolding(kind, cityId);
+  if (!r.ok) return r;
+  state.gold -= r.price;
+  book('outgo', 'ships', r.price);
+  const m = (state.holdings[cityId] ??= { paid: state.day, spent: 0 });
+  m[kind] = true;
+  m.spent = (m.spent ?? 0) + r.price;      // 유지비는 **들인 돈 전체**에 붙는다
+  pushLog(`${CITY_BY_ID[cityId].name}에 ${HOLDINGS[kind].name}${josa(HOLDINGS[kind].name, '을/를')} 두었다`
+        + ` (−${r.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: r.price };
+}
+
+/** 이 항구에서 보관할 수 있는 칸 */
+export function storeCap(cityId = state.at) {
+  const m = state.holdings?.[cityId];
+  if (!m) return 0;
+  let cap = 0;
+  for (const k of HOLDING_KEYS) if (m[k]) cap = Math.max(cap, HOLDINGS[k].store ?? 0);
+  return cap;
+}
+
+export const storedUsed = (cityId = state.at) =>
+  Object.values(state.stored?.[cityId] ?? {}).reduce((a, b) => a + b, 0);
+
+/** 배에서 창고로 — **여기 둔 짐은 시장을 누르지 않는다**(`impact` 누적 없음) */
+export function storeGoods(goodId, qty, cityId = state.at) {
+  const have = state.cargo[goodId] || 0;
+  const room = storeCap(cityId) - storedUsed(cityId);
+  const n = Math.min(qty, have, room);
+  if (n <= 0) return { ok: false, reason: room <= 0 ? '창고가 찼다' : '실은 것이 없다' };
+  state.cargo[goodId] = have - n;
+  if (!state.cargo[goodId]) delete state.cargo[goodId];
+  const m = (state.stored[cityId] ??= {});
+  m[goodId] = (m[goodId] || 0) + n;
+  return { ok: true, n };
+}
+
+/** 창고에서 배로 */
+export function takeGoods(goodId, qty, cityId = state.at) {
+  const m = state.stored?.[cityId] ?? {};
+  const have = m[goodId] || 0;
+  const n = Math.min(qty, have, cargoFree());
+  if (n <= 0) return { ok: false, reason: have <= 0 ? '창고에 없다' : '화물칸이 찼다' };
+  m[goodId] = have - n;
+  if (!m[goodId]) delete m[goodId];
+  state.cargo[goodId] = (state.cargo[goodId] || 0) + n;
+  return { ok: true, n };
+}
+
+/** 30일마다 무는 거점 유지비 — 못 내면 압류된다 */
+export function holdingUpkeepDue(cityId) {
+  const m = state.holdings?.[cityId];
+  if (!m) return 0;
+  const days = state.day - (m.paid ?? state.day);
+  if (days < HOLDING.upkeepEvery) return 0;
+  const periods = Math.floor(days / HOLDING.upkeepEvery);
+  return Math.round((m.spent ?? 0) * HOLDING.upkeepRate * (HOLDING.upkeepEvery / 360) * periods);
+}
+
+/** 이 항구의 거점 유지비를 치른다(항구에 들어올 때). 못 내면 압류. */
+export function settleHolding(cityId = state.at) {
+  const m = state.holdings?.[cityId];
+  if (!m) return null;
+  const due = holdingUpkeepDue(cityId);
+  if (due <= 0) return null;
+  const paid = Math.min(state.gold, due);
+  state.gold -= paid;
+  if (paid) book('outgo', 'port', paid);
+  m.paid = state.day;
+  if (paid >= due) {
+    pushLog(`${CITY_BY_ID[cityId].name} 거점 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'warn');
+    return { due, paid, seized: false };
+  }
+  /* ★ 못 내면 **압류**다. 거점은 자산이면서 고정비라, 후반이 "그냥 부자"가 아니라
+     "더 벌지 않으면 지킬 수 없는" 구조가 된다. 짐도 함께 넘어간다. */
+  delete state.holdings[cityId];
+  const lostGoods = state.stored?.[cityId];
+  if (lostGoods) delete state.stored[cityId];
+  pushLog(`${CITY_BY_ID[cityId].name} 거점을 유지비 ${(due - paid).toLocaleString('ko-KR')}닢 때문에 빼앗겼다.`
+        + (lostGoods && Object.keys(lostGoods).length ? ' 창고에 둔 짐도 함께 넘어갔다.' : ''), 'bad');
+  return { due, paid, seized: true };
+}
+
+/* ── 공업력 승급 (A-2) ─────────────────────────────────────────
+   **자재를 실물로 실어 와야** 오른다. 그래서 승급은 돈 쓰는 일이 아니라 **항로를 짜는 일**이다. */
+
+export const yardBoost = (cityId = state.at) => state.yards?.[cityId]?.boost ?? 0;
+export const yardBuilding = (cityId = state.at) => state.yards?.[cityId]?.building ?? null;
+
+/** 공사 중인가 — 그동안 그 부두는 제 일을 못 한다(신조·중고 0) */
+export function yardBusy(cityId = state.at) {
+  const b = yardBuilding(cityId);
+  return !!b && state.day < b.until;
+}
+
+/** 다음 등급과 그 값 — 더 올릴 수 없으면 null */
+export function yardNext(cityId = state.at) {
+  const to = industryOf(cityId) + 1;
+  if (to > YARD.cap) return null;
+  const spec = YARD_UPGRADE[to];
+  if (!spec) return null;
+  return { to, ...spec };
+}
+
+/** 승급을 걸 수 있나 — 금화와 **실은 자재**를 함께 본다 */
+export function canUpgradeYard(cityId = state.at) {
+  if (yardBusy(cityId)) {
+    const b = yardBuilding(cityId);
+    return { ok: false, reason: `공사 중이다 — ${b.until - state.day}일 남았다` };
+  }
+  const n = yardNext(cityId);
+  if (!n) return { ok: false, reason: `이 항구는 이미 꼭대기다 (공업력 ${industryOf(cityId)})` };
+  if (n.gold > state.gold) {
+    return { ok: false, reason: `금화가 ${(n.gold - state.gold).toLocaleString('ko-KR')}닢 모자란다`, need: n };
+  }
+  for (const [gid, qty] of Object.entries(n.mats)) {
+    const have = (state.cargo[gid] || 0) + ((state.stored?.[cityId] ?? {})[gid] || 0);
+    if (have < qty) {
+      return { ok: false, need: n,
+               reason: `${GOOD_BY_ID[gid]?.name ?? gid}${josa(GOOD_BY_ID[gid]?.name ?? gid, '이/가')} ${qty - have}칸 모자란다` };
+    }
+  }
+  return { ok: true, need: n };
+}
+
+/** 자재를 붓고 공사를 건다 — 배에 실은 것을 먼저, 모자라면 창고에서 */
+export function upgradeYard(cityId = state.at) {
+  const r = canUpgradeYard(cityId);
+  if (!r.ok) return r;
+  const n = r.need;
+  state.gold -= n.gold;
+  book('outgo', 'ships', n.gold);
+  for (const [gid, qty] of Object.entries(n.mats)) {
+    let left = qty;
+    const fromShip = Math.min(left, state.cargo[gid] || 0);
+    if (fromShip) {
+      state.cargo[gid] -= fromShip;
+      if (!state.cargo[gid]) { delete state.cargo[gid]; delete state.buyPrice[gid]; }
+      left -= fromShip;
+    }
+    const box = state.stored?.[cityId];
+    if (left > 0 && box) {
+      const fromStore = Math.min(left, box[gid] || 0);
+      box[gid] -= fromStore;
+      if (!box[gid]) delete box[gid];
+      left -= fromStore;
+    }
+  }
+  const y = (state.yards[cityId] ??= { boost: 0, building: null });
+  y.building = { to: n.to, until: state.day + n.days, started: state.day };
+  pushLog(`${CITY_BY_ID[cityId].name} 부두를 넓히기 시작했다 — 공업력 ${n.to}까지 ${n.days}일.`, 'good');
+  return { ok: true, until: y.building.until, to: n.to };
+}
+
+/** 공사가 끝났으면 등급을 올린다 — 그 항구에 들어올 때 본다 */
+export function settleYard(cityId = state.at) {
+  const y = state.yards?.[cityId];
+  const b = y?.building;
+  if (!b || state.day < b.until) return null;
+  y.boost = (y.boost ?? 0) + 1;
+  y.building = null;
+  pushLog(`${CITY_BY_ID[cityId].name} 부두가 넓어졌다 — 공업력 ${industryOf(cityId)}.`, 'good');
+  return { to: b.to, industry: industryOf(cityId) };
+}
+
+/** 승급이 만든 하루 유지비 — 정박·항해 어느 쪽이든 그 항구를 가진 값이다 */
+export function yardUpkeepPerDay() {
+  let sum = 0;
+  for (const cityId of Object.keys(state.yards ?? {})) {
+    sum += (state.yards[cityId].boost ?? 0) * YARD.upkeepPerBoost;
+  }
+  return sum;
+}
+
+/* ── 끝 ────────────────────────────────────────────────────────
+   조건은 `data.js: ENDING`. **진행률을 화면에 보여 주는 것이 절반**이다 —
+   무엇을 해야 끝나는지 모르면 그것은 목표가 아니라 우연이다. */
+export function endingProgress() {
+  const yards = Object.entries(ENDING.yards).map(([cityId, need]) => ({
+    cityId, name: CITY_BY_ID[cityId]?.name ?? cityId,
+    now: industryOf(cityId), need, done: industryOf(cityId) >= need,
+  }));
+  const joseon = CITIES.filter((c) => c.flag === ENDING.flag);
+  const held = joseon.filter((c) => !!state.holdings?.[c.id]);
+  const shipDone = state.everOwned?.has?.(ENDING.ship) ?? false;
+
+  const steps = [
+    { key: 'yards', label: '두 부두를 공업력 3으로',
+      now: yards.filter((y) => y.done).length, need: yards.length,
+      detail: yards.map((y) => `${y.name} ${y.now}/${y.need}`).join(' · ') },
+    { key: 'holdings', label: '조선 항구에 거점을',
+      now: held.length, need: ENDING.holdingsNeeded,
+      detail: held.length ? held.map((c) => c.name).join(' · ') : '아직 없다' },
+    { key: 'ship', label: `${SHIPS[ENDING.ship]?.name ?? ENDING.ship}을 짓는다`,
+      now: shipDone ? 1 : 0, need: 1,
+      detail: shipDone ? '진수했다' : `${CITY_BY_ID[(SHIPS[ENDING.ship]?.yards ?? [])[0]]?.name ?? '?'}에서만 나온다` },
+  ];
+  const done = steps.every((st) => st.now >= st.need);
+  return { steps, done };
+}
+
+/** 한 번만 축하한다 — 이미 본 끝을 다시 띄우지 않는다 */
+export function markEnded() {
+  if (state.ended) return false;
+  state.ended = state.day;
+  return true;
+}
+
+/* ── 악명 규칙 ────────────────────────────────────────────── */
+/** 그 깃발에 쌓인 악명 */
+export const infamyOf = (flag) => (flag ? (state.infamy?.[flag] ?? 0) : 0);
+
+/** 날이 지나면 잊힌다 — 부른 날수만큼 삭힌다 */
+export function decayInfamy(days = 1) {
+  const m = state.infamy;
+  if (!m) return;
+  state._infamyAge = (state._infamyAge ?? 0) + days;
+  while (state._infamyAge >= INFAMY.decayDays) {
+    state._infamyAge -= INFAMY.decayDays;
+    for (const k of Object.keys(m)) {
+      m[k] -= 1;
+      if (m[k] <= 0) delete m[k];
+    }
+  }
+}
+
+/** 상선을 덮쳤다 — 그 배가 단 깃발에 악명이 쌓인다 */
+export function addInfamy(flag, n = 1) {
+  if (!flag) return 0;
+  const m = (state.infamy ??= {});
+  m[flag] = Math.min(INFAMY.cap, (m[flag] ?? 0) + n);
+  return m[flag];
+}
+
+/** 이 항구에서 내 악명이 얼마나 무겁게 읽히나 — 그 도시의 깃발 기준 */
+export function infamyHere(cityId = state.at) {
+  return infamyOf(CITY_BY_ID[cityId]?.flag);
+}
+
+/** 악명이 만든 세금 가산(비율) — 문서·부관이 깎는 것과 반대 방향으로 붙는다 */
+export const infamyTariffUp = (cityId = state.at) =>
+  Math.min(INFAMY.tariffCap, infamyHere(cityId) * INFAMY.tariffPer);
+
+/** 악명이 만든 조우 가산 — 그 세력이 나를 찾아다닌다 */
+export function infamyOdds(from = state.at, to = null) {
+  const flags = new Set([CITY_BY_ID[from]?.flag, to ? CITY_BY_ID[to]?.flag : null].filter(Boolean));
+  let worst = 0;
+  for (const f of flags) worst = Math.max(worst, infamyOf(f));
+  return Math.min(INFAMY.oddsCap, worst * INFAMY.oddsPer);
+}
+
+/** 지금 이 항구에서 누리고 있는 혜택 — 화면이 "무엇이 걸려 있나"를 보여줄 때 쓴다 */
+export function activeBoons(cityId = state.at) {
+  const b = state.boons ?? {};
+  const out = [];
+  const rid = REGION_OF_CITY[cityId];
+  if (rid && (b.permit?.[rid] ?? 0) > state.day) {
+    out.push({ kind: 'permit', text: `이 바다의 문서 (세 −${Math.round(BOON.permitTariffOff * 100)}%)`,
+               until: b.permit[rid] });
+  }
+  if ((b.smuggle?.[cityId] ?? 0) > state.day) {
+    out.push({ kind: 'smuggle', text: `세관을 피하는 길 (세 −${Math.round(BOON.smuggleTariffOff * 100)}%)`,
+               until: b.smuggle[cityId] });
+  }
+  if ((b.repair?.[cityId] ?? 0) > state.day) {
+    out.push({ kind: 'repair', text: `수리 −${Math.round(BOON.repairOff * 100)}%`, until: b.repair[cityId] });
+  }
+  if (b.loan) out.push({ kind: 'loan', text: `빚 ${b.loan.owed.toLocaleString('ko-KR')}닢`, until: b.loan.due });
+  return out;
+}
+
+/* ── 인물에게 무언가를 산다 ────────────────────────────────
+   명부의 `service` 여덟 갈래를 규칙에 붙인다. **값을 받고 그 자리에서 효과가 생긴다.**
+   정보형(price-tip·route-tip)은 상태를 안 바꾸고 화면에 줄 재료만 돌려준다 —
+   "무엇을 알려 주었나"를 화면이 그려야 하기 때문이다. */
+export function figureFee(f) {
+  if (!f?.fee) return 0;
+  const [lo, hi] = f.fee;
+  // 값이 사람마다 정해져 있되 그날그날 조금 다르다 — 같은 사람에게 같은 날은 같은 값
+  const r = ((state.day * 2654435761) % 1000) / 1000;
+  // 갈래에 따라 같은 문서가 더 비싸다 — 상인은 관 앞에서 값을 더 치른다(`permitUp`)
+  return Math.round((lo + (hi - lo) * r) * (1 + originPerk('permitUp')));
+}
+
+export function buyService(f, cityId = state.at) {
+  const fee = figureFee(f);
+  if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null });
+  const rid = REGION_OF_CITY[cityId];
+  const pay = () => { state.gold -= fee; if (fee) book('outgo', 'port', fee); };
+
+  switch (f.service) {
+    case 'permit': {
+      if ((b.permit[rid] ?? 0) > state.day) return { ok: false, reason: '이미 이 바다의 문서를 갖고 있다' };
+      pay();
+      b.permit[rid] = state.day + BOON.permitDays;
+      return { ok: true, fee, kind: 'permit',
+               line: `${BOON.permitDays}일 동안 이 바다에서 세를 ${Math.round(BOON.permitTariffOff * 100)}% 덜 문다.` };
+    }
+    case 'smuggle': {
+      if ((b.smuggle[cityId] ?? 0) > state.day) return { ok: false, reason: '이 항구에서는 이미 길이 나 있다' };
+      pay();
+      b.smuggle[cityId] = state.day + BOON.smuggleDays;
+      return { ok: true, fee, kind: 'smuggle',
+               line: `${BOON.smuggleDays}일 동안 이 항구에서 세를 ${Math.round(BOON.smuggleTariffOff * 100)}% 덜 문다. 들키면 그때 일이다.` };
+    }
+    case 'repair': {
+      if ((b.repair[cityId] ?? 0) > state.day) return { ok: false, reason: '이미 말을 넣어 두었다' };
+      pay();
+      b.repair[cityId] = state.day + BOON.repairDays;
+      return { ok: true, fee, kind: 'repair',
+               line: `${BOON.repairDays}일 동안 이 부두의 수리값을 ${Math.round(BOON.repairOff * 100)}% 깎아 준다.` };
+    }
+    case 'loan': {
+      if (b.loan) return { ok: false, reason: `아직 갚을 것이 있다 (${b.loan.owed.toLocaleString('ko-KR')}닢)` };
+      const principal = Math.max(BOON.loanMin, Math.round(fee * BOON.loanMul));
+      state.gold += principal;
+      book('income', 'contracts', principal);
+      b.loan = { principal, owed: Math.round(principal * BOON.loanRate), due: state.day + BOON.loanDays };
+      return { ok: true, fee: 0, kind: 'loan',
+               line: `${principal.toLocaleString('ko-KR')}닢을 빌렸다. ${BOON.loanDays}일 뒤 `
+                   + `${b.loan.owed.toLocaleString('ko-KR')}닢으로 갚는다 — 급여일에 함께 걷는다.` };
+    }
+    case 'contract': {
+      pay();
+      b.reroll[cityId] = (b.reroll[cityId] ?? 0) + 1;
+      return { ok: true, fee, kind: 'contract', line: '다른 일감을 물어다 주었다. 게시판을 다시 보라.' };
+    }
+    case 'recruit': {
+      pay();
+      const n = BOON.recruitCrew;
+      const room = Math.max(0, state.crewMax - state.crew);
+      const took = Math.min(n, room);
+      state.crew += took;
+      return { ok: true, fee, kind: 'recruit',
+               line: took ? `${took}명을 갑판에 올렸다. 계약금은 이 값에 포함이다.` : '갑판에 자리가 없다. 값만 치렀다.' };
+    }
+    case 'price-tip': {
+      pay();
+      return { ok: true, fee, kind: 'price-tip', tips: priceTips(cityId) };
+    }
+    case 'route-tip': {
+      pay();
+      return { ok: true, fee, kind: 'route-tip', tips: routeTips(cityId) };
+    }
+    default:
+      return { ok: false, reason: '이 사람은 파는 것이 없다' };
+  }
+}
+
+/** 먼 항구 시세 — 여기서 실을 만한 것이 어디서 비싼가. 정보상이 파는 것이 이것이다. */
+export function priceTips(cityId = state.at, limit = 4) {
+  const here = CITY_BY_ID[cityId];
+  const out = [];
+  const cands = neighborsOf(cityId).flatMap((n) => [n, ...neighborsOf(n)]);
+  const seen = new Set([cityId]);
+  for (const to of cands) {
+    if (seen.has(to) || !CITY_BY_ID[to]) continue;
+    seen.add(to);
+    for (const gid of Object.keys(here.supply ?? {})) {
+      const buyAt = priceOf(cityId, gid);
+      const sellAt = priceOf(to, gid);
+      if (sellAt > buyAt * 1.15) {
+        out.push({ to, toName: CITY_BY_ID[to].name, gid, goodName: GOOD_BY_ID[gid]?.name ?? gid,
+                   buyAt: Math.round(buyAt), sellAt: Math.round(sellAt),
+                   gain: Math.round((sellAt / buyAt - 1) * 100), days: voyageDays(cityId, to) });
+      }
+    }
+  }
+  return out.sort((a, b) => b.gain - a.gain).slice(0, limit);
+}
+
+/** 항로의 위험 — 어느 구간이 험한가. 이 값은 조우 안내가 쓰는 것과 같은 식이다. */
+export function routeTips(cityId = state.at, limit = 5) {
+  return neighborsOf(cityId).map((to) => ({
+    to, toName: CITY_BY_ID[to].name, days: voyageDays(cityId, to),
+    risk: routeRisk(cityId, to), odds: encounterOdds({ from: cityId, to }),
+  })).sort((a, b) => b.odds - a.odds).slice(0, limit);
 }
 
 export function sell(goodId, qty) {
@@ -352,7 +822,9 @@ function hash(...parts) {
 
 /** 그 항구에 지금 걸려 있는 주문 (결정론적 — 드나들며 새로 뽑을 수 없다) */
 export function contractOffer(cityId = state.at, day = state.day) {
-  const slot = Math.floor(day / 3);
+  /* 사흘마다 갈리는 것이 기본이고, **중개인에게 값을 치르면 한 칸 앞당겨 다른 일감을 본다**
+     (`boons.reroll`). 드나들며 새로 뽑을 수는 없다는 규칙은 그대로다 — 값을 낸 만큼만 바뀐다. */
+  const slot = Math.floor(day / 3) + (state.boons?.reroll?.[cityId] ?? 0);
   const nb = neighborsOf(cityId);
   // 2홉까지 목적지 후보 (먼 곳일수록 보수가 크다)
   const far = new Set();
@@ -377,7 +849,7 @@ export function contractOffer(cityId = state.at, day = state.day) {
   const [ql, qh] = CONTRACT.qty;
   const qty = Math.max(ql, Math.min(qh, Math.round(target / Math.max(1, unit * mul))));
   // 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
-  const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp')));
+  const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp') + originPerk('contractUp', cityId)));
 
   const legs = Math.max(1, voyageDays(cityId, to, day));
   const [dl, dh] = CONTRACT.daysPad;
@@ -426,10 +898,42 @@ export function abandonContract() {
   const c = state.contract;
   if (!c) return { ok: false, reason: '맡은 주문이 없다' };
   const fine = Math.round(c.advance * CONTRACT.penalty);
-  state.gold = Math.max(0, state.gold - fine);
-  book('outgo', 'port', fine);
+  const r = payFine(fine, `${CITY_BY_ID[c.to]?.name ?? c.to} 주문을 스스로 파기했다`);
   state.contract = null;
-  return { ok: true, fine };
+  /* ★ 파기만 항해일지에 안 남고 있었다 — 수주·납품·기한초과는 다 남는데.
+     그러면 "금고가 왜 줄었나"를 화면에서 못 되짚는다(완주 플레이 ISSUES #9). */
+  pushLog(`${CITY_BY_ID[c.to]?.name ?? c.to} 주문을 파기했다. 위약금 ${fine.toLocaleString('ko-KR')}닢.`
+        + (r.owed ? ` ${r.owed.toLocaleString('ko-KR')}닢은 빚으로 남았다.` : ''), 'bad');
+  return { ok: true, fine, owed: r.owed };
+}
+
+/* ── 못 낸 돈은 사라지지 않는다 ────────────────────────────────
+   ★ 위약금·보급비가 **금고에만 걸리고 `Math.max(0, …)`로 잘려** 있었다.
+   그래서 선금을 화물로 바꿔 두고 파기하면 **실제 손실이 금고 잔액뿐**이었다 —
+   선금 915닢을 비단으로 바꿔 둔 판에서 위약금 1,144닢이 청구됐는데 466닢만 물고 끝났고,
+   그 비단을 팔아 곧바로 1,943닢이 됐다(완주 플레이 ISSUES #8).
+   *"선금만 받고 파기하는 것이 순이득"*이 되면 계약이 함정이 아니라 공짜 돈이 된다.
+
+   그래서 **못 낸 몫을 빚으로 넘긴다.** 빚은 급여일에 선원보다 먼저 걷히고(`settlePayroll`),
+   못 갚으면 이자가 붙는다 — 인물에게 빌린 돈과 같은 자리를 쓴다. 가난이 **결과**를 갖게 하는 것이
+   이 함수의 목적이다(ISSUES #4·#13이 같은 뿌리다). */
+export function payFine(amount, why = '', { ledger = true } = {}) {
+  const paid = Math.min(state.gold, amount);
+  state.gold -= paid;
+  /* 장부를 여기서 적을지는 부르는 쪽이 정한다 — 항해비처럼 **갈래가 여럿인 지출**은
+     호출부가 갈래별로 적는다(안 그러면 `port` 한 줄과 갈래 줄이 겹쳐 두 번 적힌다). */
+  if (paid && ledger) book('outgo', 'port', paid);
+  const owed = amount - paid;
+  if (owed <= 0) return { paid, owed: 0 };
+
+  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null });
+  if (b.loan) {
+    b.loan.owed += owed;                       // 이미 빚이 있으면 얹는다
+  } else {
+    b.loan = { principal: owed, owed: Math.round(owed * BOON.loanRate),
+               due: state.day + BOON.loanDays, forced: true, why };
+  }
+  return { paid, owed };
 }
 
 /** 기한이 지났는지 — advanceDays가 부른다.
@@ -462,15 +966,48 @@ export function officerPerk(key) {
   return state.officer ? (OFFICER.perks[key] || 0) : 0;
 }
 
+/* ── 출신 갈래의 특전 ──────────────────────────────────────
+   `data.js: ORIGINS`의 다섯 갈래. 부관 특전과 **같은 자리에서 더해진다** —
+   읽는 쪽은 `officerPerk(k) + originPerk(k)` 꼴로 쓴다.
+   ★ `joseonOnly`가 붙은 갈래의 특전은 **조선 항구에서만** 돈다. 종친의 첩지를 명 시박사가
+     알아줄 이유가 없다 — "제도는 바다마다 다르다"가 이 게임의 뼈대이므로 특전도 그것을 따른다. */
+export function originPerk(key, cityId = state.at) {
+  const o = ORIGIN_BY_ID[state.origin ?? DEFAULT_ORIGIN];
+  if (!o) return 0;
+  const v = o.perks?.[key] ?? 0;
+  if (!v) return 0;
+  if (o.perks?.joseonOnly) {
+    const c = CITY_BY_ID[cityId];
+    if (!c || c.flag !== 'joseon') return 0;
+  }
+  return v;
+}
+
+/** 선원 하나를 태우는 값 — 갈래에 따라 오른다(양수가 벌점) */
+export function hireUnit() {
+  return Math.max(1, Math.round(HIRE_UNIT * (1 + originPerk('hireUp'))));
+}
+
+/** 지금 고른 갈래 — 화면이 "누구로 시작했나"를 보여줄 때 */
+export const originOf = () => ORIGIN_BY_ID[state.origin ?? DEFAULT_ORIGIN] ?? null;
+
 /** 처음부터 승선해 있는 상태 — `resetGame()`이 이걸로 시작한다.
     등용/해고 함수는 없다. 만나는 장면도 헤어지는 장면도 없기 때문이다. */
 export function initialOfficer() {
   return { hiredDay: 0, earned: 0, paid: 0 };
 }
 
+/** 이 항구의 수리 단가 — 선장인에게 말을 넣어 두었으면 깎인다 */
+export function repairUnit(cityId = state.at) {
+  const off = ((state.boons?.repair?.[cityId] ?? 0) > state.day ? BOON.repairOff : 0)
+            + originPerk('repairCut', cityId)        // 좌수영의 손은 제 배를 싸게 고친다
+            + (hasHolding('slipway', cityId) ? (HOLDINGS.slipway.repairCut ?? 0) : 0);
+  return Math.max(1, Math.round(REPAIR_UNIT * (1 - Math.min(0.7, off))));
+}
+
 export function repair(amount) {
   const need = Math.min(amount, state.maxHp - state.hp);
-  const cost = need * REPAIR_UNIT;
+  const cost = need * repairUnit();
   if (need <= 0) return { ok: false, reason: '선체는 멀쩡하다' };
   if (cost > state.gold) return { ok: false, reason: '금화가 모자란다' };
   state.gold -= cost;
@@ -481,9 +1018,12 @@ export function repair(amount) {
 
 export function hire(n) {
   const room = state.crewMax - state.crew;
-  const max = Math.min(n, room, Math.floor(state.gold / HIRE_UNIT));
+  /* 갈래에 따라 삯이 다르다 — 종친의 배에 오르는 것은 **기록에 남는 일**이라
+     사람이 값을 더 부른다(`ORIGINS.royal.perks.hireUp`). */
+  const unit = hireUnit();
+  const max = Math.min(n, room, Math.floor(state.gold / unit));
   if (max <= 0) return { ok: false, reason: room <= 0 ? '선실이 가득 찼다' : '금화가 모자란다' };
-  state.gold -= max * HIRE_UNIT;
+  state.gold -= max * unit;
   state.crew += max;
   book('outgo', 'port', max * HIRE_UNIT);
   // 부두에서 급히 긁어모은 인력에는 이름이 없다. 일당은 표준값으로 친다 —
@@ -530,6 +1070,7 @@ export function tavernCrews(cityId = state.at, day = state.day) {
   const pool = CREW_NAMES[poolKey];
 
   const out = [];
+  const taken = new Set();   // 같은 술집에 같은 이름이 두 번 앉지 않게 (자리마다 해시가 독립이라 겹친다)
   for (let i = 0; i < slots; i++) {
     if (hash(cityId, 'tav', i, cyc) < TAVERN.emptyOdds) continue;   // 빈 자리
 
@@ -551,7 +1092,11 @@ export function tavernCrews(cityId = state.at, day = state.day) {
     // 값은 기질이 정하고 ±12%만 흔든다. 흔들림이 크면 기질이 안 읽힌다.
     const jitter = 0.88 + hash(cityId, 'tavjit', i, cyc) * 0.24;
 
-    const nameIdx = Math.floor(hash(cityId, 'tavname', i, cyc) * pool.length);
+    /* 이름은 자리마다 따로 뽑히므로 그냥 두면 겹친다 — 광저우에 `황(黃)씨 형제`가 둘 앉아 있었다.
+       자리가 최대 5, 가장 작은 풀도 5라 **옆으로 한 칸씩 비켜 가면** 반드시 빈 이름을 찾는다. */
+    let nameIdx = Math.floor(hash(cityId, 'tavname', i, cyc) * pool.length);
+    while (taken.has(nameIdx) && taken.size < pool.length) nameIdx = (nameIdx + 1) % pool.length;
+    taken.add(nameIdx);
     out.push({
       id: `${cityId}-${cyc}-${i}`,
       n,
@@ -634,7 +1179,14 @@ export function buyRefit(key) {
   state.gold -= r.price;
   book('outgo', 'ships', r.price);
   state.refits[key] = true;
+  const before = state.maxHp;
   recalcShip();
+  /* ★ **덧댄 만큼은 새것이다.** 전에는 `maxHp`만 오르고 `hp`는 그대로여서, 2,400닢짜리
+     떡갈나무 장갑을 사고 나면 배가 "231 중 185"가 됐다 — **산 직후가 가장 약한 상태**였고
+     모르고 나가면 46pt를 손해 본 채 싸웠다(완주 플레이 ISSUES #23).
+     현측에 새 널을 덧댄 것이므로 **그 몫은 성한 것이 맞다.** 낡은 부분은 그대로 낡아 있다. */
+  const gained = Math.max(0, state.maxHp - before);
+  if (gained > 0) state.hp = Math.min(state.maxHp, state.hp + gained);
   // 상갑판을 깎았으면 넘치는 포문을 내린다 (환불은 없다 — 뜯어낸 것이다)
   const over = armsTotal() - gunCap();
   if (over > 0) {
@@ -678,9 +1230,49 @@ export function shorthanded() {
   return state.crew < (ship().crewMin || 0);
 }
 
+/* ── 대양은 사람이 있어야 건넌다 ───────────────────────────────
+   ★ 인원 미달이 **속력 벌점뿐**이라 선원 1명·선체 44/231로도 원양이 열려 있었다
+   (완주 플레이 ISSUES #24). 그러면 **백병전에 사람을 갈아 넣는 것이 늘 옳아지고**,
+   "사람을 잃는다"가 실질 손해가 아니게 된다.
+
+   근해는 그대로 둔다 — 어떻게든 노를 저어 옆 항구까지는 간다. 막히는 것은 **원양**뿐이다.
+   며칠씩 뭍이 안 보이는 구간은 교대로 키를 잡을 사람이 있어야 하기 때문이고,
+   무엇보다 **항구에 갇히는 일이 없어야** 하기 때문이다(근해가 열려 있으면 언제든 빠져나간다). */
+export const OCEAN_CREW_MIN = 0.6;      // 그 배 최소 인원의 이 비율
+export const OCEAN_HULL_MIN = 0.25;     // 선체가 이보다 상하면 대양은 못 건넌다
+
+export function oceanReady() {
+  const need = Math.max(3, Math.ceil((ship().crewMin || 0) * OCEAN_CREW_MIN));
+  if (state.crew < need) {
+    return { ok: false, need, why: `대양을 건너려면 선원이 ${need}명은 있어야 한다 (지금 ${state.crew}명)` };
+  }
+  if (state.maxHp > 0 && state.hp / state.maxHp < OCEAN_HULL_MIN) {
+    return { ok: false, why: `선체가 ${state.hp}/${state.maxHp}다. 이 배로는 뭍이 안 보이는 곳에 못 나간다` };
+  }
+  return { ok: true };
+}
+
 /** 도주 성공률 보정 (돛 증축) */
 export function fleeBonus() {
   return state.refits.sails ? 0.14 : 0;
+}
+
+/** 도주 성공 확률. 멀수록·빠를수록 잘 도망치고, 찢긴 돛은 양쪽 모두에 반영된다.
+    ★ **적 배의 속력이 들어간다** — 전에는 상대가 누구든 같은 확률이라 노를 젓는 갤리와
+      둔한 정크가 똑같이 따라왔다. 선종을 고르는 일에 뜻이 생기는 자리다.
+    ★ 전투 화면(`battle.js: tryFlee`)과 조우 안내(`map.js`)가 **같은 식을 본다** —
+      보여 준 가망과 실제 판정이 어긋나면 안내가 거짓말이 된다. */
+export function fleeOdds({ range = 78, foeHull = null, mySail = 0, foeSail = 0 } = {}) {
+  const foeSpd = SHIPS[foeHull]?.speed ?? 1;      // 적 선체명은 SHIPS 키와 같다(brig·galley…)
+  const p = 0.24 + (range / 100) * 0.52 + (shipSpeed() - foeSpd) * 0.25
+          + fleeBonus() + (foeSail / 100) * 0.30 - (mySail / 100) * 0.25;
+  return Math.max(0.05, Math.min(0.95, p));       // 확실한 도주도, 확실한 포획도 없다
+}
+
+/** 도주 가망을 말로 — 이 게임은 확률을 숫자로 내보이지 않는다(적의 세기도 `RANK`로 옮긴다) */
+export function fleeWord(p) {
+  return p >= 0.68 ? '따돌릴 만하다' : p >= 0.5 ? '반반이다'
+       : p >= 0.32 ? '쉽지 않다' : '거의 빠져나갈 수 없다';
 }
 
 /** 피격 시 선원 사상 배율 (내포격 골조) */
@@ -819,7 +1411,12 @@ function stowFlagship() {
    도시를 추가해도 규칙이 알아서 따라오고, "왜 여기선 못 사나"가 수치로 설명된다. */
 
 export function industryOf(cityId = state.at) {
-  return CITY_BY_ID[cityId]?.industry ?? 0;
+  /* 부두(`HOLDINGS.dock`)를 세우면 그 항구가 더 큰 배를 짓는다 — A-2 공업력의 첫 계단이다.
+     `tierNeeded`·`sellsShip`·`shipPriceAt`·`usedListings`가 전부 이 함수를 거치므로 여기 한 줄이 전부다. */
+  const base = CITY_BY_ID[cityId]?.industry ?? 0;
+  const dock = hasHolding('dock', cityId) ? (HOLDINGS.dock.industryUp ?? 0) : 0;
+  const boost = state.yards?.[cityId]?.boost ?? 0;   // A-2 승급
+  return Math.min(YARD.cap, base + Math.min(HOLDING.industryCap - base, dock) + boost);
 }
 
 /** 그 항구에서 이 배를 지으려면 필요한 공업력 — 원산국 항구는 1 낮다 */
@@ -841,6 +1438,9 @@ export function shipLockedBy(key) {
 
 export function sellsShip(key, cityId = state.at) {
   if (shipLockedBy(key)) return false;
+  /* ★ **공사 중에는 배를 못 짓는다.** 부두를 넓히는 동안 그 부두가 제 일을 못 한다는 뜻이고,
+     그것이 이 투자의 진짜 값이다 — 돈보다 **그 항구를 몇 달 잃는 것**이 크다. */
+  if (yardBusy(cityId)) return false;
   return industryOf(cityId) >= tierNeeded(key, cityId);
 }
 
@@ -875,7 +1475,7 @@ export function purchaseShip(key) {
   if (!sellsShip(key)) {
     if (!s.tier) return { ok: false, reason: '시중에 나오지 않는 배다' };
     const lock = shipLockedBy(key);
-    if (lock) return { ok: false, reason: `${lock}을(를) 몰아 본 선주에게만 내놓는다` };
+    if (lock) return { ok: false, reason: `${lock}${josa(lock, '을/를')} 몰아 본 선주에게만 내놓는다` };
     const where = buildableAt(key);
     return {
       ok: false,
@@ -903,6 +1503,7 @@ export function usedListings(cityId = state.at, day = state.day) {
   if (!city) return [];
   const ind = industryOf(cityId);
   if (ind <= 0) return [];        // 내륙 도시는 배가 드나들지 않는다
+  if (yardBusy(cityId)) return []; // 공사 중인 부두에는 매물이 안 걸린다
   const prize = !!city.prizeYard;
   // 중고는 흘러드는 것이라 신조보다 관대하다 — 공업력보다 한 등급 위까지 들어온다.
   const pool = Object.entries(SHIPS)
@@ -911,7 +1512,8 @@ export function usedListings(cityId = state.at, day = state.day) {
   if (!pool.length) return [];
 
   const out = [];
-  const slots = USED.slots + (prize ? 1 : 0);
+  const slots = USED.slots + (prize ? 1 : 0)
+              + (hasHolding('slipway', cityId) ? (HOLDINGS.slipway.usedSlots ?? 0) : 0);
   const cyc = Math.floor(day / USED.cycle);
   for (let i = 0; i < slots; i++) {
     // hash()는 0~1 실수를 돌려준다 — 정수 비트연산을 쓰면 전부 0이 되어 매물이 사라진다.
@@ -1234,7 +1836,9 @@ export function encounterOdds({ from, to, threat = 0, lure = null } = {}) {
   const risk = routeRisk(from, to);
   if (risk === null) return 0;                       // 오스만 내해·육로
   const bait = lure == null ? cargoLure() : cargoLure(lure);
-  return Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait);
+  /* 악명이 조우를 부른다 — 털린 쪽이 배를 띄워 찾아다닌다 */
+  return Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait
+                          + infamyOdds(from, to));
 }
 
 /** 위험도 라벨 — 출항 카드에 띄운다. 확률이 달라져도 못 읽으면 판단이 안 생긴다. */
@@ -1333,6 +1937,29 @@ export function capLoot(e) {
      두고도, 그 위험을 채우는 얼굴이 전 세계 하나였던 것이다.
    수치(hp·포·선원·병력·전리품 금액)는 손대지 않는다 — 밸런스는 이미 맞춰져 있고
    여기서 바꿔야 할 것은 "누가 왔는가"뿐이다. */
+/* ── 나포하면 무엇이 들어오나 ──────────────────────────────
+   ★ 얼굴(`FOES`)은 권역별로 갈렸는데 **전리품 선종(`prize`)은 안 갈려 있었다.**
+   그래서 동해에서 왜구 소선단을 나포하면 **지중해 「브리간틴」**이 나왔고, 제원도 안 맞아
+   ("적선 선체 80 · 포 6"인데 브리간틴은 130/10) *"저 배를 뺏었다"*가 성립하지 않았다
+   (완주 플레이 ISSUES #20). **나포는 이 게임 전투 설계의 축**(격침 0.45 vs 나포 1.00)이라
+   그 축의 보상이 세계관 밖이면 안 된다.
+
+   그 권역에서 짓는 배(`yards`가 그 바다 항구를 가진 선종) 가운데 **등급에 맞는 tier**를 고른다.
+   못 고르면 원래 값을 그대로 쓴다 — 콘텐츠가 없다고 나포가 막히면 안 되기 때문이다. */
+const PRIZE_TIER = [0, 1, 2, 3, 4];     // 적 등급(0~4) → 노리는 선종 tier
+function regionPrize(regionId, tier, fallback) {
+  const ids = new Set(citiesOfRegion(regionId).map((c) => c.id));
+  const want = PRIZE_TIER[tier] ?? 2;
+  let best = null, bestGap = 99;
+  for (const [key, sh] of Object.entries(SHIPS)) {
+    if (!(sh.yards ?? []).some((y) => ids.has(y))) continue;
+    if (sh.leak) continue;                       // 물 새는 배를 상으로 주지 않는다
+    const gap = Math.abs((sh.tier ?? 0) - want);
+    if (gap < bestGap) { best = key; bestGap = gap; }
+  }
+  return best ?? fallback;
+}
+
 function localize(base, tier, regionId) {
   const skin = FOES_BY_REGION[regionId]?.[tier];
   if (!skin) return base;
@@ -1344,6 +1971,8 @@ function localize(base, tier, regionId) {
     hull: skin.hull ?? base.hull,
     tint: skin.tint ?? base.tint,
     flag: skin.flag ?? base.flag,
+    // 명부가 전리품을 지정했으면 그것을, 아니면 그 바다에서 짓는 배를 준다
+    prize: base.prize == null ? null : (skin.prize ?? regionPrize(regionId, tier, base.prize)),
     loot: { ...base.loot, goods: skin.goods ?? base.loot.goods },
   };
 }
@@ -1510,16 +2139,136 @@ export function voyageCost(days, crew = state.crew, leg = null) {
  *    달이 바뀔 때 치렀고, 식량·물은 출항 전에 사야 했다 — 그래서 둘을 가른다.
  *    게임에서 이 구분이 중요한 이유는 **못 주는 상태가 존재하게** 되기 때문이다.
  *    매일 금고에서 빼 버리면 체불이라는 사건 자체가 생기지 않는다. */
+/* ── 항구에서 날을 보낸다 (A-1b) ───────────────────────────────
+   ★ **정박 중인 날이 공짜였다.** 날은 `advanceDays()`에서만 가는데 그것은 항해할 때만 불린다 —
+   그래서 항구에 서 있는 동안은 급여도 보급도 유지비도 나가지 않았다.
+   소설이 이 자리에서 게임과 가장 크게 어긋났다: 아덴 억류·반다 반년·아바나 한 해 대기가
+   **게임에서는 아무 대가가 없는 일**이었고, 그 규약이 없으면 급여 위기 네 장면이 통째로 사라진다
+   (`story/GAME-LINK.md §8` A-1b).
+
+   ── 정박은 항해보다 싸다 ─────────────────────────────────────
+   보급(`SUPPLY_UNIT`)은 절반만 든다(뭍에서 사 먹는다), 선체·무장 유지비와 **급여는 그대로**다.
+   ★ 그래서 **사람이 곧 시계**가 된다 — 기다리는 것이 공짜가 아니면 "언제 떠나나"가 판단이 된다.
+
+   ── 창고가 있으면 사람을 내려놓을 수 있다 ────────────────────
+   `dischargeCrew()`가 선원을 내리면 급여 시계가 멈춘다. 다시 태우는 값은 `HIRE_UNIT`의 절반 —
+   그 사람들이 이 항구에 그대로 있기 때문이다. **거점이 있어야 그 선택지가 생긴다**(A-1과 짝). */
+export const PORT_SUPPLY_RATE = 0.5;
+export const RECALL_RATE = 0.5;
+
+export function portDayCost(days = 1) {
+  /* 항해비와 **같은 식**을 쓰되 보급만 절반이다 — 뭍에서는 사 먹기 때문이다.
+     `voyageCost`가 그 계산의 정본이므로 여기서 다시 쓰지 않는다(값이 갈리면 안 된다). */
+  const v = voyageCost(days, state.crew, null);
+  const supplies = Math.round(v.supplies * PORT_SUPPLY_RATE);
+  const now = supplies + v.hull + v.arms + v.fleet;     // 지금 나가는 것
+  return { ...v, supplies, now, total: now + v.wages + v.officer };
+}
+
+/** 항구에서 며칠을 보낸다 — 세계는 돌고, 삯은 쌓이고, 짐은 그대로다 */
+export function waitDays(n = 1) {
+  if (n <= 0) return { ok: false, reason: '하루는 지나야 한다' };
+  state.day += n;
+  decayInfamy(n);
+
+  const c = portDayCost(n);
+  c.now += yardUpkeepPerDay() * n;      // 넓힌 부두는 놀려도 값이 나간다
+  const before = state.gold;
+  const r = payFine(c.now, '정박 유지비', { ledger: false });
+  const paidNow = before - state.gold;
+  const share = c.now > 0 ? paidNow / c.now : 0;
+  const sup = Math.round(c.supplies * share);
+  book('outgo', 'supplies', sup);
+  book('outgo', 'upkeep', paidNow - sup);
+  if (r.owed > 0) {
+    pushLog(`정박 중에도 값은 나간다 — ${r.owed.toLocaleString('ko-KR')}닢을 못 내 빚으로 남았다.`, 'bad');
+  }
+
+  // 급여는 발생주의 — 정박 중에도 날마다 쌓인다(치르는 것은 급여일)
+  state.payroll.due += c.wages + c.officer;
+  book('outgo', 'wages', c.wages);
+  book('outgo', 'officer', c.officer);
+  if (state.officer) state.officer.paid += c.officer;
+
+  // 시장은 회복하고 사건은 익는다 — 기다리는 것이 전략이 되려면 세계가 돌아야 한다
+  const keep = MARKET.decay ** n;
+  for (const cityId of Object.keys(state.impact)) {
+    const row = state.impact[cityId];
+    for (const gid of Object.keys(row)) {
+      row[gid] *= keep;
+      if (row[gid] < 1) delete row[gid];
+    }
+    if (!Object.keys(row).length) delete state.impact[cityId];
+  }
+  const shocks = rollShockEvents(n);
+  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks };
+}
+
+/** 사람을 내려놓는다 — 창고가 있는 항구에서만. 급여 시계가 멈춘다. */
+export function dischargeCrew() {
+  if (!storeCap(state.at)) return { ok: false, reason: '내려놓을 데가 없다 — 이 항구에 창고가 필요하다' };
+  if (state.crew <= 0) return { ok: false, reason: '갑판이 이미 비었다' };
+  const n = state.crew;
+  const m = (state.holdings[state.at] ??= { paid: state.day, spent: 0 });
+  m.ashore = (m.ashore ?? 0) + n;
+  state.crew = 0;
+  state.bands = [];
+  trimLoadout();
+  pushLog(`${CITY_BY_ID[state.at].name}에 선원 ${n}명을 내려놓았다. 삯이 멎는다.`, 'warn');
+  return { ok: true, n };
+}
+
+/** 내려놓은 사람을 다시 태운다 — 새로 뽑는 값의 절반 */
+export function recallCrew() {
+  const m = state.holdings?.[state.at];
+  const n = m?.ashore ?? 0;
+  if (!n) return { ok: false, reason: '이 항구에 내려놓은 사람이 없다' };
+  const room = Math.min(n, state.crewMax - state.crew);
+  if (room <= 0) return { ok: false, reason: '갑판에 자리가 없다' };
+  const cost = Math.round(HIRE_UNIT * RECALL_RATE * room);
+  if (cost > state.gold) return { ok: false, reason: `금화가 ${(cost - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  state.gold -= cost;
+  book('outgo', 'port', cost);
+  state.crew += room;
+  m.ashore = n - room;
+  pushLog(`${CITY_BY_ID[state.at].name}에서 ${room}명을 다시 태웠다 (−${cost.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, n: room, cost };
+}
+
 export function advanceDays(n, leg = null) {
   state.day += n;
+  /* 악명은 잊힌다 — 40일마다 한 칸씩. 지워 주는 것이 아니라 **한 번 크게 턴 값이
+     오래가되 영원하지는 않게** 두는 것이다(`INFAMY.decayDays`). */
+  decayInfamy(n);
   const c = voyageCost(n, state.crew, leg);
 
   // 즉시 나가는 것 — 물자와 배에 드는 돈은 외상이 안 된다
-  const now = c.supplies + c.fleet + c.hull + c.arms + c.insurance;
-  state.gold = Math.max(0, state.gold - now);
-  book('outgo', 'supplies', c.supplies);
-  book('outgo', 'upkeep', c.fleet + c.hull + c.arms);
-  book('outgo', 'insurance', c.insurance);
+  const now = c.supplies + c.fleet + c.hull + c.arms + c.insurance + yardUpkeepPerDay() * n;
+  /* ★ 금고가 모자라면 부족분이 **소리 없이 사라지고 있었다**(`Math.max(0, …)`만 있었다).
+     가난할수록 항해비를 덜 내는 셈이라, 파산 직전이 오히려 싸게 다니는 구멍이었다.
+     그다음엔 항해일지에 알리기만 했는데, 그러자 **경고 문장이 거짓**이 됐다 —
+     *"다음 항구에서 물건을 팔지 못하면 배가 서게 된다"*고 여섯 항차를 말하고도 아무 일이 없었다
+     (완주 플레이 ISSUES #4·#13). 가난이 아무것도 막지 않으면 파산이 성립하지 않는다.
+     그래서 **못 낸 몫을 빚으로 넘긴다**(`payFine`) — 급여일에 선원보다 먼저 걷히고 이자가 붙는다.
+     배를 세우지 않는 이유는 그러면 항구에 갇혀 빠져나갈 길이 없어지기 때문이다.
+     **길은 열어 두되 값은 남긴다.** */
+  const before = state.gold;
+  const r = payFine(now, '보급·유지비', { ledger: false });
+  const unpaid = r.owed;
+  if (unpaid > 0) {
+    pushLog(`금고가 비어 보급·유지비 ${unpaid.toLocaleString('ko-KR')}닢을 치르지 못했다.`
+            + ' 그만큼이 빚으로 남아 급여일에 이자와 함께 걷힌다.', 'bad');
+  }
+  /* 장부는 **실제로 나간 만큼**만 갈래별로 적는다(빚으로 넘어간 몫은 급여일에 적힌다).
+     반올림 오차가 금고와 어긋나지 않게 **마지막 갈래가 나머지를 흡수**한다 —
+     `test-payroll`의 "금고 증감이 장부와 맞는다"가 이것을 지킨다. */
+  const paidNow = before - state.gold;
+  const share = now > 0 ? paidNow / now : 0;
+  const sup = Math.round(c.supplies * share);
+  const upk = Math.round((c.fleet + c.hull + c.arms) * share);
+  book('outgo', 'supplies', sup);
+  book('outgo', 'upkeep', upk);
+  book('outgo', 'insurance', paidNow - sup - upk);
 
   // 쌓이는 것 — 급여
   state.payroll.due += c.wages + c.officer;
@@ -1568,6 +2317,10 @@ export function paydayDue() {
   return state.day >= state.payroll.nextDue && (state.payroll.due > 0 || state.payroll.arrears > 0);
 }
 
+/** 오늘은 "짐을 팔고 오겠다"고 미뤄 둔 상태인가 — 같은 날 항구 안에서만 유효하다.
+    **떠날 때는 안 봐준다**(출항 단추가 다시 띄운다). */
+export const paydayDeferred = () => state.payroll.deferredDay === state.day;
+
 /** 다음 급여일까지 남은 날 */
 export const daysToPayday = () => Math.max(0, state.payroll.nextDue - state.day);
 
@@ -1602,6 +2355,28 @@ function stealCargo(headcount, rand = Math.random) {
 /** 급여를 치른다. 금고가 모자라면 **낼 수 있는 만큼 내고** 나머지는 체불로 넘긴다.
     돌려주는 값이 그대로 정산 화면의 재료다. */
 export function settlePayroll(rand = Math.random) {
+  /* ★ **빌린 돈이 먼저다.** 전주는 급여일에 맞춰 사람을 보내고, 선원보다 먼저 받아 간다 —
+     그것이 이 돈이 무이자가 아닌 이유이자 빌리는 것이 위험한 이유다.
+     금고가 모자라면 갚은 만큼만 줄고 나머지는 이자가 한 번 더 붙어 다음 달로 넘어간다. */
+  const loan = state.boons?.loan;
+  let loanPaid = 0, loanLeft = 0;
+  if (loan && state.day >= loan.due) {
+    loanPaid = Math.min(state.gold, loan.owed);
+    state.gold -= loanPaid;
+    if (loanPaid) book('outgo', 'port', loanPaid);
+    const rest = loan.owed - loanPaid;
+    if (rest > 0) {
+      loan.owed = Math.round(rest * BOON.loanRate);
+      loan.due = state.day + BOON.loanDays;
+      loanLeft = loan.owed;
+      pushLog(`빚 ${rest.toLocaleString('ko-KR')}닢을 못 갚아 `
+            + `${loan.owed.toLocaleString('ko-KR')}닢으로 불었다.`, 'bad');
+    } else {
+      state.boons.loan = null;
+      pushLog(`빌린 돈 ${loanPaid.toLocaleString('ko-KR')}닢을 갚았다.`, 'good');
+    }
+  }
+
   const owed = payrollOwed();
   const paid = Math.min(state.gold, owed);
   const missed = owed - paid;
@@ -1634,7 +2409,7 @@ export function settlePayroll(rand = Math.random) {
 
   const closed = state.ledger;
   state.ledger = newLedger(state.day);
-  return { owed, paid, missed, deserted, ledger: closed, arrears: missed };
+  return { owed, paid, missed, deserted, ledger: closed, arrears: missed, loanPaid, loanLeft };
 }
 
 /* ── 저 혼자 일어나는 사건 ────────────────────────────────────
@@ -1694,21 +2469,32 @@ export function playerTroops() {
   return out;
 }
 
-export function resetGame() {
+/** 판을 처음 상태로 되돌린다. `at`은 **시작할 부두**다(고르지 않으면 `DEFAULT_START`).
+    ★ 시작지가 여기 한 곳에서만 정해진다 — 화면에 적는 문구는 상태에서 읽으므로(main.js: titleScreen)
+      이 값을 바꾸면 타이틀·항구·선단 기록이 함께 따라온다. */
+export function resetGame(at = DEFAULT_START, originId = null) {
+  /* ★ **갈래가 시작 항구를 정한다.** 한반도 다섯 갈래(`data.js: ORIGINS`)는 저마다 다른 문으로
+     바다에 나가므로 부두도 다르다 — 역관은 부산포, 종친·상인·서자는 마포(경강), 군관은 여수.
+     `at`을 따로 주면 그쪽이 이긴다(디버그·다른 바다에서 시작할 때). */
+  const origin = ORIGIN_BY_ID[originId] ?? null;
+  if (origin && at === DEFAULT_START) at = origin.at;
   const s = SHIPS.hulk;
   const arms = { light: s.guns, medium: 0, long: 0 };
   Object.assign(state, {
-    day: 1, gold: START_GOLD, shipKey: 'hulk',
-    hp: s.hp, maxHp: s.hp, crew: 0, crewMax: s.crewMax,
+    day: 1, gold: origin?.gold ?? START_GOLD, shipKey: origin?.ship ?? 'hulk',
+    origin: origin?.id ?? null,
+    hp: s.hp, maxHp: s.hp, crew: origin?.crew ?? 0, crewMax: s.crewMax,
     guns: s.guns, arms: { ...arms },
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
-    cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at: 'venezia',
+    cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at,
+    infamy: {}, holdings: {}, stored: {}, yards: {}, ended: 0,
+    boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
-    payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1 },
+    payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1, deferredDay: 0 },
     ledger: newLedger(1),
-    fleet: { hulk: { at: 'venezia', hp: s.hp, arms: { ...arms }, refits: {} } },
+    fleet: { hulk: { at, hp: s.hp, arms: { ...arms }, refits: {} } },
     towing: null,
     loadout: ['captain', null, null, null, null, null],
     known: new Set(['venezia']), everOwned: new Set(['hulk']), log: [],
@@ -1718,5 +2504,5 @@ export function resetGame() {
   refreshPrices();
   pushLog(`베네치아 부두. 물이 새는 낡은 바사 한 척과 금화 ${START_GOLD}닢으로 시작한다.`, 'warn');
   pushLog('갑판에 사람이 없다. 술집에서 선원을 모으지 않으면 배는 뜨지 않는다.', 'warn');
-  pushLog(`${OFFICER.name}이(가) 장부를 안고 갑판에 올라섰다. 급여 ${OFFICER.wage}닢/일.`, 'good');
+  pushLog(`${OFFICER.name}${josa(OFFICER.name, '이/가')} 장부를 안고 갑판에 올라섰다. 급여 ${OFFICER.wage}닢/일.`, 'good');
 }

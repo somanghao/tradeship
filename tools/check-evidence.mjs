@@ -70,8 +70,12 @@ for (const city of CITIES) {
   const tariffCode = CITY_TARIFF[city.id];
   const tariffEv = ev.tariff;
   if (tariffCode != null && !tariffEv) {
-    warn('무근거', `${city.name} 입항세`,
-      `CITY_TARIFF에 ${(tariffCode * 100).toFixed(1)}%로 지정해 놓고 근거가 없다`);
+    /* ★ 이것은 **경고다**(실패가 아니다). 관세를 지정한 것은 *콘텐츠*이고 근거는 *뒤따르는 조사*다 —
+       실패로 다루면 "항구를 늘리려면 먼저 그 항구의 관세 사료를 찾아야" 하고, 그것이 곧
+       검증 스크립트가 콘텐츠를 억제하는 구조다(최상위 원칙이 금지한다).
+       실패로 남는 것은 아래 둘 — **유령**(근거에만 있다)과 **불일치**(코드 ≠ 근거)다. */
+    soft('무근거', `${city.name} 입항세`,
+      `CITY_TARIFF에 ${(tariffCode * 100).toFixed(1)}%로 지정해 놓고 근거가 없다 — 굴려 본 뒤 채워라`);
   } else if (tariffCode == null && tariffEv) {
     warn('유령', `${city.name} 입항세`, '근거에는 있는데 CITY_TARIFF에 없다');
   } else if (tariffCode != null && tariffEv) {

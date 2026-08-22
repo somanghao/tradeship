@@ -83,6 +83,45 @@
         }
       }
     },
+    "cadiz": {
+      "flag": {
+        "value": "spain",
+        "verdict": "probable",
+        "basis": "카스티야 왕령 도시다. 세비야·빌바오와 같은 처리로 'spain'을 그대로 쓴다 — 안달루시아 항구에 다른 깃발을 세울 근거가 없다."
+      },
+      "tariff": {
+        "value": 0.055,
+        "verdict": "probable",
+        "basis": "알모하리파스고(안달루시아 관세)는 카디스에도 물렸으나 카사 데 콘트라타시온의 함대 등록·감독은 세비야에서만 했다. 그 몫이 빠지므로 세비야 7.5%보다 가볍고, 규모 2의 기본율 4.5%보다는 무겁게 두어 \"독점을 우회하는 문\"이라는 성격을 남겼다. 사료의 정률은 확인하지 못했다.",
+        "sources": []
+      }
+    },
+    "leith": {
+      "flag": {
+        "value": "france",
+        "verdict": "gameplay",
+        "basis": "FLAGS에 스코틀랜드(파란 바탕 흰 사선십자)가 없다. 색이 가장 가까운 'france'를 얹었다 — 오랜 동맹(Auld Alliance) 관계라 오히려 읽히는 차용이다. art.flagTodo에 'scotland'를 올려 두었다."
+      },
+      "tariff": {
+        "value": 0.055,
+        "verdict": "probable",
+        "basis": "스코틀랜드 왕실 수입의 기둥은 양모·양가죽·소가죽에 물린 대관세(great customs)였고, 리스에서 나가는 물건이 정확히 그 셋이다. 규모 2의 기본율 4.5%보다 무겁게 두어 그 성격을 드러냈다. 사료의 정률은 확인하지 못했다.",
+        "sources": []
+      }
+    },
+    "visby": {
+      "flag": {
+        "value": "denmark",
+        "verdict": "probable",
+        "basis": "고틀란드는 1361년 덴마크 발데마르 4세가 비스뷔를 함락한 뒤 덴마크 왕령이었고 비스보리 성이 그 지배의 자리였다. 한자 도시가 아니므로 hanse가 아니라 denmark를 단다."
+      },
+      "tariff": {
+        "value": 0.05,
+        "verdict": "probable",
+        "basis": "한자 특권이 닿지 않는 덴마크 왕령 섬이라 도시와 성이 제 몫을 챙겼다. 규모 2의 기본율 4.5%보다 조금 무겁게 두되 뤼베크·단치히의 한자 특권(6.5~7%)보다는 훨씬 가볍게 두어 \"값을 정하는 곳이 아니라 지나가는 자리\"라는 성격을 남겼다. 사료의 정률은 확인하지 못했다.",
+        "sources": []
+      }
+    },
     "sevilla": {
       "flag": {
         "value": "spain",
@@ -1356,6 +1395,132 @@
     }
   },
   "routes": {
+    "lisboa|porto": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "안트베르펜 중개인 장부 중앙값 7.00%를 기준으로 크게 내렸다 — 하루면 닿고 몬데구·부지구 같은 피난할 강어귀가 줄지어 있는 연안이다. 이 권역에서 가장 순한 외해로 두었다.",
+      "sources": []
+    },
+    "bilbao|porto": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "핀스테레 곶을 돌아 비스케이만으로 드는 구간이다. 곶 동쪽은 전천후 피난항이 없고 만 전체가 바람에 밀리는 뭍(lee shore)이라, 같은 만의 빌바오~보르도 8.0과 같은 자리에 둔다.",
+      "sources": []
+    },
+    "bristol|porto": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "뭍을 며칠 안 보는 종단 항해다. 브르타뉴·노르망디 나포면허선의 사냥터를 지나므로 해협 횡단 앵커(1438년 5.86%)보다 훨씬 무겁고, 성격이 같은 베르겐~브리스틀 8.5에 맞췄다.",
+      "sources": []
+    },
+    "cadiz|sevilla": {
+      "risk": 3.0,
+      "verdict": "probable",
+      "basis": "과달키비르 강어귀와 카디스만을 잇는 짧은 구간이다. 산루카르 앞의 모래톱(barra)이 큰 배를 걸리게 했으나 그것은 좌초 위험이고 해적 위험이 아니다. 발트 내해 수준으로 내렸다.",
+      "sources": []
+    },
+    "cadiz|lisboa": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "상 비센치 곶을 도는 외해다. 바르바리 코르세어가 알가르브·안달루시아 해안을 덮쳤다는 것이 사료의 표현이고, 같은 물을 지나는 리스본~세비야 6.5와 같은 자리에 둔다.",
+      "sources": []
+    },
+    "cadiz|laspalmas": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "인디아스 함대가 카나리아 해류를 타고 내려간 첫 구간이다. 뭍이 사라지는 외해이므로 푼샬~세비야 7.0보다 무겁게, 안트베르펜 장부 평균 7.70% 부근에 두었다.",
+      "sources": []
+    },
+    "funchal|laspalmas": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "대서양 제도 사이를 잇는 구간이다. 양쪽 다 포르투갈·카스티야가 지킨 항구라 코르세어가 상주하지 않았으므로 푼샬~세비야 7.0보다 조금 가볍게 두었다.",
+      "sources": []
+    },
+    "larochelle|nantes": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "부르뇌프만 염전을 오가는 연안 구간이다. 한자 소금 선단이 해마다 다닌 정기 항로라 뱃길이 잘 알려져 있었고, 성격이 같은 보르도~라로셸 4.5와 같은 자리에 둔다.",
+      "sources": []
+    },
+    "bristol|nantes": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "해협 서쪽 입구를 비스듬히 건넌다. 브르타뉴 나포면허선이 바로 이 물에서 먹고살았고 피난할 데가 실리 제도뿐이라, 해협 횡단 앵커 5.86%에서 크게 올렸다.",
+      "sources": []
+    },
+    "nantes|plymouth": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "브르타뉴와 데번 사이를 가로지른다. 거리는 짧으나 양안 수십 마일 안에 적대 항구가 늘어서 있는 전형적인 해협 구간이라 라로셸~런던 7.0과 같은 자리에 둔다.",
+      "sources": []
+    },
+    "bristol|plymouth": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "랜즈엔드 곶을 도는 연안이다. 뭍이 늘 보이지만 그 곶 자체가 조류와 암초로 악명 높아, 같은 잉글랜드 연안인 브리스틀~런던 6.0보다 조금 올렸다.",
+      "sources": []
+    },
+    "london|plymouth": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "해협 북안을 따라 도는 연안 항해다. 1438년 런던~브뤼헤 브로드클로스 5.86%를 앵커로 삼아 그 바로 위, 브리스틀~런던 6.0과 같은 자리에 두었다.",
+      "sources": []
+    },
+    "hull|london": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "잉글랜드 동안 연안이다. 뭍이 늘 보이고 양끝이 다 자국 항구라 나포 위험이 낮으므로 해협 횡단 앵커 5.86% 아래로 내렸다.",
+      "sources": []
+    },
+    "hull|leith": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "험버에서 포스만까지 동안을 따라 오르는 구간이다. 잉글랜드와 스코틀랜드 사이라 전시에는 위험했으나 평시 연안 항해로 잡아 5.86% 아래에 두었다.",
+      "sources": []
+    },
+    "hamburg|hull": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "북해를 가로지른다. 뭍이 며칠 안 보이고 덩케르커·프리슬란트 사략선이 이 물을 지켰으므로 안트베르펜 중개인 장부 중앙값 7.00%에 그대로 앉혔다.",
+      "sources": []
+    },
+    "bergen|hull": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "아이슬란드·노르웨이 어장으로 나가는 종단 항해다. 위험의 대부분이 겨울 북해의 폭풍이고, 성격이 같은 베르겐~브리스틀 8.5와 맞췄다.",
+      "sources": []
+    },
+    "bergen|leith": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "스코틀랜드에서 노르웨이로 북해를 종단한다. 도중에 피난할 뭍이 셰틀랜드뿐이라 베르겐~브리스틀·베르겐~헐과 같은 8.5에 둔다.",
+      "sources": []
+    },
+    "brugge|leith": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "스코틀랜드가 플랑드르에 둔 지정 시장(스테이플)으로 가는 뱃길이다. 해협 입구를 지나므로 브뤼헤~런던 5.86%보다 크게 올리고 북해 횡단 7.00% 위에 두었다.",
+      "sources": []
+    },
+    "stockholm|visby": {
+      "risk": 3.5,
+      "verdict": "probable",
+      "basis": "발트 내해다. 한자가 제 앞바다를 지켰고 뭍이 늘 가깝다. 성격이 같은 코펜하겐~뤼베크 3.5와 같은 자리에 둔다.",
+      "sources": []
+    },
+    "danzig|visby": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "고틀란드에서 프로이센으로 내려가는 발트 구간이다. 15세기 초까지 승자병단(Victual Brothers)이 이 섬을 근거로 삼았던 기억이 남아 있어 단치히~리가 4.5와 같은 자리에 둔다.",
+      "sources": []
+    },
+    "reval|visby": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "고틀란드에서 에스토니아로 건너가는 구간이다. 한때 노브고로드 무역의 본선이었고 한자가 지킨 물이라 레발~리가 3.5보다 조금만 올렸다.",
+      "sources": []
+    },
     "lisboa|sevilla": {
       "risk": 6.5,
       "verdict": "probable",
@@ -1589,12 +1754,6 @@
         }
       ]
     },
-    "kobenhavn|stockholm": {
-      "risk": 4.0,
-      "verdict": "probable",
-      "basis": "외레순을 지나 스웨덴 동안을 따라 올라간다. 군도가 촘촘해 뭍이 늘 가깝고 양쪽 다 지켜지는 물이라 발트 평균 수준으로 뒀다.",
-      "sources": []
-    },
     "danzig|stockholm": {
       "risk": 4.5,
       "verdict": "probable",
@@ -1639,6 +1798,12 @@
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
       ]
+    },
+    "kobenhavn|visby": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "외레순을 지난 배는 발트해를 북동진해 고틀란드에 들렀다 — 비스뷔는 한자의 중계 창고였고, 스톡홀름으로 가는 배도 그 섬을 거쳐 갔다. 발트 내해라 요율이 낮다(코펜하겐~스톡홀름 직항을 이 구간으로 옮겨 적었다 — 지도 축척에서 직선이 스칸디나비아 남단을 관통했다).",
+      "sources": []
     }
   },
   "goods": {
@@ -1910,8 +2075,18 @@
       }
     ],
     "flagTodo": [
-      {"key":"novgorod","note":"루시(노브고로드) — 붉은 바탕 금빛 문장. 이 권역에서 **유일하게 남은** 빌린 깃발이라 지금도 venice를 쓴다. 나머지(portugal·hanse·denmark·sweden·burgundy)는 배선이 끝나 제 깃발을 단다."},
-      {"key":"hanse","note":"한자 깃발은 배선됐지만(적백 두 줄) 도시별 문장 — 뤼베크의 쌍두수리, 함부르크의 성문, 단치히의 두 십자와 왕관 — 을 쓰면 더 좋다. 급하지는 않다."}
+      {
+        "key": "novgorod",
+        "note": "루시(노브고로드) — 붉은 바탕 금빛 문장. 이 권역에서 **유일하게 남은** 빌린 깃발이라 지금도 venice를 쓴다. 나머지(portugal·hanse·denmark·sweden·burgundy)는 배선이 끝나 제 깃발을 단다."
+      },
+      {
+        "key": "scotland",
+        "note": "스코틀랜드(리스) — 파란 바탕에 흰 사선십자(성 안드레아 십자). 지금은 색이 가장 가까운 'france'(파란 바탕 금빛 백합)를 빌려 쓴다. 사선십자를 그리는 키는 burgundy에 이미 있으니 팔레트만 갈면 된다."
+      },
+      {
+        "key": "hanse",
+        "note": "한자 깃발은 배선됐지만(적백 두 줄) 도시별 문장 — 뤼베크의 쌍두수리, 함부르크의 성문, 단치히의 두 십자와 왕관 — 을 쓰면 더 좋다. 급하지는 않다."
+      }
     ],
     "styleTodo": [
       {

@@ -295,6 +295,59 @@ export function npcsAtPort(cityId, kind = null) {
   return (state.npcs || []).filter((n) => !n.to && n.at === cityId && (!kind || n.kind === kind));
 }
 
+/* ── 상선 조우가 빈손으로 끝나지 않게 ─────────────────────────
+   `npcsOnLeg`는 **그 배의 `at`·`to`가 정확히 내가 가는 두 항구일 때만** 잡는다.
+   지중해 열여섯 항구 시절에는 그것으로 충분했는데, 세계가 264 도시가 되자
+   상선 예순여덟 척이 흩어져 겹칠 일이 드물어졌다 — 실측에서 **상선 조우 열세 번 중
+   실제로 만난 것이 두 번**이었고 나머지 열한 번은 "멀리 돛 하나가 지나갔다"로 끝났다
+   (2026-08-22 실클릭 · `.playtest/nine-seas/FINDINGS.md` G-2).
+
+   가중치를 올리는 것은 답이 아니다 — 조우 자체는 12%로 제대로 나고 있었다.
+   **만날 대상을 찾는 범위**가 좁았던 것이다. 그래서 세 단으로 넓힌다:
+     ① 정확히 그 구간을 지나는 배 (지금까지의 규칙 — "지도에서 보던 그 배")
+     ② 두 항구 중 하나를 오가는 배 (같은 바닷목이다)
+     ③ 그래도 없으면 **그 바다의 명부에서 한 척**을 세운다(수평선 너머에서 온 배)
+   ③은 `state.npcs`에 넣지 않는다 — 세계의 정원(`NPC.traders`)을 흔들지 않기 위해서다.
+   해적은 이미 같은 폴백을 갖고 있었다(`pickEnemy`) — 상선만 없었다. */
+
+/** 그 구간 언저리를 지나는 상선 — ①정확 → ②근처 */
+export function tradersNearLeg(aId, bId) {
+  const exact = npcsOnLeg(aId, bId, 'trader');
+  if (exact.length) return exact;
+  return (state.npcs || []).filter((n) => n.kind === 'trader'
+    && (n.at === aId || n.at === bId || n.to === aId || n.to === bId));
+}
+
+/** ③ 수평선 너머에서 온 배 — 그 바다의 상단 하나를 즉석으로 세운다(짐을 싣고 온다) */
+export function strayTrader(aId, bId) {
+  const rid = REGION_OF_CITY[aId] ?? REGION_OF_CITY[bId];
+  const here = CITY_BY_ID[aId] ? aId : bId;
+  // 그 바다를 도는 상단을 먼저, 없으면 아무 상단이나 (계절을 벗어난 상단은 제외)
+  const inRegion = ALL_TRADERS.filter((d) => inSeason(d)
+    && (d.circuit ?? []).some((c) => REGION_OF_CITY[c] === rid));
+  const def = pick(inRegion.length ? inRegion : ALL_TRADERS.filter(inSeason)) ?? null;
+  if (!def) return null;
+
+  const shipKey = (def.ship && SHIPS[def.ship]) ? def.ship : pick(TRADER_SHIPS);
+  const ship = SHIPS[shipKey];
+  const n = {
+    id: `stray-${++seq}`, kind: 'trader', defId: def.id, name: def.name,
+    flag: def.flag ?? null, rank: def.rank ?? 2, goods: def.goods ?? null,
+    scope: def.scope ?? 'region', circuit: def.circuit ?? null, circuitIdx: 0,
+    shipKey, at: here, to: here === aId ? bId : aId, days: 0, legs: 0,
+    gold: def.purse ? between(def.purse) : between(PURSE.trader),
+    cargo: {}, hp: ship?.hp ?? 90, stray: true,
+  };
+
+  /* 빈 배로 만나면 살 것이 없어 결국 같은 "돛만 지나갔다"가 된다 — 짐을 실어 보낸다.
+     무엇을 실었나는 **그 상단이 다루는 품목**을 따르고, 없으면 출발 항구의 산지 품목을 싣는다. */
+  const pool = (def.goods ?? []).filter((g) => GOOD_BY_ID[g]);
+  const gid = pool.length ? pick(pool) : pick(GOODS).id;
+  const hold = Math.max(4, Math.round((ship?.cargo ?? 40) * (0.25 + rnd() * 0.45)));
+  n.cargo[gid] = hold;
+  return n;
+}
+
 /** 지도에 찍을 위치 — 항해 중이면 두 항구 사이를 보간한다 */
 export function npcPos(n) {
   const a = CITY_BY_ID[n.at];
@@ -316,6 +369,14 @@ export function removeNpc(id) {
 /** 항구에서 듣는 소문 — 최근 사건을 문장으로 */
 export function newsLines(news, limit = 3) {
   const out = [];
+  /* ★ **내 바다 소식을 앞에 세운다.** 사건은 265곳에 고루 나므로 그대로 흘려보내면
+     항해일지가 **못 가는 바다 이야기로 찬다** — 실측에서 40줄 중 22줄이 소문이었고
+     그중 내 권역은 2줄이었다(완주 플레이 ISSUES #14). 항해일지는 "무슨 일이 있었나"를
+     되짚는 화면인데 실제 사건(폭풍·해적·급여)이 남의 바다 소문에 밀려나면 안 된다.
+     먼 소식을 지우지는 않는다 — 세계가 산다는 감각은 그쪽에서 온다. 순서만 바꾼다. */
+  const here = REGION_OF_CITY[state.at];
+  const mine = (e) => REGION_OF_CITY[e.at] === here || REGION_OF_CITY[e.to] === here;
+  news = [...news].sort((a, b) => (mine(b) ? 1 : 0) - (mine(a) ? 1 : 0));
   for (const e of news) {
     if (e.kind === 'raid') {
       out.push({
@@ -371,7 +432,8 @@ export function pirateEnemy(n) {
      첫 배로 하나만 잡으면 코카를 사서 초반이 통째로 사라졌다(tools/sim-events.mjs).
      `capLoot`(state.js)이 "옮겨 실을 수 있는 만큼"으로 눌러 준다. 규칙은 떠돌이 해적과 같다. */
   return capLoot({
-    id: `npc:${n.id}`, name: `${n.name}호`, nation: '해적',
+    // `face`는 **명부 id**다(`defId`) — 전투 화면이 이것으로 그 해적의 초상을 찾는다(그림이 없으면 실루엣)
+    id: `npc:${n.id}`, face: n.defId, name: `${n.name}호`, nation: '해적',
     hull: s.hull, tint: 'dark', flag: n.flag ?? 'pirate',
     hp: Math.round(s.hp * mul), guns: Math.max(2, Math.round(s.guns * mul)),
     crew: Math.max(10, Math.round(s.crewMax * (0.35 + lv * 0.09))),

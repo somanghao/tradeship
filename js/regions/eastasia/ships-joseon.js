@@ -145,6 +145,30 @@ export const SHIPS = {
     upkeep: 31, rig: 0.75, tint: 'dark',
     desc: '판옥선에 뚜껑을 씌우고 쇠못을 심은 돌격선. 적진 한복판으로 먼저 들어가는 배라 짐은 거의 못 싣는다.',
   },
+  /* ── 히든 · 철갑 거북선 ─────────────────────────────────────
+     ★ **이 배가 이 게임의 끝이다.** 소설 《구해기》 6부가 여기서 닫히고(`story/ENDING.md`),
+     `GAME-LINK.md §8` A-2가 값까지 확정했다 — `{tier:4, requires:'geobukseon', yards:['yeompo'], price:24000}`.
+
+     기존 거북선을 건드리지 않고 **위에 한 칸을 얹는다**(밸런스 회귀가 없다).
+     tier 4라 조선 항구에서도 `tierNeeded 3`이고, **염포를 공업력 3까지 올린 플레이어만** 본다
+     (`state.js: yardBoost` — A-2 승급).
+
+     ★ **왜 염포인가**: 여수는 나무가 남고 쇠가 없으며 염포는 달천 철장이 있고 나무가 없다.
+       **둘이 물려야 이 배가 나온다** — 승급이 자재 실물을 요구하기 때문이다.
+       그리고 구리 120칸은 **조선에 산지가 없어** 아홉 바다와 끊기지 않는다.
+
+     ★ 상선으로 쓸 수 없다 — 화물 40칸에 유지비 44닢/일이라 어떤 항로에서도 회수되지 않는다.
+       **후반 금화의 종착지가 "안 쓰는 배 한 척"이 되는 것**이 이 게임의 주제와 맞는다. */
+  ironclad: {
+    hull: 'frigate', name: '철갑 거북선', origin: '조선', originFlag: 'joseon', tier: 4,
+    era: 'classic', requires: 'geobukseon',
+    yards: ['yeompo'],
+    price: 24000,
+    hp: 420, crew: 140, crewMax: 190, crewMin: 98, cargo: 40, guns: 22, speed: 1.02,
+    upkeep: 44, rig: 0.75, tint: 'dark',
+    desc: '뚜껑에 쇠판을 덧대고 총통을 늘려 세운 배. 짐은 거의 못 싣는다 — 이 배는 벌기 위한 것이 아니다.',
+  },
+
   changseon: {
     hull: 'frigate', name: '창선', origin: '조선', originFlag: 'joseon', tier: 3, era: 'modern', requires: 'geobukseon',
     yards: ['busanpo'],

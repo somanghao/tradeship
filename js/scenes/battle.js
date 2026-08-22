@@ -4,14 +4,15 @@
 
 import { VW, openSeaSprite, blastSprite, smokeSprite, splashSprite, ballSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE, SW, HULLS } from '../sprites/ship.js';
-import { unitSprite, CHAR_FOOT } from '../sprites/char.js';
+import { unitSprite, pirateSprite, CHAR_FOOT } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS } from '../data.js';
 import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
-  shotStock, useShot, fleeBonus, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL,
+  shotStock, useShot, fleeBonus, fleeOdds, fleeWord, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL, regionOf,
+  originPerk,
 } from '../state.js';
-import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa } from '../ui.js';
+import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa, spriteElTrim } from '../ui.js';
 import { go } from '../main.js';
 
 const SEA_Y = 138;          // 두 배가 떠 있는 기준 수면 y
@@ -256,10 +257,11 @@ function withdraw() {
 
 function tryFlee() {
   if (B.busy) return;
-  // 멀수록·빠를수록 잘 도망친다. 돛을 증축했으면 더, 내 돛이 찢겼으면 덜.
-  // 적의 돛을 사슬탄으로 찢어 놨다면 따라오지 못한다.
-  const chance = 0.24 + (B.range / MAX_RANGE) * 0.52 + (shipSpeed() - 1) * 0.25
-               + fleeBonus() + (B.foe.sailDmg / 100) * 0.30 - (B.you.sailDmg / 100) * 0.25;
+  // 식은 state.js가 정본이다 — 조우 안내가 보여 준 가망과 같은 값이어야 한다.
+  const chance = fleeOdds({
+    range: B.range, foeHull: B.enemy.hull,
+    mySail: B.you.sailDmg, foeSail: B.foe.sailDmg,
+  });
   if (Math.random() < chance) {
     const e = B.enemy;
     pushLog(`${e.name}${josa(e.name, '을/를')} 따돌리고 항로로 돌아왔다.`, 'warn');
@@ -444,11 +446,13 @@ function drawMelee(ctx, yourX, foeX, bobA, bobB) {
   const yStart = yH.x0 + Math.round(yH.len * 0.46);
   const fStart = fH.x0 + Math.round(fH.len * 0.42);
 
+  // 양쪽 갑판 모두 이 바다 사람들이다 — 왜구 배에 지중해 선원이 서 있었다
+  const face = regionOf(state.at);
   alive(m.you).forEach((u, i) => {
-    blit(ctx, unitSprite(u.key, u.pose), yourX + yStart + i * yStep + u.offset, yDeck, 1, false);
+    blit(ctx, unitSprite(u.key, u.pose, null, face), yourX + yStart + i * yStep + u.offset, yDeck, 1, false);
   });
   alive(m.foe).forEach((u, i) => {
-    blit(ctx, unitSprite(u.key, u.pose), foeX + fStart - i * fStep - u.offset, fDeck, 1, true);
+    blit(ctx, unitSprite(u.key, u.pose, null, face), foeX + fStart - i * fStep - u.offset, fDeck, 1, true);
   });
 }
 
@@ -475,7 +479,9 @@ function meleeRound(stance) {
     const isRanged = u.key === 'musketeer' || u.key === 'crossbow';
     const mult = stance === 'volley' ? (isRanged ? 1.7 : 0.6) : mods.atk;
     const target = fl[Math.floor(Math.random() * fl.length)];
-    const raw = u.atk * mult * (0.8 + Math.random() * 0.45);
+    /* 갈래가 백병을 거든다 — 좌수영의 군관은 갑판 싸움을 배운 사람이다
+       (`ORIGINS.navy.perks.meleeUp`). 이 루프는 **우리 측 공격**이라 적에게는 안 붙는다. */
+    const raw = u.atk * mult * (1 + originPerk('meleeUp')) * (0.8 + Math.random() * 0.45);
     const d = Math.max(1, Math.round(raw - target.def * 0.42));
     target.hp -= d; ydmg += d;
     u.pose = 'attack'; u.offset = 5;
@@ -778,7 +784,13 @@ function sideBar(side, name, s, color) {
     ? [B.enemy.nation, RANK[foeKind(B.enemy)][B.enemy.level] || null,
        B.enemy.bounty ? '현상금' : null].filter(Boolean).join(' · ')
     : null;
+  /* 이름난 해적은 **얼굴을 내건다** — 명부의 세기·현상금이 이름표에만 있으면 좀도둑과 구분이 약하다.
+     그림은 `pirate:<명부id>:idle`로 갈리고(BRIEF-NPC §4 ③), 없으면 세기에 맞는 실루엣이다. */
+  const face = side === 'right' && B.enemy.face
+    ? el('div.bar-face', {}, spriteElTrim(pirateSprite(B.enemy.face, B.enemy.level), 2))
+    : null;
   return el(`div.bar-wrap.${side}`, {}, [
+    face,
     el('div.bar-name', { text: name, style: { color } }),
     tag ? el('div.bar-num', { text: tag, style: { color: '#a2957c' } }) : null,
     bar('hp', s.hp, s.maxHp),
@@ -810,7 +822,11 @@ function commandBar() {
       el('button.btn.dark', {
         text: '백병전 돌입', disabled: off || B.range > 26, onclick: () => { B.busy = true; toMelee(); },
       }),
-      el('button.btn.danger', { text: '도주', disabled: off, onclick: tryFlee }),
+      // 거리가 멀 때 도망치는 게 낫다 — 가망이 지금 얼마인지 눌러 보기 전에 알려 준다
+      el('button.btn.danger', {
+        text: '도주', disabled: off, onclick: tryFlee,
+        title: `지금 도주하면 ${fleeWord(fleeOdds({ range: B.range, foeHull: B.enemy.hull, mySail: B.you.sailDmg, foeSail: B.foe.sailDmg }))}`,
+      }),
     );
   } else {
     const off = B.busy;

@@ -3,6 +3,7 @@
 // 이 조합 방식 덕에 병종을 늘려도 실루엣과 비례가 어긋나지 않는다.
 
 import { PAL as P, G, bake, outline } from '../pixel.js';
+import { overrideFor } from '../assets.js';
 
 export const CW = 48, CH = 48;     // 스프라이트 규격
 const FOOT = 45;                   // 발바닥 기준선
@@ -539,12 +540,22 @@ export const UNITS = {
 };
 
 /* ── 조립 ──────────────────────────────────────────────────── */
-export function unitSprite(unitKey, pose = 'idle', schemeOverride = null) {
+export function unitSprite(unitKey, pose = 'idle', schemeOverride = null, faceKey = null) {
   const u = UNITS[unitKey];
   if (!u) throw new Error(`unknown unit: ${unitKey}`);
   const schemeKey = schemeOverride || u.scheme;
-  const key = `char:${unitKey}:${pose}:${schemeKey}`;
-  return bake(key, CW, CH, (g, ctx) => {
+  /* ★ `faceKey`는 **그림을 갈아 끼울 자리**다(권역 이름이 온다 — `eastasia`·`mediterranean`).
+     키만 갈라 두고 배색(`schemeKey`)은 그대로 쓴다. 그래서 PNG가 있는 바다는 그 얼굴이 뜨고,
+     없는 바다는 지금까지처럼 코드 생성으로 그려진다.
+     전에는 키가 배색뿐이라 `assets/npc/char-sailor-eastasia.png`를 manifest에 적어도
+     **아무 데서도 불리지 않아** 그림이 한 픽셀도 안 나왔다(로더는 "갈아 끼웠다"고 말한다). */
+  const key = `char:${unitKey}:${pose}:${faceKey || schemeKey}`;
+  return bake(key, CW, CH, painter(u, pose, schemeKey));
+}
+
+/** 한 사람을 그리는 붓 — 키만 다른 초상들(인물·이름난 해적)이 같은 붓을 쓴다. */
+function painter(u, pose, schemeKey) {
+  return (g, ctx) => {
     const s = SCHEMES[schemeKey];
     const sk = skinOf(s);
     const po = poseOf(pose);
@@ -559,8 +570,38 @@ export function unitSprite(unitKey, pose = 'idle', schemeOverride = null) {
     (fem ? drawFrontArmFem : drawFrontArm)(g, s, po, sk);
     WEAPONS[u.weap](g, s, po, sk);
     outline(ctx, CW, CH);
-  });
+  };
 }
+
+/* ── 초상 — 얼굴이 오면 갈아 끼울 자리 (assets/BRIEF-NPC.md §4 ②③) ──────
+   ★ **그림이 없으면 개별 키로 굽지 않는다.** 인물은 아홉 바다 합쳐 71명이고 해적도 바다마다
+     있어서, 폴백까지 각자 키로 구우면 똑같은 그림이 수십 장 캐시(6MB LRU)를 먹는다.
+     그림이 있는 사람만 자기 키를 갖고, 나머지는 공용 병종 스프라이트를 함께 쓴다. */
+
+/** 항구에 머무는 사람(중개인·관리·정보상…) — 그림은 `figure:<인물id>:idle` */
+export function figureSprite(id, job = null) {
+  const unitKey = JOB_UNIT[job] ?? 'captain';
+  const key = `figure:${id}:idle`;
+  if (!overrideFor(key)) return unitSprite(unitKey);
+  return bake(key, CW, CH, painter(UNITS[unitKey], 'idle', UNITS[unitKey].scheme));
+}
+
+/** 이름난 해적 — 그림은 `pirate:<해적id>:idle`. 두목급은 선장 실루엣으로 폴백한다 */
+export function pirateSprite(id, tier = 1) {
+  const unitKey = tier >= 4 ? 'captain' : 'pirate';
+  const key = `pirate:${id}:idle`;
+  if (!overrideFor(key)) return unitSprite(unitKey);
+  return bake(key, CW, CH, painter(UNITS[unitKey], 'idle', UNITS[unitKey].scheme));
+}
+
+/* 직업 → 폴백 실루엣. 얼굴이 없는 사람도 "관리인지 뱃사람인지"는 보이게 한다.
+   값은 `js/regions/<권역>/npc-figures.js`의 `job`(라벨은 `port.js: JOB_LABEL`). 없는 직업은 선장 실루엣. */
+const JOB_UNIT = {
+  '官': 'captain', official: 'captain', harbormaster: 'captain', guildmaster: 'captain',
+  broker: 'captain', moneylender: 'captain', scholar: 'crossbow', cartographer: 'crossbow',
+  priest: 'crossbow', physician: 'crossbow', interpreter: 'sailor', shipwright: 'sailor',
+  smuggler: 'pirate', informant: 'pirate', gunsmith: 'gunner',
+};
 
 export const UNIT_KEYS = Object.keys(UNITS);
 export { FOOT as CHAR_FOOT };

@@ -9,12 +9,13 @@ import { shipSprite, shipTopSprite, HULLS, WATERLINE } from '../sprites/ship.js'
 import { unitSprite, CHAR_FOOT } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import {
-  SHIPS, CITY_BY_ID, CANNONS, CANNON_KEYS, CANNON_REFUND,
+  SHIPS, CITY_BY_ID, GOOD_BY_ID, CANNONS, CANNON_KEYS, CANNON_REFUND,
   TROOPS, RECRUITS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, REFIT_KEYS, SHOTS, SHOT_KEYS,
 } from '../data.js';
 import {
-  state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT,
+  state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT, repairUnit,
+  yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding,
   gunCap, armsTotal, armsFactor, armsAimAt, zoneFactor, buyCannon, removeCannon,
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
   pushLog, hasRefit, buyRefit, sellsShip, yardsOf, buyShot, shipSpeed, shorthanded,
@@ -22,7 +23,7 @@ import {
   usedListings, buyUsed,
   fleetUpkeep,
 } from '../state.js';
-import { el, overlay, toast, modal, refreshHUD, refreshLog, spriteEl, spriteElTrim } from '../ui.js';
+import { el, overlay, toast, modal, refreshHUD, refreshLog, spriteEl, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
 
 /* 배가 놓이는 자리 — 논리 좌표. 패널은 x=206부터라 겹치지 않는다. */
@@ -201,7 +202,62 @@ function redraw() {
 /* ══════════════════════════════════════════════════════════════
    선박 탭 — 보유 / 구입. 자동 매각은 없다.
    ══════════════════════════════════════════════════════════════ */
+/* ── 부두를 넓힌다 (A-2) ───────────────────────────────────────
+   ★ 도시 `industry`가 고정값이라 **배 사다리의 꼭대기가 첫날부터 정해져** 있었다.
+   자재를 실물로 실어 와야 오르므로, 이 카드는 "돈을 쓰는 자리"가 아니라 **항로를 짜는 자리**다. */
+function yardUpgradeCard() {
+  const city = CITY_BY_ID[state.at];
+  const building = yardBuilding(state.at);
+  const rows = [];
+
+  if (building && yardBusy(state.at)) {
+    rows.push(el('div.ctr-line', {
+      html: `<b>공사 중</b> — 공업력 ${building.to}까지 <b>${building.until - state.day}일</b> 남았다`,
+    }));
+    rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+      text: '그동안 이 부두는 배를 짓지도 팔지도 않는다. 그것이 이 투자의 진짜 값이다.' }));
+  } else {
+    const can = canUpgradeYard(state.at);
+    const n = can.need ?? yardNext(state.at);
+    if (!n) {
+      rows.push(el('div.ctr-sub', { text: `이 항구는 이미 꼭대기다 (공업력 ${industryOf(state.at)}).` }));
+    } else {
+      const mats = Object.entries(n.mats).map(([g, q]) => {
+        const have = (state.cargo[g] || 0) + ((state.stored?.[state.at] ?? {})[g] || 0);
+        return `${GOOD_BY_ID[g]?.name ?? g} ${have}/${q}`;
+      }).join(' · ');
+      rows.push(el('div.ctr-line', {
+        html: `공업력 <b>${industryOf(state.at)} → ${n.to}</b> · ${n.gold.toLocaleString('ko-KR')}닢 · ${n.days}일`,
+      }));
+      rows.push(el('div.ctr-sub', {
+        style: can.ok ? null : { color: '#c98a6a' },
+        text: `자재 ${mats}` + (can.ok ? '' : ` — ${can.reason}`),
+      }));
+      rows.push(el('button.btn.sm', {
+        text: can.ok ? `부두를 넓힌다 (−${n.gold.toLocaleString('ko-KR')}닢)` : '아직 못 넓힌다',
+        disabled: !can.ok,
+        onclick: () => {
+          const r = upgradeYard(state.at);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`공사를 걸었다 — ${r.to}까지 ${r.until - state.day}일`, 'good');
+          refreshHUD(); refreshLog(); redraw();
+        },
+      }));
+    }
+  }
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '부두' }),
+      el('span', { text: `${city.name} · 공업력 ${industryOf(state.at)}`,
+                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
 function shipTab() {
+  const upgradeCard = yardUpgradeCard();
   const rows = [];
   const seenKey = preview || state.shipKey;
   for (const [key, s] of Object.entries(SHIPS)) {
@@ -244,6 +300,7 @@ function shipTab() {
   }
 
   return el('div', {}, [
+    upgradeCard,
     el('p.yard-note', {
       html: `<b>${city.name}</b> 조선소 — 공업력 <b>${industryOf()}</b>`
           + `(0=내륙 · 1=소형 · 2=대형 상선 · 3=최상급). 제 나라 배는 한 등급 쉽게 짓고, `
@@ -264,7 +321,7 @@ function shipTab() {
 function whyNot(key, s) {
   if (!s.tier) return '→ 시중에 나오지 않는 배';
   const lock = shipLockedBy(key);
-  if (lock) return `→ ${lock}을(를) 몰아 본 선주에게만 내놓는다`;
+  if (lock) return `→ ${lock}${josa(lock, '을/를')} 몰아 본 선주에게만 내놓는다`;
   const where = buildableAt(key).slice(0, 4).join(' · ');
   return `→ 이 항구는 공업력 ${industryOf()}, ${tierNeeded(key)} 필요`
        + (where ? ` — ${where}에서 짓는다` : '');
@@ -312,7 +369,7 @@ function usedTab() {
                    const r = buyUsed(lot.key);
                    if (!r.ok) return toast(r.reason, 'bad');
                    toast(`${s.name} 중고 매입 · ${r.cost.toLocaleString('ko-KR')}닢 (선체 ${r.hp}/${s.hp})`, 'good');
-                   pushLog(`${city.name}에서 중고 ${s.name}을(를) 사들였다. 선체가 ${Math.round((1 - r.hp / s.hp) * 100)}% 상해 있다.`, 'good');
+                   pushLog(`${city.name}에서 중고 ${s.name}${josa(s.name, '을/를')} 사들였다. 선체가 ${Math.round((1 - r.hp / s.hp) * 100)}% 상해 있다.`, 'good');
                    redraw();
                  },
                }),
@@ -336,7 +393,7 @@ function shipActions(key, s, rec, aboard, here) {
         const r = purchaseShip(key);
         if (!r.ok) return toast(r.reason, 'bad');
         toast(`${s.name} 구입 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
-        pushLog(`${city.name} 조선소에서 ${s.name}을(를) 사들였다.`, 'good');
+        pushLog(`${city.name} 조선소에서 ${s.name}${josa(s.name, '을/를')} 사들였다.`, 'good');
         redraw();
       },
     })];
@@ -363,11 +420,11 @@ function doBoard(key, s) {
     const r = boardShip(key);
     if (!r.ok) return toast(r.reason, 'bad');
     toast(`${s.name}에 올랐다`, 'good');
-    pushLog(`${city.name}에서 ${s.name}(으)로 갈아탔다.`
+    pushLog(`${city.name}에서 ${s.name}${josa(s.name, '으로/로')} 갈아탔다.`
             + (r.dropped ? ` 선원 ${r.dropped}명이 하선했다.` : ''), 'good');
     // 큰 배는 사람을 더 먹는다 — 최소 인원을 못 채우면 돛을 다 펴지 못한다
     if (r.short) {
-      pushLog(`${s.name}을(를) 몰려면 최소 ${s.crewMin}명이 필요하다. 지금 ${state.crew}명 — 속력이 떨어진다.`, 'warn');
+      pushLog(`${s.name}${josa(s.name, '을/를')} 몰려면 최소 ${s.crewMin}명이 필요하다. 지금 ${state.crew}명 — 속력이 떨어진다.`, 'warn');
       toast(`인원 부족 — 최소 ${s.crewMin}명`, 'bad');
     }
     redraw();
@@ -394,7 +451,7 @@ function confirmSell(key, s) {
         const r = sellShip(key);
         if (!r.ok) { toast(r.reason, 'bad'); return; }
         toast(`${s.name} 매각 · ${r.gain.toLocaleString('ko-KR')}닢`, 'good');
-        pushLog(`${city.name}에서 ${s.name}을(를) 팔았다.`);
+        pushLog(`${city.name}에서 ${s.name}${josa(s.name, '을/를')} 팔았다.`);
         redraw();
       } },
       { label: '그만둔다', kind: 'dark' },
@@ -441,7 +498,7 @@ function crewTab() {
           toast(`선원 ${r.n}명 고용 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
           redraw();
         }),
-      svcRow(`선체 수리 (${REPAIR_UNIT}닢/pt)`, `${state.hp}/${state.maxHp}`, '전부 수리',
+      svcRow(`선체 수리 (${repairUnit()}닢/pt${repairUnit() < REPAIR_UNIT ? ' · 깎았다' : ''})`, `${state.hp}/${state.maxHp}`, '전부 수리',
         state.hp >= state.maxHp, () => {
           const r = repair(state.maxHp - state.hp);
           if (!r.ok) return toast(r.reason, 'bad');
@@ -471,7 +528,24 @@ function pickTroop(i) {
   for (const k of RECRUITS) {
     const t = TROOPS[k];
     const due = t.hire - refund;
-    list.append(el(`div.pick${k === prev ? '.on' : ''}`, {}, [
+    /* ★ **줄 어디를 눌러도 뽑힌다.** 전에는 오른쪽 작은 값 단추에만 `onclick`이 있어,
+       초상·이름·설명이 든 큰 줄을 눌러도 아무 일이 없었다 — 같은 화면의 배 목록·술집 카드는
+       줄 전체가 눌리므로 여기만 규칙이 달랐다. 실제로 자동 조종이 두 번 헛눌렀고 그때마다
+       모달의 *첫* 단추가 대신 먹혀 엉뚱한 병종이 배치되고 돈이 오갔다
+       (완주 플레이 ISSUES #18). 눌러도 안 되는 것처럼 느껴지는 화면은 그 자체가 결함이다. */
+    const take = () => {
+      if (k === prev) return;
+      if (due > state.gold) return toast(`금화가 ${(due - state.gold).toLocaleString('ko-KR')}닢 모자란다`, 'bad');
+      const r = setSlot(i, k);
+      if (!r.ok) return toast(r.reason, 'bad');
+      toast(`${i}번 자리에 ${t.name} 배치`, 'good');
+      close();
+      redraw();
+    };
+    list.append(el(`div.pick${k === prev ? '.on' : ''}`, {
+      onclick: take,
+      style: k === prev ? null : { cursor: 'pointer' },
+    }, [
       spriteElTrim(unitSprite(k, 'idle'), 2, 0),
       el('div.info', {}, [
         el('div.n', {}, [
@@ -483,13 +557,8 @@ function pickTroop(i) {
       k === prev ? el('span.dim', { text: '배치 중' }) : el('button.btn.sm', {
         text: due <= 0 ? '무료' : `${due.toLocaleString('ko-KR')}닢`,
         disabled: due > state.gold,
-        onclick: () => {
-          const r = setSlot(i, k);
-          if (!r.ok) return toast(r.reason, 'bad');
-          toast(`${i}번 자리에 ${t.name} 배치`, 'good');
-          close();
-          redraw();
-        },
+        // 줄 전체가 이미 눌리므로 여기서는 **버블링만 막는다**(두 번 실행되지 않게)
+        onclick: (e) => { e.stopPropagation(); take(); },
       }),
     ]));
   }
@@ -643,7 +712,7 @@ function refitTab() {
           const r2 = buyRefit(k);
           if (!r2.ok) return toast(r2.reason, 'bad');
           toast(`${r.name} 완료 · ${r2.cost.toLocaleString('ko-KR')}닢`, 'good');
-          pushLog(`${city.name} 조선소에서 ${ship().name}에 ${r.name}을(를) 했다.`, 'good');
+          pushLog(`${city.name} 조선소에서 ${ship().name}에 ${r.name}${josa(r.name, '을/를')} 했다.`, 'good');
           if (r2.dropped) {
             pushLog(`상갑판을 깎으며 대포 ${r2.dropped}문을 뜯어냈다.`, 'warn');
             toast(`포문이 줄어 대포 ${r2.dropped}문을 잃었다`, 'bad');
