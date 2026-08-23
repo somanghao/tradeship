@@ -119,7 +119,10 @@ export async function open(opts = {}) {
         ★ `click('출항하기')`는 제목 화면과 **항구 사이드패널의 출항 단추 둘 다** 매치해
           뒤에 가려진 쪽을 눌러 실패했다(중동 테스터가 잡았다). 제목 화면만 집는다. */
     async start() {
-      const b = page.locator('#title-screen button').first();
+      /* ★ **first를 누르면 안 된다.** 타이틀 안에는 갈래 고르기(`.sea-pick`)·바다 고르기·
+         **이어하기**가 먼저 오고, 저장된 판이 있으면 첫 단추가 '이어하기'라 자동 조종이
+         *다른 판*을 이어받는다. 시작 단추는 `.sea-pick`이 아닌 `.btn`이다. */
+      const b = page.locator('#title-screen button.btn:not(.sea-pick)').last();
       try { await b.click({ timeout: 4000 }); await sleep(200 + slow); return true; }
       catch { return false; }
     },
@@ -260,8 +263,16 @@ export async function open(opts = {}) {
           '마카오'가 '마카사르'를 물지 않게 정확 일치로 찾는다. */
       const clickCard = async () => {
         if (!name) return false;
+        /* ★ **`^이름$`으로 잡으면 처음 가는 항구를 통째로 놓친다.** `map.js`가 아직 안 가 본
+           항구의 이름칸에 배지를 붙여 `.rn`의 텍스트가 **"의주 초행"**이 되기 때문이다
+           (`state.known.has(id)`가 거짓일 때). 러너가 도는 항구는 **거의 전부 초행**이라
+           좌표 클릭이 실패하는 자리(육로·화면 가장자리)에서 폴백이 함께 죽었다 —
+           마포→의주 · 등주→톈진 · 오사카→쓰루가가 여러 갈래에서 되풀이해 타임아웃 났다.
+           그래서 **이름으로 시작하고 그 뒤가 끝이거나 공백**인 것까지 받는다.
+           '마카오'가 '마카사르'를 물지 않게 뒤에 글자가 바로 붙는 것은 여전히 거른다. */
+        const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const row = page.locator('.route-row').filter({
-          has: page.locator('.rn', { hasText: new RegExp(`^${name}$`) }),
+          has: page.locator('.rn', { hasText: new RegExp(`^${esc}(\\s|$)`) }),
         }).first();
         try { await row.click({ timeout: 2500 }); await sleep(300 + slow); return true; }
         catch { return false; }

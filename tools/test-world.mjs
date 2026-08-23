@@ -8,7 +8,17 @@ import {
 import { initWorld, worldTick, npcsOnLeg, npcsAtPort, newsLines } from '../js/world.js';
 import { NPC } from '../js/npc/config.js';
 
-const ok = (c, m) => console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`);
+/* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
+   `node tools/test-world.mjs`가 **exit 0**을 돌려주었고, 자동 회차와 문서는 그것을
+   "통과"로 읽었다. 실패할 수 없는 검사는 검사가 아니다 —
+   `test-tavern.mjs`는 처음부터 `process.exitCode = 1`을 세우고 있었다. */
+let PASS = 0, FAIL = 0;
+const ok = (c, m) => {
+  if (c) PASS++; else { FAIL++; process.exitCode = 1; }
+  console.log(`${c ? 'PASS' : 'FAIL'}  ${m}`);
+};
+process.on('exit', () => console.log(`
+세계 — ${PASS}/${PASS + FAIL} 통과${FAIL ? ` · **실패 ${FAIL}건**` : ''}`));
 
 resetGame();
 initWorld();
@@ -21,9 +31,17 @@ ok(state.npcs.length === NPC.traders + NPC.pirates,
    + ` · 해적 ${state.npcs.filter((n) => n.kind === 'pirate').length}/${NPC.pirates}`
    + ` (권역 수에 비례한다)`);
 
-// 30일을 돌려 본다
+/* 90일을 돌려 본다.
+   ★ 원래 30일이었는데 **「해적 습격 0건」이 확률로 흔들렸다** — 25회에 1회꼴로 9/10이 났다.
+     `ok()`가 exit code를 세우게 고친 뒤에야 드러난 것이고(그전에는 FAIL을 찍어도 exit 0이었다),
+     원인은 코드가 아니라 **표본 설계**다. 이 저장소의 규약이 그것을 이미 말해 두었다 —
+     *"확률이 낮은 사건은 '안 났다'를 결함으로 적지 마라. 표본을 설계하고 나서 판정한다."*
+     습격은 상인과 해적이 같은 구간에서 만나야 나므로 30일로는 빈손인 판이 생긴다.
+     90일이면 그 확률이 세제곱으로 줄어 게이트가 코드만 본다. (근본 해법은 시드 주입이지만
+     그것은 `state.js`의 `Math.random()`을 통째로 바꾸는 일이라 이 자리의 몫이 아니다.) */
+const DAYS = 90;
 let raids = 0, sold = 0, bought = 0;
-for (let d = 0; d < 30; d++) {
+for (let d = 0; d < DAYS; d++) {
   advanceDays(1);
   const news = worldTick(1);
   for (const e of news) {
@@ -32,7 +50,7 @@ for (let d = 0; d < 30; d++) {
     if (e.kind === 'bought') bought++;
   }
 }
-ok(bought > 0 && sold > 0, `30일간 NPC 거래: 매입 ${bought}건 · 매도 ${sold}건`);
+ok(bought > 0 && sold > 0, `${DAYS}일간 NPC 거래: 매입 ${bought}건 · 매도 ${sold}건`);
 ok(raids > 0, `해적 습격 ${raids}건 (상인은 계속 보충된다: 현재 ${state.npcs.filter(n => n.kind === 'trader').length}척)`);
 
 // NPC 거래가 실제로 시세 압력으로 남았는가

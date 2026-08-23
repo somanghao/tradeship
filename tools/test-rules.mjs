@@ -7,9 +7,22 @@ import {
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf,
   contractOffer, START_GOLD,
+  /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
+  buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
+  millBatchCap, runMill, collectMill, worksUpkeepDue, settleWorks,
 } from '../js/state.js';
 
-const ok = (c, msg) => console.log(`${c ? 'PASS' : 'FAIL'}  ${msg}`);
+/* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
+   `node tools/test-rules.mjs`가 **exit 0**을 돌려주었고, 자동 회차와 문서는 그것을
+   "통과"로 읽었다(HANDOFF가 적어 둔 `PASS 66/0`도 사람이 눈으로 센 것이다).
+   실패할 수 없는 검사는 검사가 아니다 — `test-tavern.mjs`는 처음부터 이렇게 되어 있었다. */
+let PASS = 0, FAIL = 0;
+const ok = (c, msg) => {
+  if (c) PASS++; else { FAIL++; process.exitCode = 1; }
+  console.log(`${c ? 'PASS' : 'FAIL'}  ${msg}`);
+};
+process.on('exit', () => console.log(`
+규칙 — ${PASS}/${PASS + FAIL} 통과${FAIL ? ` · **실패 ${FAIL}건**` : ''}`));
 
 resetGame();
 ok(state.shipKey === 'hulk' && state.gold === START_GOLD,
@@ -296,4 +309,68 @@ resetGame();
   ok(neighborsOf('malta').length <= 4,
      `몰타는 해협 언저리에만 이어진다 (${neighborsOf('malta').map((i) => CITY_BY_ID[i].name).join(', ')})`);
   ok(CITY_BY_ID.malta.demand.grain > 1.4, '바위섬이라 곡물 수요가 가장 높다');
+}
+
+/* ── 수직계열화 1단계 — 가공 사슬과 가공장 (A-9) ────────────────
+   ★ 여기서 지키는 것은 **값이 아니라 규칙의 뼈대**다. 값(마진 밴드·산지 대조식)은
+     `node tools/check-chain.mjs`가 따로 본다 — 그쪽이 밴드의 정본이다.
+   ★ 「창고가 먼저다」와 「매각하면 40%가 증발한다」와 「못 내면 휴업 → 두 번이면 압류」
+     셋이 이 층의 대가 전부이므로, 그 셋이 실제로 작동하는지만 확인한다. */
+{
+  resetGame('venezia');
+  state.gold = 300000; state.crew = 10;
+  const R = 'dye_scarlet';                      // 베네치아는 공업력 3이라 셋 다 지을 수 있다
+
+  ok(!canBuyMill(R, 'venezia').ok, '창고가 없으면 가공장을 못 세운다 — 산출물을 둘 데가 먼저다');
+  buyHolding('rental', 'venezia'); buyHolding('warehouse', 'venezia');
+  ok(canBuyMill(R, 'venezia').ok, '창고를 세우면 가공장이 열린다');
+
+  // 값 공식 — (9,000 + 산출 base × 80) × TIER_MUL[요구 공업력]
+  ok(millPrice(R, 'venezia', 1) === 67230, `염색장(주홍) 값 ${millPrice(R, 'venezia', 1).toLocaleString('en-US')}닢 (공업력 2라 ×1.35)`);
+  // 공업력이 문지기다 — 이즈니크(0)에서는 어떤 사슬도 못 돈다
+  ok(millRecipes('iznik').length === 0, '내륙 도시(공업력 0)에서는 사슬이 하나도 안 열린다');
+
+  const gold0 = state.gold;
+  ok(buyMill(R, 'venezia').ok && state.gold === gold0 - 67230, '가공장을 세우면 그 값이 금고에서 빠진다');
+
+  // 착수 — 투입은 **창고에서** 빠지고 가공비는 **지금** 나간다
+  state.stored.venezia = { woolcloth: 20, cochineal: 10 };
+  const g1 = state.gold;
+  const run = runMill(R, 'venezia', millBatchCap(R, 'venezia'));
+  ok(run.ok && run.batches === 10, `모직 20 + 코치닐 10 → 10회분 착수 (${run.days}일 · 가공비 ${run.fee}닢)`);
+  ok(state.gold === g1 - run.fee, '가공비는 착수할 때 현금으로 나간다');
+  ok(!state.stored.venezia.woolcloth && !state.stored.venezia.cochineal,
+     '투입 원료는 착수하는 순간 창고에서 빠진다 (배가 아니라 창고다)');
+
+  // 완성일 전에는 아무것도 안 나온다 — 기다리는 것이 이 시스템의 시계다
+  state.day += run.days - 1;
+  ok(Object.keys(collectMill('venezia')).length === 0, '완성일 전에는 수령해도 빈손이다');
+  state.day += 1;
+  const got = collectMill('venezia');
+  ok(got.scarlet === 20, `완성일에 주홍 모직 ${got.scarlet}칸이 창고로 들어온다`);
+
+  // 유지비 — 연 10%를 30일마다. 못 내면 휴업, 두 번 연속이면 압류.
+  state.day += 30;
+  const due = worksUpkeepDue('venezia');
+  ok(due === Math.round(67230 * 0.10 * (30 / 360)), `30일 유지비 ${due}닢 = 들인 돈의 연 10%`);
+  state.gold = 0;
+  const s1 = settleWorks('venezia');
+  ok(s1.idle && !s1.seized, '못 내면 곧바로 압류가 아니라 **휴업**이다 (거점과 다른 자리)');
+  state.day += 30;
+  ok(worksUpkeepDue('venezia') === Math.round(due * 0.5), '휴업 중에는 유지비를 절반만 문다 — 그래도 0은 아니다');
+  const s2 = settleWorks('venezia');
+  ok(s2.seized && !state.works.venezia, '두 번 연속 못 내면 그 항구의 시설이 넘어간다');
+
+  // 매각 — 들인 돈의 60%. 40%는 즉시 증발한다.
+  resetGame('venezia');
+  state.gold = 300000;
+  buyHolding('rental', 'venezia'); buyHolding('warehouse', 'venezia'); buyMill(R, 'venezia');
+  const before = state.gold;
+  const sold = sellMill(R, 'venezia');
+  ok(sold.ok && sold.back === Math.round(67230 * 0.60) && state.gold === before + sold.back,
+     `매각하면 ${sold.back.toLocaleString('en-US')}닢만 돌아온다 (들인 67,230의 60%)`);
+
+  // ★ 패권 조건을 건드리지 않는다 — 시설은 `works`에 있고 `hegemonyOf`는 `holdings`만 센다
+  ok(!('works' in (state.holdings.venezia ?? {})),
+     '시설은 `state.works`에 있고 `state.holdings`에 얹히지 않는다 — 패권 조건이 안 바뀐다');
 }
