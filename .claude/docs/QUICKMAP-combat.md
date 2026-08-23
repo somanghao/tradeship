@@ -1,7 +1,8 @@
 # QUICKMAP — combat (전투 · 선박 · 조선소)
 
 > 포격전·백병전과 그 준비(배·무장·개장·병종). 배를 사고 꾸미고 싸우는 쪽 전부.
-> 시세·물가·NPC·계약·고증은 [QUICKMAP-trade.md](QUICKMAP-trade.md)로 간다.
+> 시세·물가·항해비·급여는 [QUICKMAP-trade.md](QUICKMAP-trade.md)로,
+> NPC·해적 명부·계약·세력·고증은 [QUICKMAP-world.md](QUICKMAP-world.md)로 간다.
 
 ## 1. 키워드 → 문서 · 코드 정본
 
@@ -11,18 +12,23 @@
 |---|---|---|
 | 전투 · 포격 · 조준 미니게임 · 거리(range) · 명중/치명타 · 데미지 공식 · **탄종(포도탄·사슬탄·가열탄)** · 돛 손상 · 화재 · 백병전 · 병종 능력치 · 자세(돌격/난전/방진/일제사격) · 적 AI · 적 5티어 · 도주 · 나포 편입 · 격침 · 전리품 · 이펙트 타이밍 | [wiki/battle-system.md](wiki/battle-system.md) | 규칙 `js/state.js`(armsFactor·armsAimAt·playerTroops) · 씬 `js/scenes/battle.js` · 수치 `js/data.js`(ENEMIES·TROOPS·SHOTS·CANNONS) |
 | 선단 · 배 여러 척 · 구입/승선/매각 · **어느 항구에서 뭘 짓나(공업력)** · 정박지 · 예인 · **개장**(동판·장갑·돛증축·골조·격실·레이지) · 최소 인원 · 대포 종류 · 포문 상한 · 탄약고 · 갑판 슬롯 · 병종 고용비 · 배치 환불 · 중고선 | [wiki/shipyard.md](wiki/shipyard.md) | 규칙 `js/state.js`(purchaseShip·boardShip·usedListings·refit) · 씬 `js/scenes/shipyard.js` · 수치 `js/data.js`(SHIPS·REFITS·CANNONS·TROOPS) |
+| **동행 선단(9척)** · 함께 몰고 나가기 · 동행/정박 토글 · 동행선 선원·선장 · 총적재 · 선단 속도 · 발목 잡는 배 · 동행선 격침 · 선단 화력/백병 보강 | [wiki/shipyard.md](wiki/shipyard.md) | 규칙 `js/state.js`(setConsort·canConsort·fleetSpeedPenalty·consortCost·spreadDamage) · 값 `js/data.js: FLEET` · 상태 `state.consorts` · 화면 `scenes/port.js: fleetCard`·`shipyard.js` |
+| **권역 패권(지역 패자)** · 모든 항구 거점 · 상관 3 · 두목 격파 이력 · 최고 tier 배 · 두 번째 엔딩 「아홉 바다」 · 조선 숨은 항구(마포·의주) | — (사양 `.playtest/auto-improve/SPEC-hegemony.md`) | 규칙 `js/state.js`(hegemonyOf·hegemonyAll·homelandProgress·slainKey) · 값 `js/data.js: HEGEMONY` · 상태 `state.slain` · 화면 `scenes/port.js: hegemonyCard` |
+| **등급 5는 세력의 함대다** — 여덟 바다의 `FOES[4]`가 나라·회사의 함대이고 **동아시아만 무국적(왜구 대선단)·등급 4가 관(명 수군)**이다. 어느 얼굴이 어느 세력인지는 `FACTIONS[].fleets`가 잇는다(새 적을 만들지 않는다). ⚠️ 밸런스 정리 때 그 배치가 뒤집히면 소설 28·64·68장의 뼈대가 무너진다 — `check-factions.mjs`가 실패시킨다 | 사양 `SPEC-factions.md` §4-0·§4-6 (해적 명부와는 **다른 줄**이다 — 명부는 이름난 자, 이쪽은 등급표) | `js/regions/*/npc-pirates.js: FOES` · `js/data.js: FACTIONS[].fleets` · 검증 `node tools/check-factions.mjs` |
 | 갑판 배치가 그림에서 어긋남 · 선체 비례 · 대포 실물 | [wiki/shipyard.md](wiki/shipyard.md) + [QUICKMAP-art.md](QUICKMAP-art.md) | `js/sprites/ship.js: HULLS`(deck·x0·len) · `js/sprites/char.js: CHAR_FOOT` |
 | 파일이 뭘 담당하나 · 씬 흐름 (역방향: 파일 → 기능) | [wiki/file-map.md](wiki/file-map.md) | — |
 
-> 전투와 경제가 만나는 지점 둘 — **해적 조우 확률**(항로 위험 + 화물 가치)과 **선박 가격**은
-> [QUICKMAP-trade.md](QUICKMAP-trade.md)에 있다. 조우가 터진 *뒤*의 규칙만 여기서 다룬다.
+> 전투 밖과 만나는 지점 셋 — **해적 조우 확률**(항로 위험 + 화물 가치)과 **이름난 해적 명부**는
+> [QUICKMAP-world.md](QUICKMAP-world.md), **선박 가격·무장 유지비**는 [QUICKMAP-trade.md](QUICKMAP-trade.md)에 있다.
+> 조우가 터진 *뒤*의 규칙만 여기서 다룬다.
 
 ## 2. 수치를 어디서 고치나
 
 | 하고 싶은 것 | 어디 |
 |---|---|
-| 선박 성능·가격·국적 | `data.js: SHIPS` — `tier`(필요 공업력) · `originFlag`(제 나라 항구는 한 등급 쉽다) · `era`/`requires`(해금) · `yards`(**전통 조선지 = 값 할인**, 판매처가 아니다) · `crewMin` · `upkeep` · `leak` |
+| 선박 성능·가격·국적 | `data.js: SHIPS` — `tier`(필요 공업력) · `originFlag`(제 나라 항구는 한 등급 쉽다) · `era`/`requires`(해금) · `yards`(**전통 조선지 = 값 할인**, 판매처가 아니다) · **`yardsOnly`**(그 부두에서만 — 판매처다) · `crewMin` · `upkeep` · `leak` |
 | 어느 항구에서 뭘 짓나 | `map/geo.js: industry`(0~3) ≥ `SHIPS[].tier`. 판정은 `state.js: sellsShip/tierNeeded/yardCapable`, 값은 `shipPriceAt` |
+| **한 부두에서만 나오는 배** | `SHIPS[].yardsOnly: true` + `yards: [항구id]` — 판정 `state.js: yardAllowed()`. 지금은 **철갑 거북선(염포) 하나**뿐. 화면의 거절 문구는 `scenes/shipyard.js`가 따로 낸다 |
 | 중고선·나포선 매물 | `state.js: usedListings/buyUsed` · `USED` 상수도 `state.js`에 있다 · 나포선 개조항은 `map/geo.js: prizeYard` |
 | 상위 선박 해금 | `data.js: SHIPS[].requires` — 그 선종을 몰아 봤어야(`state.everOwned`) 다음 배가 열린다 |
 | 선박 매각 비율 | `state.js: SHIP_RESALE` (0.55) |
@@ -50,6 +56,8 @@
 - **대포 밸런스는 "거리 구간"으로 가른다.** 배율 하나로 전 구간을 좋게/나쁘게 만들면 상위호환이 생긴다(장포 사건). 수치를 건드리면 기대피해를 검산해 **거리별 1위가 2종 이상인지** 확인할 것.
 - **`armsFactor()`/`armsAimAt()`는 포문이 0일 때 1.0을 돌려준다.** 대포를 전부 철거해도 전투 계산이 0으로 나눠지지 않게 하는 가드다.
 - **개장 효과를 상태값에 반영하는 것을 잊지 마라.** `state.maxHp`는 파생이 아니라 저장값이라 개장·승선 후 `recalcShip()`을 불러야 한다. 속력·도주·포문 상한은 함수(`shipSpeed`/`fleeBonus`/`gunCap`)라 자동.
+- **동행 선단은 `state.fleet`(보유)과 `state.consorts`(지금 데리고 나간 배)를 갈라 쓴다.** `fleet`에만 있으면 정박 중이라 `fleetUpkeep`을 물고, `consorts`에 들어가면 그 몫이 **항해비로 옮겨 간다** — 둘 다 걷으면 이중과금이다.
+- **선단 속도 배율(`fleetSpeedPenalty`)은 항해 일수와 도주 확률 **둘 다**에 곱한다.** 한쪽만 곱하면 "느려서 오래 걸리는데 도망은 잘 치는" 배가 된다. 호출처 셋(전투 도주·전투 안내·조우 안내)이 전부 `fleeOdds`를 거치므로 값이 갈리지 않는다.
 - **개장은 배에 붙는다.** `state.refits`는 기함 것이고 정박선은 `fleet[key].refits`. `stowFlagship()`이 기록하고 `boardShip()`이 복원한다 — 이 왕복을 빼면 갈아탈 때마다 개장이 증발한다.
 - **선원이 줄면 `trimLoadout()`을 부른다.** 갑판 슬롯은 선원 7명당 하나라, 전투로 선원을 잃으면 닫힌 슬롯의 병종이 유령으로 남는다.
 - **갑판 위 배치는 x·y 둘 다 선체에서 가져온다.** 기준선을 상수로 박아 병사가 돛대 높이에 뜬 적(y·`HULLS[hull].deck`/`CHAR_FOOT`), 짧은 선체에서 뱃전 밖 허공에 선 적(x·`HULLS[hull].x0`/`len`)이 각각 있다. 선종이 늘수록 상수는 반드시 깨진다.
@@ -57,4 +65,5 @@
 - **무장을 늘리면 매일 돈이 나간다.** `ARM_UPKEEP`이 붙어 있어 "해적이 무서워 포를 더 싣는다"에 대가가 있다. 대포 수치를 만지면 유지비도 함께 보고, 근거는 `content/upkeep-evidence.json`에 있다.
 - **전리품은 자산 대비 상한을 받는다 — `ENEMIES[].loot`를 올려도 초반에는 안 오른다.** `capLoot()`가 "옮겨 실을 수 있는 만큼"으로 누르기 때문이다(초반 상한 60닢). 상한을 빼면 세기 1 좀도둑 하나가 시작 자산의 573%가 되어 첫 배로 코카를 산다 — 실측 근거는 `content/voyage-evidence.json: spoilsVsAssets`. 보상을 키우려면 상한 계수부터 본다.
 - **이벤트 보상 수치의 일부는 아직 `scenes/map.js`에 박혀 있다.** 표류물(금화 60~300 + 화물 3~11개)과 폭풍 피해(선체 6~19)가 그렇다 — `data.js`에 없으니 **밸런스를 만지려고 값을 찾다 못 찾는다.** 둘 다 **금액이 고정**이라 초반엔 자산의 587%·91%이고 후반엔 6%·1%다(`tools/sim-events.mjs`). 옮길 때는 `data.js`로 빼고 `sim-events.mjs`의 `MIRROR` 블록을 지운다.
+- **`yardsOnly`인 배는 「공업력이 모자란다」가 아니라 「여기서 짓는 배가 아니다」가 이유다.** 그 말을 안 하면 플레이어가 공업력을 올리려 헛수고한다(`shipyard.js`가 문구를 갈라 낸다). **중고 매물 풀에도 안 흘러든다** — 풀은 `tier <= ind + 1`이라 그냥 두면 다른 항구에서 중고로 새어 나온다(`state.js: usedListings`).
 - **패배는 게임오버가 아니다.** 금화 50%·화물 전량을 잃고 항구로 예인된다(재기 가능). 이 처리를 바꿀 때 진행 불가 상태가 되지 않게.

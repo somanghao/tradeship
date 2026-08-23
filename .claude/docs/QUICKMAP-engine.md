@@ -10,6 +10,7 @@
 | 실행 · 로컬 서버(`serve.py`) · 포트 · 브라우저 캐시 · 검은 화면 · 콘솔 디버깅 · 씬 강제 전환 · 자동 조작 타이밍 · 검증 체크리스트 · 새로고침 · Playwright 자동검증 | [wiki/dev-workflow.md](wiki/dev-workflow.md) | 띄우고 확인하는 법 |
 | 플레이테스트 하네스 · 사람 속도 클릭 · 커서 오버레이 · CDP 조종 · 권역별 시작 시험 · 여러 판 시뮬 · **아홉 창 동시 검증** · 사건 발동 점검 · 원양/계절/급여일 라운드 | [wiki/playtest-harness.md](wiki/playtest-harness.md) | 눌러 보는 **장치**(playtest.mjs · playtest-live). 회차 러너 셋은 `nine-seas`·`ocean-season`·`payday-inland`, 창은 **2번 모니터에만**, 결과는 `.playtest/nine-seas/` |
 | 실제로 눌러 본 기록 · 시나리오 표 · 거기서 나온 문제와 고친 것 | [wiki/playtest-log.md](wiki/playtest-log.md) | 눌러 본 **결과** |
+| **배속** · 게임 속도 · `?speed=` · 화면 토글 · 연출 대기 줄이기 · 빠른 자동테스트 · `PLAYTEST_SPEED` | 코드 머리주석 `js/speed.js` | **연출과 대기시간만** 줄인다 — 일수·확률·판정 횟수는 배속과 **무관**. 대기는 `after()`/`delay()`로만 쓰고 **`setTimeout`을 새로 쓰지 마라**. 조준 바늘(`battle.js: B.aim.speed`)은 연출이 아니라 **난이도**라 제외, rAF 메인 루프도 제외. 하네스는 `play.mjs --fast=N` |
 | 조선소 씬 · 패널을 논리좌표에 얹기 · 탭 UI · 선단/무장/갑판배치 | [wiki/shipyard.md](wiki/shipyard.md) | 조선소를 고칠 때, UI가 게임 화면을 가릴 때 |
 | 술집 씬 · 배경/전경 2겹 · 좌석 좌표 · 선원 등용 화면 | [wiki/crew-tavern.md](wiki/crew-tavern.md) §6 | 술집 그림·자리 배치를 고칠 때 (규칙·값은 trade 도메인) |
 | 파일이 뭘 담당하나 · 씬 흐름도 · 데이터 조정 지점 | [wiki/file-map.md](wiki/file-map.md) | 파일↔기능 맵 |

@@ -4,12 +4,17 @@
 
 ## 실행
 
-```
+```bash
 cd C:\Users\soman\AntiProject\tradeship
 python serve.py 8891            # run_in_background · 포트 생략 시 8891
-# http://localhost:8891/index.html   게임
-# http://localhost:8891/preview.html 에셋 미리보기
+start http://localhost:8891/index.html            # 게임 (PowerShell도 같다)
+start http://localhost:8891/preview.html          # 에셋 미리보기
+start "http://localhost:8891/index.html?speed=8"  # 8배속 — 연출만 빨라진다
 ```
+
+⚠️ **이 저장소의 예시는 bash 표기다.** 이 PC의 기본 셸은 PowerShell이라 `&`(백그라운드)와
+`VAR=x cmd`(인라인 환경변수)가 안 먹는다. PowerShell에서는 각각 `Start-Process`(또는 Bash 툴을 쓴다)와
+`$env:VAR='x'; cmd`로 바꾼다 — 예: `$env:PLAYTEST_SPEED='8'; node tools/playtest-live/launch.mjs`.
 
 `file://`로 열면 ES 모듈이 CORS로 막힌다 — 반드시 http 서버로.
 웹 출력은 claude.ai Artifact가 아니라 로컬 HTML + 로컬 서버 + 브라우저(사용자 지침).
@@ -41,6 +46,11 @@ main.go('map');  main.go('port');
 포격전 한 턴 ≈ **2초** (내 행동 420ms → 적 턴 620ms → 적 포격 420+480ms).
 스크립트로 버튼을 연속 클릭할 땐 턴당 2.2초 이상 대기해야 `disabled`에 막히지 않는다.
 
+★ **이 수치는 1× 기준이다**(2026-08-23~). `js/speed.js`가 시간 스케일 정본이고 `?speed=N`·화면 토글로
+**연출과 대기시간만** 줄어든다 — 실측 8×에서 한 턴 **0.27초**다. 일수·확률·판정 횟수는 배속과 **무관**하고,
+조준 바늘은 연출이 아니라 난이도라 제외했다. 하네스는 `PLAYTEST_SPEED=8` 또는 `play.mjs --fast=8`(옵트인).
+새 연출 대기를 넣을 때 **`setTimeout`을 직접 쓰지 말고** `speed.js`의 `after()`/`delay()`를 쓴다. → `QUICKMAP-engine.md`
+
 ```js
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const btn  = (t) => [...document.querySelectorAll('#battle-cmd .btn')]
@@ -50,8 +60,10 @@ const btn  = (t) => [...document.querySelectorAll('#battle-cmd .btn')]
 ## 검증 도구 (`tools/` — 브라우저 없이 돈다)
 
 ```bash
-node tools/test-rules.mjs      # 규칙 전반(경제·개장·나포·유지비·부관·항로위험) 65항목
+node tools/test-rules.mjs      # 규칙 전반(경제·개장·나포·유지비·부관·항로위험·가공사슬) 82항목
 node tools/test-world.mjs      # NPC 세계·바람·해류·계약 10항목
+node tools/test-payroll.mjs    # 급여 발생·정산·체불·이탈·장부
+node tools/test-tavern.mjs     # 술집 등용 20항목
 node tools/sim-trade.mjs       # 무역 곡선 — "몇 항차에 어느 배를 사는가"
 node tools/sim-risk.mjs [항차] [시드수]   # 실효 조우율·화물 손실 빈도 (기본 90×20 — ★시드 평균)
 node tools/check-evidence.mjs  # 도시 수치 ↔ content/regions/<권역>-evidence.json 정합 (exit 1)
@@ -60,7 +72,30 @@ node tools/check-wages.mjs     # 부관·선원 보수 ↔ content/wage-evidence
 node tools/check-prices.mjs    # 물가·자산·유지비 ↔ goods/asset/upkeep-evidence.json 정합 (exit 1)
 node tools/check-voyage.mjs    # 항차 수익 분포·손실 빈도·톤당승조원 ↔ voyage-evidence.json
 python tools/check-map.py      # 납품된 지도 그림 검수 (Pillow 필요 · exit 1)
+node tools/check-architecture.mjs   # 계층 트리 ↔ 실제 파일·state 필드 (exit 1)
+                                    # ★ 파일·state 필드를 늘리면 dashboard/architecture.mjs에 적어야 통과한다
+node tools/check-novel-events.mjs   # 소설 소재집 §6 이벤트 72건의 근거 ↔ 코드
+node tools/check-world.mjs          # 권역 데이터 정합
+node tools/sim-stat.mjs 20          # 무역 곡선을 20판 분포로 — ★1회 실행으로 판단하지 않는다
+node tools/sim-events.mjs           # 전리품·사건 규모
+node tools/event-inventory.mjs      # 사건이 걸릴 자리를 코드에서 전수로 센다
+node tools/check-chain.mjs          # 가공 사슬 ↔ content/chain-evidence.json · 가공마진 밴드 이탈 (exit 1)
+node tools/sim-chain.mjs [판수] [항차]   # 수직계열화가 곡선을 움직이나 — ★같은 시드로 짝지어(paired)
+node tools/check-factions.mjs       # 세력·관계·`FACTIONS[].fleets` ↔ FOES 배치 (exit 1)
+node tools/check-origins.mjs        # 한반도 갈래 다섯(`data.js: ORIGINS`) ↔ story 사본표 (exit 1)
+node tools/region-topology.mjs      # 권역 항로 그물 전수 — 연결 성분이 갈리면 그 권역 패권이 성립 안 한다 (`--md`)
 ```
+
+### ★ "통과"로 보이는데 실패다 — exit code를 믿지 마라
+
+`test-rules.mjs`·`test-world.mjs`는 **FAIL을 찍고도 exit 0**이었다(2026-08-23 고침 — 이제 exit 1이고
+마지막에 `규칙 — 82/82 통과`·`세계 — 10/10 통과`를 찍는다). 그 탓에 문서가 낡은 통과 수(`PASS 66/0`)를
+근거로 삼고 있었다. **판정은 exit code가 아니라 마지막 요약 줄로 한다**, 그리고 통과 수를 문서에
+인용할 땐 **그날 실측한 값**을 적는다.
+
+⚠️ 그 대가로 **`test-world.mjs`가 간헐적으로 빨개진다** — 「해적 습격 0건」 항목이 확률 판정이라
+실측 25회 중 1회(회차 7)가 `9/10`으로 떨어졌다. **코드 회귀로 오진하지 말고 한 번 더 돌린다**;
+연속으로 실패하면 그때가 진짜다. 근본 해법은 그 항목에 시드를 물리거나 표본을 늘리는 것이다.
 
 **고증 데이터를 만졌으면 `check-*`를 다 돌린다.** 수치만 고치고 근거를 안 고치면
 "왜 이 값인지"를 아무도 모르게 되고, 다음 사람이 밸런스만 보고 고증을 되돌린다.
