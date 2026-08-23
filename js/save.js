@@ -24,6 +24,20 @@ const VERSION = 1;
 /** JSON이 모르는 것 — `Set`은 배열로 눕혀 싣는다 */
 const SET_KEYS = ['known', 'everOwned'];
 
+/** 나중에 생긴 필드 — 옛 세이브에 없으면 이 값으로 채운다(아래 `loadGame` 주석) */
+const FILL_IF_MISSING = {
+  consorts: () => ({}),      // 동행 선단(`state.js`) — 옛 판은 데리고 나간 배가 없다
+  /* 꺾은 상대의 기록(권역 패권 조건 ③) — 옛 판은 **아무도 꺾지 않은 것으로** 이어진다.
+     이력이 비면 그 판의 패권이 한 칸 뒤로 물러날 뿐, 다시 싸우면 채워진다. */
+  slain: () => ({}),
+  endedNine: () => 0,        // 두 번째 끝 「아홉 바다」 — 옛 판은 아직 못 봤다
+  /* 세력 관계(SPEC-factions 1단계) — 옛 판은 **아무도 나를 모르는 것으로** 이어진다.
+     0이 기본선이라 비어 있어도 뜻이 통한다(악명은 `infamy`에 그대로 남아 있으므로,
+     이어한 판에서도 덮친 값은 `regardOf`가 그대로 읽어 낸다). */
+  regard: () => ({}),
+  _regardAge: () => 0,
+};
+
 export function saveGame(slot = 'auto') {
   try {
     const plain = { ...state };
@@ -68,6 +82,11 @@ export function loadGame() {
     for (const k of Object.keys(state)) delete state[k];
     Object.assign(state, d.state);
     for (const k of SET_KEYS) state[k] = new Set(d.state[k] ?? []);
+    /* ★ **새로 생긴 필드는 옛 세이브에 없다.** VERSION을 올리면 그 판이 통째로 버려지므로,
+       *비어 있어도 뜻이 통하는* 컨테이너는 여기서 기본값을 세워 준다.
+       (뜻이 통하지 않는 변화 — 규칙이 갈리거나 세계가 바뀌는 것 — 은 그때 VERSION을 올린다.)
+       `consorts` 동행 선단: 옛 판은 아무 배도 데리고 나가지 않은 것으로 이어진다. */
+    for (const [k, v] of Object.entries(FILL_IF_MISSING)) state[k] ??= v();
     return true;
   } catch { return false; }
 }

@@ -17,6 +17,30 @@
         "basis": "포르투갈 왕도다. FLAGS에 포르투갈 깃발이 생겨(흰 바탕·그리스도 기사단의 붉은 십자) 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
+      "scarlet": {
+        "side": "demand",
+        "value": 1.28,
+        "verdict": "probable",
+        "basis": "궁정과 교회가 입는 최상급 붉은 옷은 포르투갈에서 만들지 못했다 — 이탈리아·플랑드르에서 사 왔다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Scarlet (cloth)",
+            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+          }
+        ]
+      },
+      "chintz": {
+        "side": "demand",
+        "value": 1.34,
+        "verdict": "confirmed",
+        "basis": "인도 날염포가 유럽으로 들어오는 첫 문이 카사 다 인디아였다. 흰 면포의 서너 배에 팔린 물건이라 수요를 이 권역 최고로 둔다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Casa da Índia",
+            "url": "https://en.wikipedia.org/wiki/Casa_da_%C3%8Fndia"
+          }
+        ]
+      },
         "sugar": {
           "side": "supply",
           "value": 0.6,
@@ -521,6 +545,18 @@
         "basis": "부르고뉴령 플랑드르 — 뒤에 합스부르크로 넘어간다. FLAGS에 부르고뉴 깃발(흰 바탕·붉은 옹이십자)이 생겨 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
+      "scarlet": {
+        "side": "supply",
+        "value": 0.54,
+        "verdict": "confirmed",
+        "basis": "플랑드르 염색 길드가 유럽 최고급 붉은 모직의 다른 한쪽 주인이었다. 베네치아(0.52)보다 반 칸 얕게 두는 것은 최상급 *scarlatto*의 이름값이 이탈리아 쪽에 있었기 때문이고, 즈윈이 메워 가는 도시라는 이 항구의 성격과도 어긋나지 않는다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Flemish cloth / Scarlet (cloth)",
+            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+          }
+        ]
+      },
         "woolcloth": {
           "side": "supply",
           "value": 0.54,
@@ -586,6 +622,18 @@
         "sources": []
       },
       "goods": {
+      "chintz": {
+        "side": "demand",
+        "value": 1.32,
+        "verdict": "probable",
+        "basis": "리스본이 푼 인도 날염포가 여기서 북유럽 값을 받았다. 재분배 시장이라 리스본(1.34)보다 조금 낮다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Antwerp § Golden Age (redistribution market for Portuguese Asian goods)",
+            "url": "https://en.wikipedia.org/wiki/Antwerp"
+          }
+        ]
+      },
         "linen": {
           "side": "supply",
           "value": 0.56,
@@ -1040,6 +1088,18 @@
         ]
       },
       "goods": {
+      "scarlet": {
+        "side": "demand",
+        "value": 1.3,
+        "verdict": "probable",
+        "basis": "폴란드 귀족(슐라흐타)의 붉은 겉옷이 비스와를 거슬러 올라갔다. 곡물을 내보내고 사치품을 사들이는 이 항구의 성격 그대로다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Żupan / Kontusz (szlachta dress in dyed woollens)",
+            "url": "https://en.wikipedia.org/wiki/Kontusz"
+          }
+        ]
+      },
         "grain": {
           "side": "supply",
           "value": 0.44,

@@ -163,6 +163,21 @@ export const SHIPS = {
     hull: 'frigate', name: '철갑 거북선', origin: '조선', originFlag: 'joseon', tier: 4,
     era: 'classic', requires: 'geobukseon',
     yards: ['yeompo'],
+    /* ★ **이 배만 `yards`가 "값이 싸지는 곳"이 아니라 "거기서만 나오는 곳"이다.**
+       `yards`의 원래 뜻은 전통 조선지 할인(`state.js: shipPriceAt` → `YARD_TRADITION_OFF`)이고,
+       아흔 척 남짓한 나머지 배는 전부 그 뜻으로 쓴다 — `sellsShip`이 `yards`를 안 보는 것은
+       **의도된 설계**다. 그것을 통째로 바꾸면 아홉 바다의 배 사다리가 전부 흔들린다.
+       그래서 뜻을 바꾸는 대신 **이 배에만 플래그를 하나** 세운다.
+
+       왜 이 배만인가 — 위 주석과 화면 문구(`state.js: endingProgress`의 *"염포에서만 나온다"*),
+       그리고 소설 《구해기》 68장의 결말(염포 진수)이 셋 다 *"거기서만"*이라고 말하는데
+       규칙만 그렇지 않았다. **문구가 아니라 규칙이 틀린 자리**라 규칙을 문구에 맞춘다.
+
+       실측(고치기 전): 여수에 조선대+부두(190,410닢)를 세우면 **1일차에 자재 0·공사 0일로**
+       이 배가 나왔다. 염포 정공법은 246,000닢 + 자재 760칸 + 360일이므로,
+       *"둘이 물려야 나온다"*던 배가 **더 싸고 더 빠른 우회로**를 갖고 있었다.
+       → `.playtest/origin-sweep/out/FINDINGS-hegemony.md` F1 */
+    yardsOnly: true,
     price: 24000,
     hp: 420, crew: 140, crewMax: 190, crewMin: 98, cargo: 40, guns: 22, speed: 1.02,
     upkeep: 44, rig: 0.75, tint: 'dark',

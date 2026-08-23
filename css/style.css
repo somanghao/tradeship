@@ -251,6 +251,15 @@ html, body {
 #map-side {
   position: absolute; right: 14px; top: 14px; width: 240px;
   display: flex; flex-direction: column; gap: 10px;
+  /* ★ **스크롤이 없어서 항로가 화면 밖으로 밀려 나갔다.** `#port-side`에는 처음부터
+     `max-height: 100%; overflow: auto`가 있었는데 이쪽에만 빠져 있었다 —
+     이 패널은 `position:absolute`라 목록이 길면 아래로 **끝없이 늘어난다.**
+     부산포처럼 항로가 많은 항구는 근해 + 원양 + 시세 사건 행까지 붙어 목록이 길고,
+     그러면 아래쪽 카드는 보이지도 눌리지도 않는다. 좁은 창일수록 먼저 잘린다.
+     실측에서 여러 갈래가 같은 목적지들(의주·톈진·쓰루가·사도·경주·세부·갈레)에
+     되풀이해 못 갔고, **그 항구들이 전부 그 권역 좌표의 극단**이었다 —
+     캔버스 클릭은 화면 밖이라 빗나가고 카드 폴백은 잘려 있어, 두 경로가 함께 죽었다. */
+  max-height: calc(100% - 28px); overflow: auto;
 }
 .city-card { padding: 10px 12px; font-size: 12.5px; line-height: 1.6; }
 .city-card .cname { color: var(--brass-l); font-weight: 700; font-size: 14px; }
@@ -782,3 +791,72 @@ html, body {
 .pay-unrest { margin-top: 12px; padding-top: 8px; border-top: 1px solid #ffffff14; }
 
 @media (max-width: 620px) { .pay-wrap { flex-direction: column; } }
+
+/* ══ 세력 관계도 ══════════════════════════════════════════════
+   두 열 × 다섯 행, 가운데 나. 노드는 DOM(글자가 한글이라)이고 선은 SVG 한 겹이다.
+   좌표는 `js/factions.js`가 픽셀로 정하므로 여기서는 **모양만** 준다 —
+   자리를 CSS로도 정하면 선과 노드가 다른 좌표계를 보게 된다. */
+.modal-box:has(.fac-wrap) { width: min(780px, 96vw); }
+
+.fac-legend { font-size: 11px; color: #8f8878; line-height: 1.7; margin-bottom: 6px; }
+.fac-legend b { color: #c9b98a; }
+
+/* 좁은 창에서는 가로로 민다 — 줄이면 한글 노드가 다시 안 읽힌다 */
+.fac-scroll { overflow-x: auto; overflow-y: hidden; }
+.fac-board { position: relative; margin: 0 auto; }
+.fac-svg { position: absolute; left: 0; top: 0; pointer-events: none; }
+
+.fac-col-title {
+  position: absolute; top: 0; text-align: center;
+  font-size: 10.5px; letter-spacing: .08em; color: #8f8878;
+}
+
+.fac-node {
+  position: absolute; box-sizing: border-box;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 2px;
+  padding: 6px 8px; cursor: pointer; overflow: hidden;
+}
+.fac-node:hover { border-color: var(--brass-d); }
+.fac-node.on { border-color: var(--brass); background: #2f2a3a; }
+/* ★ 회사만 테두리가 다르다 — 파는 것이 없는 유일한 세력이다 */
+.fac-node.fac-shut { border-style: dashed; border-color: #7a5a52; }
+.fac-node.fac-unmet {
+  border-style: dashed; border-color: #3a3444; background: #201d29;
+  cursor: default; display: flex; align-items: center; gap: 8px;
+}
+.fac-node.fac-unmet:hover { border-color: #3a3444; }
+.fac-q { color: #5b5468; font-size: 18px; line-height: 1; }
+.fac-unmet .fac-name { color: #5b5468; font-size: 11px; }
+
+.fac-head { display: flex; align-items: center; gap: 6px; }
+.fac-head .fac-name { flex: 1 1 auto; font-size: 12.5px; color: var(--parch); }
+.fac-val { flex: 0 0 auto; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+.fac-chip {
+  flex: 0 0 auto; width: 12px; height: 8px; border: 1px solid #2a1d14;
+  display: block; position: relative;
+}
+.fac-chip i { position: absolute; left: 4px; top: 2px; width: 4px; height: 4px; display: block; }
+.fac-chip.fac-ledger {
+  width: auto; height: auto; border: 0; color: #a89a84; font-size: 11px; line-height: 8px;
+}
+
+.fac-bar { display: flex; gap: 1px; margin: 5px 0 3px; }
+.fac-bar i { flex: 1 1 0; height: 5px; background: #332e3f; display: block; }
+.fac-band { font-size: 10.5px; color: #8f8878; }
+
+.fac-me {
+  position: absolute; box-sizing: border-box;
+  background: #2b2438; border: 1px solid var(--brass-d); border-radius: 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+}
+.fac-me .fac-name { font-size: 13px; color: var(--brass-l); letter-spacing: .08em; }
+.fac-me-sub { font-size: 10.5px; color: #8f8878; }
+
+.fac-detail { margin-top: 8px; padding-top: 8px; border-top: 1px solid #ffffff14; }
+.fac-title { font-size: 13px; margin-bottom: 4px; }
+.fac-blurb { font-size: 11.5px; color: #b6ac9c; line-height: 1.6; margin-bottom: 5px; }
+.fac-line { display: flex; gap: 8px; font-size: 11.5px; line-height: 1.65; color: #b6ac9c; }
+.fac-line .k { flex: 0 0 82px; color: #8f8878; }
+.fac-line .v { flex: 1 1 auto; min-width: 0; }
+.fac-note { font-size: 10.5px; color: #6f6858; line-height: 1.6; margin-top: 6px; }

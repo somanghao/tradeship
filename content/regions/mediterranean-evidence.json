@@ -11,6 +11,18 @@
         "basis": "베네치아 공화국. 게임 시대 전 구간에 걸쳐 독립 공화국이었으므로 논란이 없다."
       },
       "goods": {
+      "scarlet": {
+        "side": "supply",
+        "value": 0.52,
+        "verdict": "confirmed",
+        "basis": "*scarlatto*는 베네치아·피렌체 염색장의 물건이었다. 유럽 직물 가운데 가장 비쌌고 그 값을 만든 것이 이 도시의 염색 기술과 염료(커미즈, 뒤에는 코치닐)였다. 최상급 산지라 배율을 깊게 둔다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Scarlet (cloth)",
+            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+          }
+        ]
+      },
         "glass": {
           "side": "supply",
           "value": 0.48,
@@ -782,6 +794,30 @@
         "basis": "1453년 메흐메트 2세의 정복 이후 오스만 제국 수도. 게임 시대 전 구간에 해당한다."
       },
       "goods": {
+      "chintz": {
+        "side": "demand",
+        "value": 1.3,
+        "verdict": "probable",
+        "basis": "레반트 육로의 끝. 인도 날염포가 카이로를 거쳐 이 시장에서 값을 받았다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Chintz (spread to the Ottoman and European markets)",
+            "url": "https://en.wikipedia.org/wiki/Chintz"
+          }
+        ]
+      },
+      "scarlet": {
+        "side": "demand",
+        "value": 1.34,
+        "verdict": "probable",
+        "basis": "오스만 궁정의 카프탄에 쓰는 최상급 붉은 모직은 베네치아에서 사 왔다. 유럽 직물이 이 도시로 흘러드는 자리라 이 권역 최고 수요로 둔다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Ottoman clothing (court kaftans of imported European woollens)",
+            "url": "https://en.wikipedia.org/wiki/Ottoman_clothing"
+          }
+        ]
+      },
         "silk": {
           "side": "supply",
           "value": 0.62,
@@ -1096,6 +1132,18 @@
         "sources": []
       },
       "goods": {
+      "scarlet": {
+        "side": "demand",
+        "value": 1.28,
+        "verdict": "probable",
+        "basis": "맘루크·오스만 상층이 사들이던 유럽 물건의 대표다. 통과항이라 이스탄불(1.34)보다 얕게 둔다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Scarlet (cloth)",
+            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+          }
+        ]
+      },
         "grain": {
           "side": "supply",
           "value": 0.48,
@@ -1879,6 +1927,22 @@
         ]
       },
       "goods": {
+      "cotton": {
+        "side": "supply",
+        "value": 0.54,
+        "verdict": "confirmed",
+        "basis": "키프로스는 설탕과 함께 **면화**를 베네치아로 부치던 섬이다. 그동안 `cotton`은 산지가 상루이스(남아메리카) 한 곳뿐이라 사실상 죽은 품목이었는데, 방직 사슬(`원면 3 → 면포 2`)이 그 물건의 쓸 데를 만들면서 지중해 쪽 산지가 필요해졌다. 배율은 신대륙 대농장(0.44)보다 얕다 — 섬 농사 값이다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Cyprus § Venetian Cyprus (sugar and cotton exports)",
+            "url": "https://en.wikipedia.org/wiki/Venetian_Cyprus"
+          },
+          {
+            "title": "Wikipedia — Fustian (Levantine cotton for Italian and South German weavers)",
+            "url": "https://en.wikipedia.org/wiki/Fustian"
+          }
+        ]
+      },
         "sugar": {
           "side": "supply",
           "value": 0.52,
@@ -1941,6 +2005,22 @@
         ]
       },
       "goods": {
+      "cotton": {
+        "side": "supply",
+        "value": 0.5,
+        "verdict": "confirmed",
+        "basis": "알레포 배후의 시리아 면화가 이 갯벌에서 배에 올라 이탈리아·남독일의 퍼스티언(면·마 혼방) 베틀로 갔다. 대상로의 끝이라 이 바다에서 원면이 가장 싸게 붙는 자리다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Fustian",
+            "url": "https://en.wikipedia.org/wiki/Fustian"
+          },
+          {
+            "title": "Wikipedia — Aleppo Eyalet (caravan trade to the Levantine coast)",
+            "url": "https://en.wikipedia.org/wiki/Aleppo_Eyalet"
+          }
+        ]
+      },
         "silk": {
           "side": "supply",
           "value": 0.64,
@@ -2557,6 +2637,22 @@
     }
   },
   "goods": {
+    "scarlet": {
+      "base": 510,
+      "verdict": "gameplay",
+      "basis": "곡물의 25.5배 — 이 표에서 **비단(21배)보다 비싼 유일한 유럽 물건**이다. 사료는 그 방향을 지지한다(scarlatto는 중세·근세 유럽에서 가장 비싼 천이었고, 커미즈·코치닐 염료값이 그 값의 대부분이었다). 다만 게임의 「유럽이 아시아에서 사 오는 쪽」 구도를 한 칸 흔들므로 판정을 gameplay로 남긴다 — 몰라서가 아니라 골랐다는 표시다. 정확한 510은 **가공마진 밴드**에서 역산했다: `모직물 2 + 코치닐 1 → 주홍 2`가 1.159가 된다.",
+      "note": "산지는 베네치아(0.52)와 브뤼헤(0.54) 둘이다. 이탈리아 염색장과 플랑드르 염색 길드가 그 붉은색의 두 주인이었다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Scarlet (cloth) (\"the most expensive cloth of the medieval and early modern periods\")",
+          "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+        },
+        {
+          "title": "Wikipedia — Cochineal",
+          "url": "https://en.wikipedia.org/wiki/Cochineal"
+        }
+      ]
+    },
     "alum": {
       "base": 60,
       "verdict": "probable",

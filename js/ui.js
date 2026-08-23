@@ -2,9 +2,10 @@
 // 게임 그림은 캔버스, 글자/버튼은 DOM. 픽셀 폰트를 쓰지 않고도
 // 한글이 또렷하게 나오고 레이아웃 잡기도 쉽다.
 
-import { state, cargoUsed, ship } from './state.js';
+import { state, cargoUsed, ship, cargoCapTotal } from './state.js';
 import { blit } from './pixel.js';
 import { iconSprite } from './sprites/icons.js';
+import { after, speed, setSpeed, onSpeedChange, SPEED_STEPS } from './speed.js';
 
 export const overlay = document.getElementById('overlay');
 const toastBox = document.getElementById('toast');
@@ -96,11 +97,12 @@ export const npcTitle = (n) => (n?.defId ? n.name : `${n?.name ?? ''}호`);
 export function toast(text, kind = '') {
   const item = el(`div.toast-item${kind ? '.' + kind : ''}`, { text });
   toastBox.append(item);
-  setTimeout(() => {
+  // 머무는 시간도 연출이다 — 배속으로 굴리면 토스트가 다음 장면까지 남지 않는다
+  after(() => {
     item.style.transition = 'opacity .3s, transform .3s';
     item.style.opacity = '0';
     item.style.transform = 'translateY(-6px)';
-    setTimeout(() => item.remove(), 320);
+    after(() => item.remove(), 320);
   }, 2000);
 }
 
@@ -144,7 +146,7 @@ export function refreshHUD() {
   hud.hull.textContent = `${state.hp}/${state.maxHp}`;
   hud.crew.textContent = `${state.crew}/${state.crewMax}`;
   hud.guns.textContent = state.guns;
-  hud.cargo.textContent = `${cargoUsed()}/${state.cargoCap}`;
+  hud.cargo.textContent = `${cargoUsed()}/${cargoCapTotal()}`;
   document.getElementById('hud-hull')
     .classList.toggle('low', state.hp < state.maxHp * 0.34);
   document.getElementById('hud-crew')
@@ -172,6 +174,35 @@ logModal.addEventListener('click', (e) => {
     logModal.classList.add('hidden');
   }
 });
+
+/* ── 배속 토글 ──────────────────────────────────────
+   항해일지 바 오른쪽에 붙는다 — 눈에 띄지만 화면을 가리지 않는 자리다.
+   ★ 기본은 1×이고, 이것을 올려도 **줄어드는 것은 연출과 대기시간뿐**이다(→ `js/speed.js`).
+     `?speed=`로 연 판은 단계에 없는 값일 수 있으므로 라벨이 지금 값을 그대로 적는다. */
+const speedBox = document.getElementById('speed-box');
+if (speedBox) {
+  const label = el('span', {
+    style: { color: 'var(--brass-d)', fontSize: '11px', letterSpacing: '.04em' },
+  });
+  const btns = SPEED_STEPS.map((n) => el('button.mini', {
+    text: `${n}×`,
+    title: `연출 ${n}배속 — 일수·확률·수치는 그대로다`,
+    style: { padding: '2px 5px' },
+    onclick: () => setSpeed(n, { persist: true }),
+  }));
+  const paint = () => {
+    label.textContent = `배속 ${speed.mul}×`;
+    btns.forEach((b, i) => {
+      const on = SPEED_STEPS[i] === speed.mul;
+      b.style.color = on ? '#f4dd86' : '';
+      b.style.background = on ? '#3b3222' : '';
+      b.style.borderColor = on ? '#8a6a2f' : '';
+    });
+  };
+  speedBox.append(label, ...btns);
+  onSpeedChange(paint);
+  paint();
+}
 
 /* ── 진행바 ─────────────────────────────────────────── */
 export function bar(kind, value, max) {

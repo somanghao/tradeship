@@ -5,7 +5,9 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
-  HOLDINGS, HOLDING_KEYS, HOLDING, YARD_UPGRADE, YARD, ENDING,
+  HOLDINGS, HOLDING_KEYS, HOLDING, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  CHAIN, CHAIN_BY_ID, WORKS, WORK,
+  FACTIONS, REGARD,
   laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
   FOES_BY_REGION,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL, PIRATE_NAME_POOL,
@@ -18,7 +20,7 @@ import {
   LURE_PER, LURE_PER_STEP, LURE_CAP,
   ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
-  USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW,
+  USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW, FLEET,
   SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR, SPOILS_GOODS_PER_CREW, SPOILS_GOODS_CAP,
 } from './data.js';
 import { josa } from './josa.js';   // leaf 유틸 — 화면 헬퍼(ui.js)가 아니라 모듈 방향을 안 깬다
@@ -34,7 +36,7 @@ export {
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
   ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
-  USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW,
+  USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW, FLEET,
   SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR,
 };
 
@@ -53,6 +55,11 @@ export const state = {
   buyPrice: {},              // goodId -> 평균 매입가 (손익 표시용)
   at: 'venezia',             // 현재 정박 도시
   fleet: {},                 // shipKey -> { at, hp, arms, refits }  보유 선박(기함 포함)
+  /* 지금 **함께 몰고 나가는** 배 — `shipKey -> { crew, captain }`. 기함은 여기 들어가지 않는다.
+     배 자체(선체·무장·개장·정박지)는 그대로 `fleet`에 있고, 이쪽은 "따라 나섰는가"만 적는다.
+     ★ 평범한 객체다(Set이 아니다) — `save.js`가 state를 통째로 직렬화하므로 그대로 실린다.
+       `captain`은 **자리만 있고 아직 아무도 없다**(null 허용 · `data.js: FLEET.requireCaptain`). */
+  consorts: {},
   towing: null,              // 항해 중 나포해 끌고 가는 배 (입항 때 그 항구에 정박)
   loadout: ['captain', 'sailor', null, null, null, null],  // 갑판 배치 6칸
   prices: {},                // cityId -> goodId -> 단가
@@ -89,6 +96,18 @@ export const state = {
      깃발마다 쌓이고, 그 깃발의 항구에서 **세가 오르고** 그 세력이 **나를 사냥한다**. */
   infamy: {},                // 깃발 → 악명 점수
 
+  /* ── 세력 관계 (SPEC-factions 1단계) ────────────────────────
+     ★ **덮쳐도 아무도 화내지 않았다.** 악명은 깃발에 쌓이는데 깃발은 도시의 속성일 뿐이라,
+       숫자 하나가 오를 뿐 *누가* 화났는지가 화면에 없었다. `regard`가 그 얼굴이다.
+     ★ **이름이 `standing`이 아닌 이유** — `SPEC-supremacy.md`가 `STANDING`(국세 · 나라의 형세)을
+       이미 그 말로 쓴다. 셋이 뒤섞이면 나중에 어느 것을 고치는지 아무도 모른다
+       (`state.industry`로 한 번 겪은 함정이다). *"그 세력이 나를 어떻게 보는가"* → `regard`.
+     ★ **저장이 둘인 것은 붙는 대상이 달라서다** — 악명은 깃발 28종, 관계는 세력 10.
+       화면에는 **합쳐진 하나**만 뜬다(`regardOf` = raw − 그 세력 깃발의 악명).
+     ★ 평범한 객체·숫자다(`Set` 금지) — `save.js`가 `state`를 통째로 직렬화한다. */
+  regard: {},                // 세력 id → −10…+10 (악명을 빼기 **전**의 raw)
+  _regardAge: 0,             // 삭음 누적일 — 90일마다 한 칸씩 0 쪽으로 (`decayRegard`)
+
   /* ── 거점과 보관 화물 (A-1) ────────────────────────────────
      `holdings[cityId] = { rental:true, warehouse:true, … , paid: 마지막 유지비 낸 날 }`
      `stored[cityId]  = { goodId: 수량 }` — **여기 있는 짐은 시장을 누르지 않는다.** */
@@ -96,7 +115,17 @@ export const state = {
   stored: {},
   /* 공업력 승급(A-2) — `yards[cityId] = { boost, building: { to, until } }` */
   yards: {},
+  /* 수직계열화 시설(A-9) — `works[cityId] = { paid, spent, missed, '<종>:<품목>': {…} }`.
+     ★ **`holdings`와 갈라 둔 것이 이 필드의 존재 이유다** — `hegemonyOf`가 `holdings`를
+       세므로 같은 그릇에 담으면 권역 패권 조건이 조용히 바뀐다. → `data.js: WORK` 머리주석 */
+  works: {},
+  /* 꺾은 상대의 기록 — `{ '<권역>:t<등급>': 날, 'pirate:<명부id>': 날 }`. 권역 패권 조건 ③이 읽는다.
+     ★ **평범한 객체다(Set이 아니다)** — `save.js`가 `state`를 통째로 JSON으로 눕히므로
+       Set을 새로 만들면 `SET_KEYS`에 손을 대야 하고, 그 목록은 조용히 낡는다.
+       날짜를 값으로 두면 "언제 꺾었나"까지 남아 나중에 화면이 쓸 수 있다. */
+  slain: {},
   ended: 0,                  // 끝을 본 날 (0이면 아직)
+  endedNine: 0,              // 두 번째 끝 「아홉 바다」를 본 날 (0이면 아직)
   boons: {
     permit: {},              // 권역 → 만료일. 그 바다에서 세를 덜 문다(감합·카르타스)
     smuggle: {},             // 도시 → 만료일. 그 항구에서 세관을 피한다
@@ -114,8 +143,16 @@ export const state = {
 export function cargoUsed() {
   return Object.values(state.cargo).reduce((a, b) => a + b, 0);
 }
+/** 선단 전체의 적재량 — 기함 + 동행선의 화물칸 합.
+    ★ 동행 선단의 **첫째 이득**이 이것이다. `cargoFree()`가 이 값을 보므로
+      매매·전리품·계약이 전부 늘어난 칸을 쓴다. */
+export function cargoCapTotal() {
+  let cap = state.cargoCap;
+  for (const key of consortKeys()) cap += SHIPS[key]?.cargo || 0;
+  return cap;
+}
 export function cargoFree() {
-  return state.cargoCap - cargoUsed();
+  return cargoCapTotal() - cargoUsed();
 }
 export function ship() {
   return SHIPS[state.shipKey];
@@ -333,12 +370,10 @@ export function baseTariff(cityId = state.at) {
   return CITY_TARIFF[cityId] ?? TARIFF[size] ?? 0.045;
 }
 
-/** 지금 우리가 실제로 무는 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
-export function tariffRate(cityId = state.at) {
-  /* 부관이 깎고, **문서와 밀수가 또 깎는다.** 셋은 곱이 아니라 합으로 두되 바닥을 둔다 —
-     감합·카르타스를 쥐고 밀수업자까지 끼면 세가 0이 되어 제도가 사라지기 때문이다.
-     제도는 피해 갈 수 있어야 하지만 **없어지면 안 된다**(그것이 이 세계의 이야기다). */
-  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + boonTariffOff(cityId);
+/** 감면 총합(off)에서 실제 무는 세율까지 — 바닥·상관·부두 가산을 한곳에 모은다.
+    `tariffRate()`와 `tariffCutPreview()`가 같이 쓴다. 이 계산을 두 곳에 따로 베끼면
+    "지금 세율"과 "이 문서를 사면 얼마가 되나"가 서로 다른 공식으로 어긋나기 쉽다. */
+function tariffFromOff(off, cityId) {
   /* 악명은 **깎는 것들과 반대 방향**으로 붙는다 — 문서를 쥐고도 털고 다니면 그 문서가 무색해진다. */
   const rate = baseTariff(cityId) * Math.max(BOON.tariffFloor, 1 - off) * (1 + infamyTariffUp(cityId));
   /* 상관은 **비율이 아니라 자릿수**를 깎는다(−1.5%p) — 제 이름으로 통관하기 때문이다.
@@ -347,6 +382,37 @@ export function tariffRate(cityId = state.at) {
   const yardUp = yardBoost(cityId) * YARD.tariffPerBoost;
   if (!hasHolding('factory', cityId)) return rate + yardUp;
   return Math.max(HOLDING.tariffFloorPt, rate - (HOLDINGS.factory.tariffCut ?? 0)) + yardUp;
+}
+
+/** 지금 우리가 실제로 무는 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
+export function tariffRate(cityId = state.at) {
+  /* 부관이 깎고, **문서와 밀수가 또 깎는다.** 셋은 곱이 아니라 합으로 두되 바닥을 둔다 —
+     감합·카르타스를 쥐고 밀수업자까지 끼면 세가 0이 되어 제도가 사라지기 때문이다.
+     제도는 피해 갈 수 있어야 하지만 **없어지면 안 된다**(그것이 이 세계의 이야기다). */
+  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + boonTariffOff(cityId);
+  return tariffFromOff(off, cityId);
+}
+
+/** 세를 깎는 인물 서비스(permit·smuggle)를 사면 **이 항구에서 지금 실제로** 세가 얼마나 내려가나.
+    화면(구매 전 안내·구매 후 결과 문구)이 이걸 보여줘야 "종친이 문서를 사도 한 닢도 안 내려가는데
+    아무 표시가 없다"는 결함이 재발하지 않는다(원인 — royal+에이미는 이미 바닥(`BOON.tariffFloor`)
+    아래에 눌려 있어 문서분(35%p)을 더해도 `Math.max(floor, …)`에 막혀 buy가 무효가 된다).
+    ⚠️ 이미 그 서비스를 갖고 있어도(갱신 구매) delta는 "지금부터 새로 얻는 몫"이 아니라
+    "이 서비스가 없다면 얼마나 더 물었을까"를 보여준다 — 갱신은 만료를 늦추는 것이지 감면을
+    다시 얻는 게 아니므로, 상시 갖고 있다고 가정한 delta를 보여주는 쪽이 "이 서비스의 값어치"를
+    더 정직하게 답한다. */
+export function tariffCutPreview(kind, cityId = state.at) {
+  const before = tariffRate(cityId);
+  const addOff = kind === 'permit' ? BOON.permitTariffOff : kind === 'smuggle' ? BOON.smuggleTariffOff : 0;
+  if (!addOff) return { before, after: before, delta: 0 };
+  const active = kind === 'permit'
+    ? (state.boons?.permit?.[REGION_OF_CITY[cityId]] ?? 0) > state.day
+    : (state.boons?.smuggle?.[cityId] ?? 0) > state.day;
+  // 이미 갖고 있으면 그 몫은 지금 세율에 이미 반영돼 있다 — 다시 더하면 두 번 깎는 꼴이 된다.
+  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + boonTariffOff(cityId)
+            + (active ? 0 : addOff);
+  const after = tariffFromOff(off, cityId);
+  return { before, after, delta: Math.max(0, before - after), active };
 }
 
 /** 문서(permit)와 밀수(smuggle)가 깎아 주는 몫 — 기한이 지난 것은 안 센다. */
@@ -475,6 +541,324 @@ export function settleHolding(cityId = state.at) {
   return { due, paid, seized: true };
 }
 
+/* ── 수직계열화 ① 가공장 (A-9 1단계) ───────────────────────────
+   값과 설계 근거는 `data.js: CHAIN·WORKS·WORK`, 사양은 `.claude/docs/SPEC-vertical.md`.
+
+   ★ **`state.holdings`에 얹지 않고 `state.works`를 새로 둔다.** 이유가 결정적이다 —
+     `hegemonyOf()`가 `state.holdings`를 세므로 같은 그릇에 담으면 **권역 패권 조건이
+     조용히 바뀐다.** `HEGEMONY` 주석이 *"조건을 무겁게 하면 목표가 아니라 벌금이 된다"*고
+     못박은 자리라 건드리지 않는다. 게다가 거점은 종류가 다섯인 **불리언 집합**인데
+     시설은 `{level, job}`을 들어야 해서 애초에 모양이 다르다.
+
+   ★ 이름이 `state.industry`가 아닌 이유 — `city.industry`(공업력)와 `state.yards`
+     (공업력 승급)가 이미 그 말을 쓰고 있어 셋이 뒤섞인다.
+
+   ★ **평범한 객체다(Set 금지).** `save.js`가 `state`를 통째로 JSON으로 눕히므로
+     `SET_KEYS`에 손댈 일이 없다.
+
+     works[cityId] = {
+       paid: 마지막 유지비를 낸 날, spent: 들인 돈 누계, missed: 연속으로 못 낸 횟수,
+       'mill:<산출품목>': { level, since, idle, job: { recipe, out:{gid:n}, until } },
+     }
+
+   ── 왜 창고가 먼저인가 ────────────────────────────────────────
+   투입은 **창고에서 빠지고** 산출은 **창고로 들어온다**(배가 아니다). 산출물을 둘 데가
+   있어야 하기 때문이고, 동시에 그것이 진입 문턱이 된다(창고는 `size × 8,000닢`). */
+
+export const workKey = (kind, good) => `${kind}:${good}`;
+/** 사슬의 대표 산출 품목 — 지금은 사슬마다 산출이 하나뿐이라 첫 키가 곧 그것이다 */
+export const chainOut = (recipe) => Object.keys(recipe.out)[0];
+export const chainOutUnits = (recipe) => Object.values(recipe.out).reduce((a, b) => a + b, 0);
+export const chainInUnits = (recipe) => Object.values(recipe.in).reduce((a, b) => a + b, 0);
+
+/** 산출 기준가 합 — 가공비(×`WORK.feeRate`)와 마진 밴드가 함께 읽는 값 */
+export const chainOutValue = (recipe) =>
+  Object.entries(recipe.out).reduce((a, [g, n]) => a + (GOOD_BY_ID[g]?.base ?? 0) * n, 0);
+export const chainInValue = (recipe) =>
+  Object.entries(recipe.in).reduce((a, [g, n]) => a + (GOOD_BY_ID[g]?.base ?? 0) * n, 0);
+/** 가공마진 — `check-chain.mjs`가 이 값이 밴드 안인지 본다(코드가 정본) */
+export const chainMargin = (recipe) => chainOutValue(recipe) / chainInValue(recipe);
+
+export const worksOf = (cityId = state.at) => state.works?.[cityId] ?? null;
+/** 그 항구의 시설 목록 — `[key, 시설]`. `paid`·`spent` 같은 살림 필드는 걸러 낸다. */
+export function workList(cityId = state.at) {
+  const m = state.works?.[cityId];
+  if (!m) return [];
+  return Object.entries(m).filter(([k]) => k.includes(':'));
+}
+export const workAt = (kind, good, cityId = state.at) =>
+  state.works?.[cityId]?.[workKey(kind, good)] ?? null;
+export const hasWork = (kind, good, cityId = state.at) => !!workAt(kind, good, cityId);
+/** 그 사슬의 가공장 — 사슬 하나에 가공장 하나다(산출 품목이 열쇠) */
+export const millOf = (recipeId, cityId = state.at) => {
+  const r = CHAIN_BY_ID[recipeId];
+  return r ? workAt('mill', chainOut(r), cityId) : null;
+};
+export const worksIdle = (cityId = state.at) => workList(cityId).some(([, w]) => w.idle);
+
+/** 이 항구에서 지을 수 있는 사슬 — 공업력이 문지기다.
+    ★ 광산 도시(포토시·우앙카벨리카)는 `industry 0`이고 A-2 부두 승급 대상도 아니라
+      **영영 0이다.** 2단계에서 정련 사슬을 얹을 때 `req`를 2로 두면 그 사슬이 통째로 죽는다. */
+export const millRecipes = (cityId = state.at) =>
+  CHAIN.filter((r) => industryOf(cityId) >= r.req);
+
+/** 가공장 값 — `(9,000 + 산출 base × 80) × TIER_MUL[요구 공업력]`.
+    `level`은 **그 등급에 새로 내는 몫**이다(1→2가 0.80배, 2→3이 1.30배). */
+export function millPrice(recipeId, cityId = state.at, level = 1) {
+  const r = CHAIN_BY_ID[recipeId];
+  if (!r) return Infinity;
+  const out = GOOD_BY_ID[chainOut(r)];
+  if (!out) return Infinity;
+  const w = WORKS.mill;
+  const full = (w.priceBase + out.base * w.priceByOut) * (WORK.tierMul[r.req] ?? 1);
+  return Math.round(full * (WORK.levelMul[level] ?? 1));
+}
+
+/** 하루에 뽑는 산출 칸 수 */
+export const millRate = (level = 1) => WORK.millPerDay[level] ?? WORK.millPerDay[1];
+/** 가공비(현금) — 착수할 때 낸다 */
+export const millFee = (recipeId, batches = 1) =>
+  Math.round(chainOutValue(CHAIN_BY_ID[recipeId]) * WORK.feeRate * batches);
+/** 소요 일수 = 2 + ceil(산출 수량 ÷ 하루 처리) */
+export const millDays = (recipeId, batches, level = 1) =>
+  WORK.setupDays + Math.ceil((chainOutUnits(CHAIN_BY_ID[recipeId]) * batches) / millRate(level));
+
+/** 이 항구에 세울 수 있나 — 창고 · 공업력 · 시설 상한 · 금화 */
+export function canBuyMill(recipeId, cityId = state.at) {
+  const r = CHAIN_BY_ID[recipeId];
+  if (!r) return { ok: false, reason: '그런 사슬은 없다' };
+  if (millOf(recipeId, cityId)) return { ok: false, reason: '이미 있다' };
+  /* 창고(`warehouse`) 이상이 먼저다 — 임차창고(20칸)로는 사슬이 안 돈다.
+     투입과 산출이 둘 다 창고를 지나기 때문이고, 동시에 그것이 진입 문턱이다. */
+  if (!hasHolding('warehouse', cityId) && !hasHolding('factory', cityId)) {
+    return { ok: false, reason: '창고가 먼저다' };
+  }
+  if (industryOf(cityId) < r.req) return { ok: false, reason: `공업력 ${r.req}이 필요하다` };
+  const list = workList(cityId);
+  if (list.filter(([k]) => k.startsWith('mill:')).length >= WORKS.mill.perPort) {
+    return { ok: false, reason: `가공장은 한 항구에 ${WORKS.mill.perPort}까지다` };
+  }
+  if (list.length >= WORK.perPort) return { ok: false, reason: `시설은 한 항구에 ${WORK.perPort}까지다` };
+  const price = millPrice(recipeId, cityId, 1);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price };
+}
+
+export function buyMill(recipeId, cityId = state.at) {
+  const c = canBuyMill(recipeId, cityId);
+  if (!c.ok) return c;
+  const r = CHAIN_BY_ID[recipeId];
+  state.gold -= c.price;
+  book('outgo', 'ships', c.price);      // 거점과 같은 갈래 — 배 밖에 묶이는 자본이다
+  const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
+  m[workKey('mill', chainOut(r))] = { level: 1, since: state.day, idle: false, job: null };
+  m.spent = (m.spent ?? 0) + c.price;   // 유지비는 **들인 돈 전체**에 붙는다(거점과 같다)
+  pushLog(`${CITY_BY_ID[cityId].name}에 ${r.work}${josa(r.work, '을/를')} 세웠다`
+        + ` (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: c.price };
+}
+
+export function canUpgradeMill(recipeId, cityId = state.at) {
+  const w = millOf(recipeId, cityId);
+  if (!w) return { ok: false, reason: '가공장이 없다' };
+  if (w.level >= WORK.levelCap) return { ok: false, reason: '더 올릴 수 없다' };
+  if (w.job) return { ok: false, reason: '가공 중이다' };
+  const price = millPrice(recipeId, cityId, w.level + 1);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price, to: w.level + 1 };
+}
+
+export function upgradeMill(recipeId, cityId = state.at) {
+  const c = canUpgradeMill(recipeId, cityId);
+  if (!c.ok) return c;
+  const w = millOf(recipeId, cityId);
+  state.gold -= c.price;
+  book('outgo', 'ships', c.price);
+  const m = state.works[cityId];
+  m.spent = (m.spent ?? 0) + c.price;   // 승급분도 유지비 밑변에 얹힌다 — 커질수록 무거워진다
+  w.level = c.to;
+  pushLog(`${CITY_BY_ID[cityId].name} ${CHAIN_BY_ID[recipeId].work}${josa(CHAIN_BY_ID[recipeId].work, '을/를')}`
+        + ` ${c.to}등급으로 올렸다 (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: c.price, level: c.to };
+}
+
+/** 매각 — ★ 들인 돈의 60%만 돌아온다. 사면 40%가 즉시 증발한다는 것이 이 층의 대가다.
+    가공 중인 것은 못 판다(원료가 사라진다). */
+export function sellMill(recipeId, cityId = state.at) {
+  const w = millOf(recipeId, cityId);
+  if (!w) return { ok: false, reason: '가공장이 없다' };
+  if (w.job) return { ok: false, reason: '가공 중이다' };
+  const r = CHAIN_BY_ID[recipeId];
+  let spent = 0;
+  for (let lv = 1; lv <= w.level; lv++) spent += millPrice(recipeId, cityId, lv);
+  const back = Math.round(spent * WORK.sellBack);
+  const m = state.works[cityId];
+  delete m[workKey('mill', chainOut(r))];
+  m.spent = Math.max(0, (m.spent ?? 0) - spent);
+  if (!workList(cityId).length) delete state.works[cityId];
+  state.gold += back;
+  // 배 매각(`sellShip`)과 같은 갈래에 적는다 — 장부 항목을 늘리면 정산 모달도 함께 봐야 한다
+  book('income', 'loot', back);
+  pushLog(`${CITY_BY_ID[cityId].name} ${r.work}${josa(r.work, '을/를')} 넘겼다`
+        + ` (+${back.toLocaleString('ko-KR')}닢 — 들인 돈의 ${Math.round(WORK.sellBack * 100)}%).`, 'warn');
+  return { ok: true, back, spent };
+}
+
+/** 창고 재고로 몇 회분을 돌릴 수 있나 — 원료·금화·창고 자리를 다 본다.
+    ★ 산출이 들어갈 자리까지 미리 센다. 투입이 빠진 뒤의 빈자리에 산출이 들어오므로
+      `여유 + 투입칸 ≥ 산출칸`이 성립해야 한다. */
+export function millBatchCap(recipeId, cityId = state.at) {
+  const r = CHAIN_BY_ID[recipeId];
+  const w = millOf(recipeId, cityId);
+  if (!r || !w || w.idle || w.job) return 0;
+  const store = state.stored?.[cityId] ?? {};
+  let k = Infinity;
+  for (const [gid, n] of Object.entries(r.in)) k = Math.min(k, Math.floor((store[gid] ?? 0) / n));
+  if (!Number.isFinite(k)) return 0;
+  const fee = chainOutValue(r) * WORK.feeRate;
+  k = Math.min(k, Math.floor(state.gold / Math.max(1, fee)));
+  const room = storeCap(cityId) - storedUsed(cityId);
+  const inU = chainInUnits(r), outU = chainOutUnits(r);
+  if (outU > inU) k = Math.min(k, Math.floor(room / (outU - inU)));
+  return Math.max(0, k);
+}
+
+export function canRunMill(recipeId, cityId = state.at, batches = 1) {
+  const r = CHAIN_BY_ID[recipeId];
+  const w = millOf(recipeId, cityId);
+  if (!r || !w) return { ok: false, reason: '가공장이 없다' };
+  if (w.idle) return { ok: false, reason: '휴업 중이다 — 밀린 유지비를 내야 한다' };
+  if (w.job) return { ok: false, reason: '이미 돌고 있다' };
+  const cap = millBatchCap(recipeId, cityId);
+  if (cap <= 0) {
+    const store = state.stored?.[cityId] ?? {};
+    const missing = Object.entries(r.in).find(([gid, n]) => (store[gid] ?? 0) < n);
+    if (missing) {
+      const g = GOOD_BY_ID[missing[0]];
+      return { ok: false, reason: `창고에 ${g.name}${josa(g.name, '이/가')} 모자란다` };
+    }
+    return { ok: false, reason: '가공비나 창고 자리가 모자란다' };
+  }
+  return { ok: true, batches: Math.min(batches, cap), cap };
+}
+
+/** 착수 — 투입은 **지금** 창고에서 빠지고 가공비도 **지금** 나간다.
+    ★ 기다리는 것은 공짜가 아니다 — `waitDays()`가 정박 급여·유지비를 문다.
+      다시 오는 쪽을 골라도 되고, 그 선택이 이 시스템의 시계다. */
+export function runMill(recipeId, cityId = state.at, batches = 1) {
+  const c = canRunMill(recipeId, cityId, batches);
+  if (!c.ok) return c;
+  const r = CHAIN_BY_ID[recipeId];
+  const w = millOf(recipeId, cityId);
+  const k = c.batches;
+  const store = (state.stored[cityId] ??= {});
+  for (const [gid, n] of Object.entries(r.in)) {
+    store[gid] -= n * k;
+    if (store[gid] <= 0) delete store[gid];
+  }
+  const fee = millFee(recipeId, k);
+  state.gold -= fee;
+  book('outgo', 'goods', fee);
+  const days = millDays(recipeId, k, w.level);
+  w.job = {
+    recipe: recipeId, batches: k, until: state.day + days,
+    out: Object.fromEntries(Object.entries(r.out).map(([g, n]) => [g, n * k])),
+  };
+  const outName = GOOD_BY_ID[chainOut(r)].name;
+  pushLog(`${CITY_BY_ID[cityId].name} ${r.work}에 ${r.name}${josa(r.name, '을/를')} 걸었다 —`
+        + ` ${days}일 뒤 ${outName} ${chainOutUnits(r) * k}칸 (가공비 ${fee.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, batches: k, fee, days, until: w.job.until };
+}
+
+/** 완성분을 창고로 옮긴다 — 창고가 차 있으면 **들어간 만큼만** 옮기고 나머지는 기다린다.
+    (사라지지 않는다. 다음에 자리를 비우고 다시 부르면 나머지가 들어온다.) */
+export function collectMill(cityId = state.at) {
+  const got = {};
+  for (const [, w] of workList(cityId)) {
+    const job = w.job;
+    if (!job || state.day < job.until) continue;
+    const store = (state.stored[cityId] ??= {});
+    for (const gid of Object.keys(job.out)) {
+      const room = storeCap(cityId) - storedUsed(cityId);
+      if (room <= 0) break;
+      const n = Math.min(job.out[gid], room);
+      if (n <= 0) continue;
+      store[gid] = (store[gid] ?? 0) + n;
+      job.out[gid] -= n;
+      if (!job.out[gid]) delete job.out[gid];
+      got[gid] = (got[gid] ?? 0) + n;
+    }
+    if (!Object.keys(job.out).length) w.job = null;
+  }
+  const names = Object.entries(got).map(([g, n]) => `${GOOD_BY_ID[g].name} ${n}칸`);
+  if (names.length) {
+    pushLog(`${CITY_BY_ID[cityId].name} 가공장에서 ${names.join(' · ')}${josa(names[names.length - 1], '을/를')} 받아 창고에 넣었다.`, 'good');
+  }
+  return got;
+}
+
+/** 30일마다 무는 시설 유지비 — 들인 돈의 **연 10%**(거점 6%보다 무겁다) */
+export function worksUpkeepDue(cityId) {
+  const m = state.works?.[cityId];
+  if (!m) return 0;
+  const days = state.day - (m.paid ?? state.day);
+  if (days < WORK.upkeepEvery) return 0;
+  const periods = Math.floor(days / WORK.upkeepEvery);
+  const full = (m.spent ?? 0) * WORK.upkeepRate * (WORK.upkeepEvery / 360) * periods;
+  // 휴업 중에는 절반만 문다 — 사람이 덜 붙기 때문이다. 대신 **0은 아니다**(방치가 답이 되지 않게).
+  return Math.round(full * (worksIdle(cityId) ? WORK.idleRate : 1));
+}
+
+/** 이 항구의 시설 유지비를 치른다(항구에 들어올 때 · `settleHolding` 옆).
+    ★ 거점과 달리 **휴업을 한 번 거친다** — 사슬은 여러 항구에 걸치므로 한 항구의 사고로
+      전체가 끊기면 "수직계열화"가 도박이 된다. 두 번 연속이면 그때 압류다. */
+export function settleWorks(cityId = state.at) {
+  const m = state.works?.[cityId];
+  if (!m) return null;
+  const due = worksUpkeepDue(cityId);
+  if (due <= 0) return null;
+  const paid = Math.min(state.gold, due);
+  state.gold -= paid;
+  if (paid) book('outgo', 'port', paid);
+  m.paid = state.day;
+  const name = CITY_BY_ID[cityId].name;
+  if (paid >= due) {
+    if (worksIdle(cityId)) {
+      for (const [, w] of workList(cityId)) w.idle = false;
+      pushLog(`${name} 가공장이 다시 돈다 — 밀린 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'good');
+    } else {
+      pushLog(`${name} 시설 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'warn');
+    }
+    m.missed = 0;
+    return { due, paid, idle: false, seized: false };
+  }
+  m.missed = (m.missed ?? 0) + 1;
+  if (m.missed >= WORK.seizeAfter) {
+    delete state.works[cityId];
+    const lost = state.stored?.[cityId];
+    if (lost) delete state.stored[cityId];
+    pushLog(`${name}의 시설을 유지비 ${(due - paid).toLocaleString('ko-KR')}닢 때문에 빼앗겼다.`
+          + (lost && Object.keys(lost).length ? ' 창고에 둔 짐도 함께 넘어갔다.' : ''), 'bad');
+    return { due, paid, idle: false, seized: true };
+  }
+  for (const [, w] of workList(cityId)) { w.idle = true; w.job = null; }
+  pushLog(`${name} 시설이 유지비 ${(due - paid).toLocaleString('ko-KR')}닢을 못 채워 **휴업**한다.`
+        + ' 한 번 더 밀리면 넘어간다.', 'bad');
+  return { due, paid, idle: true, seized: false };
+}
+
+/** 지금 이 시설들을 다 넘기면 얼마가 돌아오나 — 총자산 계산(시뮬·대시보드)이 읽는다 */
+export function worksValue(cityId = null) {
+  const ids = cityId ? [cityId] : Object.keys(state.works ?? {});
+  let v = 0;
+  for (const id of ids) v += (state.works?.[id]?.spent ?? 0) * WORK.sellBack;
+  return Math.round(v);
+}
+
 /* ── 공업력 승급 (A-2) ─────────────────────────────────────────
    **자재를 실물로 실어 와야** 오른다. 그래서 승급은 돈 쓰는 일이 아니라 **항로를 짜는 일**이다. */
 
@@ -600,6 +984,144 @@ export function markEnded() {
   return true;
 }
 
+/* ── 꺾은 상대의 기록 ──────────────────────────────────────────
+   ★ 이 게임은 **누구를 이겼는지 기억하지 않았다.** `state.stats.wins`가 횟수만 세고,
+   어느 바다에서 무엇을 꺾었는지는 전투가 끝나는 순간 사라졌다. 권역 패권 조건 ③
+   ("그 바다의 최상급 적을 꺾었다")은 그 기억 없이는 판정 자체가 불가능하다.
+
+   ── 무엇을 키로 삼나 ────────────────────────────────────────
+   후보가 셋이었다.
+     ⓐ `enemy.id` — 익명 적은 `localize()`가 `'flagship:eastasia'`로 만들지만
+        이름난 해적은 `'npc:<런타임 id>'`이고 그 id는 **판마다 다시 뽑힌다**(`world.js`).
+        세이브를 건너면 뜻이 사라지는 키다.
+     ⓑ `enemy.face`(명부 id) — 이름난 해적만 있고 익명 `FOES`에는 아예 없다.
+        아홉 바다 중 이름난 tier 5가 없는 바다가 생기면 그 바다는 영영 못 잡는다.
+     ⓒ **`<권역>:t<등급>`** ← 채택. 익명 `FOES`와 이름난 해적을 **한 자리에 모은다**.
+        `FOES`는 id 없는 다섯 칸 배열이라 인덱스(=등급)가 사실상 그 배열의 이름이고,
+        이름난 해적의 `strength`가 그대로 `level`이 되므로 둘의 눈금이 이미 같다.
+        "그 바다의 다섯째 얼굴을 꺾었다"는 문장이 그대로 키가 된다.
+   ⓑ는 버리지 않고 `pirate:<명부id>`로 **함께** 적는다 — 판정에는 안 쓰지만
+   "왕직을 잡은 판인가"를 나중에 화면이 물을 수 있는 값이라 공짜로 남겨 둔다. */
+export const slainKey = (regionId, tier) => `${regionId}:t${tier}`;
+
+/** ⓑ 명부 한 사람의 키 — `recordSlain`이 적고 **`world.js: pickDef`가 읽는다**.
+    ★ 위 주석의 *"판정에는 안 쓰지만"*은 이제 반만 맞다. 패권 판정은 여전히 ⓒ만 보지만,
+      「해적을 다 무찌른다」(SPEC-supremacy §1)가 이 키로 명부를 닫는다.
+      키 문자열을 두 파일에 손으로 적지 않으려고 함수로 뽑아 둔다. */
+export const rosterKey = (pirateId) => `pirate:${pirateId}`;
+
+/** 그 바다에서 그 등급을 꺾은 날 (0이면 아직) */
+export const slainOn = (regionId, tier) => state.slain?.[slainKey(regionId, tier)] ?? 0;
+
+/** 전투 승리를 기록한다 — `scenes/battle.js: finish()`가 이긴 순간에 부른다.
+    ★ **상선은 세지 않는다.** 내가 먼저 덮친 상선이 조건 ③을 채우면 "이 바다의 두목을
+      꺾었다"가 "살진 배 한 척을 털었다"로 바뀐다. 분류 규칙은 `battle.js: foeKind`와 같다. */
+export function recordSlain(enemy, regionId = currentRegion()) {
+  if (!enemy || !regionId) return null;
+  if (enemy.nation === '상인') return null;
+  const tier = Math.min(5, Math.max(1, enemy.level ?? 1));
+  const keys = [slainKey(regionId, tier)];
+  if (enemy.face) keys.push(rosterKey(enemy.face));
+  const box = (state.slain ??= {});
+  for (const k of keys) box[k] ??= state.day;    // 처음 꺾은 날을 남긴다
+  return keys;
+}
+
+/* ── 권역 패권 (지역 패자) ─────────────────────────────────────
+   조건 넷은 `data.js: HEGEMONY` 주석이 정본. 여기서는 **진행도까지 담아** 돌려준다 —
+   `21/24`를 못 보여 주면 그것은 목표가 아니라 우연이다(`endingProgress`와 같은 이유). */
+
+/** 그 권역에서 짓는 배 가운데 가장 높은 tier의 것들 — 동률이면 전부 */
+export function regionTopShips(regionId) {
+  const ids = new Set(citiesOfRegion(regionId).map((c) => c.id));
+  let best = 0, out = [];
+  for (const [key, sh] of Object.entries(SHIPS)) {
+    if (!(sh.yards ?? []).some((y) => ids.has(y))) continue;
+    const t = sh.tier ?? 0;
+    if (t > best) { best = t; out = [key]; }
+    else if (t === best && t > 0) out.push(key);
+  }
+  return { tier: best, keys: out };
+}
+
+/** 이 바다의 패자인가 — 진행도까지 담은 객체를 돌려준다 */
+export function hegemonyOf(regionId) {
+  const cities = citiesOfRegion(regionId);
+  const held = cities.filter((c) => !!state.holdings?.[c.id]);
+  const facs = cities.filter((c) => hasHolding('factory', c.id));
+
+  const ports = { have: held.length, need: cities.length };
+  const factories = { have: facs.length, need: HEGEMONY.factoriesNeeded };
+
+  const day = slainOn(regionId, HEGEMONY.bossTier);
+  const boss = {
+    done: day > 0, day,
+    name: FOES_BY_REGION[regionId]?.[HEGEMONY.bossTier - 1]?.name
+       ?? ENEMIES[HEGEMONY.bossTier - 1]?.name ?? '두목',
+  };
+
+  const top = regionTopShips(regionId);
+  const owned = top.keys.find((k) => state.everOwned?.has?.(k)) ?? null;
+  const key = owned ?? top.keys[0] ?? null;
+  const topShip = {
+    done: !!owned, tier: top.tier, key,
+    name: key ? (SHIPS[key]?.name ?? key) : '없다',
+    /* 동률이 여럿이면 "이 중 하나" — 화면이 그대로 읽어 쓴다 */
+    choices: top.keys.map((k) => SHIPS[k]?.name ?? k),
+  };
+
+  const done = ports.have >= ports.need && factories.have >= factories.need
+            && boss.done && topShip.done;
+  return {
+    region: regionId, name: REGION_BY_ID[regionId]?.name ?? regionId,
+    ports, factories, boss, topShip, done,
+    /* 넷 중 몇을 채웠나 — 카드 머리말이 `2/4`를 쓴다 */
+    steps: (ports.have >= ports.need ? 1 : 0) + (factories.have >= factories.need ? 1 : 0)
+         + (boss.done ? 1 : 0) + (topShip.done ? 1 : 0),
+  };
+}
+
+/** 아홉 바다 전부 — 두 번째 끝의 조건이자 요약 화면의 자료 */
+export function hegemonyAll() {
+  const seas = REGIONS.map((r) => hegemonyOf(r.id));
+  const have = seas.filter((s) => s.done).length;
+  return { seas, have, need: seas.length, done: have >= seas.length };
+}
+
+/** 두 번째 끝을 한 번만 축하한다 — 조선의 끝(`markEnded`)과 **따로 논다** */
+export function markNineEnded() {
+  if (state.endedNine) return false;
+  state.endedNine = state.day;
+  return true;
+}
+
+/* ── 한반도 항구 개발 ("숨겨진 항구") ──────────────────────────
+   ★ 조선 항구는 아홉인데 그중 **둘은 부두가 없다**(마포·의주 `industry 0`). 배를 짓기는커녕
+   중고 매물도 안 걸리는 항구다. "숨겨진 항구를 연다"는 새 포구를 지도에 그리는 것이 아니라
+   **부두가 없던 그 자리에 부두를 내는 것**이다 — `조선대`+`부두`를 세우면 `industryOf()`가
+   +1 하므로 **규칙은 이미 있었고 목표와 화면만 없었다**(SPEC §4).
+   ⚠️ 새 도시를 지도에 더하지 않는다 — 좌표를 늘리면 지도 아홉 장을 다시 뽑아야 한다. */
+export function homelandProgress() {
+  const cities = CITIES.filter((c) => c.flag === HEGEMONY.homeFlag);
+  const held = cities.filter((c) => !!state.holdings?.[c.id]);
+  const docks = cities.filter((c) => hasHolding('dock', c.id));
+  /* 태어날 때 부두가 없던 항구 — 여는 것이 이 목표의 이름이다 */
+  const hidden = cities.filter((c) => (c.industry ?? 0) === 0).map((c) => ({
+    id: c.id, name: c.name, now: industryOf(c.id), done: industryOf(c.id) > 0,
+  }));
+  const yards = Object.entries(ENDING.yards).map(([cityId, need]) => ({
+    cityId, name: CITY_BY_ID[cityId]?.name ?? cityId,
+    now: industryOf(cityId), need, done: industryOf(cityId) >= need,
+  }));
+  return {
+    cities, ports: cities.length,
+    holdings: { have: held.length, need: cities.length },
+    docks: { have: docks.length, need: cities.length },
+    hidden, yards,
+    done: held.length >= cities.length && hidden.every((h) => h.done) && yards.every((y) => y.done),
+  };
+}
+
 /* ── 악명 규칙 ────────────────────────────────────────────── */
 /** 그 깃발에 쌓인 악명 */
 export const infamyOf = (flag) => (flag ? (state.infamy?.[flag] ?? 0) : 0);
@@ -641,6 +1163,140 @@ export function infamyOdds(from = state.at, to = null) {
   let worst = 0;
   for (const f of flags) worst = Math.max(worst, infamyOf(f));
   return Math.min(INFAMY.oddsCap, worst * INFAMY.oddsPer);
+}
+
+/* ── 세력 관계 규칙 (SPEC-factions 1단계) ──────────────────────
+   1단계가 하는 일은 넷뿐이다 — **움직이는 것 둘 · 무는 것 둘.**
+     움직인다 ① 그 세력 깃발 상선을 덮치면 내려간다 (`regardOf`가 악명을 흡수해 읽는다 — 새 배선 0)
+     움직인다 ② 그 세력이 낸 일감을 완수하면 +1 (`deliverContract` · 상한 +6)
+     문다   ① 눈총(−1 이하) → 그 세력 도시에 **일감이 안 걸린다** (`contractOffer`)
+     문다   ② 원수(−6 이하) → 그 세력이 **파는 것을 안 판다** (`buyService`의 `permit`)
+   ⚠️ **이중과세 금지** — 여기 있는 어떤 함수도 `tariffRate`·`encounterOdds`를 건드리지 않는다.
+     세율과 조우는 악명(`INFAMY`)의 몫이고, 관계가 무는 것은 **접근권**이다.
+     그래서 관계를 바닥까지 내려도 세율·조우 확률은 한 자리도 안 움직인다. */
+
+/** 그 세력에 실제로 쌓인 값 — 악명을 빼기 **전**이다 */
+export const regardRaw = (facId) => state.regard?.[facId] ?? 0;
+
+/** 그 세력이 읽는 내 악명 — 그 세력 깃발 중 가장 무거운 것.
+    ★ 푸거는 깃발이 없어 언제나 0이다. **배를 안 띄우므로 덮칠 수가 없다** —
+      "돈으로 하는 싸움은 칼로 못 푼다"가 규칙이 되는 자리다. */
+export function infamyWeight(facId) {
+  const f = FACTIONS[facId];
+  if (!f) return 0;
+  let worst = 0;
+  for (const flag of f.flags) worst = Math.max(worst, infamyOf(flag));
+  return worst;
+}
+
+/** 화면과 규칙이 보는 **하나의 값** — raw에서 악명을 뺀 것. [−10, +10] */
+export function regardOf(facId) {
+  const v = regardRaw(facId) - infamyWeight(facId);
+  return Math.max(-REGARD.cap, Math.min(REGARD.cap, v));
+}
+
+/** 다섯 칸 중 어디인가 — `{ lo, hi, name }`. 값이 아니라 **말**이 필요한 자리에 쓴다 */
+export function regardBand(facId) {
+  const v = regardOf(facId);
+  for (const [lo, hi, name] of REGARD.bands) if (v >= lo && v <= hi) return { lo, hi, name, value: v };
+  return { lo: 0, hi: 0, name: '모른다', value: v };
+}
+
+/** 관계를 움직인다. **상한 판정을 여기 한 곳에 모은다** — 호출부마다 두면 반드시 어긋난다.
+    `why`는 상한이 갈리는 이유다(`'contract'`는 +6에서 멈춘다). */
+export function addRegard(facId, n, why = '') {
+  const f = FACTIONS[facId];
+  if (!f || !n) return regardRaw(facId);
+  const m = (state.regard ??= {});
+  const cur = m[facId] ?? 0;
+  let v = cur + n;
+  // ★ 일감만으로는 「한편」에 못 간다 — 일은 신뢰이지 동무가 아니다
+  if (n > 0 && why === 'contract') v = Math.min(v, REGARD.contractCap);
+  /* ★ 회사(`sells: 'nothing'`)는 0 위로 못 올라간다. 살 것이 없으니 거래로 못 올린다 —
+     회복하는 유일한 길은 그 산지에서 손을 떼고 90일을 기다리는 것이다. */
+  if (f.sells === 'nothing') v = Math.min(v, REGARD.companyCap);
+  v = Math.max(-REGARD.cap, Math.min(REGARD.cap, v));
+  if (v === cur) return cur;
+  if (v === 0) delete m[facId];        // 0이 기본선이라 안 적는다 — 세이브가 그만큼 가벼워진다
+  else m[facId] = v;
+  return v;
+}
+
+/** 날이 지나면 삭는다 — **90일마다 한 칸씩 0 쪽으로.** 양수도 음수도 같이 삭는다.
+    ★ `decayInfamy`를 그대로 베낀 모양이다(누적일 하나 · while 한 번).
+      방치의 종착지가 파산이 아니라 **무관심**이라, 관계가 벌금이 되지 않는다. */
+export function decayRegard(days = 1) {
+  const m = state.regard;
+  if (!m) return;
+  state._regardAge = (state._regardAge ?? 0) + days;
+  while (state._regardAge >= REGARD.decayDays) {
+    state._regardAge -= REGARD.decayDays;
+    for (const k of Object.keys(m)) {
+      m[k] += m[k] > 0 ? -1 : 1;
+      if (m[k] === 0) delete m[k];
+    }
+  }
+}
+
+/** 이 도시에 걸린 세력 전부 — `{ id, how }`. `how`는 'seat' | 'grip' | 'flag'.
+    ★ 한 도시에 둘이 걸리는 자리가 실제로 있다(세비야 = 카사 seat + 산 조르조 seat,
+      단치히 = 한자 seat + 푸거 seat, 암본 = 회사 seat + 에스타두 grip). */
+export function factionsOfCity(cityId) {
+  const c = CITY_BY_ID[cityId];
+  if (!c) return [];
+  const out = [];
+  for (const [id, f] of Object.entries(FACTIONS)) {
+    if (f.seats.includes(cityId)) out.push({ id, how: 'seat', rank: 0 });
+    else if (f.grip.cities.includes(cityId)) out.push({ id, how: 'grip', rank: 1 });
+    else if (f.flags.includes(c.flag)) out.push({ id, how: 'flag', rank: 2 });
+  }
+  return out;
+}
+
+/** 이 도시의 **임자** 하나 — 없으면 null. seats → grip.cities → flags 순으로 찾는다.
+    ★ 같은 층위에서 겹치면 **그 도시의 깃발을 쓰는 쪽**이 이긴다. 세비야는 카사(에스파냐 깃발)이고
+      단치히는 한자다 — 제노바 자본과 푸거의 상관은 그 도시에 *앉아 있을* 뿐 임자가 아니다.
+      순서에 기대지 않고 데이터로 갈리게 해 둔 것이다(FACTIONS의 선언 순서를 바꿔도 답이 같다).
+    ★ 그래서 리스본의 임자는 푸거다(seat) — 후추 계약을 쥔 것이 그 집이라는 사료 그대로이고,
+      `story/FACTIONS.md`가 *"어긋난 자리가 곧 이야기다"*라고 적은 다섯 자리 중 하나다. */
+export function factionOfCity(cityId) {
+  const flag = CITY_BY_ID[cityId]?.flag;
+  const cands = factionsOfCity(cityId);
+  if (!cands.length) return null;
+  cands.sort((a, b) => (a.rank - b.rank)
+    || ((FACTIONS[a.id].flags.includes(flag) ? 0 : 1) - (FACTIONS[b.id].flags.includes(flag) ? 0 : 1)));
+  return cands[0].id;
+}
+
+/** 만난 세력 — **`state.known`에서 파생한다.** 새 상태를 만들지 않는다.
+    ★ 제1해에서 둘, 제7해에서 다섯. 바다를 넓힐수록 관계도가 자라는 것이 그대로 진행 표시다. */
+export function metFactions() {
+  const out = new Set();
+  for (const cityId of state.known) {
+    for (const { id } of factionsOfCity(cityId)) out.add(id);
+  }
+  return [...out];
+}
+
+/** 이 항구에 일감이 걸리는가 — **눈총이면 빈다.**
+    ★ 값이 아니라 **동선**을 문다. 관계가 나쁜 세력의 바다에서는 게시판이 자주 비고,
+      일감을 찾아 다른 항구로 가게 된다. */
+export function contractFactionOK(cityId) {
+  const fid = factionOfCity(cityId);
+  return !fid || regardOf(fid) > REGARD.contractAt;
+}
+
+/** 그 세력이 지금 이것을 파는가 — 안 팔면 **거절 문구**를 돌려준다(팔면 null).
+    ★ 무엇이 막히는지는 그 세력이 **무엇을 파느냐**(`sells`)로 갈린다 —
+      종이(카르타스)·순서(감합)·세(카피툴레이션)가 전부 `BOON.permit` 한 자리에 붙어 있다. */
+const SELLS_FOR = { permit: ['paper', 'order', 'toll'] };
+export function sellBlocked(cityId, service = 'permit') {
+  const fid = factionOfCity(cityId);
+  const f = FACTIONS[fid];
+  if (!f) return null;
+  if (!(SELLS_FOR[service] ?? []).includes(f.sells)) return null;
+  if (regardOf(fid) > REGARD.refuseAt) return null;
+  return f.lines?.refuse ?? `${f.name}이 이 문서를 내주지 않는다`;
 }
 
 /** 지금 이 항구에서 누리고 있는 혜택 — 화면이 "무엇이 걸려 있나"를 보여줄 때 쓴다 */
@@ -685,18 +1341,36 @@ export function buyService(f, cityId = state.at) {
 
   switch (f.service) {
     case 'permit': {
+      /* ★ **원수(regard ≤ −6)면 그 세력이 문서를 안 판다.** 관계가 무는 것은 세율이 아니라
+         **접근권**이다 — 값을 더 받는 것이 아니라 아예 안 내준다. 거절 문구는 명부의 것을 그대로 쓴다.
+         ⚠️ 세율을 다시 곱하지 않는다(이중과세 금지 · 그것은 `infamyTariffUp`의 몫이다). */
+      const refused = sellBlocked(cityId, 'permit');
+      if (refused) return { ok: false, reason: refused };
       if ((b.permit[rid] ?? 0) > state.day) return { ok: false, reason: '이미 이 바다의 문서를 갖고 있다' };
+      // ★ 결함 C — 부관·갈래 특전으로 이미 세율 바닥(BOON.tariffFloor)에 눌려 있으면
+      //   문서를 사도 실효세가 안 움직인다. 사기 전에 실제 효과를 재서 문구에 넣는다
+      //   (막지는 않는다 — 시장 깊이 등 세율 말고 다른 이유로 살 수도 있으므로).
+      const cut = tariffCutPreview('permit', cityId);
       pay();
       b.permit[rid] = state.day + BOON.permitDays;
       return { ok: true, fee, kind: 'permit',
-               line: `${BOON.permitDays}일 동안 이 바다에서 세를 ${Math.round(BOON.permitTariffOff * 100)}% 덜 문다.` };
+               line: cut.delta > 0
+                 ? `${BOON.permitDays}일 동안 이 바다에서 세가 ${(cut.before * 100).toFixed(2)}%에서 `
+                   + `${(cut.after * 100).toFixed(2)}%로 내려간다.`
+                 : `이 항구는 이미 세율이 바닥이다(부관·특전으로 ${(cut.before * 100).toFixed(2)}%) — `
+                   + `문서를 사도 세는 그대로다.` };
     }
     case 'smuggle': {
       if ((b.smuggle[cityId] ?? 0) > state.day) return { ok: false, reason: '이 항구에서는 이미 길이 나 있다' };
+      const cut = tariffCutPreview('smuggle', cityId);
       pay();
       b.smuggle[cityId] = state.day + BOON.smuggleDays;
       return { ok: true, fee, kind: 'smuggle',
-               line: `${BOON.smuggleDays}일 동안 이 항구에서 세를 ${Math.round(BOON.smuggleTariffOff * 100)}% 덜 문다. 들키면 그때 일이다.` };
+               line: cut.delta > 0
+                 ? `${BOON.smuggleDays}일 동안 이 항구에서 세가 ${(cut.before * 100).toFixed(2)}%에서 `
+                   + `${(cut.after * 100).toFixed(2)}%로 내려간다. 들키면 그때 일이다.`
+                 : `이 항구는 이미 세율이 바닥이다(부관·특전으로 ${(cut.before * 100).toFixed(2)}%) — `
+                   + `길을 터도 세는 그대로다.` };
     }
     case 'repair': {
       if ((b.repair[cityId] ?? 0) > state.day) return { ok: false, reason: '이미 말을 넣어 두었다' };
@@ -716,6 +1390,12 @@ export function buyService(f, cityId = state.at) {
                    + `${b.loan.owed.toLocaleString('ko-KR')}닢으로 갚는다 — 급여일에 함께 걷는다.` };
     }
     case 'contract': {
+      /* ★ 일감이 안 걸리는 항구에서 **일감 갱신을 팔면 돈만 받고 아무 일도 안 난다** —
+         `contractOffer`가 `null`을 내므로 갈아 줄 자리가 없다. 값을 받기 전에 거절한다. */
+      if (!contractFactionOK(cityId)) {
+        return { ok: false, reason: FACTIONS[factionOfCity(cityId)]?.lines?.refuse
+                                 ?? '이 항구의 게시판에는 걸릴 일감이 없다' };
+      }
       pay();
       b.reroll[cityId] = (b.reroll[cityId] ?? 0) + 1;
       return { ok: true, fee, kind: 'contract', line: '다른 일감을 물어다 주었다. 게시판을 다시 보라.' };
@@ -825,6 +1505,10 @@ export function contractOffer(cityId = state.at, day = state.day) {
   /* 사흘마다 갈리는 것이 기본이고, **중개인에게 값을 치르면 한 칸 앞당겨 다른 일감을 본다**
      (`boons.reroll`). 드나들며 새로 뽑을 수는 없다는 규칙은 그대로다 — 값을 낸 만큼만 바뀐다. */
   const slot = Math.floor(day / 3) + (state.boons?.reroll?.[cityId] ?? 0);
+  /* ★ **눈총(regard ≤ −1)이면 이 항구의 자리가 빈다.** 일감을 내는 것은 그 도시의 임자이고,
+     그가 나를 안 좋게 보면 상관 게시판에 내 이름이 안 오른다. 값을 무는 것이 아니라
+     **일감을 찾아 다른 항구로 가게** 하는 규칙이다(§3-4). */
+  if (!contractFactionOK(cityId)) return null;
   const nb = neighborsOf(cityId);
   // 2홉까지 목적지 후보 (먼 곳일수록 보수가 크다)
   const far = new Set();
@@ -859,6 +1543,9 @@ export function contractOffer(cityId = state.at, day = state.day) {
     from: cityId, to, goodId, qty, pay, due,
     advance: Math.round(pay * CONTRACT.advance),
     id: `${cityId}:${slot}`,
+    /* ★ 일감에 **임자가 생긴다.** 이 한 줄이 "누가 낸 일인가"이고, 납품하면 그가 +1이 된다.
+       임자가 없는 항구(어느 세력에도 안 걸리는 도시)는 `null`이라 지금과 똑같이 굴러간다. */
+    by: factionOfCity(cityId),
   };
 }
 
@@ -867,8 +1554,8 @@ export function acceptContract() {
   const c = contractOffer();
   if (!c) return { ok: false, reason: '지금은 들어온 주문이 없다' };
   // 실을 수 없는 주문은 받지 못한다 — 큰 계약이 큰 배를 사는 이유가 된다
-  if (c.qty > state.cargoCap) {
-    return { ok: false, reason: `화물칸이 ${c.qty - state.cargoCap}칸 모자란다 (${c.qty}개를 실어야 한다)` };
+  if (c.qty > cargoCapTotal()) {
+    return { ok: false, reason: `화물칸이 ${c.qty - cargoCapTotal()}칸 모자란다 (${c.qty}개를 실어야 한다)` };
   }
   state.contract = { ...c, taken: state.day };
   state.gold += c.advance;
@@ -891,7 +1578,21 @@ export function deliverContract() {
   state.stats.profit += rest;
   book('income', 'contracts', rest);
   state.contract = null;
-  return { ok: true, paid: rest, total: c.pay };
+  /* ★ **일을 해내면 그 세력이 그것을 적는다.** 관계가 오르는 두 길 중 하나이고(다른 하나는
+     덮치지 않는 것, 곧 시간이다), 오르는 쪽에는 **금액이 하나도 안 붙는다** —
+     보수도 세율도 그대로다. 늘어나는 것은 숫자 하나뿐이다. */
+  let regard = null;
+  if (c.by && FACTIONS[c.by]) {
+    const before = regardOf(c.by);
+    addRegard(c.by, 1, 'contract');
+    const after = regardOf(c.by);
+    if (after !== before) {
+      regard = { fac: c.by, value: after };
+      const nm = FACTIONS[c.by].short;
+      pushLog(`${nm}${josa(nm, '이/가')} 이 일을 적어 두었다 (관계 ${after > 0 ? '+' : ''}${after}).`, 'good');
+    }
+  }
+  return { ok: true, paid: rest, total: c.pay, regard };
 }
 
 export function abandonContract() {
@@ -969,14 +1670,20 @@ export function officerPerk(key) {
 /* ── 출신 갈래의 특전 ──────────────────────────────────────
    `data.js: ORIGINS`의 다섯 갈래. 부관 특전과 **같은 자리에서 더해진다** —
    읽는 쪽은 `officerPerk(k) + originPerk(k)` 꼴로 쓴다.
-   ★ `joseonOnly`가 붙은 갈래의 특전은 **조선 항구에서만** 돈다. 종친의 첩지를 명 시박사가
-     알아줄 이유가 없다 — "제도는 바다마다 다르다"가 이 게임의 뼈대이므로 특전도 그것을 따른다. */
+   ★ `joseonOnly`가 붙은 **키만** 조선 항구에서만 돈다(결함 D, PM 지시).
+     예전엔 갈래 전체에 붙은 플래그라 그 갈래의 *모든* perk가 조선 밖에서 0이 됐다 —
+     종친은 특전(tariffOff)뿐 아니라 벌점(hireUp)까지 죽어 조선 밖에서 "아무 갈래도 아닌 상태"가
+     됐다. 신분은 국경에서 죽어도(특전 무효) **결격은 보증인이 필요 없다**(벌점은 어디서나 산다)는
+     소설 원리 B와 정반대였다. 그래서 `joseonOnly`를 **이득 키만 골라 게이팅하는 배열**로 바꾼다 —
+     `true`(전부 게이팅)도 계속 받는다(기존 데이터·`interpreter`처럼 벌점이 없는 갈래는 어차피 결과가 같다). */
 export function originPerk(key, cityId = state.at) {
   const o = ORIGIN_BY_ID[state.origin ?? DEFAULT_ORIGIN];
   if (!o) return 0;
   const v = o.perks?.[key] ?? 0;
   if (!v) return 0;
-  if (o.perks?.joseonOnly) {
+  const gate = o.perks?.joseonOnly;
+  const gated = gate === true || (Array.isArray(gate) && gate.includes(key));
+  if (gated) {
     const c = CITY_BY_ID[cityId];
     if (!c || c.flag !== 'joseon') return 0;
   }
@@ -1023,13 +1730,16 @@ export function hire(n) {
   const unit = hireUnit();
   const max = Math.min(n, room, Math.floor(state.gold / unit));
   if (max <= 0) return { ok: false, reason: room <= 0 ? '선실이 가득 찼다' : '금화가 모자란다' };
-  state.gold -= max * unit;
+  const cost = max * unit;
+  state.gold -= cost;
   state.crew += max;
-  book('outgo', 'port', max * HIRE_UNIT);
+  // ★ 장부·반환값도 실제 할증 단가(unit)로 적는다 — 예전에는 HIRE_UNIT(기본값)으로 적어
+  //   갈래가 할증을 물어도 장부엔 안 잡혀 지출이 새는 것처럼 보였다(결함 B).
+  book('outgo', 'port', cost);
   // 부두에서 급히 긁어모은 인력에는 이름이 없다. 일당은 표준값으로 친다 —
   // 값을 두 배로 치르는 대신 고르지 않는 것이 이 경로의 성격이다.
   state.bands.push({ n: max, trait: 'steady', wage: CREW_WAGE, name: '부두 인부', from: state.at, day: state.day, unrest: 0 });
-  return { ok: true, n: max, cost: max * HIRE_UNIT };
+  return { ok: true, n: max, cost };
 }
 
 /* ── 술집 ─────────────────────────────────────────────────────
@@ -1105,8 +1815,16 @@ export function tavernCrews(cityId = state.at, day = state.day) {
       desc: T.desc,
       troop: T.troop,
       temper: T.temper,
+      // ★ 일당(wage)에는 갈래 할증을 안 붙인다 — 요구 일당은 그 사람의 기질이 정하는 값이지
+      //   "누가 태우느냐"로 바뀌면 안 된다(무리는 결정론으로 앉아 있고, 값만 갈래마다 달라야 한다).
+      //   갈래 할증(`hireUp`)은 **태우는 그 순간의 값**(계약금)에만 붙는다 — 부두 즉석고용(`hireUnit`)이
+      //   이미 그 꼴이고(할증이 단가 하나에 붙는다), 종친의 cost 문구("사람을 몰래 부리지 못해
+      //   선원이 더디 모인다")도 "모으는 값이 비싸진다"는 뜻이지 "데리고 있는 내내 더 비싸다"가 아니다.
+      //   일당까지 올리면 90항차 내내 복리로 불어나 밸런스가 종친 하나만으로 크게 흔들린다
+      //   (economy-trade.md: "임금은 규모와 무관한 고정비라 후반 브레이크" — 갈래 하나 때문에
+      //   그 브레이크의 세기를 바꾸지 않는다).
       wage: Math.round(CREW_WAGE * T.wageMul * jitter * 100) / 100,
-      advance: Math.round(TAVERN.advanceUnit * T.advMul * jitter) * n,
+      advance: Math.round(TAVERN.advanceUnit * T.advMul * jitter * (1 + originPerk('hireUp', cityId))) * n,
       name: pool[nameIdx],
       city: cityId,
     });
@@ -1264,7 +1982,12 @@ export function fleeBonus() {
       보여 준 가망과 실제 판정이 어긋나면 안내가 거짓말이 된다. */
 export function fleeOdds({ range = 78, foeHull = null, mySail = 0, foeSail = 0 } = {}) {
   const foeSpd = SHIPS[foeHull]?.speed ?? 1;      // 적 선체명은 SHIPS 키와 같다(brig·galley…)
-  const p = 0.24 + (range / 100) * 0.52 + (shipSpeed() - foeSpd) * 0.25
+  /* ★ 도망치는 것은 기함이 아니라 **선단 전체**다 — 굼뜬 동행선을 끌고 기함 속력으로
+     빠져나갈 수는 없다. `fleetSpeedPenalty()`는 항해 일수에도 곱해지는 그 배율이라
+     "느려서 오래 걸린다"와 "느려서 못 도망친다"가 **같은 수 하나**에서 나온다.
+     호출처 셋(전투 도주·전투 안내·조우 안내)이 전부 이 함수를 거치므로 값이 갈리지 않는다. */
+  const mySpd = shipSpeed() * fleetSpeedPenalty();
+  const p = 0.24 + (range / 100) * 0.52 + (mySpd - foeSpd) * 0.25
           + fleeBonus() + (foeSail / 100) * 0.30 - (mySail / 100) * 0.25;
   return Math.max(0.05, Math.min(0.95, p));       // 확실한 도주도, 확실한 포획도 없다
 }
@@ -1441,7 +2164,30 @@ export function sellsShip(key, cityId = state.at) {
   /* ★ **공사 중에는 배를 못 짓는다.** 부두를 넓히는 동안 그 부두가 제 일을 못 한다는 뜻이고,
      그것이 이 투자의 진짜 값이다 — 돈보다 **그 항구를 몇 달 잃는 것**이 크다. */
   if (yardBusy(cityId)) return false;
+  if (!yardAllowed(key, cityId)) return false;
   return industryOf(cityId) >= tierNeeded(key, cityId);
+}
+
+/* ── `yards`의 두 가지 뜻 ──────────────────────────────────────
+   `SHIPS[].yards`는 원래 **전통 조선지 = 값이 싸지는 곳**이다(`shipPriceAt` → `YARD_TRADITION_OFF`).
+   *"거기서만 살 수 있다"*가 아니고, 그래서 `sellsShip`은 공업력만 본다 — 그것이 설계다.
+
+   딱 한 배만 다르다. **`yardsOnly: true`를 세운 배는 그 부두에서만 나온다.**
+   플래그를 배 쪽에 둔 이유: 규칙을 바꾸면 아흔 척이 전부 영향을 받지만,
+   플래그는 **데이터에 드러나고 그 배 한 줄만 바꾼다.**
+
+   ★ 문이 **셋**이라 셋 다 같은 함수를 지나게 했다 — 하나만 막으면 나머지로 새어 나온다:
+     ① 신조   `sellsShip`      (→ `buildableAt`·`shipPriceAt`·조선소 화면이 전부 이것을 거친다)
+     ② 중고   `usedListings`   공업력 3 항구의 매물 풀이 `tier <= ind + 1`이라 tier 4가 걸렸다.
+                               실측 **정가 24,000닢 → 사카이 14,300닢**(정공법의 6%)
+     ③ 나포   `regionPrize`    등급 5의 전리품이 *"그 바다에서 짓는 tier 4"*라 **정확히 이 배**였다.
+                               4,000회 표본에서 **1,020/1,020(100%)**. 패권 조건 ③을 채우는 그
+                               전투가 ④까지 통째로 채워 줬다.
+   → `.playtest/origin-sweep/out/FINDINGS-hegemony.md` F1·F2 */
+export function yardAllowed(key, cityId = state.at) {
+  const s = SHIPS[key];
+  if (!s?.yardsOnly) return true;
+  return (s.yards ?? []).includes(cityId);
 }
 
 /** 공업력만 놓고 보면 지을 수 있는가 (해금 여부는 따지지 않는다 — UI에서 이유를 갈라 보여주려고) */
@@ -1476,6 +2222,12 @@ export function purchaseShip(key) {
     if (!s.tier) return { ok: false, reason: '시중에 나오지 않는 배다' };
     const lock = shipLockedBy(key);
     if (lock) return { ok: false, reason: `${lock}${josa(lock, '을/를')} 몰아 본 선주에게만 내놓는다` };
+    /* `yardsOnly`인 배는 "공업력이 모자란다"가 아니라 **"여기서 짓는 배가 아니다"**가 이유다.
+       그 말을 안 하면 플레이어가 이 항구의 부두를 넓히며 시간을 태운다. */
+    if (!yardAllowed(key)) {
+      const w = yardsOf(key).join('·');
+      return { ok: false, reason: `${w}에서만 짓는 배다 (공업력 ${tierNeeded(key, (s.yards ?? [])[0])} 필요)` };
+    }
     const where = buildableAt(key);
     return {
       ok: false,
@@ -1506,8 +2258,11 @@ export function usedListings(cityId = state.at, day = state.day) {
   if (yardBusy(cityId)) return []; // 공사 중인 부두에는 매물이 안 걸린다
   const prize = !!city.prizeYard;
   // 중고는 흘러드는 것이라 신조보다 관대하다 — 공업력보다 한 등급 위까지 들어온다.
+  /* ★ `yardsOnly`인 배는 **중고로도 안 흘러든다.** 매물 풀은 `tier <= ind + 1`이라
+     공업력 3 항구에서 tier 4가 걸렸고, 그래서 정가 24,000닢짜리 히든 함선이
+     사카이 24일차에 **14,300닢**으로 나왔다(실측). 지어야만 갖는 배다. */
   const pool = Object.entries(SHIPS)
-    .filter(([k, s]) => s.tier > 0 && s.tier <= ind + 1 && !shipLockedBy(k))
+    .filter(([k, s]) => s.tier > 0 && s.tier <= ind + 1 && !s.yardsOnly && !shipLockedBy(k))
     .map(([k]) => k);
   if (!pool.length) return [];
 
@@ -1586,14 +2341,266 @@ export function captureShip(key) {
 }
 
 /* ── 선단 유지비 ──────────────────────────────────────────────
-   기함 밖의 배도 정박해 있는 동안 삯과 관리비가 나간다. 배를 쟁여두는 값. */
+   기함 밖의 배도 정박해 있는 동안 삯과 관리비가 나간다. 배를 쟁여두는 값.
+   ★ **동행 중인 배는 여기서 빠진다** — 그 배들은 정박 유지비가 아니라 항해비를 문다
+     (`consortCost`). 두 군데서 다 걷으면 같은 배에 값을 두 번 매기는 셈이 된다. */
 export function fleetUpkeep() {
   let sum = 0;
   for (const key of Object.keys(state.fleet)) {
     if (key === state.shipKey) continue;      // 기함은 선원 급여로 따로 나간다
+    if (isConsort(key)) continue;             // 따라 나선 배는 항해비 쪽에서 센다
     sum += SHIPS[key].upkeep || 0;
   }
   return sum;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   동행 선단 (consort) — 기함 1 + 동행 최대 8 = 아홉 척
+   ──────────────────────────────────────────────────────────────
+   설계·값의 정본은 `data.js: FLEET`이고 여기는 **규칙**만 둔다.
+   ★ `state.fleet`(가진 배)과 `state.consorts`(따라 나선 배)를 갈라 둔 이유:
+     배의 선체·무장·개장은 어차피 `fleet`에 있고, "지금 함께 가는가"는 매 항차 바뀐다.
+     한 곳에 몰면 `boardShip`·`sellShip`·나포 편입이 전부 이 플래그를 신경 써야 한다.
+   ══════════════════════════════════════════════════════════════ */
+
+export function consortKeys() {
+  return Object.keys(state.consorts || {});
+}
+export function isConsort(key) {
+  return !!state.consorts?.[key];
+}
+export function consortCount() {
+  return consortKeys().length;
+}
+/** 기함까지 센 선단 규모 — 화면에 "N척"으로 나가는 값 */
+export function fleetSize() {
+  return 1 + consortCount();
+}
+
+/** 이 배를 동행시키려면 태워야 하는 인원 */
+export function consortCrewNeed(key) {
+  return Math.max(1, Math.ceil((SHIPS[key]?.crewMin || 0) * FLEET.crewRate));
+}
+/** 그 인원을 부두에서 뽑는 값(계약금) — 술집이 아니라 부두다(`HIRE_UNIT`) */
+export function consortHireCost(key) {
+  return consortCrewNeed(key) * HIRE_UNIT;
+}
+
+/** 동행선에 타고 있는 사람 수의 합 */
+export function consortCrew() {
+  let n = 0;
+  for (const k of consortKeys()) n += state.consorts[k].crew || 0;
+  return n;
+}
+/** 선단 총원 — 기함(`state.crew`) + 동행선.
+    ★ `state.crew`는 여전히 **기함 정원(`crewMax`)에 묶인 값**이고 이쪽은 합계일 뿐이다.
+      갑판 슬롯·백병 병종·술집 무리는 전부 기함 쪽만 본다. */
+export function fleetCrew() {
+  return state.crew + consortCrew();
+}
+
+/** 동행선의 선장 — **아직 아무도 없다.** Dev-B의 NPC 동료가 이 자리를 채운다.
+    지금은 늘 null을 돌려주고, 규칙(`FLEET.requireCaptain`)도 닫혀 있지 않다. */
+export function captainOf(key) {
+  return state.consorts?.[key]?.captain ?? null;
+}
+/** 선장을 앉힌다(후크) — 동료 데이터는 이 파일이 만들지 않는다. */
+export function setCaptain(key, captain) {
+  if (!state.consorts?.[key]) return { ok: false, reason: '동행 중인 배가 아니다' };
+  state.consorts[key].captain = captain ?? null;
+  return { ok: true };
+}
+
+/** 동행선 한 척의 실제 속력 — 개장과 인원 사정까지 본다(기함의 `shipSpeed`와 같은 꼴) */
+export function consortSpeed(key) {
+  const s = SHIPS[key];
+  if (!s) return 1;
+  const r = state.fleet[key]?.refits || {};
+  let v = s.speed;
+  if (r.copper) v *= 1.08;
+  if (r.sails) v *= 1.05;
+  if (r.razee) v *= 1.15;
+  if ((state.consorts[key]?.crew || 0) < (s.crewMin || 0)) v *= 0.75;
+  return v;
+}
+
+/** 선단은 **가장 느린 배**에 맞춘다 — 기함 속력에 곱할 배율(1 이하).
+    ★ `voyageDays()`가 이것을 곱하므로 **항해 일수 계산은 `state.js` 안에서 닫힌다**
+      (`scenes/map.js`는 `voyageDays`만 부르므로 손댈 곳이 없다). */
+export function fleetSpeedPenalty() {
+  const keys = consortKeys();
+  if (!keys.length) return 1;
+  let slowest = shipSpeed();
+  for (const k of keys) slowest = Math.min(slowest, consortSpeed(k));
+  const mine = shipSpeed();
+  return mine > 0 ? Math.min(1, slowest / mine) : 1;
+}
+
+/** 지금 선단에서 가장 느린 배의 이름 — 화면에 "무엇이 발목을 잡는가"를 보여준다. 없으면 null */
+export function fleetLaggard() {
+  const keys = consortKeys();
+  if (!keys.length) return null;
+  let key = null, v = shipSpeed();
+  for (const k of keys) {
+    const s = consortSpeed(k);
+    if (s < v) { v = s; key = k; }
+  }
+  return key ? { key, name: SHIPS[key].name, speed: v } : null;
+}
+
+/* ── 동행선 몫의 항해비 ────────────────────────────────────────
+   ★ **정박 유지비가 아니라 항해비다.** 사람 몫(삯·보급)은 표준 단가를 쓰고
+     (`CREW_WAGE`·`SUPPLY_UNIT` — 부두에서 뽑은 사람이라 술집 기질이 없다),
+     배 몫은 기함과 같은 식(`HULL_UPKEEP`·`ARM_UPKEEP`)이다.
+     값을 새로 만들지 않은 것이 요점이다 — 선단이 커져도 비용 구조는 하나다. */
+export function consortCost(days = 1) {
+  const crew = consortCrew();
+  const wages = Math.round(crew * CREW_WAGE * days);
+  const supplies = Math.round(crew * SUPPLY_UNIT * days);
+  let up = 0;
+  for (const key of consortKeys()) {
+    up += (SHIPS[key]?.upkeep || 0) * HULL_UPKEEP;
+    up += armsUpkeep(state.fleet[key]?.arms);
+  }
+  return { crew, ships: consortCount(), wages, supplies, upkeep: Math.round(up * days) };
+}
+
+/** 선단이 하루에 먹는 돈 — 항구 화면이 "N척 · 하루 얼마"로 보여주는 값 */
+export function fleetDailyCost() {
+  const c = consortCost(1);
+  return c.wages + c.supplies + c.upkeep;
+}
+
+/* ── 동행시킨다 / 정박시킨다 ───────────────────────────────────
+   토글 하나지만 값이 두 갈래다 — **띄울 때 계약금, 다니는 내내 일당.**
+   술집 무리와 같은 구조이고(계약금은 지금, 일당은 내내) 그래서 같은 상수를 쓴다. */
+export function canConsort(key) {
+  const rec = state.fleet[key];
+  if (!rec) return { ok: false, reason: '보유하지 않은 배다' };
+  if (key === state.shipKey) return { ok: false, reason: '기함은 저 스스로를 동행시킬 수 없다' };
+  if (isConsort(key)) return { ok: false, reason: '이미 동행 중이다' };
+  if (rec.at !== state.at) return { ok: false, reason: `${CITY_BY_ID[rec.at]?.name ?? '다른 항구'}에 정박해 있다` };
+  if (consortCount() >= FLEET.max) {
+    return { ok: false, reason: `한 번에 데리고 나갈 수 있는 배는 ${FLEET.max}척까지다 (기함까지 ${FLEET.max + 1}척)` };
+  }
+  /* 선장 규칙은 **열려 있다** — Dev-B가 NPC 동료를 붙이면 `FLEET.requireCaptain`만 켜면 된다. */
+  if (FLEET.requireCaptain && !captainOf(key)) {
+    return { ok: false, reason: '이 배를 맡길 선장이 없다' };
+  }
+  const cost = consortHireCost(key);
+  if (cost > state.gold) {
+    return { ok: false, reason: `선원 ${consortCrewNeed(key)}명을 태울 ${cost.toLocaleString('ko-KR')}닢이 모자란다`, cost };
+  }
+  return { ok: true, cost, crew: consortCrewNeed(key) };
+}
+
+/** 정박해 둔 배를 데리고 나선다 — 사람을 태우는 값이 지금 나간다 */
+export function setConsort(key) {
+  const can = canConsort(key);
+  if (!can.ok) return can;
+  state.gold -= can.cost;
+  book('outgo', 'port', can.cost);       // 부두에서 뽑는 값이다 — `hire()`·술집 계약금과 같은 갈래
+  state.consorts[key] = { crew: can.crew, captain: null };
+  const n = SHIPS[key].name;
+  pushLog(`${n}${josa(n, '이/가')} 뱃머리를 나란히 했다. 선원 ${can.crew}명을 태우는 데 `
+        + `${can.cost.toLocaleString('ko-KR')}닢. 선단 ${fleetSize()}척.`, 'good');
+  return { ok: true, cost: can.cost, crew: can.crew };
+}
+
+/** 다시 매어 둔다 — 태운 사람은 내리고 계약금은 돌아오지 않는다.
+    ★ **짐을 먼저 내려야 한다.** 화물칸이 줄어드는 일이라, 안 막으면 실은 것이
+      허공으로 사라지거나 `cargoFree()`가 음수가 된다(매매 계산이 통째로 어긋난다). */
+export function stowConsort(key) {
+  if (!isConsort(key)) return { ok: false, reason: '동행 중인 배가 아니다' };
+  const over = cargoUsed() - (cargoCapTotal() - (SHIPS[key]?.cargo || 0));
+  if (over > 0) {
+    return { ok: false, reason: `실은 짐 ${over}칸을 먼저 내려야 이 배를 뺄 수 있다`, over };
+  }
+  const crew = state.consorts[key].crew || 0;
+  delete state.consorts[key];
+  if (state.fleet[key]) state.fleet[key].at = state.at;
+  const n = SHIPS[key].name;
+  pushLog(`${n}${josa(n, '을/를')} ${CITY_BY_ID[state.at].name} 부두에 매어 두었다.`
+        + ` 선원 ${crew}명이 내렸다.`, 'warn');
+  return { ok: true, crew };
+}
+
+/** 동행선을 항구에 맞춰 둔다 — 함께 다녔으니 정박지도 함께 옮긴다.
+    ★ 배선은 **`scenes/port.js: enter()`** 한 곳이다. 도착 처리(`scenes/map.js`)는
+      기함과 예인선만 옮기고 있으므로, 항구 화면이 열릴 때 여기서 맞춘다.
+      (그 편이 세이브를 불러온 판에서도 어긋나지 않는다.) */
+export function syncConsortPort(cityId = state.at) {
+  for (const key of consortKeys()) {
+    if (state.fleet[key]) state.fleet[key].at = cityId;
+    else delete state.consorts[key];      // 배가 사라졌으면(격침·매각) 명부도 지운다
+  }
+}
+
+/* ── 전투에서의 선단 ───────────────────────────────────────────
+   ★ 규칙은 전부 여기 순수 함수로 두고 `scenes/battle.js`는 **부르기만** 한다.
+     전투 씬은 이미 850줄이고, 선단 규칙이 그 안에 흩어지면 다음 사람이 못 찾는다. */
+
+/** 동행선이 함께 내는 포문 수 (실린 대포 기준 · 없으면 선종 기본 포문) */
+export function consortGuns() {
+  let n = 0;
+  for (const key of consortKeys()) {
+    const rec = state.fleet[key];
+    const mounted = rec ? armsTotal(rec.arms) : 0;
+    n += mounted || SHIPS[key]?.guns || 0;
+  }
+  return n;
+}
+
+/** 기함의 한 발에 얹히는 **실효 포문 수** — 조준이 따로라 전부는 못 얹는다 */
+export function consortGunBonus() {
+  return consortGuns() * FLEET.gunShare;
+}
+
+/** 동행선에서 갑판으로 넘어오는 손 — 백병전 인원 */
+export function consortMelee() {
+  return consortCrew();
+}
+
+/** 그 손이 갑판 병력을 얼마나 두껍게 하는가 (유닛 수가 아니라 체력으로 반영한다 —
+    갑판 그림의 자리가 `MELEE_SLOTS` 여섯 칸으로 정해져 있기 때문이다) */
+export function consortMeleeBoost() {
+  return 1 + Math.min(FLEET.meleeCap, consortMelee() * FLEET.meleePerHand);
+}
+
+/** 기함이 맞을 것을 동행선이 나눠 받는 비율 (0~`FLEET.shieldCap`) */
+export function consortShield() {
+  return Math.min(FLEET.shieldCap, consortCount() * FLEET.shieldPer);
+}
+
+/* ── 배가 가라앉는다 ───────────────────────────────────────────
+   ★ **이 게임에 침몰 규칙이 없었다.** 져도 예인되고, 배는 잃지 않았다.
+     동행선을 데리고 나가는 것이 순이득이 되지 않으려면 잃을 수 있어야 한다.
+     기함은 여기서 가라앉지 않는다 — 패배 처리(`battle.js: finish('lose')`)가 따로 있다. */
+export function spreadDamage(dmg) {
+  const keys = consortKeys();
+  if (!keys.length || dmg <= 0) return { toYou: dmg, absorbed: 0, hit: null, sunk: [] };
+
+  const taken = Math.round(dmg * consortShield());
+  if (taken <= 0) return { toYou: dmg, absorbed: 0, hit: null, sunk: [] };
+
+  // 한 척이 대신 맞는다 — 여러 척에 흩뿌리면 아무 배도 가라앉지 않아 침몰이 안 생긴다
+  const key = keys[Math.floor(Math.random() * keys.length)];
+  const rec = state.fleet[key];
+  if (!rec) { delete state.consorts[key]; return { toYou: dmg, absorbed: 0, hit: null, sunk: [] }; }
+
+  rec.hp -= taken;
+  const name = SHIPS[key].name;
+  const sunk = [];
+  if (rec.hp <= 0) {
+    const lostCrew = state.consorts[key].crew || 0;
+    delete state.consorts[key];
+    delete state.fleet[key];
+    state.everOwned.add(key);          // 잃어도 "몰아 본" 것은 남는다(해금 경로를 되돌리지 않는다)
+    sunk.push({ key, name, crew: lostCrew });
+    pushLog(`${name}${josa(name, '이/가')} 현측이 갈라지며 가라앉았다.`
+          + (lostCrew ? ` 선원 ${lostCrew}명이 함께 바다에 남았다.` : ''), 'bad');
+  }
+  return { toYou: Math.max(0, dmg - taken), absorbed: taken, hit: { key, name, hp: Math.max(0, rec.hp) }, sunk };
 }
 
 /** 정박해 둔 배로 갈아탄다 — 화물·선원은 함께 옮겨진다 */
@@ -1603,7 +2610,19 @@ export function boardShip(key) {
   if (!rec) return { ok: false, reason: '보유하지 않은 배다' };
   if (state.shipKey === key) return { ok: false, reason: '이미 그 배를 몰고 있다' };
   if (rec.at !== state.at) return { ok: false, reason: `${CITY_BY_ID[rec.at].name}에 정박해 있다` };
-  if (cargoUsed() > s.cargo) return { ok: false, reason: '화물이 새 배의 적재량을 넘는다' };
+  /* ★ 적재량은 **선단 전체**로 잰다. 동행선을 넷 데리고 있으면 기함이 작아도 짐은 실린다 —
+     다만 갈아탈 배가 동행선이면 그 배는 기함이 되므로 제 몫이 중복되지 않게 뺀다. */
+  const capAfter = cargoCapTotal() - state.cargoCap + s.cargo
+                 - (isConsort(key) ? (s.cargo || 0) : 0);
+  if (cargoUsed() > capAfter) return { ok: false, reason: '화물이 새 배의 적재량을 넘는다' };
+
+  /* 동행선으로 갈아타면 그 배는 기함이 된다 — 명부에서 뺀다.
+     그 배에 태워 두었던 사람은 내린다(기함 선원은 아래에서 그대로 옮겨 탄다). */
+  let consortCrewOff = 0;
+  if (isConsort(key)) {
+    consortCrewOff = state.consorts[key].crew || 0;
+    delete state.consorts[key];
+  }
 
   stowFlagship();
   const dropped = Math.max(0, state.crew - s.crewMax);   // 선실이 좁으면 초과분은 하선
@@ -1617,7 +2636,7 @@ export function boardShip(key) {
   state.arms = { light: 0, medium: 0, long: 0, ...rec.arms };
   syncGuns();
   trimLoadout();
-  return { ok: true, dropped, short: shorthanded() };
+  return { ok: true, dropped, short: shorthanded(), consortCrewOff };
 }
 
 /* ── 개발용 지급 ───────────────────────────────────────────────
@@ -1653,6 +2672,11 @@ export function sellShip(key) {
   if (!rec) return { ok: false, reason: '보유하지 않은 배다' };
   if (state.shipKey === key) return { ok: false, reason: '타고 있는 배는 팔 수 없다' };
   if (rec.at !== state.at) return { ok: false, reason: `${CITY_BY_ID[rec.at].name}에 정박해 있다` };
+  /* 동행 중인 배는 짐을 싣고 있을 수 있다 — `stowConsort`가 그 판정을 갖고 있으므로 거기 맡긴다. */
+  if (isConsort(key)) {
+    const off = stowConsort(key);
+    if (!off.ok) return off;
+  }
   const gain = resaleOf(key);
   delete state.fleet[key];
   state.gold += gain;
@@ -1792,8 +2816,10 @@ export function routeWindLabel(aId, bId, day = state.day) {
   return { text: '역풍', kind: 'bad' };
 }
 
+/** ★ 선단은 **가장 느린 배**에 맞춘다 — `fleetSpeedPenalty()`가 1 이하의 배율이다.
+    동행선이 없으면 1이라 기존 계산과 한 치도 다르지 않다. */
 export function voyageDays(aId, bId, day = state.day) {
-  const base = distanceBetween(aId, bId) / (13 * shipSpeed());
+  const base = distanceBetween(aId, bId) / (13 * shipSpeed() * fleetSpeedPenalty());
   return Math.max(1, Math.round(base / routeFactor(aId, bId, day)));
 }
 
@@ -1954,6 +2980,10 @@ function regionPrize(regionId, tier, fallback) {
   for (const [key, sh] of Object.entries(SHIPS)) {
     if (!(sh.yards ?? []).some((y) => ids.has(y))) continue;
     if (sh.leak) continue;                       // 물 새는 배를 상으로 주지 않는다
+    /* ★ 지어야만 갖는 배(`yardsOnly`)는 **상으로도 주지 않는다.** 이것이 없으면 동아시아
+       등급 5의 전리품이 tier 4에 가장 가까운 배 = **철갑 거북선**으로 고정된다(표본 1,020/1,020).
+       패권 ③을 채우는 그 한 판이 ④까지 채워 버려, 조건 넷 중 둘이 한 번에 붙었다. */
+    if (sh.yardsOnly) continue;
     const gap = Math.abs((sh.tier ?? 0) - want);
     if (gap < bestGap) { best = key; bestGap = gap; }
   }
@@ -2113,10 +3143,15 @@ export function armsUpkeep(arms = state.arms) {
 }
 
 export function voyageCost(days, crew = state.crew, leg = null) {
+  /* ★ 동행선 몫은 **기존 갈래에 얹는다**(새 항목을 만들지 않는다) —
+     삯은 `wages`, 보급은 `supplies`, 배 몫은 `fleet`. 그래야 항해일지·정산 화면·
+     대시보드·시뮬이 배선 없이 그대로 선단 비용을 보여준다. 갈래별 내역이 필요하면
+     돌려주는 `consort` 필드를 읽는다(총액에는 이미 들어가 있으므로 다시 더하지 말 것). */
+  const cs = consortCost(days);
   // 일당은 무리마다 다르다 — 술집에서 누구를 태웠는지가 여기서 값으로 돌아온다.
-  const wages = Math.round(crew * avgCrewWage() * days);
-  const supplies = Math.round(crew * SUPPLY_UNIT * days);
-  const fleet = fleetUpkeep() * days;
+  const wages = Math.round(crew * avgCrewWage() * days) + cs.wages;
+  const supplies = Math.round(crew * SUPPLY_UNIT * days) + cs.supplies;
+  const fleet = fleetUpkeep() * days + cs.upkeep;
   // 기함 선체 유지 — 삭구·타르·펌프질. 예전에는 "기함은 선원 급여로 갈음한다"며 뺐는데,
   // 그러면 배를 키워도 고정비가 안 늘어 후반이 너무 풍족해진다(실측 90항차 +65%).
   // 큰 배를 몰수록 무거워지는 값이라 성장에 브레이크를 거는 자리다.
@@ -2127,7 +3162,7 @@ export function voyageCost(days, crew = state.crew, leg = null) {
   // 뭉뚱그리면 "부관을 데리고 있는 값"이 얼마인지 플레이어가 읽을 수 없다.
   const officer = state.officer ? Math.round(OFFICER.wage * days) : 0;
   return {
-    wages, supplies, fleet, hull, arms, officer, insurance,
+    wages, supplies, fleet, hull, arms, officer, insurance, consort: cs,
     total: wages + supplies + fleet + hull + arms + officer + insurance,
   };
 }
@@ -2170,6 +3205,7 @@ export function waitDays(n = 1) {
   if (n <= 0) return { ok: false, reason: '하루는 지나야 한다' };
   state.day += n;
   decayInfamy(n);
+  decayRegard(n);          // 소문은 40일이면 잊히지만 장부는 90일이다
 
   const c = portDayCost(n);
   c.now += yardUpkeepPerDay() * n;      // 넓힌 부두는 놀려도 값이 나간다
@@ -2240,6 +3276,8 @@ export function advanceDays(n, leg = null) {
   /* 악명은 잊힌다 — 40일마다 한 칸씩. 지워 주는 것이 아니라 **한 번 크게 턴 값이
      오래가되 영원하지는 않게** 두는 것이다(`INFAMY.decayDays`). */
   decayInfamy(n);
+  /* 관계도 삭는다 — 다만 **2.25배 느리게**(90일). 방치의 종착지가 파산이 아니라 무관심이다. */
+  decayRegard(n);
   const c = voyageCost(n, state.crew, leg);
 
   // 즉시 나가는 것 — 물자와 배에 드는 돈은 외상이 안 된다
@@ -2488,13 +3526,18 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
     cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at,
-    infamy: {}, holdings: {}, stored: {}, yards: {}, ended: 0,
+    infamy: {}, holdings: {}, stored: {}, yards: {}, works: {},
+    /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
+    regard: {}, _regardAge: 0,
+    /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
+    slain: {}, ended: 0, endedNine: 0,
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
     payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1, deferredDay: 0 },
     ledger: newLedger(1),
     fleet: { hulk: { at, hp: s.hp, arms: { ...arms }, refits: {} } },
+    consorts: {},                // 새 판에는 따라 나선 배가 없다 — 안 비우면 옛 선단이 남는다
     towing: null,
     loadout: ['captain', null, null, null, null, null],
     known: new Set(['venezia']), everOwned: new Set(['hulk']), log: [],

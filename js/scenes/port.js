@@ -4,7 +4,8 @@ import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS } from '../data.js';
+import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS,
+         WORK, FACTIONS, REGARD } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -12,17 +13,37 @@ import {
   contractOffer, acceptContract, deliverContract, abandonContract,
   hasOfficer, paydayDue, paydayDeferred, daysToPayday, payrollOwed, regionOf,
   priceOf, voyageDays, neighborsOf,
-  buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp,
+  buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   hasHolding, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding,
   portDayCost, waitDays, dischargeCrew, recallCrew, settleYard,
   endingProgress, markEnded,
+  /* 권역 패권 — 규칙은 `state.js`, 값은 `data.js: HEGEMONY`. 여기서는 보여주기만 한다 */
+  hegemonyOf, hegemonyAll, markNineEnded, homelandProgress,
+  /* 동행 선단 — 규칙은 `state.js`, 여기서는 보여주고 토글만 한다 */
+  cargoCapTotal, consortCount, fleetSize, fleetCrew, fleetDailyCost,
+  fleetLaggard, fleetSpeedPenalty, setConsort, stowConsort, canConsort, syncConsortPort,
+  consortHireCost, consortCrewNeed, captainOf, isConsort,
+  /* 수직계열화 1단계(A-9) — 값은 `data.js: CHAIN·WORKS·WORK`, 규칙은 `state.js`.
+     여기서는 보여주고 누르기만 한다. */
+  millRecipes, millOf, millPrice, canBuyMill, buyMill, canUpgradeMill, upgradeMill, sellMill,
+  millBatchCap, millFee, millDays, canRunMill, runMill, collectMill,
+  worksUpkeepDue, settleWorks, workList, chainOutUnits,
+  /* 세력 관계(SPEC-factions 1단계) — 규칙은 `state.js`, 값은 `data.js: FACTIONS·REGARD`.
+     여기서는 **이 항구의 임자 한 줄**만 보여주고 나머지는 관계도 모달이 편다. */
+  factionOfCity, factionsOfCity, regardOf, regardBand, infamyWeight,
 } from '../state.js';
 import { openPayday } from '../payday.js';
+import { openFactions } from '../factions.js';
 import { autoSave } from '../save.js';
-import { npcsAtPort, figuresAt } from '../world.js';
+/* 해적 명부(`rosterOf`)는 규칙이 `world.js`에 있다 — 후보에서 빼는 규칙(`pickDef`)과
+   같은 자리라야 카드와 세계가 갈리지 않는다. 여기서는 **세어 보여주기만** 한다. */
+import { npcsAtPort, figuresAt, rosterOf } from '../world.js';
 import { goodRank, goodBasis } from '../evidence.js';
-import { el, overlay, toast, refreshHUD, iconEl, spriteElTrim, modal, josa, npcTitle } from '../ui.js';
+/* ★ `refreshLog`가 **import에 빠져 있었다.** 정박 카드(기다린다·선원을 내린다)와 거점 카드가
+   이미 부르고 있었으므로 그 단추들은 눌리는 순간 ReferenceError로 죽었다 —
+   화면은 멀쩡하고 아무 일도 안 일어나는 꼴이라 버그로 안 보인다. */
+import { el, overlay, toast, refreshHUD, refreshLog, iconEl, spriteElTrim, modal, josa, npcTitle } from '../ui.js';
 import { go, gameStarted } from '../main.js';
 
 let bg, city, dockers;
@@ -45,12 +66,20 @@ export const portScene = {
     bg = portSprite(city.style, city.seed);
     dockers = pickDockers(city.seed);
     state.known.add(city.id);
+    /* ★ **동행선의 정박지를 여기서 맞춘다.** 도착 처리(`scenes/map.js: arrive`)는 기함과
+       예인선만 옮기므로, 함께 다닌 배들은 항구 화면이 열릴 때 이 한 줄로 따라온다.
+       세이브를 불러온 판에서도 어긋나지 않는 자리다. */
+    syncConsortPort(city.id);
     buildUI();
     /* ★ **항구가 곧 세이브 포인트다.** 바다 위 상태(`sailing`)는 씬의 모듈 변수라 어차피
        담기지 않으므로, 저장 시점을 항구로 못박는 것이 그 사실과 맞아떨어진다.
        단 **타이틀이 닫히기 전에는 저장하지 않는다** — 부팅 순서상 여기가 먼저 불린다. */
     /* 거점 유지비는 **그 항구에 들어올 때** 문다 — 연 6%를 30일마다. 못 내면 압류된다. */
     settleHolding(city.id);
+    /* 시설 유지비도 **들어올 때** 문다 — 거점(연 6%)과 같은 리듬, 값만 더 무겁다(연 10%).
+       ★ `settleHolding` **바로 옆**에 두는 것이 규약이다. 한 곳에 모아 두지 않으면
+         "어느 항구에서는 청구되고 어느 항구에서는 안 되는" 자리가 생긴다. */
+    settleWorks(city.id);
     settleYard(city.id);     // 부두 공사가 끝났으면 여기서 올라간다
     if (gameStarted()) autoSave();
     // 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
@@ -96,7 +125,9 @@ function marketPanel() {
       el('span', { text: `${city.name} 시장` }),
       el('span', {
         style: { fontSize: '11px', color: '#9a917f', letterSpacing: 0 },
-        text: `적재 ${cargoUsed()}/${state.cargoCap}`,
+        // 적재량은 **선단 전체**다 — 동행선을 데리고 나가면 여기부터 늘어난다
+        text: `적재 ${cargoUsed()}/${cargoCapTotal()}`
+            + (consortCount() ? ` (기함 ${state.cargoCap} + 동행 ${cargoCapTotal() - state.cargoCap})` : ''),
       }),
       /* ★ 악명은 **값이 오르는 자리에서 보여야** 뜻이 있다. 상선을 턴 값이 여기서 돌아온다
          (`state.js: infamyTariffUp`). 아무 데도 안 뜨면 "왜 세가 비싸졌지"를 알 길이 없다. */
@@ -496,6 +527,163 @@ function endingCard() {
   ]);
 }
 
+/* ── 권역 패권 (지역 패자) ─────────────────────────────────────
+   ★ 아홉 바다 각각에 **같은 모양의 중간 목표**를 준다. 조건 넷은 `data.js: HEGEMONY`,
+     판정은 `state.js: hegemonyOf`. 이 카드는 **지금 이 항구가 속한 바다**를 펴서 보여주고
+     나머지 여덟은 접어 둔다 — 사이드패널이 이미 길다.
+   ★ 보상은 없다. 얻는 것은 거점이 이미 주는 이득(세·시장 깊이·매물)뿐이고,
+     늘어난 유지비가 그 값이다. 화면도 그것을 그대로 말한다. */
+function hegemonyCard() {
+  const rid = regionOf(city.id);
+  const h = hegemonyOf(rid);
+  const all = hegemonyAll();
+  const home = homelandProgress();
+
+  /* 아홉 바다를 전부 잡으면 두 번째 끝이 열린다. 조선의 끝(`endingCard`)과 따로 논다 —
+     둘은 겹치지 않으므로 기존 밸런스가 한 줄도 움직이지 않는다. */
+  if (all.done && markNineEnded()) {
+    setTimeout(() => modal({
+      title: '아홉 바다',
+      body: '아홉 개의 바다에 장부가 하나씩 섰다.<br>'
+          + '어느 항구에 들어가도 이쪽 이름으로 된 창고가 있고, 세 곳마다 상관이 문을 연다.<br><br>'
+          + '<b>이것으로 벌이가 늘지는 않는다.</b> 늘어난 것은 서른 날마다 나가는 유지비뿐이고, '
+          + '깎인 세와 깊어진 시장은 애초에 거점이 주던 것이다.<br>'
+          + '바다를 가진다는 말은 그 바다에서 더 받는다는 뜻이 아니라 '
+          + '<b>그 바다가 무너지면 이쪽이 함께 무너진다</b>는 뜻이었다.<br><br>'
+          + '<span style="opacity:.75">아홉 바다의 두목을 차례로 꺾었고, 아홉 바다가 짓는 가장 큰 배를 '
+          + '한 척씩 몰아 보았다. 남은 것은 장부와 배 한 척이다.</span>',
+      actions: [{ label: '장부를 덮는다' }],
+    }), 400);
+  }
+
+  const mark = (ok) => (ok ? '✓' : '·');
+  const line = (ok, text) => el('div.ctr-sub', {
+    style: ok ? { color: '#8fbf8a' } : null, text: `${mark(ok)} ${text}`,
+  });
+
+  const rows = [
+    line(h.ports.have >= h.ports.need,
+      `모든 항구에 거점 (${h.ports.have}/${h.ports.need}) — 뭍의 도시도 센다`),
+    line(h.factories.have >= h.factories.need,
+      `상관 (${h.factories.have}/${h.factories.need}) — 세가 가볍고 시장이 깊어진다`),
+    line(h.boss.done,
+      `${h.boss.name}${josa(h.boss.name, '을/를')} 꺾는다`
+      + (h.boss.done ? ` — ${h.boss.day}일차` : ' — 아직')),
+    line(h.topShip.done,
+      `이 바다가 짓는 가장 큰 배 (tier ${h.topShip.tier})`
+      + ` — ${h.topShip.done ? `${h.topShip.name} 보유`
+            : h.topShip.choices.length > 1
+              ? `${h.topShip.choices.slice(0, 3).join(' · ')} 중 하나`
+              : `${h.topShip.name}${josa(h.topShip.name, '이/가')} 아직 없다`}`),
+  ];
+
+  /* ── 아홉 바다 요약 — 접어 둔다 ─────────────────────────── */
+  rows.push(el('details', { style: { marginTop: '6px' } }, [
+    el('summary', {
+      style: { cursor: 'pointer', fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+      text: `아홉 바다 ${all.have}/${all.need}`,
+    }),
+    el('div', { style: { marginTop: '4px' } }, all.seas.map((s) => el('div.ctr-sub', {
+      style: s.done ? { color: '#8fbf8a' } : null,
+      text: `${mark(s.done)} ${s.name} ${s.done ? '— 패자다' : `${s.steps}/4 · 항구 ${s.ports.have}/${s.ports.need}`}`,
+    }))),
+  ]));
+
+  /* ── 명부 줄 ──────────────────────────────────────────────
+     ★ **장식이다. 패권 조건이 아니다.** 조건 넷(`data.js: HEGEMONY`)은 손으로 실클릭까지
+       끝난 값이라 다섯째를 얹으면 이미 달성한 판이 통째로 무효가 된다(SPEC-supremacy §1-3 (a)).
+       그래서 ✓/· 를 안 붙이고 회색으로만 적는다 — 세어 볼 수는 있되 관문은 아니다.
+     ★ 「다 무찌른다」의 눈금은 이름난 자(`PIRATES` 명부)뿐이다. 정원 13척은 그대로라
+       명부를 다 닫아도 이 바다가 안전해지지는 않는다 — 이름과 현상금만 사라진다. */
+  const ros = rosterOf(rid);
+  const seas = rosterOf();               // 아홉 바다 전부(40명)
+  if (ros.need) {
+    rows.push(el('div.ctr-sub', {
+      style: { marginTop: '6px', opacity: 0.75, color: ros.done ? '#8fbf8a' : null },
+      text: `명부 ${ros.have}/${ros.need}`
+          + (ros.done ? ' — 이 바다의 이름은 다 지워졌다'
+                      : ` — 아직: ${ros.open.map((x) => x.name).join(' · ')}`)
+          + ` (아홉 바다 ${seas.have}/${seas.need}`
+          + (seas.done ? ' — 명부가 비었다' : '') + ')',
+    }));
+  }
+
+  /* ── 한반도 줄 ────────────────────────────────────────────
+     ★ 조선 아홉 항구는 **부두가 없는 곳이 둘**(마포·의주 `industry 0`)이다.
+       "숨겨진 항구를 연다"는 지도에 포구를 더하는 것이 아니라 그 둘에 부두를 내는 것이다. */
+  const hiddenDone = home.hidden.filter((x) => x.done).length;
+  rows.push(el('div.ctr-sub', {
+    style: { marginTop: '6px', color: home.done ? '#8fbf8a' : '#c9b98a' },
+    text: `${mark(home.done)} 조선 ${home.ports}항구 — 거점 ${home.holdings.have}/${home.holdings.need}`
+        + ` · 부두 ${home.docks.have}/${home.docks.need}`
+        + ` · 공업력 ${home.yards.map((y) => `${y.name} ${y.now}/${y.need}`).join(' · ')}`,
+  }));
+  rows.push(el('div.ctr-sub', {
+    style: { opacity: 0.75 },
+    text: `   숨은 항구 ${hiddenDone}/${home.hidden.length} — `
+        + home.hidden.map((x) => `${x.name} ${x.done ? '열렸다' : '부두 없음'}`).join(' · ')
+        + ' (조선대와 부두를 세우면 부두가 없던 항구가 열린다)',
+  }));
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: h.done ? `패자 — ${h.name}` : `패권 — ${h.name}` }),
+      el('span', {
+        text: h.done ? `아홉 바다 ${all.have}/${all.need}` : `${h.steps}/4`,
+        style: { fontSize: '11px', color: h.done ? '#8fbf8a' : '#8f8878', letterSpacing: 0 },
+      }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
+/* ── 세력 (SPEC-factions 1단계) ────────────────────────────────
+   ★ **세 줄만 쓴다.** 사이드패널은 이미 카드 열둘을 쌓고 있고, 열셋째가 넘으면 출항 단추가
+     화면 밖으로 밀린다(947행 주석의 사고 — 시흐르에서 y가 941px였다). 그래서 이 카드는
+     **이 항구의 임자 한 줄 · 그와의 사이 한 줄 · 단추 하나**이고, 열 세력 전부는 모달이 편다.
+   ★ 임자가 없는 항구(조선 아홉 항구가 그렇다)에서는 **카드 자체를 안 띄운다** —
+     빈 패널은 벽지다(`fleetCard()`와 같은 규약).
+   ★ 자리는 패권 카드 **아래**, 정박 카드 **위**다. 「이 항구가 누구 것인가」가
+     「여기서 무엇을 할까」보다 먼저다. */
+function factionCard() {
+  const fid = factionOfCity(city.id);
+  if (!fid) return null;
+  const f = FACTIONS[fid];
+  const v = regardOf(fid);
+  const band = regardBand(fid);
+  const inf = infamyWeight(fid);
+  const how = factionsOfCity(city.id).find((x) => x.id === fid)?.how;
+  const HOW = { seat: '앉은 자리', grip: '쥔 산지', flag: '이 깃발의 항구' };
+
+  /* 무는 것은 **규칙에 실제로 걸린 것만** 적는다. 화면이 없는 규칙을 말하면
+     플레이어는 자기가 무엇을 물고 있는지 영영 못 읽는다. */
+  const bite = [];
+  if (v <= REGARD.contractAt) bite.push('상관 게시판이 빈다');
+  const sold = { paper: '종이', order: '순서', toll: '조약문' }[f.sells];
+  if (v <= REGARD.refuseAt && sold) bite.push(`${sold}${josa(sold, '을/를')} 안 판다`);
+
+  const cells = '▓'.repeat(Math.abs(v)) + '░'.repeat(REGARD.cap - Math.abs(v));
+  const tone = v < 0 ? '#a8563f' : v > 0 ? '#5f86a8' : '#8f8878';
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '세력' }),
+      el('span', { text: `${f.short} · ${band.name}`,
+                   style: { fontSize: '11px', color: tone, letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, [
+      el('div.ctr-sub', { text: `이 항구의 임자 — ${f.name} (${city.name} · ${HOW[how] ?? ''})` }),
+      el('div.ctr-sub', {
+        style: { color: tone },
+        text: `${v > 0 ? '+' : ''}${v} ${cells}`
+            + (inf ? ` · 그중 악명 ${inf}` : '')
+            + (bite.length ? ` · ${bite.join(' · ')}` : ''),
+      }),
+      el('button.btn.sm.dark', { text: '관계도를 편다  (F)', onclick: () => openFactions(city.id) }),
+    ]),
+  ]);
+}
+
 /* ── 정박 (A-1b) ───────────────────────────────────────────────
    ★ **정박 중인 날이 공짜였다.** 날은 항해할 때만 갔으므로 항구에 서 있는 동안은
    급여도 보급도 유지비도 나가지 않았다 — 소설의 *"아덴 억류·반다 반년·아바나 한 해 대기"*가
@@ -622,6 +810,114 @@ function holdingCard() {
   ]);
 }
 
+/* ── 가공장 (A-9 1단계) ────────────────────────────────────────
+   ★ 「거점」 카드 **바로 아래**에 둔다 — 창고가 있어야 가공장이 서고, 투입도 산출도
+     그 창고를 지나기 때문이다. 「정박」 카드와도 이웃이라 *"기다리면 가공이 끝난다"*가
+     한 화면에 보인다(기다리는 것이 공짜가 아니라는 것도 그 카드가 같이 말한다).
+
+   ★ **새 수입원이 아니다.** 원료를 시세로 사서 가공하면 그 완제품을 산지에서 사는 것보다
+     손해다(`data.js: WORK` 머리주석의 가공마진 밴드). 이 카드가 파는 것은 이문이 아니라
+     *"어디까지 가공해서 팔 것인가"*라는 판단이다. */
+function worksCard() {
+  const recipes = millRecipes(city.id);
+  const mine = workList(city.id);
+  if (!recipes.length && !mine.length) return null;
+
+  const rows = [];
+  const due = worksUpkeepDue(city.id);
+  if (due > 0) {
+    rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+      text: `유지비 ${due.toLocaleString('ko-KR')}닢이 밀려 있다 — 못 내면 휴업, 두 번이면 빼앗긴다` }));
+  }
+
+  for (const r of recipes) {
+    const w = millOf(r.id, city.id);
+    const inTxt = Object.entries(r.in).map(([g, n]) => `${GOOD_BY_ID[g].name} ${n}`).join(' + ');
+    const outTxt = Object.entries(r.out).map(([g, n]) => `${GOOD_BY_ID[g].name} ${n}`).join(' + ');
+
+    if (!w) {
+      const can = canBuyMill(r.id, city.id);
+      const price = millPrice(r.id, city.id, 1);
+      rows.push(svcRow(`${r.work} — ${price.toLocaleString('ko-KR')}닢`,
+        `${inTxt} → ${outTxt} · 공업력 ${r.req} 필요 · 유지비 연 ${Math.round(WORK.upkeepRate * 100)}%`,
+        can.ok ? '세운다' : (can.reason.length > 10 ? '못 세운다' : can.reason),
+        !can.ok, () => {
+          const res = buyMill(r.id, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${r.work}${josa(r.work, '을/를')} 세웠다`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+      continue;
+    }
+
+    /* ── 가진 가공장 ─────────────────────────────────────────── */
+    const label = `${r.work} ${w.level}등급` + (w.idle ? ' · 휴업' : '');
+    if (w.job) {
+      const left = w.job.until - state.day;
+      if (left > 0) {
+        rows.push(svcRow(label, `${r.name} 진행 중 — ${left}일 남았다`, '기다린다', true, () => {}));
+      } else {
+        rows.push(svcRow(label, `${outTxt.replace(/\d+$/, '')} ${chainOutUnits(r) * w.job.batches}칸이 다 됐다`,
+          '받는다', false, () => {
+            const got = collectMill(city.id);
+            const n = Object.values(got).reduce((a, b) => a + b, 0);
+            toast(n ? `가공품 ${n}칸을 창고에 넣었다` : '창고가 가득 차 못 받는다', n ? 'good' : 'bad');
+            refreshLog(); after();
+          }));
+      }
+    } else {
+      const cap = millBatchCap(r.id, city.id);
+      const can = canRunMill(r.id, city.id, cap);
+      const fee = millFee(r.id, Math.max(1, cap));
+      rows.push(svcRow(label,
+        cap > 0
+          ? `${cap}회분 — ${inTxt} ×${cap} → ${outTxt} ×${cap} · 가공비 ${fee.toLocaleString('ko-KR')}닢`
+            + ` · ${millDays(r.id, cap, w.level)}일`
+          : (can.reason ?? '창고에 원료를 채워야 한다'),
+        '착수', cap <= 0, () => {
+          const res = runMill(r.id, city.id, cap);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${r.name} 착수 — ${res.days}일`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+
+    const up = canUpgradeMill(r.id, city.id);
+    if (w.level < WORK.levelCap) {
+      const price = millPrice(r.id, city.id, w.level + 1);
+      rows.push(svcRow(`　└ ${w.level + 1}등급으로 — ${price.toLocaleString('ko-KR')}닢`,
+        `하루 처리 ${WORK.millPerDay[w.level]} → ${WORK.millPerDay[w.level + 1]}칸`,
+        up.ok ? '올린다' : (up.reason.length > 10 ? '못 올린다' : up.reason), !up.ok, () => {
+          const res = upgradeMill(r.id, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${r.work} ${res.level}등급`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+    // 매각은 **들인 돈의 60%**만 돌아온다 — 화면이 그것을 그대로 말해야 잘못 누르지 않는다
+    rows.push(svcRow('　└ 넘긴다', `들인 돈의 ${Math.round(WORK.sellBack * 100)}%만 돌아온다`,
+      '넘긴다', !!w.job, () => {
+        const res = sellMill(r.id, city.id);
+        if (!res.ok) return toast(res.reason, 'bad');
+        toast(`+${res.back.toLocaleString('ko-KR')}닢`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+
+  if (!rows.length) return null;
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '가공장' }),
+      el('span', {
+        text: mine.length ? `${mine.length}개 · 연 ${Math.round(WORK.upkeepRate * 100)}%`
+                          : `공업력 ${city.industry}`,
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+      }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
 function harborCard() {
   const ships = npcsAtPort(city.id);
   if (!ships.length) return null;
@@ -714,13 +1010,29 @@ function talkTo(f) {
   }
   actions.push({ label: '자리를 뜬다' });
 
+  /* ★ 결함 C — 세를 깎는 서비스(permit·smuggle)는 부관·갈래 특전이 이미 바닥(`BOON.tariffFloor`)에
+     눌러 놓았으면 사도 세가 안 움직인다. 사기 전에 이 항구에서 실제로 얼마가 내려가는지 보여준다 —
+     막지는 않는다(시장 깊이 등 다른 이유로 살 수도 있다), 다만 효과 0은 반드시 화면에 나와야 한다. */
+  const tariffPreview = (f.service === 'permit' || f.service === 'smuggle')
+    ? tariffCutPreview(f.service, city.id)
+    : null;
+  const previewLine = tariffPreview
+    ? (tariffPreview.active
+        ? `<br><span style="opacity:.75">이미 갖고 있다(세 ${(tariffPreview.before * 100).toFixed(2)}%) — 다시 사면 기한만 늘어난다.</span>`
+        : tariffPreview.delta > 0
+          ? `<br><span style="opacity:.75">지금 사면 세가 ${(tariffPreview.before * 100).toFixed(2)}%`
+            + `→${(tariffPreview.after * 100).toFixed(2)}%로 내려간다.</span>`
+          : `<br><span style="color:#c98a5a">이미 세율이 바닥이다(${(tariffPreview.before * 100).toFixed(2)}%)`
+            + ` — 사도 세는 그대로다.</span>`)
+    : '';
+
   modal({
     title: f.name,
     body: head
         + (SERVICE_LABEL[f.service]
             ? `<br><br><span style="opacity:.75">파는 것 — ${SERVICE_LABEL[f.service]}`
               + (f.fee ? ` · 오늘 값 ${fee.toLocaleString('ko-KR')}닢` : ' · 값은 받지 않는다')
-              + `</span>`
+              + `</span>${previewLine}`
             : ''),
     actions,
   });
@@ -807,12 +1119,16 @@ function sidePanel() {
       ]),
     ]),
 
+    fleetCard(),
     payrollCard(),
     officerCard(),
     contractCard(),
     endingCard(),
+    hegemonyCard(),
+    factionCard(),
     waitCard(),
     holdingCard(),
+    worksCard(),
     harborCard(),
 
     figureCard(),
@@ -834,6 +1150,87 @@ function sidePanel() {
         go('map');
       },
     }),
+  ]);
+}
+
+/* ── 선단 ──────────────────────────────────────────────
+   ★ 배를 여러 척 가지고 있어도 **함께 몰고 나갈 방법이 없었다.** 이 카드가 그 문이다.
+     「동행시킨다 / 정박시킨다」 토글 하나지만 값이 두 갈래다 —
+     띄울 때 사람을 태우는 계약금, 다니는 내내 삯과 보급. 술집과 같은 구조다.
+     규칙·값은 전부 `state.js`·`data.js: FLEET`에 있고 여기서는 보여주고 부르기만 한다. */
+function fleetCard() {
+  // 기함 밖의 배만 줄이 된다. 한 척도 없으면 카드 자체를 띄우지 않는다(빈 패널은 벽지다).
+  const others = Object.keys(state.fleet).filter((k) => k !== state.shipKey);
+  if (!others.length) return null;
+
+  const n = consortCount();
+  const lag = fleetLaggard();
+  const slow = Math.round((1 - fleetSpeedPenalty()) * 100);
+
+  const rows = others.map((key) => {
+    const s = SHIPS[key];
+    const rec = state.fleet[key];
+    const here = rec.at === state.at;
+    const on = isConsort(key);
+    const cap = captainOf(key);
+
+    if (on) {
+      const c = state.consorts[key];
+      return svcRow(`${s.name} — 동행 중`,
+        `선원 ${c.crew}명 · 화물 ${s.cargo}칸 · 선체 ${rec.hp}/${s.hp}`
+        + ` · 속력 ${s.speed}` + (cap ? ` · 선장 ${cap.name ?? cap}` : ' · 선장 없음'),
+        '정박시킨다', false, () => {
+          const r = stowConsort(key);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${s.name}${josa(s.name, '을/를')} 매어 두었다 — 선원 ${r.crew}명 하선`, 'warn');
+          refreshHUD(); refreshLog(); after();
+        });
+    }
+
+    if (!here) {
+      return svcRow(`${s.name}`, `${CITY_BY_ID[rec.at].name}에 정박해 있다 · 유지비 ${s.upkeep}닢/일`,
+        '여기 없음', true, () => {});
+    }
+
+    const can = canConsort(key);
+    const need = consortCrewNeed(key);
+    const cost = consortHireCost(key);
+    return svcRow(`${s.name}`,
+      `선원 ${need}명을 태워야 한다 (−${cost.toLocaleString('ko-KR')}닢)`
+      + ` · 화물 +${s.cargo}칸 · 포 ${s.guns}문 · 속력 ${s.speed}`
+      + (can.ok ? '' : ` — ${can.reason}`),
+      '동행시킨다', !can.ok, () => {
+        const r = setConsort(key);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${s.name}${josa(s.name, '이/가')} 따라나선다 — 선원 ${r.crew}명 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
+        refreshHUD(); refreshLog(); after();
+      });
+  });
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '선단' }),
+      el('span', { text: `${fleetSize()}척`,
+                   style: { fontSize: '11px', color: n ? '#54a89b' : '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, [
+      el('div.ctr-sub', {
+        text: `${fleetSize()}척 · 총적재 ${cargoUsed()}/${cargoCapTotal()}칸`
+            + ` · 총선원 ${fleetCrew()}명`
+            + (n ? ` · 동행 하루 ${fleetDailyCost().toLocaleString('ko-KR')}닢` : ''),
+      }),
+      /* 무엇이 발목을 잡는가 — 선단은 가장 느린 배에 맞춘다. 안 보여주면
+         "왜 갑자기 항해가 길어졌지"가 버그로 읽힌다. */
+      lag && slow > 0 ? el('div.ctr-sub', {
+        style: { color: '#c98a6a' },
+        text: `${lag.name}${josa(lag.name, '이/가')} 가장 느리다 — 선단 속력 −${slow}%. 항해가 그만큼 길어진다.`,
+      }) : null,
+      n === 0 ? el('div.ctr-sub', {
+        style: { color: '#6f6858' },
+        text: '데리고 나가려면 사람을 따로 태워야 한다. 짐은 늘고, 포는 함께 쏘고, 적탄을 나눠 받는다 — 대신 가라앉는다.',
+      }) : null,
+      ...rows,
+    ].filter(Boolean)),
   ]);
 }
 

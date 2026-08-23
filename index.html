@@ -38,6 +38,9 @@
   <footer id="logbar">
     <span class="log-label">항해일지</span>
     <div id="log-line">—</div>
+    <!-- 배속 토글 — 평소에는 1×라 게임에 아무 영향이 없다. 줄이는 것은 연출 대기시간뿐이고
+         일수·확률·수치는 그대로다(js/speed.js 머리주석). 단추는 ui.js가 채운다. -->
+    <div id="speed-box" style="display:flex;align-items:center;gap:4px;flex:0 0 auto"></div>
     <button id="log-toggle" class="mini">전체</button>
   </footer>
 

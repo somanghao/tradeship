@@ -16,6 +16,7 @@ export const gameStarted = () => started;
 export const markStarted = () => { started = true; };
 import { initWorld } from './world.js';
 import { refreshHUD, refreshLog, clearOverlay, el, overlay } from './ui.js';
+import { speed, setSpeed, waitIdle, isBusy } from './speed.js';
 
 const canvas = document.getElementById('screen');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -157,7 +158,8 @@ async function boot() {
   go('port', { first: true });
   requestAnimationFrame(frame);
 
-  if (new URLSearchParams(location.search).has('start')) markStarted();
+  const dbgQ = new URLSearchParams(location.search);
+  if (dbgQ.has('start') || dbgQ.has('origin')) markStarted();
   titleScreen();
   exposeForTest();
 }
@@ -173,6 +175,19 @@ async function boot() {
 function applyDebugStart() {
   const q = new URLSearchParams(location.search);
   if (![...q.keys()].length) return;
+
+  /* ★ **갈래를 주소로 고른다** — `?origin=navy`. 이것이 없으면 갈래별 자동 검증이
+     불가능했다: `?start=`를 주면 타이틀의 갈래 고르기가 통째로 감춰지고(titleScreen),
+     안 주면 사람이 눌러야 해서 다섯 갈래를 자동으로 돌 수 없었다.
+     `resetGame`이 시작 조건의 정본이므로 **여기서도 그것을 부른다** — 갈래의 부두·금화·
+     선원·배가 그 함수 안에서 정해지고, 아래의 `gold`·`ship`·`crew`가 그 위에 덮인다.
+     (사람이 갈래를 고를 때와 같은 경로다 — 조작 API가 아니라 시작 조건이다.) */
+  const originId = q.get('origin');
+  if (originId && ORIGIN_BY_ID[originId]) {
+    resetGame(undefined, originId);
+  } else if (originId) {
+    console.warn(`[debug] '${originId}'라는 갈래가 없다 — 기본 갈래로 둔다.`);
+  }
 
   const at = q.get('start');
   if (at && CITY_BY_ID[at]) {
@@ -195,7 +210,8 @@ function applyDebugStart() {
   if (Number.isFinite(crew) && crew > 0) grantCrew(Math.round(crew));
 
   console.info(`[debug] 시작 조건을 바꿨다 — ${state.at} · 금화 ${state.gold} `
-    + `· ${SHIPS[state.shipKey].name} · 선원 ${state.crew}`);
+    + `· ${SHIPS[state.shipKey].name} · 선원 ${state.crew}`
+    + (state.origin ? ` · ${ORIGIN_BY_ID[state.origin]?.name ?? state.origin}` : ''));
 }
 
 /* ── 자동 조종 창구 ─────────────────────────────────────────────
@@ -207,13 +223,63 @@ function applyDebugStart() {
        ① 지금 어느 씬인가 · 상태가 어떤가 (읽기)
        ② 논리좌표(400×225) → 화면좌표 (캔버스를 클릭하려면 필요하다)
        ③ 도시가 화면 어디에 있나 (지도에서 항구를 누르려면 필요하다)
-     쓰지 않으면 아무 일도 안 하므로 게임에는 영향이 없다. */
+     쓰지 않으면 아무 일도 안 하므로 게임에는 영향이 없다.
+
+   ★ 나중에 넷이 늘었다(`speed`·`waitIdle`·`blockingModal`·`snapshot`). **철학은 그대로다** —
+     넷 다 *게임을 조작하지 않는다.* `speed`가 바꾸는 것은 연출 대기시간뿐이고(→ `js/speed.js`),
+     나머지 셋은 읽기다. 시작 조건을 바꾸는 문은 여전히 `?gold=`·`?ship=`·`?crew=` 하나뿐이다.
+     **돈을 주거나 순간이동시키는 API를 여기에 만들지 마라** — 그것이 있으면 자동 조종이
+     사람이 못 하는 수를 두게 되고, "테스트는 통과하는데 사람이 하면 안 되는" 일이 돌아온다. */
 function exposeForTest() {
   window.__game = {
     get scene() { return sceneName(); },
     get state() { return state; },
     toScreen,
     viewport,
+    /** 연출 배속 — 인자를 안 주면 지금 값만 돌려준다. 규칙은 바뀌지 않는다. */
+    speed(n) { return n == null ? speed.mul : setSpeed(n); },
+    /** 지금 화면이 움직이는 중인가(포격 연출·항해 애니메이션) */
+    get busy() { return isBusy(); },
+    /** 진행 중인 연출이 끝날 때까지 — 자동 조종이 폴링으로 때려 맞히지 않게 */
+    waitIdle,
+    /** 지금 화면을 막고 있는 모달. **보이는 것만** 센다.
+        ★ 항해일지(`#logmodal`)는 `display:none`으로 **늘 DOM에 있다**(`gotchas.md` 2번) —
+          그냥 `querySelector('.modal')`로 잡으면 이것이 먼저 걸려 "모달 있음"이 항상 참이 되고
+          첫 줄이 빈 문자열이라 조우를 영원히 놓친다. 그래서 display·visibility·opacity를 본다. */
+    blockingModal() {
+      for (const m of document.querySelectorAll('.modal')) {
+        const st = getComputedStyle(m);
+        if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) === 0) continue;
+        const lines = (m.innerText || '').split('\n').map((s) => s.trim()).filter(Boolean);
+        if (!lines.length) continue;
+        return {
+          id: m.id || null,
+          title: m.querySelector('h3')?.textContent?.trim() ?? lines[0],
+          lines,
+          actions: [...m.querySelectorAll('button')].map((b) => b.textContent.trim()).filter(Boolean),
+        };
+      }
+      return null;
+    },
+    /** 지금 판정에 필요한 것만 추린 상태. **항해일지는 최신이 앞이다**(`state.log[0]`). */
+    snapshot() {
+      const cargo = Object.entries(state.cargo).reduce((a, [, q]) => a + q, 0);
+      return {
+        day: state.day,
+        at: state.at,
+        atName: CITY_BY_ID[state.at]?.name ?? state.at,
+        gold: state.gold,
+        hp: state.hp, maxHp: state.maxHp,
+        crew: state.crew, crewMax: state.crewMax,
+        cargo, cargoCap: state.cargoCap,
+        ship: state.shipKey,
+        scene: sceneName(),
+        speed: speed.mul,
+        busy: isBusy(),
+        modal: window.__game.blockingModal(),
+        log: state.log.slice(0, 3).map((l) => `${l.day}일: ${l.text}`),
+      };
+    },
     /** 그 도시가 지금 화면 어디에 있나 — 지도 씬에서만 뜻이 있다 */
     cityScreenPos(id) {
       const c = CITY_BY_ID[id];
@@ -265,8 +331,11 @@ function originPicker(onPick) {
 }
 
 function startPicker(onPick) {
-  const debug = new URLSearchParams(location.search).has('start');
-  if (debug) return null;
+  /* ★ `?origin=`으로도 감춘다 — 갈래가 **시작 부두까지 정하기 때문**이다.
+     감추지 않으면 타이틀의 첫 단추가 '지중해 · 베네치아'가 되어, 자동 조종이
+     `#title-screen button`을 누르는 순간 갈래로 연 판이 통째로 다른 바다로 갈린다. */
+  const q = new URLSearchParams(location.search);
+  if (q.has('start') || q.has('origin')) return null;
   const rows = START_PORTS.map((p) => {
     const city = CITY_BY_ID[p.at];
     const region = REGION_BY_ID[p.region];
@@ -311,7 +380,7 @@ function titleScreen() {
     }),
     /* 갈래 고르기가 먼저다 — 조선에서 시작하는 것이 이 게임의 기본값이기 때문이다.
        `?start=`로 열었을 때는(개발·검증) 둘 다 감춘다. */
-    new URLSearchParams(location.search).has('start') ? null : originPicker((id) => {
+    (() => { const q = new URLSearchParams(location.search); return q.has('start') || q.has('origin'); })() ? null : originPicker((id) => {
       markStarted();
       resetGame(undefined, id);
       initWorld();

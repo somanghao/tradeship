@@ -15,12 +15,12 @@
 import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS } from './data.js';
 import {
   state, neighborsOf, distanceBetween, priceOf, addPressure, tariffRate, pushLog, addShock,
-  capLoot,
+  capLoot, rosterKey,
 } from './state.js';
 import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
-import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY } from './regions/index.js';
+import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
 import { seasonOf, inSeason } from './state.js';
 import { riskKey } from './map/geo.js';
 
@@ -40,9 +40,22 @@ function inUse(kind) {
   return new Set((state.npcs ?? []).filter((n) => n.defId).map((n) => n.defId));
 }
 
-function pickDef(list) {
+/* ── 닫힌 명부는 두 번 오지 않는다 ────────────────────────────
+   ★ 여기가 「해적을 다 무찌른다」가 **문장으로도 성립하지 않던** 자리다.
+     명부의 왕직을 꺾으면 `removeNpc()`가 바다에서 지우지만, 같은 tick에 `worldTick()`이
+     정원 13을 채우면서 이 함수가 **왕직을 다시 뽑았다** — `pickDef`가 뺀 것은
+     *지금 떠 있는* defId뿐이었기 때문이다. 그래서 죽은 자가 다음 날 소굴에 서 있었다.
+   닫는 길은 둘이고 **둘 다 영구다**(SPEC-supremacy §1-3):
+     · 격파 — `state.slain['pirate:<id>']` (`recordSlain`이 이미 적고 있다)
+     · 초무 — `state.tamed[<id>]`  (아직 사는 화면이 없다. 그 값이 서면 여기가 바로 읽는다)
+   ⚠️ **정원은 안 줄인다.** 명부가 비면 그 자리를 얼굴 없는 배가 채우고(`makePirate` 폴백),
+      세력이 들어오면 그 자리가 사략선이 된다(§1-2b). 위험도는 한 줄도 안 움직인다. */
+export const rosterClosed = (pirateId) =>
+  !!(state.slain?.[rosterKey(pirateId)] || state.tamed?.[pirateId]);
+
+function pickDef(list, closed = null) {
   const used = inUse();
-  const pool = list.filter((d) => inSeason(d) && !used.has(d.id));
+  const pool = list.filter((d) => inSeason(d) && !used.has(d.id) && !(closed && closed(d)));
   return pool.length ? pick(pool) : null;
 }
 const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
@@ -93,22 +106,75 @@ function makeTrader() {
   };
 }
 
+/* ── 이름 없는 자리의 얼굴 ────────────────────────────────────
+   ★ **이것을 빠뜨리면 명부를 비운 동중국해에 「살렘의 늑대」가 뜬다.**
+     폴백 이름 다섯(`PIRATE_NAMES`)이 전 세계 공용이라, 명부가 닫힐수록 그 바다는
+     이름을 잃는 게 아니라 **남의 바다 이름을 얻는다** — `QUICKMAP-combat.md §3`이
+     이미 잡아 둔 함정("`FOES`를 안 적은 바다는 지중해 얼굴이 된다")의 재발이다.
+     세력(`SPEC-factions.md`)이 이 자리를 사략선으로 채우기 전까지의 폴백ⓐ이고,
+     세력이 늦어져도 40명을 다 닫은 판이 이것만으로 안 깨진다.
+
+   ★ **여기서 오는 것은 얼굴뿐이다** — 이름·국적·깃발과 털어 온 짐. 수치(배·세기·소굴)는
+     바로 아래 `standIn()`이 **그 자리에 있던 이름에게서** 가져온다. 둘을 갈라 둔 이유는
+     `pickEnemy()`의 `localize()`와 같다: 얼굴이 바뀌어도 밸런스는 안 움직여야 한다.
+   ★ 등급은 `strength`로 고른다 — `FOES`의 인덱스가 곧 등급이라 눈금이 이미 같다.
+     세기 5짜리 자리를 물려받았으면 그 바다의 다섯째 얼굴(가장 사나운 쪽)이 선다. */
+function foeFace(cityId, strength) {
+  const foes = FOES_BY_REGION[REGION_OF_CITY[cityId]];
+  if (!foes?.length) return null;
+  return foes[Math.min(foes.length - 1, Math.max(0, strength - 1))];
+}
+
+/* ── 빈자리는 무엇을 물려받나 ─────────────────────────────────
+   ★ **이름만 없고 나머지는 그 자리 그대로다.** 예전 폴백은 소굴이 `pick(CITIES)`(전 세계 균등),
+     배가 `PIRATE_SHIPS`(브리그·캐러벨), 세기가 늘 2였다. 그대로 두면 명부를 닫을수록
+     바다가 **평평하고 순해진다** — 회귀 검증(`.playtest/origin-sweep/roster-check.mjs`)이
+     실측으로 잡아냈다: 세기 평균 2.63 → 2.00, 적 선원 30.4 → 23.0. 정원은 13척 그대로인데
+     만나는 배가 약해졌으니 그것은 **위험도가 움직인 것**이고, 사양 §1-2 ②의 위반이다.
+     (요율 상위 세 구간이 전부 동중국해인 것도 그 바다에 이름난 자가 많기 때문인데,
+      소굴을 균등 분포로 두면 그 근거까지 함께 사라진다 — 지중해 7%→14%로 실제로 옮겨 갔다.)
+   ★ 그래서 **명부를 그대로 분포로 쓴다.** 닫혔든 아니든 철이 맞는 한 사람을 뽑아
+     그 소굴·그 배·그 세기·그 사냥터를 물려준다. 물려주지 않는 것은 셋뿐이다:
+       · **이름**(그 바다 `FOES`의 얼굴이 대신 선다) · **현상금**(명부에만 붙는다)
+       · **순회로**(소굴과 사냥터는 그 바다의 성질이지만 도는 길은 그 사람의 습관이다)
+     "왕직을 죽였는데 히라도에 또 배가 있다. 다만 그 배에는 이름이 없다" — 이것이 이 설계의 값이다. */
+function standIn() {
+  /* 철을 가린다 — 겨울 바다에 여름 왜구를 세우지 않는다.
+     ⚠️ `filter(inSeason)`이라고 쓰면 안 된다. `inSeason(def, day)`의 둘째 인자에
+     **배열 인덱스가 들어가** 늘 'summer'로 판정된다(0~39 < 반년). 실제로 그렇게 썼다가
+     회귀 검증에서 지중해 밀도가 8%→17%로 튀어 잡혔다 — 여름에만 나오는 바르바리
+     코르세어가 겨울에도 자리를 채우고 있었던 것이다. */
+  const pool = ALL_PIRATES.filter((d) => inSeason(d));
+  return pool.length ? pick(pool) : null;
+}
+
 function makePirate() {
-  const def = pickDef(ALL_PIRATES);
-  const shipKey = (def?.ship && SHIPS[def.ship]) ? def.ship : pick(PIRATE_SHIPS);
-  const at = def?.base && CITY_BY_ID[def.base] ? def.base : pick(CITIES).id;
+  const def = pickDef(ALL_PIRATES, (d) => rosterClosed(d.id));
+  /* `def`는 **이름**이고 `slot`은 **자리**다. 명부에서 뽑혔으면 둘이 같고,
+     못 뽑았으면(철이 안 맞거나 이미 떠 있거나 **닫혔거나**) 자리만 남는다. */
+  const slot = def ?? standIn();
+  const shipKey = (slot?.ship && SHIPS[slot.ship]) ? slot.ship : pick(PIRATE_SHIPS);
+  const at = slot?.base && CITY_BY_ID[slot.base] ? slot.base : pick(CITIES).id;
+  // 전투력 — 예전에는 전부 level 2였다. 바르바로사와 좀도둑이 같은 급으로 나왔다는 뜻이다
+  const strength = slot?.strength ?? 2;
+  const face = def ? null : foeFace(at, strength);      // 명부에서 뽑혔으면 제 이름이 있다
   return {
     id: ++seq, kind: 'pirate',
     defId: def?.id ?? null,
-    name: def?.name ?? PIRATE_NAMES[seq % PIRATE_NAMES.length],
-    flag: def?.flag ?? 'pirate',
-    // 전투력 — 예전에는 전부 level 2였다. 바르바로사와 좀도둑이 같은 급으로 나왔다는 뜻이다
-    strength: def?.strength ?? 2,
-    bounty: def?.bounty ?? null,
+    name: def?.name ?? face?.name ?? PIRATE_NAMES[seq % PIRATE_NAMES.length],
+    flag: def?.flag ?? face?.flag ?? 'pirate',
+    /* 얼굴에서 온 것 — 전투 화면이 읽는다(`pirateEnemy`). 명부 해적은 null이다(제 이름이 있다).
+       ★ `lootGoods`를 `goods`라 안 적은 이유: `goodsOf()`가 그 이름으로 **상단의 취급 품목**을
+         읽는다. 겹치면 해적의 행동 판단이 세 품목으로 좁아진다. */
+    nation: face?.nation ?? null,
+    lootGoods: face?.goods ?? null,
+    strength,
+    bounty: def?.bounty ?? null,           // ★ 현상금은 명부에만 붙는다 — 닫을수록 전리품 꼬리가 마른다
     base: at,
-    hunt: def?.hunt ?? null,             // 즐겨 노리는 구간
-    scope: def?.scope ?? 'region',
-    circuit: def?.circuit ?? null,
+    hunt: slot?.hunt ?? null,            // 즐겨 노리는 구간 — 사냥터는 그 바다의 성질이라 물려받는다
+    season: slot?.season ?? null,        // 철도 물려받는다 — `worldTick`의 철 지난 배 정리가 읽는다
+    scope: slot?.scope ?? 'region',
+    circuit: def?.circuit ?? null,       // 순회로는 그 사람의 습관이라 안 물려받는다
     circuitIdx: 0,
     shipKey, at, to: null, days: 0, legs: 0,
     gold: def?.purse ? between(def.purse) : between(PURSE.pirate),
@@ -127,10 +193,17 @@ export function worldTick(days = 1) {
   /* 철이 지난 배는 **항구에 있을 때만** 물러난다 — 바다 한복판에서 배가 사라지면
      플레이어가 본 것이 무엇이었는지 설명되지 않는다. 발트가 얼고 계절풍이 뒤집히면
      그 바다의 배가 한 철 통째로 자취를 감추는 것이 이 규칙의 목적이다. */
+  /* ★ 이름 없는 배도 철을 탄다. 예전에는 `!n.defId`면 그냥 건너뛰었는데, 명부를 다 닫은
+     세계에서는 **철이 안 도는 바다**가 된다 — 여름에 뜬 배가 겨울 내내 눌러앉아
+     지중해 밀도가 8%→17%로 굳었다(`roster-check.mjs` 실측). 여름 왜구의 자리를 물려받은
+     배는 그 자리의 철도 함께 물려받아야 "여름에는 중국 연안이, 겨울에는 루손 해협이
+     위험해진다"가 명부를 닫은 뒤에도 성립한다. */
   for (const n of state.npcs) {
-    if (n.to || !n.defId) continue;
-    const def = (n.kind === 'pirate' ? ALL_PIRATES : ALL_TRADERS).find((d) => d.id === n.defId);
-    if (def && !inSeason(def)) n.gone = true;
+    if (n.to) continue;
+    const def = n.defId
+      ? (n.kind === 'pirate' ? ALL_PIRATES : ALL_TRADERS).find((d) => d.id === n.defId)
+      : null;
+    if (!inSeason(def ?? n)) n.gone = true;     // `n.season`은 물려받은 자리의 철
   }
   state.npcs = state.npcs.filter((n) => !n.gone);
 
@@ -283,6 +356,26 @@ function raids(news) {
 
 /* ── 조회 (씬에서 쓴다) ───────────────────────────────────── */
 
+/** 그 바다의 명부와 각자의 닫힘 상태 — 권역 id를 안 주면 **아홉 바다 전부**(40명).
+    ★ 사양(§8-2)은 이 판정을 `state.js`에 두라고 적었지만 여기 둔다.
+      닫힘의 정의(`rosterClosed`)를 `pickDef`와 **같은 파일 한 자리**에 두기 위해서다 —
+      "후보에서 빠지는 규칙"과 "화면이 세는 규칙"이 갈리면 카드가 6/6인데 왕직이 도는
+      판이 생긴다. 명부(`ALL_PIRATES`)를 이미 들고 있는 파일도 여기다. */
+export function rosterOf(regionId = null) {
+  const list = ALL_PIRATES
+    .filter((d) => !regionId || d.region === regionId)
+    .map((d) => ({
+      id: d.id, name: d.name, region: d.region, base: d.base,
+      bounty: d.bounty ?? null,
+      slain: state.slain?.[rosterKey(d.id)] ?? 0,
+      tamed: state.tamed?.[d.id] ?? 0,
+    }));
+  const closed = list.filter((x) => x.slain || x.tamed);
+  const open = list.filter((x) => !x.slain && !x.tamed);
+  return { list, closed, open, have: closed.length, need: list.length,
+           done: list.length > 0 && open.length === 0 };
+}
+
 /** 그 구간을 지금 지나는 NPC들 */
 export function npcsOnLeg(aId, bId, kind = null) {
   return (state.npcs || []).filter((n) =>
@@ -325,7 +418,8 @@ export function strayTrader(aId, bId) {
   // 그 바다를 도는 상단을 먼저, 없으면 아무 상단이나 (계절을 벗어난 상단은 제외)
   const inRegion = ALL_TRADERS.filter((d) => inSeason(d)
     && (d.circuit ?? []).some((c) => REGION_OF_CITY[c] === rid));
-  const def = pick(inRegion.length ? inRegion : ALL_TRADERS.filter(inSeason)) ?? null;
+  // ⚠️ `filter(inSeason)`은 인덱스가 `day`로 들어가 늘 여름이 된다 — 위 `standIn()` 주석 참고
+  const def = pick(inRegion.length ? inRegion : ALL_TRADERS.filter((d) => inSeason(d))) ?? null;
   if (!def) return null;
 
   const shipKey = (def.ship && SHIPS[def.ship]) ? def.ship : pick(TRADER_SHIPS);
@@ -433,7 +527,12 @@ export function pirateEnemy(n) {
      `capLoot`(state.js)이 "옮겨 실을 수 있는 만큼"으로 눌러 준다. 규칙은 떠돌이 해적과 같다. */
   return capLoot({
     // `face`는 **명부 id**다(`defId`) — 전투 화면이 이것으로 그 해적의 초상을 찾는다(그림이 없으면 실루엣)
-    id: `npc:${n.id}`, face: n.defId, name: `${n.name}호`, nation: '해적',
+    // ★ 이름 없는 배는 `defId`가 null이라 `recordSlain`이 `pirate:` 키를 안 적는다 —
+    //   **얼굴을 입혔다고 명부가 닫히면 안 된다.** 닫히는 것은 이름 있는 자뿐이다.
+    id: `npc:${n.id}`, face: n.defId, name: `${n.name}호`, nation: n.nation ?? '해적',
+    /* 선체는 **그 배가 실제로 타고 다니는 배**다. 얼굴 없는 자리도 그 자리에 있던 배를
+       그대로 물려받으므로(`makePirate: standIn`) 동중국해에서 브리그가 나오지 않는다 —
+       `fleeOdds`가 이 값으로 적 속력을 재고, 나포하면 이 배가 들어온다. */
     hull: s.hull, tint: 'dark', flag: n.flag ?? 'pirate',
     hp: Math.round(s.hp * mul), guns: Math.max(2, Math.round(s.guns * mul)),
     crew: Math.max(10, Math.round(s.crewMax * (0.35 + lv * 0.09))),
@@ -444,7 +543,8 @@ export function pirateEnemy(n) {
       gold: n.bounty
         ? [Math.round(gold * 0.6) + n.bounty[0], gold + n.bounty[1]]
         : [Math.round(gold * 0.6), gold],
-      goods: Object.keys(n.cargo).length ? Object.keys(n.cargo) : ['salt', 'wine'],
+      goods: Object.keys(n.cargo).length ? Object.keys(n.cargo)
+           : (n.lootGoods ?? ['salt', 'wine']),
     },
   });
 }

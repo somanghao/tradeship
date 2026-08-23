@@ -16,7 +16,7 @@
 import { GOOD_BY_ID, CITY_BY_ID, OFFICER, CREW_TRAITS } from './data.js';
 import {
   state, settlePayroll, payrollOwed, ledgerTotal, MONTH_DAYS,
-  pushLog, cargoUsed, priceOf, DESERT_AT,
+  pushLog, cargoUsed, priceOf, DESERT_AT, cargoCapTotal,
 } from './state.js';
 import { el, modal, refreshHUD, refreshLog, iconEl, josa } from './ui.js';
 
@@ -154,7 +154,7 @@ function holdPane() {
   const cost = rows.reduce((a, r) => a + r.avg * r.n, 0);
 
   return el('div.pay-pane', {}, [
-    el('h4', { text: `선창 — ${cargoUsed()}/${state.cargoCap}칸` }),
+    el('h4', { text: `선창 — ${cargoUsed()}/${cargoCapTotal()}칸` }),
     rows.length
       ? el('div', {}, rows.map((r) => el('div.pay-hold', {}, [
           el('span.i', {}, iconEl(GOOD_BY_ID[r.gid].icon, 1)),
@@ -187,7 +187,7 @@ function holdPane() {
 function buyingHint() {
   const left = Math.max(0, state.gold - payrollOwed());
   const city = CITY_BY_ID[state.at];
-  const room = state.cargoCap - cargoUsed();
+  const room = cargoCapTotal() - cargoUsed();
   if (room <= 0) return '선창이 가득 찼다. 팔지 않으면 실을 자리가 없다.';
   if (left <= 0) return '급여를 치르고 나면 <b>살 돈이 없다</b>. 실은 것을 팔아야 한다.';
 

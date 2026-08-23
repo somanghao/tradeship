@@ -10,10 +10,16 @@ import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS } from '../data.js';
 import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
   shotStock, useShot, fleeBonus, fleeOdds, fleeWord, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL, regionOf,
-  originPerk,
+  originPerk, recordSlain,
+  /* 동행 선단 — **규칙은 전부 state.js의 순수 함수**이고 여기서는 부르기만 한다.
+     포화력이 얹히고(consortGunBonus), 갑판이 두꺼워지고(consortMeleeBoost),
+     맞는 것을 나눠 받는다(spreadDamage — 크게 상한 배는 여기서 가라앉는다). */
+  consortCount, consortGunBonus, consortMelee, consortMeleeBoost, spreadDamage,
 } from '../state.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa, spriteElTrim } from '../ui.js';
 import { go } from '../main.js';
+/* 연출 대기는 전부 배속을 거친다 — 규칙(피해·확률·거리)은 건드리지 않는다. → js/speed.js */
+import { after } from '../speed.js';
 
 const SEA_Y = 138;          // 두 배가 떠 있는 기준 수면 y
 const MIN_RANGE = 0, MAX_RANGE = 100;
@@ -52,7 +58,11 @@ export const battleScene = {
       range: 78,
       turn: 'player',
       busy: false,
-      you: { hp: state.hp, maxHp: state.maxHp, crew: state.crew, guns: state.guns, sailDmg: 0, fire: 0 },
+      /* `aux`는 동행선이 얹어 주는 **실효 포문 수**다. 전투가 시작될 때 한 번 재는 이유는
+         싸우는 도중 배가 가라앉아도 이미 사거리 안에 든 포는 계속 쏘기 때문이고,
+         무엇보다 매 발 다시 세면 격침 직후 화력이 툭 끊겨 읽히지 않기 때문이다. */
+      you: { hp: state.hp, maxHp: state.maxHp, crew: state.crew, guns: state.guns, sailDmg: 0, fire: 0,
+             aux: consortGunBonus(), consorts: consortCount() },
       foe: { hp: enemy.hp, maxHp: enemy.hp, crew: enemy.crew, guns: enemy.guns, sailDmg: 0, fire: 0 },
       shot: 'round',             // 다음 발에 재어 넣을 탄
       saved: false,              // 4부 격실로 한 번 버텼는가
@@ -200,15 +210,16 @@ function fire() {
   addFx('ball', 0, 0, 0.42);
   Object.assign(fx[fx.length - 1], { x: fromX, y: SEA_Y - 24, x2: toX, y2: SEA_Y - 26 });
   B.shake = 0.5;
-  setTimeout(() => { B.fireFlash = null; }, 160);
+  after(() => { B.fireFlash = null; }, 160);
 
-  setTimeout(() => {
+  after(() => {
     if (!B) return;
     if (grade === 'miss') {
       addFx('splash', toX + 12, SEA_Y + 6, 0.55);
       logLine(`${SHOT.name}이 빗나가 물기둥만 솟았다.`);
     } else {
-      const base = (4 + B.you.guns * 1.15) * armsFactor('dmg') * SHOT.dmg;
+      // 동행선의 포가 함께 쏜다 — 조준은 기함 것이라 전부는 못 얹는다(data.js: FLEET.gunShare)
+      const base = (4 + (B.you.guns + B.you.aux) * 1.15) * armsFactor('dmg') * SHOT.dmg;
       const mult = grade === 'crit' ? 2.1 : 1;
       const dmg = Math.round((base * mult) * (0.85 + Math.random() * 0.3));
       B.foe.hp = Math.max(0, B.foe.hp - dmg);
@@ -233,7 +244,7 @@ function fire() {
               grade === 'crit' ? 'good' : '');
     }
     buildUI();
-    setTimeout(endPlayerTurn, 520);
+    after(endPlayerTurn, 520);
   }, 420);
 }
 
@@ -243,7 +254,7 @@ function approach() {
   B.range = Math.max(MIN_RANGE, B.range - (18 + Math.round(Math.random() * 10)));
   logLine('돛을 펴 거리를 좁혔다.');
   buildUI();
-  setTimeout(endPlayerTurn, 420);
+  after(endPlayerTurn, 420);
 }
 
 function withdraw() {
@@ -252,7 +263,7 @@ function withdraw() {
   B.range = Math.min(MAX_RANGE, B.range + (16 + Math.round(Math.random() * 10)));
   logLine('바람을 받아 거리를 벌렸다.');
   buildUI();
-  setTimeout(endPlayerTurn, 420);
+  after(endPlayerTurn, 420);
 }
 
 function tryFlee() {
@@ -276,7 +287,7 @@ function tryFlee() {
     B.busy = true;
     logLine('돛을 돌렸지만 따라잡혔다!', 'bad');
     buildUI();
-    setTimeout(endPlayerTurn, 420);
+    after(endPlayerTurn, 420);
   }
 }
 
@@ -298,7 +309,7 @@ function endPlayerTurn() {
   if (checkGunneryEnd()) return;
   B.turn = 'foe';
   buildUI();
-  setTimeout(foeTurn, 620);
+  after(foeTurn, 620);
 }
 
 function foeTurn() {
@@ -329,17 +340,20 @@ function foeTurn() {
     B.fireFlash = 'foe';
     addFx('smoke', fromX, SEA_Y - 22, 0.9);
     fx.push({ kind: 'ball', x: fromX, y: SEA_Y - 24, x2: toX, y2: SEA_Y - 26, t: 0, life: 0.42 });
-    setTimeout(() => { if (B) B.fireFlash = null; }, 160);
+    after(() => { if (B) B.fireFlash = null; }, 160);
 
     // 거리가 가까울수록 잘 맞는다
     const acc = 0.34 + (1 - B.range / MAX_RANGE) * 0.42;
-    setTimeout(() => {
+    after(() => {
       if (!B) return;
       if (Math.random() < acc) {
         const dmg = Math.round((3 + e.guns * 1.05) * (0.8 + Math.random() * 0.45));
-        B.you.hp = Math.max(0, B.you.hp - dmg);
+        /* ★ 동행선이 한 척 끼어들어 대신 맞는다 — 그 몫은 **그 배의 선체**로 간다.
+           크게 상한 배는 여기서 가라앉고 선단에서 빠진다(state.js: spreadDamage). */
+        const sp = spreadDamage(dmg);
+        B.you.hp = Math.max(0, B.you.hp - sp.toYou);
         // 내포격 골조를 넣었으면 파편이 갑판까지 튀지 않는다
-        const cl = Math.round(dmg * (0.1 + Math.random() * 0.12) * crewLossFactor());
+        const cl = Math.round(sp.toYou * (0.1 + Math.random() * 0.12) * crewLossFactor());
         B.you.crew = Math.max(0, B.you.crew - cl);
         addFx('blast', toX - 4, SEA_Y - 22, 0.5);
         B.shake = 1.1;
@@ -348,13 +362,21 @@ function foeTurn() {
           B.you.sailDmg = Math.min(100, B.you.sailDmg + 8 + Math.round(Math.random() * 8));
           extra = ' 삭구가 끊겼다.';
         }
-        logLine(`적탄이 현측을 뚫었다. ${dmg} 피해, 선원 ${cl}명 사상.${extra}`, 'bad');
+        if (sp.absorbed > 0 && sp.hit) {
+          extra += ` ${sp.hit.name}${josa(sp.hit.name, '이/가')} ${sp.absorbed}을 대신 받아냈다.`;
+        }
+        for (const s of sp.sunk) {
+          extra += ` ${s.name}${josa(s.name, '이/가')} 가라앉는다!`;
+          B.you.consorts = Math.max(0, B.you.consorts - 1);
+        }
+        logLine(`적탄이 현측을 뚫었다. ${sp.toYou} 피해, 선원 ${cl}명 사상.${extra}`, 'bad');
+        if (sp.sunk.length) { refreshLog(); refreshHUD(); }   // 항해일지에 침몰 한 줄이 적혔다
       } else {
         addFx('splash', toX - 14, SEA_Y + 6, 0.55);
         logLine('적탄이 빗나갔다.');
       }
       buildUI();
-      setTimeout(() => {
+      after(() => {
         if (!B) return;
         tickFire('you');
         if (checkGunneryEnd()) return;
@@ -366,7 +388,7 @@ function foeTurn() {
   }
 
   buildUI();
-  setTimeout(() => {
+  after(() => {
     if (!B || checkGunneryEnd()) return;
     B.turn = 'player'; B.busy = false;
     buildUI();
@@ -416,10 +438,16 @@ function toMelee() {
     stance: 'balanced',
     round: 1,
   };
-  // 포격으로 선원을 잃었다면 백병 병력도 그만큼 약해진다
+  /* 포격으로 선원을 잃었다면 백병 병력도 그만큼 약해진다.
+     반대로 **동행선에서 사람이 건너오면 갑판이 두꺼워진다** — 자리(6칸)를 늘리지 않고
+     각 유닛의 체력으로 반영한다(갑판 그림의 병사 자리가 선체 길이에 묶여 있다). */
+  const boost = consortMeleeBoost();
   for (const u of B.melee.you) {
-    u.hp = Math.max(4, Math.round(u.hp * crewScale));
+    u.hp = Math.max(4, Math.round(u.hp * crewScale * boost));
     u.maxHp = u.hp;
+  }
+  if (B.you.consorts > 0) {
+    logLine(`동행선 ${B.you.consorts}척에서 ${consortMelee()}명이 갑판으로 건너왔다.`, 'good');
   }
   logLine('갈고리가 걸렸다 — 백병전!', 'warn');
   pushLog(`${B.enemy.name}${josa(B.enemy.name, '과/와')} 갑판에서 맞붙었다.`, 'warn');
@@ -507,7 +535,7 @@ function meleeRound(stance) {
   m.round++;
   buildUI();
 
-  setTimeout(() => {
+  after(() => {
     if (!B) return;
     for (const u of [...m.you, ...m.foe]) { if (u.hp > 0) { u.pose = 'idle'; u.offset = 0; } }
     const yAlive = m.you.some((u) => u.hp > 0);
@@ -532,7 +560,7 @@ function meleeRetreat() {
     logLine('밧줄을 끊지 못했다!', 'bad');
     B.busy = true;
     buildUI();
-    setTimeout(() => { if (B) { B.busy = false; meleeRound('hold'); } }, 400);
+    after(() => { if (B) { B.busy = false; meleeRound('hold'); } }, 400);
   }
 }
 
@@ -588,6 +616,9 @@ function finish(kind) {
 
   // 승리 — 나포가 격침보다 전리품이 많다
   state.stats.wins++;
+  /* 누구를 꺾었는지 남긴다 — 권역 패권 조건 ③이 읽는다(`state.js: recordSlain`).
+     격침이든 나포든 꺾은 것은 같으므로 가르지 않는다. 상선은 저쪽에서 걸러진다. */
+  recordSlain(e, regionOf(state.at));
   const [lo, hi] = e.loot.gold;
   const mult = kind === 'capture' ? 1 : 0.45;
   const coin = Math.round((lo + Math.random() * (hi - lo)) * mult);
@@ -796,7 +827,15 @@ function sideBar(side, name, s, color) {
     bar('hp', s.hp, s.maxHp),
     el('div.bar-num', { text: `선체 ${s.hp}/${s.maxHp}` }),
     bar('crew', s.crew, Math.max(s.crew, side === 'left' ? state.crewMax : B.enemy.crew)),
-    el('div.bar-num', { text: `선원 ${s.crew} · 포 ${s.guns}문` }),
+    el('div.bar-num', {
+      text: `선원 ${s.crew} · 포 ${s.guns}문`
+          + (s.aux > 0 ? ` (+${Math.round(s.aux)} 동행)` : ''),
+    }),
+    /* 몇 척이 따라와 있는가 — 대신 맞아 주는 배가 몇인지가 이 화면에서 가장 중요한 정보다 */
+    s.consorts > 0 ? el('div.bar-num', {
+      text: `동행 ${s.consorts}척`, style: { color: '#54a89b' },
+      title: '동행선이 포를 보태고 적탄을 나눠 받는다. 크게 상하면 가라앉는다.',
+    }) : null,
     marks ? el('div.bar-num', { text: marks, style: { color: s.fire > 0 ? '#e0806e' : '#c8a24a' } }) : null,
   ].filter(Boolean));
 }

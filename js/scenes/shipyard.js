@@ -22,6 +22,10 @@ import {
   industryOf, tierNeeded, shipPriceAt, shipLockedBy, yardCapable, buildableAt,
   usedListings, buyUsed,
   fleetUpkeep,
+  /* 동행 선단 — 규칙은 `state.js`, 여기서는 줄에 토글 하나를 얹을 뿐이다 */
+  isConsort, consortCount, fleetSize, fleetCrew, fleetDailyCost, cargoCapTotal,
+  setConsort, stowConsort, canConsort, consortCrewNeed, consortHireCost, captainOf,
+  fleetSpeedPenalty, fleetLaggard,
 } from '../state.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, spriteEl, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
@@ -171,9 +175,19 @@ function buildUI() {
         el('div.sub', {
           text: `속력 ${shipSpeed().toFixed(2)}`
               + (shorthanded() ? ` · 인원 부족 (최소 ${ship().crewMin}명)` : '')
-              + (fleetUpkeep() ? ` · 선단 유지비 ${fleetUpkeep()}닢/일` : ''),
+              + (fleetUpkeep() ? ` · 정박 유지비 ${fleetUpkeep()}닢/일` : ''),
           style: shorthanded() ? { color: '#e0806e' } : null,
         }),
+        /* 선단 현황 — 동행이 붙어 있을 때만. 조선소는 "배를 고르는 화면"이라
+           지금 몇 척을 데리고 다니는지가 여기서 가장 무거운 정보다. */
+        consortCount() ? el('div.sub', {
+          style: { color: '#54a89b' },
+          text: `선단 ${fleetSize()}척 · 총적재 ${cargoUsed()}/${cargoCapTotal()}칸`
+              + ` · 총선원 ${fleetCrew()}명 · 하루 ${fleetDailyCost().toLocaleString('ko-KR')}닢`
+              + (fleetSpeedPenalty() < 1
+                  ? ` · 속력 −${Math.round((1 - fleetSpeedPenalty()) * 100)}%(${fleetLaggard()?.name})`
+                  : ''),
+        }) : null,
       ]),
       el('button.btn.sm.dark', { text: '나가기', onclick: () => go('port') }),
     ]),
@@ -279,8 +293,9 @@ function shipTab() {
           el('b', { text: s.name }),
           el('span.origin', { text: s.origin }),
           aboard ? el('span.badge.now', { text: '승선 중' })
-                 : rec ? el(`span.badge${here ? '.here' : ''}`,
-                            { text: here ? '이 항구 정박' : `${CITY_BY_ID[rec.at].name} 정박` })
+                 : rec ? el(`span.badge${isConsort(key) || here ? '.here' : ''}`,
+                            { text: isConsort(key) ? '동행 중'
+                                  : here ? '이 항구 정박' : `${CITY_BY_ID[rec.at].name} 정박` })
                        : el(`span.badge${sellsShip(key) ? '.buy' : ''}`, {
                            text: sellsShip(key) ? `${shipPriceAt(key).toLocaleString('ko-KR')}닢`
                              : shipLockedBy(key) ? '아직 못 짓는다' : '이 항구엔 못 짓는다',
@@ -322,6 +337,12 @@ function whyNot(key, s) {
   if (!s.tier) return '→ 시중에 나오지 않는 배';
   const lock = shipLockedBy(key);
   if (lock) return `→ ${lock}${josa(lock, '을/를')} 몰아 본 선주에게만 내놓는다`;
+  /* ★ `yardsOnly`인 배는 이유가 **공업력이 아니라 자리**다. 그 말을 안 하면 플레이어가
+     엉뚱한 항구의 부두를 넓히며 자재와 몇백 일을 태운다. */
+  if (s.yardsOnly && !(s.yards ?? []).includes(city.id)) {
+    const w = yardsOf(key).join(' · ');
+    return `→ ${w}에서만 짓는다 (그 부두에 공업력 ${tierNeeded(key, (s.yards ?? [])[0])} 필요)`;
+  }
   const where = buildableAt(key).slice(0, 4).join(' · ');
   return `→ 이 항구는 공업력 ${industryOf()}, ${tierNeeded(key)} 필요`
        + (where ? ` — ${where}에서 짓는다` : '');
@@ -399,13 +420,49 @@ function shipActions(key, s, rec, aboard, here) {
     })];
   }
 
+  /* ★ **동행 중인 배는 "여기"에 있다.** 함께 다니고 있으므로 정박지 판정보다 앞선다 —
+     이 갈래를 뒤에 두면 항해 직후 그 배가 "여기 없음"으로 읽힌다. */
+  if (isConsort(key)) {
+    return [
+      el('span.dim', { text: '동행 중', style: { color: '#54a89b' } }),
+      el('button.btn.sm.dark', {
+        text: '정박시킨다',
+        title: '선단에서 뺀다. 태운 사람은 내리고 계약금은 돌아오지 않는다.',
+        onclick: () => {
+          const r = stowConsort(key);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${s.name}${josa(s.name, '을/를')} 매어 두었다 — 선원 ${r.crew}명 하선`, 'warn');
+          redraw();
+        },
+      }),
+    ];
+  }
+
   if (!here) return [el('span.dim', { text: '여기 없음' })];
 
+  const can = canConsort(key);
   return [
     el('button.btn.sm', {
+      // 적재 판정은 **선단 전체**로 한다 — 동행선을 데리고 있으면 작은 기함으로도 갈아탈 수 있다
       text: '승선',
-      disabled: cargoUsed() > s.cargo,
+      disabled: cargoUsed() > cargoCapTotal() - state.cargoCap + s.cargo,
       onclick: () => doBoard(key, s),
+    }),
+    /* 「동행시킨다」 — 이 게임에서 배가 두 척 이상이 되는 자리다.
+       값은 사람에게 든다(`consortHireCost` = 부두 고용 ×최소 인원). */
+    el('button.btn.sm', {
+      text: `동행 −${consortHireCost(key).toLocaleString('ko-KR')}`,
+      disabled: !can.ok,
+      title: can.ok
+        ? `선원 ${consortCrewNeed(key)}명을 태워 함께 나간다. 화물 +${s.cargo}칸 · 포 ${s.guns}문이 함께 쏜다.`
+          + (captainOf(key) ? '' : ' (맡길 선장은 아직 없다)')
+        : can.reason,
+      onclick: () => {
+        const r = setConsort(key);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${s.name}${josa(s.name, '이/가')} 따라나선다 — 선원 ${r.crew}명 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
+        redraw();
+      },
     }),
     el('button.btn.sm.dark', {
       text: `매각 ${resaleOf(key).toLocaleString('ko-KR')}`,

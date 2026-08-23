@@ -102,6 +102,18 @@
         "sources": []
       },
       "goods": {
+      "chintz": {
+        "side": "supply",
+        "value": 0.54,
+        "verdict": "confirmed",
+        "basis": "구자라트 날염포는 목판으로 찍었다 — 물량은 코로만델보다 컸으나 최상급의 이름값은 코로만델에 있었다. 그래서 마술리파트남(0.50)보다 반 칸 얕게 둔다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Chintz (Gujarat block-printed cottons)",
+            "url": "https://en.wikipedia.org/wiki/Chintz"
+          }
+        ]
+      },
         "calico": {
           "side": "supply",
           "value": 0.54,
@@ -1125,6 +1137,22 @@
         ]
       },
       "goods": {
+      "chintz": {
+        "side": "supply",
+        "value": 0.5,
+        "verdict": "confirmed",
+        "basis": "고다바리 삼각주의 칼람카리 — 붓으로 그리고 매염·방염을 되풀이해 인디고에 담근 날염 무명이다. 마술리파트남이 그 최대 적출항이었고 「골콘다 친츠」가 국제 상품명으로 통했다. 이 권역에서 가장 깊은 산지 배율을 주는 근거다. ★ 산지 배율을 얕게 두면 사슬이 시세를 이겨 \"가공은 시세보다 비싸다\"(SPEC-vertical.md §0-2)가 무너진다 — 그것이 이 값이 0.50인 두 번째 이유다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Kalamkari (Machilipatnam style)",
+            "url": "https://en.wikipedia.org/wiki/Kalamkari"
+          },
+          {
+            "title": "Wikipedia — Machilipatnam",
+            "url": "https://en.wikipedia.org/wiki/Machilipatnam"
+          }
+        ]
+      },
         "diamond": {
           "side": "supply",
           "value": 0.7,
@@ -1558,6 +1586,22 @@
     }
   },
   "goods": {
+    "chintz": {
+      "base": 320,
+      "verdict": "balance",
+      "basis": "곡물의 16배 — 흰 면포(calico 7.25배)의 2.2배다. 사료가 말해 주는 것은 **순서**다: 인도 날염포는 유럽에서 흰 무명보다 몇 곱절에 팔렸고 그것이 캘리코 열풍의 실체였다. 정확한 320은 사료가 아니라 **가공마진 밴드**에서 역산했다 — `면포 2 + 인디고 1 → 사라사 2`가 1.164가 되는 값이고, 밴드(1.08~1.25)를 벗어나면 node tools/check-chain.mjs가 실패시킨다. 상세는 content/chain-evidence.json.",
+      "note": "코로만델(마술리파트남)의 칼람카리는 붓으로 그렸고 구자라트(수라트)는 목판으로 찍었다. 최상급은 코로만델 것이라 산지 배율을 더 깊게 뒀다(0.50 ↔ 0.54).",
+      "sources": [
+        {
+          "title": "Wikipedia — Chintz",
+          "url": "https://en.wikipedia.org/wiki/Chintz"
+        },
+        {
+          "title": "Wikipedia — Kalamkari",
+          "url": "https://en.wikipedia.org/wiki/Kalamkari"
+        }
+      ]
+    },
     "cowrie": {
       "base": 34,
       "verdict": "probable",

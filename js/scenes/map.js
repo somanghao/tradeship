@@ -25,9 +25,16 @@ import {
 import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
 import { go, toLogical, canvas, setInsetRight, setViewSpan } from '../main.js';
+/* 항해 애니메이션은 **연출**이라 배속을 탄다. 일수(`voyageDays`)·판정 횟수(`rollsLeft`)·
+   사건 확률은 여기서 손대지 않는다 — 8배로 굴려도 같은 항해가 되어야 한다. → js/speed.js */
+import { speed as timeScale, registerBusy } from '../speed.js';
 
 let bg, hover = null, sailing = null, pendingArrival = null;
 let bgRegion = null;      // 지금 구워 둔 배경이 어느 권역 것인가
+
+/* 항해는 타이머가 아니라 프레임(`update`)으로 끝나므로, "아직 연출 중"임을 따로 알린다.
+   자동 조종의 `__game.waitIdle()`이 이것을 본다 — 폴링으로 때려 맞히지 않게. */
+registerBusy(() => !!sailing);
 
 /* ── 권역 ─────────────────────────────────────────────────────
    지도는 지금 정박한 바다만 그린다. 다른 권역 도시는 좌표계가 달라 찍을 수 없다. */
@@ -110,7 +117,7 @@ export const mapScene = {
 
   update(dt) {
     if (!sailing) return;
-    sailing.t = Math.min(1, sailing.t + dt * sailing.speed);
+    sailing.t = Math.min(1, sailing.t + dt * sailing.speed * timeScale.mul);
 
     if (!sailing.eventDone && sailing.t >= sailing.eventAt) {
       // 항로마다 위험이 다르다 — 보험료율(ROUTE_RISK) + 그 구간에 실제로 뜬 해적 수

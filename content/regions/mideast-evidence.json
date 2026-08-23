@@ -774,6 +774,22 @@
         ]
       },
       "goods": {
+      "chintz": {
+        "side": "demand",
+        "value": 1.28,
+        "verdict": "confirmed",
+        "basis": "구자라트 날염포가 15세기에 이미 카이로 시장에 올라 있었다 — 푸스타트에서 나온 인도 무명 조각이 그 물증이다. 흰 면포보다 값이 붙는 물건이라 따로 센다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Calico (\"By the 15th century, calico from Gujarat made its appearance in Cairo\")",
+            "url": "https://en.wikipedia.org/wiki/Calico"
+          },
+          {
+            "title": "Wikipedia — Fustat textiles (Indian block-printed cotton finds)",
+            "url": "https://en.wikipedia.org/wiki/Fustat"
+          }
+        ]
+      },
         "grain": {
           "side": "supply",
           "value": 0.5,

@@ -224,6 +224,22 @@
         "sources": []
       },
       "goods": {
+      "chintz": {
+        "side": "demand",
+        "value": 1.24,
+        "verdict": "confirmed",
+        "basis": "인도 날염포는 이 바다에서 **화폐에 가까운 물건**이었다 — 향신료를 사는 값이 은이 아니라 천이었다. 구자라트 배가 실어 온 것 가운데 값이 가장 높은 축이다.",
+        "sources": [
+          {
+            "title": "Wikipedia — Indian Ocean trade § textiles as currency for spices",
+            "url": "https://en.wikipedia.org/wiki/Indian_Ocean_trade"
+          },
+          {
+            "title": "Wikipedia — Aceh Sultanate",
+            "url": "https://en.wikipedia.org/wiki/Aceh_Sultanate"
+          }
+        ]
+      },
         "pepper": {
           "side": "supply",
           "value": 0.46,
