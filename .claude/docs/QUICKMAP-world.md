@@ -12,6 +12,7 @@
 
 | 키워드 | 읽을 문서 | 코드 정본 |
 |---|---|---|
+| **새 바다·새 권역을 만든다** · 권역 담당자가 읽는 규약 · 폴더 구성(`geo·trade·goods·ships·npc-*`) · 권역끼리 import 금지 · 원양으로만 잇는다 | [WORLD-EXPANSION-CONTRACT.md](WORLD-EXPANSION-CONTRACT.md) (§0 원칙은 협상 대상 아님) · 남은 배선 [WORLD-INTEGRATION-TODO.md](WORLD-INTEGRATION-TODO.md) | `js/regions/<권역>/` · 합치는 곳 `js/regions/index.js`(`OCEAN_LANES`는 거리가 아니라 `days`를 직접 적는다) |
 | 상인/해적 NPC · 세계가 혼자 돈다 · 시장압력의 출처 · 해상 조우(흥정·약탈) · 소문 · **대형 주문(계약)** · 선금/위약금/기한 | [wiki/world-npc.md](wiki/world-npc.md) | 숫자 `js/npc/config.js` · 판단 `js/npc/behavior.js` · 집행 `js/world.js` · 계약 `js/data.js: CONTRACT` |
 | **해적 명부 · 이름난 해적 40 · 명부 닫기(격파/초무) · 현상금 · 소식(`bounty-tip`)** · 꺾은 자가 왜 다음 날 다시 서 있었나 | 사양 `SPEC-supremacy.md` §1 · 얼굴은 `story/FACTIONS.md` | 값 `js/data.js: ROSTER`(tameMult·tipRate·tipFloor·tipDays) · 명부 권역 `npc-pirates.js: PIRATES` · 규칙 `js/world.js`(`rosterClosed`·`pickDef`·`rosterOf`) · 상태 `state.slain['pirate:<id>']`·`state.tamed` · 키 `js/state.js`(`rosterKey`·`recordSlain`) |
 | **세력 · 관계 · 독점** · 누가 이 항구의 임자인가 · 덮치면 누가 화나나 · 일감이 왜 비나 · 문서를 왜 안 파나 · 관계도 화면 | 사양 정본 `SPEC-factions.md`(§8-1이 1단계) · 세력의 얼굴은 `story/FACTIONS.md` | 값 `js/data.js: FACTIONS·FACTION_TIES·REGARD` · 규칙 `js/state.js`(regardOf·addRegard·decayRegard·factionOfCity·contractFactionOK·sellBlocked) · 화면 `js/factions.js`(관계도 모달)·`port.js: factionCard` · 검증 `node tools/check-factions.mjs` |

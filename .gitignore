@@ -24,3 +24,6 @@ probe_tmp*
 # 하네스가 덮어쓰는 캡쳐 — 회차마다 바뀌는 산출물이라 이력에 남길 값이 없다.
 # 추적 중이라 매 회차 git status에 떠서 "미커밋이 하나 더 있다"는 오해를 낳았다.
 tools/playtest-live/.out/
+
+# 서브에이전트 격리 워크트리
+.claude/worktrees/

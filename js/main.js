@@ -280,10 +280,18 @@ function exposeForTest() {
         log: state.log.slice(0, 3).map((l) => `${l.day}일: ${l.text}`),
       };
     },
-    /** 그 도시가 지금 화면 어디에 있나 — 지도 씬에서만 뜻이 있다 */
+    /** 그 도시가 지금 화면 어디에 있나 — 지도 씬에서만 뜻이 있다.
+        ★ **다른 권역 도시는 이 지도에 없다.** 권역마다 좌표계가 따로라(`geo.js`의 x·y는
+          제 바다 안에서만 뜻이 있다) 남의 좌표를 이 지도의 `toScreen`에 넣으면 **그럴듯한
+          화면 좌표가 나오는데 그 자리에는 엉뚱한 도시가 있다.** 원양 항로(`melaka↔guangzhou`)를
+          그렇게 눌러 광저우에서 마카오로 떠난 적이 있고, 자동 검증 셋이 그것을 "시간 안에
+          못 닿았다"로만 보고 세 회차를 잃었다. 원양은 사이드패널 `.route-row` 카드로 간다 —
+          `null`을 돌려주어 호출자가 그 길을 타게 한다. */
     cityScreenPos(id) {
       const c = CITY_BY_ID[id];
       if (!c) return null;
+      const here = CITY_BY_ID[state.at];
+      if (here && c.region !== here.region) return null;
       const p = toScreen(c.x, c.y);
       const r = canvas.getBoundingClientRect();
       return { x: r.left + p.x, y: r.top + p.y };

@@ -135,6 +135,7 @@ export const LAYERS = [
       ['tools/check-map.py', '납품된 지도 그림 검수(Pillow)'],
       ['tools/clean-map-art.py', '납품 지도에서 게임이 그리는 것(글자·항로선·나침도·배)을 지우고 400×225로 줄인다'],
       ['tools/gen-map-tracing.mjs', '그림쟁이가 덧그릴 기준판 — 게임 지도 4배 확대판 + 해안선만 남긴 판'],
+      ['tools/check-memory-routing.mjs', '**메모리 3-tier 라우터가 실제로 라우팅을 하는가** — 트립와이어(바이트−줄 수)·dead pointer·고아 문서·세션시작에서 몇 hop. 라우터는 **백틱 경로로도 잇는다**(`QUICKMAP.md`)'],
       ['tools/test-rules.mjs', '규칙 테스트'],
       ['tools/test-world.mjs', 'NPC·계약·바람 테스트'],
       ['tools/test-tavern.mjs', '술집·시작 조건 20종'],
