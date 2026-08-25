@@ -1518,20 +1518,44 @@ export function contractOffer(cityId = state.at, day = state.day) {
 
   const r1 = hash(cityId, slot, 'dest');
   const to = dests[Math.floor(r1 * dests.length)];
-  const wants = Object.keys(CITY_BY_ID[to].demand);
-  const goods = wants.length ? wants : GOODS.map((g) => g.id);
-  const goodId = goods[Math.floor(hash(cityId, slot, 'good') * goods.length)];
 
   const [pl, ph] = CONTRACT.payMul;
   const mul = pl + hash(cityId, slot, 'pay') * (ph - pl);
-  const unit = priceOf(to, goodId);
 
-  // 보수를 먼저 정하고 수량을 역산한다 — 품목이 비싸다고 계약이 통째로 커지지 않게.
+  /* 보수를 먼저 정하고 수량을 역산한다 — 품목이 비싸다고 계약이 통째로 커지지 않게.
+     ★ 그 보수의 크기를 **선복(船腹)**이 정한다 — 상관은 "이 배를 채워 오라"고 발주했지
+       상인의 재산을 보고 발주하지 않았다. 근거와 계수는 `data.js: CONTRACT`의 주석. */
   const [vl, vh] = CONTRACT.value;
   const scale = 0.6 + CITY_BY_ID[cityId].size * 0.28;          // 큰 항구일수록 큰 일감
-  const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale;
-  const [ql, qh] = CONTRACT.qty;
-  const qty = Math.max(ql, Math.min(qh, Math.round(target / Math.max(1, unit * mul))));
+  /* ★ 선단 전체(`cargoCapTotal`)가 아니라 **기함 한 척의 선복**이다.
+     사료가 말하는 것은 "단일 계약 = 선단 **한 척분** 화물값"이고, 선단 합으로 재면
+     동행을 늘리는 것이 그대로 계약 수입의 배수가 된다 — §5-L이 시장 깊이에서 지적한 것과
+     똑같은 구멍을 계약 쪽에 새로 파는 셈이다. 동행선의 몫은 "그 일감을 실을 수 있느냐"
+     (`acceptContract`의 `cargoCapTotal`)로만 온다. */
+  const cap = Math.max(1, state.cargoCap);
+  const [ml, mh] = CONTRACT.holdMul;
+  const hold = Math.min(mh, Math.max(ml, (cap / CONTRACT.holdRef) ** CONTRACT.holdPow));
+  const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale * hold;
+
+  /* ★ 작은 일감에는 값싼 물건이 걸린다.
+     수량에 하한(`qtyFloor`)이 있어서, 목표 보수가 작을 때 금괴·비단이 걸리면 다섯 개만으로도
+     규모가 통째로 튀어 오른다(금괴 5개 = 3,432닢). 그래서 **그 일감 크기로 다섯 개를 살 수 있는
+     물건**만 후보로 둔다. 사료 쪽도 같다 — 작은 배에 오는 주문은 곡물·소금·목재 같은 부피화물이었고
+     귀중품 위탁은 큰 상관이 큰 배에 맡겼다. 후보가 하나도 없으면 그 항구에서 가장 싼 것으로 간다
+     (일감이 사라지지는 않게 — 콘텐츠를 줄이지 않는다). */
+  const wants = Object.keys(CITY_BY_ID[to].demand);
+  const all = wants.length ? wants : GOODS.map((g) => g.id);
+  const room = target * 1.25;
+  const fits = all.filter((id) => priceOf(to, id) * CONTRACT.qtyFloor * mul <= room);
+  const goods = fits.length ? fits
+    : [all.reduce((a, b) => (priceOf(to, a) <= priceOf(to, b) ? a : b))];
+  const goodId = goods[Math.floor(hash(cityId, slot, 'good') * goods.length)];
+  const unit = priceOf(to, goodId);
+
+  /* 수량 상한도 선복이 정한다 — 기함 화물칸의 1.2배까지(고정 64였다. 그 고정값이 값싼 부피화물이
+     걸린 큰 배의 일감을 눌러 놓고 있었다). 값싼 물건이 걸렸을 때만 실제로 문다. */
+  const qhi = Math.max(CONTRACT.qtyFloor, Math.round(cap * CONTRACT.qtyCap));
+  const qty = Math.max(CONTRACT.qtyFloor, Math.min(qhi, Math.round(target / Math.max(1, unit * mul))));
   // 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
   const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp') + originPerk('contractUp', cityId)));
 
@@ -1541,7 +1565,9 @@ export function contractOffer(cityId = state.at, day = state.day) {
 
   return {
     from: cityId, to, goodId, qty, pay, due,
-    advance: Math.round(pay * CONTRACT.advance),
+    /* ★ 선금은 담보를 넘지 못한다 — 해상대차의 담보는 배다(`data.js: CONTRACT.advanceCap`). */
+    advance: Math.min(Math.round(pay * CONTRACT.advance),
+                      Math.round(fleetCollateral() * CONTRACT.advanceCap)),
     id: `${cityId}:${slot}`,
     /* ★ 일감에 **임자가 생긴다.** 이 한 줄이 "누가 낸 일인가"이고, 납품하면 그가 +1이 된다.
        임자가 없는 항구(어느 세력에도 안 걸리는 도시)는 `null`이라 지금과 똑같이 굴러간다. */
@@ -2114,7 +2140,16 @@ export function fleetRecord(key) {
   return state.fleet[key];
 }
 export function resaleOf(key) {
-  return Math.round(SHIPS[key].price * SHIP_RESALE);
+  return Math.round((SHIPS[key]?.price ?? 0) * SHIP_RESALE);
+}
+
+/** 지금 함께 나서는 배들의 매각가 합 — **해상대차의 담보**다(`contractOffer`의 선금 상한).
+    ★ 정박해 둔 배(`state.fleet`)까지 세지 않는다. 담보로 잡히는 것은 그 항해에 나서는 선복이고,
+      항구에 남겨 둔 배까지 세면 "배를 팔지 않고 담보만 늘리는" 자리가 생긴다. */
+export function fleetCollateral() {
+  let v = resaleOf(state.shipKey);
+  for (const k of consortKeys()) v += resaleOf(k);
+  return v;
 }
 
 /** 기함의 현재 상태(선체·무장·개장·정박지)를 선단 기록에 적어 둔다 */

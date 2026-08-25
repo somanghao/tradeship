@@ -143,6 +143,8 @@ export const LAYERS = [
       ['tools/sim-trade.mjs', '자산 곡선 CLI'],
       ['tools/sim-stat.mjs', '무역 곡선을 여러 판 돌려 분포로 본다(1회 실행 금지)'],
       ['tools/sim-chain.mjs', '사슬을 쓰는 판과 안 쓰는 판을 **같은 시드로 짝지어**(paired) 돌린다 — 따로 돌려 비교하면 기준선이 25%씩 튀어 효과의 부호가 뒤집힌다'],
+      ['tools/sim-fleet.mjs', '동행 선단이 **시장 깊이를 뚫는가** — 화물칸 단면과 짝지은 한 판. ★ 반드시 **실제로 채운 칸(used)**을 함께 낸다: `planFor`는 한계마진 0에서 멈추므로 `칸당 이익 × 화물칸`을 항차 이익으로 적으면 거짓 수가 나온다'],
+      ['tools/sim-contract.mjs', '대형 주문이 **플레이어 단계에 맞는 크기인가** — 무역 곡선(sim-trade·sim-stat)이 계약을 빼고 재기 때문에 아무도 안 보던 자리다. 판정선 둘: **선금/자산**(너무 쉬운 쪽)과 **자금이닿나**(막다른 길 쪽)'],
       ['tools/playtest-live/launch.mjs', '관전용 — 크롬 창을 띄우고 CDP를 연 채 대기'],
       ['tools/playtest-live/play.mjs', '관전용 — 창을 살려 둔 채 한 스텝씩 사람 속도로 누른다'],
       ['tools/playtest-live/pw.mjs', 'playwright-core 찾기(이 저장소엔 node_modules가 없다)'],
