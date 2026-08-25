@@ -112,8 +112,13 @@ export const TRADE = {
   havana: {
     // 아메리카 전역의 배가 여기 모여 함께 대서양을 건넌다. 쿠바 담배와 설탕을 내놓지만
     // 이 항구의 본업은 **사 모으는 것**이다 — 함대에 실을 것이면 무엇이든.
-    supply: { tobacco: 0.54, sugar: 0.60 },
-    demand: { cochineal: 1.34, vanilla: 1.30, emerald: 1.24, logwood: 1.22 },
+    /* ★ 원양 관문(sevilla·cartagena 항로의 끝). 대서양을 건너온 배가 파는 것과
+       건널 배가 사 가는 것이 여기서 갈린다 — 유럽 물건(와인·기름·모직·아마포)은
+       여기서 가장 비싸고, 쿠바 담배는 여기서 가장 싸다. 그 두 값의 차가 곧
+       「34일을 건널 이유」다. 배율의 근거는 -evidence.json의 각 항목. */
+    supply: { tobacco: 0.44, sugar: 0.60 },
+    demand: { cochineal: 1.34, vanilla: 1.30, emerald: 1.40, logwood: 1.22,
+              wine: 1.46, oliveoil: 1.40, woolcloth: 1.36, linen: 1.30, mercury: 1.38 },
     blurb: '서인도 함대가 모이는 항구. 실을 것이면 무엇이든 값을 쳐 준다.',
   },
   trinidadcuba: {
@@ -158,8 +163,10 @@ export const TRADE = {
   santodomingo: {
     // 아메리카 최초의 유럽 도시이자 가장 먼저 밀려난 곳. 제당소와 소가죽이 남은 전부다.
     // 1605~06년 '오소리오의 파괴'로 북쪽 해안이 통째로 비워지면서 사들이는 쪽이 더 커졌다.
-    supply: { hide: 0.44, sugar: 0.56 },
-    demand: { wine: 1.30, woolcloth: 1.28, oliveoil: 1.24, weapon: 1.22 },
+    // ★ 원양 관문(푼샬 항로의 끝). 이 섬 가죽의 정본 창구라 배율을 더 내렸다 —
+    //   대서양 건너에서 이 값에 가죽을 살 수 있는 곳은 여기뿐이다.
+    supply: { hide: 0.36, sugar: 0.56 },
+    demand: { wine: 1.46, woolcloth: 1.34, oliveoil: 1.24, weapon: 1.30, linen: 1.34 },
     blurb: '아메리카에서 가장 오래된 도시. 제당소 연기와 절인 소가죽 냄새로 버틴다.',
   },
   sanjuan: {
@@ -258,8 +265,11 @@ export const TRADE = {
   cartagena: {
     // 티에라피르메 함대의 요새항. 무소의 에메랄드와 안티오키아의 금이 강을 타고 내려오고
     // 갈레온은 마르가리타에 들러 진주까지 실었다. 안쪽 광산으로 갈 수은이 여기서 풀린다.
-    supply: { emerald: 0.62, gold: 0.70 },
-    demand: { mercury: 1.32, wine: 1.28, woolcloth: 1.26, pearl: 1.22 },
+    // ★ 원양 관문(아바나 항로의 끝). 무소 에메랄드가 함대를 만나는 자리라 배율을 더 내렸다 —
+    //   산타마르타(0.70)로 새어 나가는 값과 갈라 두어야 「본선은 카르타헤나」가 값으로 읽힌다.
+    supply: { emerald: 0.54, gold: 0.70 },
+    demand: { mercury: 1.32, wine: 1.28, woolcloth: 1.26, pearl: 1.22,
+              tobacco: 1.30, linen: 1.28 },
     blurb: '11km 성벽이 두른 티에라피르메의 금고. 에메랄드와 사금이 강을 타고 내려온다.',
   },
 
@@ -289,16 +299,24 @@ export const TRADE = {
   panama: {
     // 태평양 최초의 유럽 도시. 카야오에서 올라온 은이 여기 내려 노새 등에 오른다.
     // 앞바다 진주 군도(Archipiélago de las Perlas)의 이름이 곧 이 항구의 특산이다.
-    supply: { silver: 0.66, pearl: 0.54 },
-    demand: { mercury: 1.42, wine: 1.34, woolcloth: 1.30 },
+    // ★ 원양 관문(카야오 항로의 끝). 진주 군도의 값을 더 내렸다 — 남해 함대가
+    //   리마로 내려보내던 물건이 이것이고, 페루에는 진주 어장이 없다.
+    //   키나 껍질은 반대로 사들인다: 안데스의 예수회 껍질이 여기서 대서양 배로 갈아탔다.
+    supply: { silver: 0.66, pearl: 0.46 },
+    demand: { mercury: 1.42, wine: 1.34, woolcloth: 1.30, quina: 1.36 },
     blurb: '태평양에 처음 선 유럽 도시. 페루 은이 여기서 노새 등에 오른다.',
   },
   acapulco: {
     // 마닐라 갤리온이 떠나는 부두. 서쪽으로 실려 가는 짐의 8할이 아메리카 것이었고
     // 그 첫째가 은, 둘째가 코치닐이었다. 그래서 여기는 **아시아행 짐을 사 모으는 자리**다.
     // 은은 멕시코 것이 곧장 실리므로 supply, 나머지는 뭍길로 실어 와야 하므로 demand다.
-    supply: { silver: 0.52 },
-    demand: { vanilla: 1.28, cochineal: 1.26, cacao: 1.24, tobacco: 1.20 },
+    // ★ 원양 관문(마닐라 항로의 끝 · 42~49일 · 이 게임에서 가장 긴 항로).
+    //   갤리온이 닿으면 누에바에스파냐 전역의 상인이 모여 비단·자기·칠기를 사 갔다 —
+    //   「값이 두 배가 된다」는 것이 이 부두의 전설이었고 그것이 아래 수요 배율이다.
+    //   반대로 서행 화물의 8할인 은은 멕시코 광산에서 곧장 실려 여기서 가장 싸다.
+    supply: { silver: 0.38 },
+    demand: { vanilla: 1.28, cochineal: 1.26, cacao: 1.24, tobacco: 1.20,
+              silk: 1.46, ceramic: 1.40, lacquer: 1.34, musk: 1.36 },
     blurb: '마닐라 갤리온이 떠나는 부두. 갤리온이 없는 철에는 열병 도는 어촌이다.',
   },
 };

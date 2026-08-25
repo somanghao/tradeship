@@ -11,18 +11,18 @@
         "basis": "베네치아 공화국. 게임 시대 전 구간에 걸쳐 독립 공화국이었으므로 논란이 없다."
       },
       "goods": {
-      "scarlet": {
-        "side": "supply",
-        "value": 0.52,
-        "verdict": "confirmed",
-        "basis": "*scarlatto*는 베네치아·피렌체 염색장의 물건이었다. 유럽 직물 가운데 가장 비쌌고 그 값을 만든 것이 이 도시의 염색 기술과 염료(커미즈, 뒤에는 코치닐)였다. 최상급 산지라 배율을 깊게 둔다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Scarlet (cloth)",
-            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
-          }
-        ]
-      },
+        "scarlet": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "*scarlatto*는 베네치아·피렌체 염색장의 물건이었다. 유럽 직물 가운데 가장 비쌌고 그 값을 만든 것이 이 도시의 염색 기술과 염료(커미즈, 뒤에는 코치닐)였다. 최상급 산지라 배율을 깊게 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Scarlet (cloth)",
+              "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+            }
+          ]
+        },
         "glass": {
           "side": "supply",
           "value": 0.48,
@@ -167,13 +167,13 @@
         },
         "spice": {
           "side": "demand",
-          "value": 1.3,
-          "verdict": "confirmed",
-          "basis": "제노바 무역의 주력 수입품이 동방 향신료·염료·의약품이었다. 베네치아와 달리 흑해·레반트 상관망(카파·페라·키오스)을 거쳐 들여왔고, 그 물량을 서지중해와 알프스 이북에 되파는 것이 도시의 밥벌이였다 — 게임에서 두 번째로 후한 향신료 수요처로 둔 근거다.",
+          "value": 1.4,
+          "verdict": "probable",
+          "basis": "리스본이 카사 다 인디아에서 푼 향신료가 제노바 시장에서 값을 받았다. 원양 관문(리스본 14일)이라 지중해 안쪽 수요보다 한 칸 위에 둔다 — 그 차가 곧 해협을 지날 이유다.",
           "sources": [
             {
-              "title": "Britannica — Genoa",
-              "url": "https://www.britannica.com/place/Genoa-Italy"
+              "title": "Republic of Genoa",
+              "url": "https://en.wikipedia.org/wiki/Republic_of_Genoa"
             }
           ]
         },
@@ -198,13 +198,33 @@
         },
         "pepper": {
           "side": "demand",
-          "value": 1.28,
-          "verdict": "corrected",
-          "basis": "후추를 사 주는 곳이 세계에서 인도 안 두 곳뿐이라 \"유럽이 대양으로 나선 이유\"가 값으로 성립하지 않았다(인도양 감수자가 찾아냈다). 후추는 이 시대 향신료 무역의 부피였고 베네치아·제노바가 레반트에서 받아 유럽에 재분배한 물건이므로 수요를 여기 둔다. 범용 향신료보다 낮게 잡는 것은 후추가 최고가가 아니라 물량이었기 때문이다.",
+          "value": 1.42,
+          "verdict": "confirmed",
+          "basis": "희망봉 항로가 열린 뒤 후추의 유럽 도착지가 알렉산드리아에서 리스본으로 옮겨 갔고, 제노바·베네치아는 그것을 리스본에서 되사 왔다. 지중해 구간 배율(1.2~2.0)의 위쪽을 준다.",
           "sources": [
             {
-              "title": "Spice trade",
-              "url": "https://en.wikipedia.org/wiki/Spice_trade"
+              "title": "Black pepper",
+              "url": "https://en.wikipedia.org/wiki/Black_pepper"
+            },
+            {
+              "title": "Republic of Genoa",
+              "url": "https://en.wikipedia.org/wiki/Republic_of_Genoa"
+            }
+          ]
+        },
+        "coral": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "confirmed",
+          "basis": "리구리아·사르데냐 산호 어장의 원물을 제노바 세공소가 다듬어 팔았고, 그 산호가 리스본을 거쳐 인도로 건너가 다이아몬드와 바뀌었다. 알게로(0.48)가 어장값이고 여기는 세공·중개값이라 그보다 높다.",
+          "sources": [
+            {
+              "title": "Precious coral",
+              "url": "https://en.wikipedia.org/wiki/Precious_coral"
+            },
+            {
+              "title": "Republic of Genoa",
+              "url": "https://en.wikipedia.org/wiki/Republic_of_Genoa"
             }
           ]
         }
@@ -291,17 +311,13 @@
       "goods": {
         "weapon": {
           "side": "supply",
-          "value": 0.62,
-          "verdict": "confirmed",
-          "basis": "카탈루냐는 15~18세기 이베리아 반도에서 가장 중요한 휴대무기(화기) 생산지였고 리폴을 필두로 바르셀로나·이괄라다·빅·만레사가 산지였다. 12~14세기부터 카탈루냐산 검이 이탈리아로 수출됐다.",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "리폴을 필두로 한 카탈루냐 화기 산업은 이베리아 최대 산지였고, 그 무기가 세비야에서 아메리카행 함대에 실렸다. 원양 관문(세비야 11일)이라 배율을 한 칸 내렸다 — 해협 밖으로 나가는 물건이다.",
           "sources": [
             {
-              "title": "The War Industry in the Crown of Aragon",
-              "url": "https://www.academia.edu/97736642/"
-            },
-            {
-              "title": "mNACTEC — Catalan manufactured weapons",
-              "url": "https://mnactec.cat/en/the-museum/press-detail/mnactec-acquires-catalan-manufactured-weapons"
+              "title": "Barcelona",
+              "url": "https://en.wikipedia.org/wiki/Barcelona"
             }
           ]
         },
@@ -350,6 +366,22 @@
             {
               "title": "The Commercial Influence of the Crown of Aragon in the Eastern Mediterranean",
               "url": "https://www.academia.edu/50921071/"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "아메리카 은은 세비야에 하역된 뒤 제노바·카탈루냐 은행으로 흘러 유럽의 빚을 갚았다. 지중해 어느 도시도 은을 캐지 못하므로 이것은 **해협 밖에서만 오는 물건**이다.",
+          "sources": [
+            {
+              "title": "Casa de Contratación",
+              "url": "https://en.wikipedia.org/wiki/Casa_de_Contrataci%C3%B3n"
+            },
+            {
+              "title": "Potosí",
+              "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
             }
           ]
         }
@@ -794,30 +826,30 @@
         "basis": "1453년 메흐메트 2세의 정복 이후 오스만 제국 수도. 게임 시대 전 구간에 해당한다."
       },
       "goods": {
-      "chintz": {
-        "side": "demand",
-        "value": 1.3,
-        "verdict": "probable",
-        "basis": "레반트 육로의 끝. 인도 날염포가 카이로를 거쳐 이 시장에서 값을 받았다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Chintz (spread to the Ottoman and European markets)",
-            "url": "https://en.wikipedia.org/wiki/Chintz"
-          }
-        ]
-      },
-      "scarlet": {
-        "side": "demand",
-        "value": 1.34,
-        "verdict": "probable",
-        "basis": "오스만 궁정의 카프탄에 쓰는 최상급 붉은 모직은 베네치아에서 사 왔다. 유럽 직물이 이 도시로 흘러드는 자리라 이 권역 최고 수요로 둔다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Ottoman clothing (court kaftans of imported European woollens)",
-            "url": "https://en.wikipedia.org/wiki/Ottoman_clothing"
-          }
-        ]
-      },
+        "chintz": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "레반트 육로의 끝. 인도 날염포가 카이로를 거쳐 이 시장에서 값을 받았다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Chintz (spread to the Ottoman and European markets)",
+              "url": "https://en.wikipedia.org/wiki/Chintz"
+            }
+          ]
+        },
+        "scarlet": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "오스만 궁정의 카프탄에 쓰는 최상급 붉은 모직은 베네치아에서 사 왔다. 유럽 직물이 이 도시로 흘러드는 자리라 이 권역 최고 수요로 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Ottoman clothing (court kaftans of imported European woollens)",
+              "url": "https://en.wikipedia.org/wiki/Ottoman_clothing"
+            }
+          ]
+        },
         "silk": {
           "side": "supply",
           "value": 0.62,
@@ -1121,6 +1153,42 @@
               "url": "https://knowledge.uchicago.edu/record/1096"
             }
           ]
+        },
+        "coral": {
+          "side": "supply",
+          "value": 0.7,
+          "verdict": "probable",
+          "basis": "지중해 산호는 레반트 항구에서 대상로를 타고 걸프·인도로 넘어가던 상품이다. 여기는 산지가 아니라 환적 시세라 알게로(0.48)·제노바(0.62)보다 높다.",
+          "sources": [
+            {
+              "title": "Precious coral",
+              "url": "https://en.wikipedia.org/wiki/Precious_coral"
+            }
+          ]
+        },
+        "pearl": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "걸프 진주가 바스라~바그다드~알레포 대상로를 타고 레반트로 올라와 유럽 배에 실렸다. 이 항구가 그 길의 바다 쪽 끝이다.",
+          "sources": [
+            {
+              "title": "Beirut",
+              "url": "https://en.wikipedia.org/wiki/Beirut"
+            }
+          ]
+        },
+        "carpet": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "페르시아 융단이 같은 대상로로 올라와 베네치아·제노바 배에 실렸다. 산지가 아니라 중계 수요라 배율을 폭의 가운데에 둔다.",
+          "sources": [
+            {
+              "title": "Persian carpet",
+              "url": "https://en.wikipedia.org/wiki/Persian_carpet"
+            }
+          ]
         }
       }
     },
@@ -1132,18 +1200,18 @@
         "sources": []
       },
       "goods": {
-      "scarlet": {
-        "side": "demand",
-        "value": 1.28,
-        "verdict": "probable",
-        "basis": "맘루크·오스만 상층이 사들이던 유럽 물건의 대표다. 통과항이라 이스탄불(1.34)보다 얕게 둔다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Scarlet (cloth)",
-            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
-          }
-        ]
-      },
+        "scarlet": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "맘루크·오스만 상층이 사들이던 유럽 물건의 대표다. 통과항이라 이스탄불(1.34)보다 얕게 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Scarlet (cloth)",
+              "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+            }
+          ]
+        },
         "grain": {
           "side": "supply",
           "value": 0.48,
@@ -1217,13 +1285,41 @@
         },
         "pepper": {
           "side": "demand",
-          "value": 1.22,
-          "verdict": "corrected",
-          "basis": "후추를 사 주는 곳이 세계에서 인도 안 두 곳뿐이라 \"유럽이 대양으로 나선 이유\"가 값으로 성립하지 않았다(인도양 감수자가 찾아냈다). 후추는 이 시대 향신료 무역의 부피였고 베네치아·제노바가 레반트에서 받아 유럽에 재분배한 물건이므로 수요를 여기 둔다. 범용 향신료보다 낮게 잡는 것은 후추가 최고가가 아니라 물량이었기 때문이다.",
+          "value": 1.44,
+          "verdict": "confirmed",
+          "basis": "홍해로 올라온 말라바르 후추가 지다에서 낙타로 갈아타 나일로 넘어와 여기서 유럽 배에 실렸다. 「후추 30배」 전 구간의 지중해 쪽 출발점이 이 부두이므로, 원양 환적 구간의 값이 여기서 매겨진다.",
           "sources": [
             {
-              "title": "Spice trade",
-              "url": "https://en.wikipedia.org/wiki/Spice_trade"
+              "title": "Black pepper",
+              "url": "https://en.wikipedia.org/wiki/Black_pepper"
+            },
+            {
+              "title": "Alexandria",
+              "url": "https://en.wikipedia.org/wiki/Alexandria"
+            }
+          ]
+        },
+        "linen": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "probable",
+          "basis": "이집트 아마는 고대부터의 물건이고 맘루크 시대에도 계속 짜였다. 홍해 너머로 나가는 배의 되짐이 그것이라 산지로 세운다.",
+          "sources": [
+            {
+              "title": "Alexandria",
+              "url": "https://en.wikipedia.org/wiki/Alexandria"
+            }
+          ]
+        },
+        "coffee": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "모카 커피가 지다를 거쳐 카이로·알렉산드리아로 올라와 지중해로 퍼졌다. 커피가 유럽으로 들어간 첫 길이 이 축이다.",
+          "sources": [
+            {
+              "title": "Mocha, Yemen",
+              "url": "https://en.wikipedia.org/wiki/Mocha,_Yemen"
             }
           ]
         }
@@ -1927,22 +2023,22 @@
         ]
       },
       "goods": {
-      "cotton": {
-        "side": "supply",
-        "value": 0.54,
-        "verdict": "confirmed",
-        "basis": "키프로스는 설탕과 함께 **면화**를 베네치아로 부치던 섬이다. 그동안 `cotton`은 산지가 상루이스(남아메리카) 한 곳뿐이라 사실상 죽은 품목이었는데, 방직 사슬(`원면 3 → 면포 2`)이 그 물건의 쓸 데를 만들면서 지중해 쪽 산지가 필요해졌다. 배율은 신대륙 대농장(0.44)보다 얕다 — 섬 농사 값이다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Cyprus § Venetian Cyprus (sugar and cotton exports)",
-            "url": "https://en.wikipedia.org/wiki/Venetian_Cyprus"
-          },
-          {
-            "title": "Wikipedia — Fustian (Levantine cotton for Italian and South German weavers)",
-            "url": "https://en.wikipedia.org/wiki/Fustian"
-          }
-        ]
-      },
+        "cotton": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "키프로스는 설탕과 함께 **면화**를 베네치아로 부치던 섬이다. 그동안 `cotton`은 산지가 상루이스(남아메리카) 한 곳뿐이라 사실상 죽은 품목이었는데, 방직 사슬(`원면 3 → 면포 2`)이 그 물건의 쓸 데를 만들면서 지중해 쪽 산지가 필요해졌다. 배율은 신대륙 대농장(0.44)보다 얕다 — 섬 농사 값이다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Cyprus § Venetian Cyprus (sugar and cotton exports)",
+              "url": "https://en.wikipedia.org/wiki/Venetian_Cyprus"
+            },
+            {
+              "title": "Wikipedia — Fustian (Levantine cotton for Italian and South German weavers)",
+              "url": "https://en.wikipedia.org/wiki/Fustian"
+            }
+          ]
+        },
         "sugar": {
           "side": "supply",
           "value": 0.52,
@@ -2005,22 +2101,22 @@
         ]
       },
       "goods": {
-      "cotton": {
-        "side": "supply",
-        "value": 0.5,
-        "verdict": "confirmed",
-        "basis": "알레포 배후의 시리아 면화가 이 갯벌에서 배에 올라 이탈리아·남독일의 퍼스티언(면·마 혼방) 베틀로 갔다. 대상로의 끝이라 이 바다에서 원면이 가장 싸게 붙는 자리다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Fustian",
-            "url": "https://en.wikipedia.org/wiki/Fustian"
-          },
-          {
-            "title": "Wikipedia — Aleppo Eyalet (caravan trade to the Levantine coast)",
-            "url": "https://en.wikipedia.org/wiki/Aleppo_Eyalet"
-          }
-        ]
-      },
+        "cotton": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "알레포 배후의 시리아 면화가 이 갯벌에서 배에 올라 이탈리아·남독일의 퍼스티언(면·마 혼방) 베틀로 갔다. 대상로의 끝이라 이 바다에서 원면이 가장 싸게 붙는 자리다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Fustian",
+              "url": "https://en.wikipedia.org/wiki/Fustian"
+            },
+            {
+              "title": "Wikipedia — Aleppo Eyalet (caravan trade to the Levantine coast)",
+              "url": "https://en.wikipedia.org/wiki/Aleppo_Eyalet"
+            }
+          ]
+        },
         "silk": {
           "side": "supply",
           "value": 0.64,

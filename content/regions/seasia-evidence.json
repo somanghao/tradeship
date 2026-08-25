@@ -224,22 +224,22 @@
         "sources": []
       },
       "goods": {
-      "chintz": {
-        "side": "demand",
-        "value": 1.24,
-        "verdict": "confirmed",
-        "basis": "인도 날염포는 이 바다에서 **화폐에 가까운 물건**이었다 — 향신료를 사는 값이 은이 아니라 천이었다. 구자라트 배가 실어 온 것 가운데 값이 가장 높은 축이다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Indian Ocean trade § textiles as currency for spices",
-            "url": "https://en.wikipedia.org/wiki/Indian_Ocean_trade"
-          },
-          {
-            "title": "Wikipedia — Aceh Sultanate",
-            "url": "https://en.wikipedia.org/wiki/Aceh_Sultanate"
-          }
-        ]
-      },
+        "chintz": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "confirmed",
+          "basis": "인도 날염포는 이 바다에서 **화폐에 가까운 물건**이었다 — 향신료를 사는 값이 은이 아니라 천이었다. 구자라트 배가 실어 온 것 가운데 값이 가장 높은 축이다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Indian Ocean trade § textiles as currency for spices",
+              "url": "https://en.wikipedia.org/wiki/Indian_Ocean_trade"
+            },
+            {
+              "title": "Wikipedia — Aceh Sultanate",
+              "url": "https://en.wikipedia.org/wiki/Aceh_Sultanate"
+            }
+          ]
+        },
         "pepper": {
           "side": "supply",
           "value": 0.46,
@@ -428,9 +428,9 @@
       "goods": {
         "tin": {
           "side": "supply",
-          "value": 0.62,
+          "value": 0.5,
           "verdict": "confirmed",
-          "basis": "믈라카는 중계항이라 나는 것이 거의 없었고, 사료도 '소량의 주석과 금'만 자체 생산했다고 적는다. 그 '소량'을 배율 0.62(얕은 산지)로 옮겼다 — 페락(0.44)보다 확실히 비싸다.",
+          "basis": "페락·케다의 주석이 이 해협에서 배에 올라 인도와 중국 양쪽으로 갔다. 광산(페락 0.44)이 아니라 집산지이므로 그보다 높다 — 이 도시가 내놓는 것은 사실상 이것 하나다.",
           "sources": [
             {
               "title": "Malacca Sultanate",
@@ -480,12 +480,12 @@
         },
         "calico": {
           "side": "demand",
-          "value": 1.28,
+          "value": 1.44,
           "verdict": "confirmed",
-          "basis": "★ 2026-08-15 감수 추가. 사료는 믈라카의 구실을 **두 갈래**로 적는다 — 말루쿠 정향·육두구·메이스의 집산지이면서 동시에 '구자라트·코로만델·말라바르·벵골 항구에서 온 면포의 재분배 중심'이었다. 향료 수요만 있고 면포 수요가 없으면 그 절반이 사라진다. 게다가 `index.js: OCEAN_LANES`의 nagapattinam~melaka에 붙은 주석('인도 면포가 향료와 바뀌는 축이다')과 인도양 권역이 면포 base를 145로 낮게 잡은 근거('여러 권역이 사간다')가 둘 다 값으로는 성립하지 않고 있었다. 향료 둘(1.36·1.34)과 곡물(1.30) 아래에 두어 이 항구의 첫째 성격은 어디까지나 향료임을 지켰다.",
+          "basis": "사료가 이 도시의 구실을 두 갈래로 적는다 — 말루쿠 향료의 집산지이자 구자라트·코로만델·말라바르·벵골 면포의 재분배 중심이다. 원양 관문(나가파티남 15일)의 값이 그 절반이다.",
           "sources": [
             {
-              "title": "Wikipedia — Malacca Sultanate ('Among Malacca's most crucial functions was its role as both a collection centre for cloves, nutmeg and mace from the Maluku Islands and a redistribution centre for cotton textiles from ports in Gujarat, the Coromandel Coast, Malabar Coast and Bengal')",
+              "title": "Malacca Sultanate",
               "url": "https://en.wikipedia.org/wiki/Malacca_Sultanate"
             }
           ]
@@ -495,6 +495,46 @@
           "value": 1.26,
           "verdict": "confirmed",
           "basis": "사료가 '생선을 절일 소금조차 밖에서 구해야 했다'고 명시한다. 이 한 줄이 믈라카가 무엇 하나 나지 않는 항구였음을 가장 잘 보여 준다.",
+          "sources": [
+            {
+              "title": "Malacca Sultanate",
+              "url": "https://en.wikipedia.org/wiki/Malacca_Sultanate"
+            }
+          ]
+        },
+        "pepper": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "수마트라·자바 후추가 이 해협에 모여 중국과 인도로 갔다. 산지가 아니라 집산 시세다.",
+          "sources": [
+            {
+              "title": "Malacca Sultanate",
+              "url": "https://en.wikipedia.org/wiki/Malacca_Sultanate"
+            },
+            {
+              "title": "Black pepper",
+              "url": "https://en.wikipedia.org/wiki/Black_pepper"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "confirmed",
+          "basis": "중국 비단이 남중국해를 내려와 여기서 인도·아라비아 상인에게 넘어갔다. 원양 관문(광저우 16일)이 그 길이다.",
+          "sources": [
+            {
+              "title": "Malacca Sultanate",
+              "url": "https://en.wikipedia.org/wiki/Malacca_Sultanate"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "probable",
+          "basis": "중국 자기도 같은 길로 내려와 이 해협에서 흩어졌다. 동남아 가마의 물건과는 등급이 달라 따로 값을 받았다.",
           "sources": [
             {
               "title": "Malacca Sultanate",
@@ -1341,7 +1381,7 @@
       "sources": []
     },
     "ayutthaya|patani": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "샴만 연안을 도는 항해이고 양쪽 다 아유타야의 세력권 안이다. 지중해 앵커의 '평범한 연안 항로'(4~5.5)에 해당한다.",
       "sources": []
@@ -1353,13 +1393,13 @@
       "sources": []
     },
     "brunei|patani": {
-      "risk": 9.0,
+      "risk": 9,
       "verdict": "probable",
       "basis": "남중국해를 통째로 가로지른다. 며칠씩 뭍이 보이지 않고 계절풍이 어긋나면 되돌아올 수 없는 구간이라 지중해의 '사략 소굴 앞·며칠씩 뭍이 안 보임'(9~11) 급으로 뒀다.",
       "sources": []
     },
     "aceh|pasai": {
-      "risk": 4.0,
+      "risk": 4,
       "verdict": "probable",
       "basis": "수마트라 북단의 짧은 연안이고 뒤에는 두 항구가 한 세력(아체)으로 묶인다. 한 세력의 안뜰에 가까운 구간이라 연안 항로의 아래쪽 값을 줬다.",
       "sources": [
@@ -1389,7 +1429,7 @@
       ]
     },
     "pasai|perak": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "해협을 가로질러 수마트라에서 반도로 건너간다. 병목 안이라 뭍은 가깝지만 어느 쪽 세력의 보호도 확실하지 않은 물이다.",
       "sources": [
@@ -1400,7 +1440,7 @@
       ]
     },
     "melaka|pasai": {
-      "risk": 8.0,
+      "risk": 8,
       "verdict": "probable",
       "basis": "해협 병목 안쪽을 비스듬히 지난다. 섬과 모래톱이 많아 뱃길이 좁고, 좁은 물목은 곧 매복 자리다. 지중해의 에게해(8.0)와 같은 급으로 뒀다.",
       "sources": [
@@ -1417,7 +1457,7 @@
       "sources": []
     },
     "johor|melaka": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "해협 남단 구간이다. 섬이 빽빽해 뱃길이 사실상 하나뿐이라 매복이 쉬웠고, 그 자리를 지키던 것이 오랑 라우트다. 다만 믈라카 술탄가가 그들을 부려 항로를 지켰으므로 아체~믈라카만큼 높이지 않았다.",
       "sources": [
@@ -1432,13 +1472,13 @@
       ]
     },
     "banten|johor": {
-      "risk": 8.0,
+      "risk": 8,
       "verdict": "probable",
       "basis": "해협에서 자바로 내려가는 외해 구간이다. 카리마타 쪽은 섬과 얕은 여울이 흩어져 있고 뭍이 멀다. 외해·병목 급(6~8)의 위쪽에 뒀다.",
       "sources": []
     },
     "banten|sundakelapa": {
-      "risk": 3.0,
+      "risk": 3,
       "verdict": "probable",
       "basis": "순다 연안의 짧은 항해이고 두 항구가 한 세력(반텐)의 안뜰이다. 지중해의 '한 세력의 내해'(2~3.5)에 해당한다.",
       "sources": [
@@ -1449,7 +1489,7 @@
       ]
     },
     "sundakelapa|tuban": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "자바 북안을 따라가는 긴 연안 항해다. 뭍이 늘 가깝지만 항구마다 주인이 달라 평범한 연안 항로의 값을 줬다.",
       "sources": [
@@ -1460,19 +1500,19 @@
       ]
     },
     "gresik|tuban": {
-      "risk": 3.0,
+      "risk": 3,
       "verdict": "probable",
       "basis": "이웃한 두 항구 사이의 짧은 구간이고 같은 자바 북안 상권이다. 한 세력의 내해 급으로 뒀다.",
       "sources": []
     },
     "brunei|gresik": {
-      "risk": 8.0,
+      "risk": 8,
       "verdict": "probable",
       "basis": "자바해를 남북으로 가로지른다. 이 바다는 얕고 산호초와 모래톱이 깔려 있어 해적보다 좌초가 무서운 구간이다. 요율은 위험의 총량이므로 그 몫을 외해 급으로 실었다.",
       "sources": []
     },
     "gresik|makassar": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "자바해 동쪽을 건넌다. 산호초 지대이고 뭍이 며칠 안 보인다. 브루나이 횡단보다는 짧아 한 급 낮게 뒀다.",
       "sources": []
@@ -1496,7 +1536,7 @@
       "sources": []
     },
     "banda|makassar": {
-      "risk": 9.0,
+      "risk": 9,
       "verdict": "probable",
       "basis": "이 권역에서 가장 먼 향료 항로다. 반다는 작고 흩어진 화산섬 무리라 뱃길을 잡기 어렵고, 마카사르가 자유항이었던 만큼 이 구간이 곧 밀무역선의 길이었다. 사략 소굴 급(9~11)의 아래쪽에 뒀다.",
       "sources": [
@@ -1507,7 +1547,7 @@
       ]
     },
     "ternate|tidore": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "두 화산섬 사이의 아주 짧은 물목인데도 6.0을 준 것은 **두 섬이 평생 서로를 쳤기 때문**이다. 거리가 아니라 적대가 값을 만든 구간이라, 지중해의 '양단 깃발이 적대'하는 항로 기준을 그대로 적용했다.",
       "sources": [
@@ -1518,7 +1558,7 @@
       ]
     },
     "ambon|ternate": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "말루쿠 북쪽에서 암본으로 내려간다. 섬 사이를 지나지만 코라코라를 몰고 나오는 홍기 원정대의 물이기도 했다.",
       "sources": [
@@ -1529,7 +1569,7 @@
       ]
     },
     "ambon|tidore": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "테르나테~암본과 같은 물이고 같은 성격이라 같은 값을 줬다. 두 라이벌 섬 어느 쪽에서 내려오든 위험이 다르지 않다.",
       "sources": []

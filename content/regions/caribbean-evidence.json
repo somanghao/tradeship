@@ -311,13 +311,17 @@
       "goods": {
         "tobacco": {
           "side": "supply",
-          "value": 0.54,
+          "value": 0.44,
           "verdict": "probable",
-          "basis": "쿠바 담배가 이 섬의 대표 환금작물이 된 것은 확실하나 확보한 문헌은 그 시점을 18세기로 적는다. 은 함대 시대에도 이미 재배가 있었다는 통설을 따라 넣되 판정은 내린다.",
+          "basis": "쿠바 담배가 이 섬의 대표 환금작물이었고 함대가 그것을 실어 세비야로 가져갔다. 원양 관문(세비야 34일)이라 산티아고데쿠바(0.50)보다 낮은 값을 준다 — 대서양 배가 직접 싣는 자리다.",
           "sources": [
             {
               "title": "Tobacco",
               "url": "https://en.wikipedia.org/wiki/Tobacco"
+            },
+            {
+              "title": "Havana",
+              "url": "https://en.wikipedia.org/wiki/Havana"
             }
           ]
         },
@@ -359,13 +363,17 @@
         },
         "emerald": {
           "side": "demand",
-          "value": 1.24,
+          "value": 1.4,
           "verdict": "confirmed",
-          "basis": "1622년 아바나를 떠난 아토차호가 '콜롬비아의 금과 에메랄드'를 싣고 있었다. 카르타헤나에서 실린 에메랄드가 아바나에서 함대와 합류했다는 뜻이므로 집하 수요로 적었다.",
+          "basis": "1622년 아바나를 떠난 아토차호가 콜롬비아의 금과 에메랄드를 싣고 있었다. 카르타헤나에서 실린 에메랄드가 여기서 함대와 합류했다는 뜻이고, 그 집하 수요를 원양 관문답게 올렸다.",
           "sources": [
             {
-              "title": "Nuestra Señora de Atocha",
-              "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            },
+            {
+              "title": "Muzo",
+              "url": "https://en.wikipedia.org/wiki/Muzo"
             }
           ]
         },
@@ -378,6 +386,66 @@
             {
               "title": "Haematoxylum campechianum",
               "url": "https://en.wikipedia.org/wiki/Haematoxylum_campechianum"
+            }
+          ]
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "confirmed",
+          "basis": "서인도 함대의 서행 화물은 포도주·기름·밀가루·옷감이 대부분이었고 카리브에는 포도밭이 없었다. 아메리카 전역의 배가 모이는 항구라 유럽 물건 값이 여기서 가장 높다.",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "probable",
+          "basis": "포도주와 같은 이유다 — 안달루시아의 기름이 함대의 표준 화물이었고 카리브에는 올리브가 자라지 않는다.",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "woolcloth": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "카스티야·플랑드르 모직이 함대 화물의 한 축이었다. 아메리카에는 직조업이 거의 없어 옷감을 통째로 사들였다.",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "돛과 사람 옷이 될 아마포는 브르타뉴·플랑드르에서 왔다. 카리브 어느 섬도 아마를 짜지 않았다.",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "mercury": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "probable",
+          "basis": "수은 아말감법이 아메리카 은 제련의 기본이었고 그 수은은 알마덴에서 실려 왔다. 함대 집결지인 이 항구가 그것을 모아 지협과 누에바에스파냐로 넘겼다.",
+          "sources": [
+            {
+              "title": "Almadén",
+              "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n"
             }
           ]
         }
@@ -618,10 +686,14 @@
       "goods": {
         "hide": {
           "side": "supply",
-          "value": 0.44,
+          "value": 0.36,
           "verdict": "confirmed",
-          "basis": "멕시코·페루 정복 뒤 밀려난 이스파니올라의 경제가 제당(ingenio)과 소가죽(cuero)에 기댔다고 문헌이 직접 적는다. 이 바다에서 가죽이 가장 싼 자리로 두는 것이 맞다.",
+          "basis": "이스파니올라의 야생 소가죽이 이 섬 최대의 수출품이었고 아우디엔시아가 앉은 이 도시가 그 정본 창구였다. 원양 관문(푼샬 30일)이라 대서양 배가 직접 싣는 값을 준다.",
           "sources": [
+            {
+              "title": "Hispaniola",
+              "url": "https://en.wikipedia.org/wiki/Hispaniola"
+            },
             {
               "title": "Santo Domingo",
               "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
@@ -642,9 +714,9 @@
         },
         "wine": {
           "side": "demand",
-          "value": 1.3,
+          "value": 1.46,
           "verdict": "probable",
-          "basis": "유럽 포도주가 아메리카 전역의 표준 수입품이었다는 사실에서 왔다. 1605~06년 '오소리오의 파괴'로 북안이 비워져 밀무역 공급선이 끊긴 뒤로는 더 아쉬웠을 것이다.",
+          "basis": "섬에 포도밭이 없어 미사용 포도주까지 전부 실어 왔다. 대서양 제도에서 오는 배가 닿는 첫 항구라 값이 가장 높다.",
           "sources": [
             {
               "title": "Santo Domingo",
@@ -654,9 +726,9 @@
         },
         "woolcloth": {
           "side": "demand",
-          "value": 1.28,
+          "value": 1.34,
           "verdict": "probable",
-          "basis": "왕실이 북안을 통째로 비운 이유가 그 해안이 유럽 직물을 밀수로 들여오고 있었기 때문이다. 즉 이 섬은 직물이 아쉬웠다 — 다만 값의 직접 근거는 없다.",
+          "basis": "제당과 목축뿐인 섬이라 옷감은 통째로 들어왔다. 오소리오의 파괴로 북안이 비워진 뒤로는 사들이는 쪽이 더 커졌다.",
           "sources": [
             {
               "title": "Santo Domingo",
@@ -678,9 +750,21 @@
         },
         "weapon": {
           "side": "demand",
-          "value": 1.22,
-          "verdict": "confirmed",
-          "basis": "1586년 드레이크에게 도시를 통째로 내준 일이 이스파니올라에서 스페인 지배가 기울기 시작한 표지로 꼽힌다. 화기 수요는 거기서 나온다.",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "밀무역선과 사략선이 드나드는 해안이라 화약과 쇠붙이를 늘 필요로 했다. 섬에 대장간 산업이 없다.",
+          "sources": [
+            {
+              "title": "Santo Domingo",
+              "url": "https://en.wikipedia.org/wiki/Santo_Domingo"
+            }
+          ]
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "아마포는 돛과 사람 옷의 재료이고 이 섬에서 나지 않는다. 대서양을 건너온 배가 파는 표준 물건이다.",
           "sources": [
             {
               "title": "Santo Domingo",
@@ -1086,17 +1170,17 @@
       "goods": {
         "emerald": {
           "side": "supply",
-          "value": 0.62,
+          "value": 0.54,
           "verdict": "confirmed",
-          "basis": "무소는 세계에서 가장 좋은 에메랄드가 나는 곳이고 1559년 정복 뒤 엔코미엔다로 캤다. 그것이 막달레나 강을 타고 내려와 실린 자리가 여기다 — 1622년 아토차호 화물에 '콜롬비아의 금과 에메랄드'가 적혀 있다.",
+          "basis": "무소 광산의 에메랄드가 막달레나 강을 타고 내려와 티에라피르메 함대에 실렸다. 원양 관문(아바나 9일)이라 산타마르타(0.70)로 새는 값과 갈라 두어 「본선은 카르타헤나」가 값으로 읽히게 한다.",
           "sources": [
             {
               "title": "Muzo",
               "url": "https://en.wikipedia.org/wiki/Muzo"
             },
             {
-              "title": "Nuestra Señora de Atocha",
-              "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
+              "title": "Cartagena, Colombia",
+              "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
             }
           ]
         },
@@ -1152,6 +1236,30 @@
             {
               "title": "Spanish treasure fleet",
               "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "함대를 기다리는 동안 실을 것을 사 모으는 항구다. 쿠바·베네수엘라 담배가 여기서 갈레온에 옮겨졌다.",
+          "sources": [
+            {
+              "title": "Cartagena, Colombia",
+              "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
+            }
+          ]
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "요새와 함대가 있는 도시라 돛·옷감 수요가 상시였고 배후지에서 아마가 나지 않는다.",
+          "sources": [
+            {
+              "title": "Cartagena, Colombia",
+              "url": "https://en.wikipedia.org/wiki/Cartagena,_Colombia"
             }
           ]
         }
@@ -1338,10 +1446,19 @@
         },
         "pearl": {
           "side": "supply",
-          "value": 0.54,
-          "verdict": "probable",
-          "basis": "앞바다 진주 군도(Archipiélago de las Perlas)의 이름 자체가 이 만의 진주에서 나왔다. 다만 식민 초기 채취 규모를 밝힌 문헌은 확보하지 못해 마르가리타·과히라보다 배율을 높였다.",
-          "sources": []
+          "value": 0.46,
+          "verdict": "confirmed",
+          "basis": "앞바다 진주 군도(Archipiélago de las Perlas)의 이름이 곧 이 항구의 특산이다. 원양 관문(카야오 18일)이라 남해 함대가 리마로 내려보내는 값을 준다 — 페루에는 진주 어장이 없다.",
+          "sources": [
+            {
+              "title": "Pearl Islands",
+              "url": "https://en.wikipedia.org/wiki/Pearl_Islands"
+            },
+            {
+              "title": "Panama City",
+              "url": "https://en.wikipedia.org/wiki/Panama_City"
+            }
+          ]
         },
         "mercury": {
           "side": "demand",
@@ -1373,6 +1490,18 @@
               "url": "https://en.wikipedia.org/wiki/Panam%C3%A1_Viejo"
             }
           ]
+        },
+        "quina": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "안데스의 예수회 껍질이 카야오에서 배를 타고 올라와 여기서 지협을 넘어 대서양 배로 갈아탔다. 유럽으로 가는 길이 이 지협뿐이었다.",
+          "sources": [
+            {
+              "title": "Cinchona",
+              "url": "https://en.wikipedia.org/wiki/Cinchona"
+            }
+          ]
         }
       }
     },
@@ -1402,13 +1531,17 @@
       "goods": {
         "silver": {
           "side": "supply",
-          "value": 0.52,
+          "value": 0.38,
           "verdict": "confirmed",
-          "basis": "아카풀코에서 마닐라로 실려 간 화물의 약 8할이 아메리카 것이었고 그 첫째가 은이었다. 동아시아가 은본위로 굴러갔기 때문이다. 멕시코 은이 뭍길로 내려와 실리는 자리라 베라크루스(0.50)보다 조금 높다.",
+          "basis": "서행 갤리온 화물의 8할이 은이었고 그것은 누에바에스파냐 광산에서 곧장 내려온 것이다. 42~49일짜리 태평양 항로의 출발점이라 광산값에 가장 가까운 자리로 둔다(포토시 0.44와 나란하다).",
           "sources": [
             {
               "title": "Manila galleon",
               "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            },
+            {
+              "title": "Acapulco",
+              "url": "https://en.wikipedia.org/wiki/Acapulco"
             }
           ]
         },
@@ -1458,6 +1591,58 @@
           "verdict": "confirmed",
           "basis": "마닐라행 화물 목록에 '은, 코치닐, 씨앗, 고구마, 옥수수, 토마토, 담배'가 직접 적혀 있다. 담배가 아메리카에서 아시아로 건너간 통로가 바로 이 항로이고, 이 권역에서 담배를 사는 유일한 항구라 품목이 죽지 않는 자리이기도 하다.",
           "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "silk": {
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "confirmed",
+          "basis": "갤리온이 닿으면 누에바에스파냐 전역의 상인이 모여 중국 생사를 사 갔고 마닐라 값의 두 배에 팔린다는 것이 이 부두의 전설이었다. 그 두 배가 곧 태평양을 건널 이유다.",
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "confirmed",
+          "basis": "비단 다음가는 갤리온 화물이 중국 자기였다. 아메리카에 자기 가마가 없어 전량이 태평양을 건너왔다.",
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "lacquer": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "남만칠기(일본 칠기)가 마닐라를 거쳐 갤리온에 실려 누에바에스파냐 교회와 저택으로 갔다. 오늘날 멕시코에 남은 병풍·궤가 그 물건이다.",
+          "sources": [
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "musk": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "사향은 부피가 작고 값이 커 갤리온 화물로 알맞았다. 중국 사향이 마닐라를 거쳐 아메리카·유럽으로 갔다.",
+          "sources": [
+            {
+              "title": "Musk",
+              "url": "https://en.wikipedia.org/wiki/Musk"
+            },
             {
               "title": "Manila galleon",
               "url": "https://en.wikipedia.org/wiki/Manila_galleon"

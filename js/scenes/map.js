@@ -18,6 +18,7 @@ import {
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
+  totalLossOdds, totalLoss,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
@@ -602,11 +603,36 @@ function resolveEvent(ev0, voyage) {
       state.crew = Math.max(1, state.crew - lost);
       if (lost) trimLoadout();   // 무리 명부와 갑판 슬롯을 줄어든 인원에 맞춘다
 
+      /* ★★ **원양에서는 배가 통째로 가라앉는다**(P4-c). 근해는 여기까지 오지 않는다 —
+         `totalLossOdds`가 원양 구간에서만 0이 아니다. 4.7%는 카레라 데 인디아스의
+         실제 상실률이고, 삭은 배일수록 배가 된다(수리를 미룬 값이 여기서 온다).
+         판이 끝나지는 않는다 — 동행선이 있으면 갈아타고, 없으면 「바닥의 규칙」(청산)으로 간다. */
+      const leg = { from: voyage.from.id, to: voyage.to.id };
+      if (Math.random() < totalLossOdds(leg)) {
+        const wreck = totalLoss(Math.random, leg);
+        refreshHUD(); refreshLog();
+        modal({
+          title: caravan ? '대열이 무너졌다' : '난파',
+          body: (caravan
+                  ? `모래가 대열을 삼켰다. 짐승도 짐도 남지 않았다.<br>`
+                  : `돛대가 부러지고 배가 옆으로 누웠다. 뱃전을 넘은 물이 창고를 채웠다.<br>`)
+              + `<b>${SHIPS[wreck.ship].name}</b>${josa(SHIPS[wreck.ship].name, '을/를')} 잃었다`
+              + (wreck.value ? ` — 실은 짐 ${wreck.value.toLocaleString('ko-KR')}닢어치도 함께 갔다.` : '.')
+              + (wreck.payout ? `<br>적하보험이 <b>${wreck.payout.toLocaleString('ko-KR')}닢</b>을 물어 준다.` : '')
+              + (wreck.mode === 'consort'
+                  ? `<br><br>동행하던 <b>${SHIPS[wreck.moved].name}</b>이 사람을 건져 올렸다. 이제 그 배가 기함이다.`
+                  : `<br><br>혼자였다. 채권자도 화주도 셈을 접었고, 남은 것은 낡은 배 한 척과 여태 열어 둔 항구들이다.`),
+          actions: [{ label: '물 위로 올라온다', onClick: finish }],
+          closable: false,
+        });
+        break;
+      }
+
       /* ★ 폭풍이 심하면 배를 살리려 짐을 던진다(공동해손) — 보험이 무는 사건이 이것이다.
          전에는 보험료만 걷고 보상하는 자리가 없어, 그 항목이 사실상 세금이었다.
          확률은 항로 위험도에서 나온다(그 숫자의 본래 뜻이 사고 확률의 시장가격이다). */
       const jet = Math.random() < jettisonOdds({ from: voyage.from.id, to: voyage.to.id })
-        ? jettisonCargo() : null;
+        ? jettisonCargo(0.4, Math.random, { from: voyage.from.id, to: voyage.to.id }) : null;
       const jetLine = jet
         ? (caravan
             ? `<br><br>짐승이 주저앉기 시작하자 대상장이 소리쳤다. <b>짐을 버려라.</b><br>`

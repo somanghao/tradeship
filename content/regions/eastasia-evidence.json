@@ -104,6 +104,34 @@
           "verdict": "probable",
           "basis": "광동은 상아 조각의 본산이고 시박사 남해 담당으로 동남아·인도의 상아가 여기로 들었다. 다만 이 시기 상아 수입량이나 시세를 직접 말하는 자료는 찾지 못했다.",
           "sources": []
+        },
+        "tin": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "중국은 주석이 모자라 남해에서 사들였다 — 놋과 주석 제기의 원료다. 남해 시박사가 앉은 이 문으로 그것이 들어왔다.",
+          "sources": [
+            {
+              "title": "Guangzhou",
+              "url": "https://en.wikipedia.org/wiki/Guangzhou"
+            }
+          ]
+        },
+        "pepper": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "명대 내내 중국은 동남아 후추를 대량으로 수입했고 그 창구가 광저우였다. 중국 안에서 후추가 나지 않는다.",
+          "sources": [
+            {
+              "title": "Black pepper",
+              "url": "https://en.wikipedia.org/wiki/Black_pepper"
+            },
+            {
+              "title": "Guangzhou",
+              "url": "https://en.wikipedia.org/wiki/Guangzhou"
+            }
+          ]
         }
       }
     },
@@ -336,13 +364,17 @@
       "goods": {
         "ceramic": {
           "side": "supply",
-          "value": 0.5,
-          "verdict": "probable",
-          "basis": "덕화요 백자의 출구가 취안저우였다. 항구는 쇠했어도 배후 가마는 남아 자기가 이 바다에서 가장 싼 축이다. 낱개 시세는 확인하지 못했다.",
+          "value": 0.42,
+          "verdict": "confirmed",
+          "basis": "덕화요 백자의 본산이라 자기 값이 광저우(0.50)보다 낮다. 원양 관문(마닐라 7일)이라 갤리온에 실릴 자기가 여기서 실린다.",
           "sources": [
             {
-              "title": "Quanzhou — Britannica",
-              "url": "https://www.britannica.com/place/Quanzhou"
+              "title": "Dehua porcelain",
+              "url": "https://en.wikipedia.org/wiki/Dehua_porcelain"
+            },
+            {
+              "title": "Quanzhou",
+              "url": "https://en.wikipedia.org/wiki/Quanzhou"
             }
           ]
         },
@@ -374,13 +406,25 @@
         },
         "spice": {
           "side": "demand",
-          "value": 1.22,
+          "value": 1.36,
           "verdict": "probable",
-          "basis": "동남아 후추·소목이 복건 항구로 들어와 내륙으로 풀렸다. 취안저우 몫의 수치는 따로 확인하지 못했다.",
+          "basis": "남해 향신료가 마닐라를 거쳐 이 항구로 들어왔다. 배후지가 좁아 먹을 것과 남양 물건을 사들이는 쪽이다.",
           "sources": [
             {
-              "title": "Yuegang — Wikipedia",
-              "url": "https://en.wikipedia.org/wiki/Yuegang"
+              "title": "Quanzhou",
+              "url": "https://en.wikipedia.org/wiki/Quanzhou"
+            }
+          ]
+        },
+        "deerhide": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "시암·루손·대만의 사슴 가죽이 중국으로 들어갔다 — 명의 가죽 수요는 남양에서 채웠다. 마닐라가 그 환적항이다.",
+          "sources": [
+            {
+              "title": "Quanzhou",
+              "url": "https://en.wikipedia.org/wiki/Quanzhou"
             }
           ]
         }
@@ -1455,110 +1499,110 @@
       },
       "goods": {
         "silver": {
-          "side": "supply",
-          "value": 0.48,
-          "verdict": "confirmed",
-          "basis": "아카풀코에서 오는 갈레온이 부린 아메리카 은이다. 1600년경 해마다 40톤, 1630년경에는 100톤이 여기를 거쳐 중국으로 갔고, 1571~1815년 통틀어 연 50~70톤이 태평양을 건넜다.",
+          "side": "demand",
+          "value": 1.46,
+          "verdict": "corrected",
+          "basis": "마닐라에는 은광이 없다 — 여기 은은 전부 아카풀코에서 건너온 것이고, 그것을 사들여 복건 정크에 넘기는 것이 이 도시의 본업이다. 산지로 적혀 있으면 태평양을 건널 이유가 사라진다. 일본 은(나가사키 0.46·히라도 0.52·사도 0.60)이 동아시아의 산지 몫을 맡는다.",
           "sources": [
             {
-              "title": "Manila galleon — Wikipedia",
+              "title": "Manila galleon",
               "url": "https://en.wikipedia.org/wiki/Manila_galleon"
-            },
-            {
-              "title": "The Nao of China and the Global Silver Trade — Wessex Mint",
-              "url": "https://thewessexmint.com/en-us/blogs/academy-articles/the-nao-of-china-and-the-global-silver-trade-of-the-16th-18th-centuries"
-            },
-            {
-              "title": "Global silver trade from the 16th to 19th centuries — Wikipedia",
-              "url": "https://en.wikipedia.org/wiki/Global_silver_trade_from_the_16th_to_19th_centuries"
             }
           ]
         },
         "deerhide": {
           "side": "supply",
-          "value": 0.62,
-          "verdict": "confirmed",
-          "basis": "사슴·상어·가오리 가죽은 일본의 수입품이었고 '주로 시암에서' 왔다는 것이 Boxer의 주석이다. 주인선의 목적지 상위가 코친차이나·시암·루손이라 마닐라가 그 환적점이 된다.",
+          "value": 0.46,
+          "verdict": "probable",
+          "basis": "시암·루손의 사슴 가죽이 여기서 환적되어 중국·일본으로 갔다. 이 섬들이 그 산지다.",
           "sources": [
             {
-              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
-              "url": "https://archive.org/details/dli.ernet.448023"
-            },
-            {
-              "title": "Red seal ships (朱印船) — Wikipedia",
-              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+              "title": "Quanzhou",
+              "url": "https://en.wikipedia.org/wiki/Quanzhou"
             }
           ]
         },
         "spice": {
           "side": "supply",
-          "value": 0.7,
-          "verdict": "confirmed",
-          "basis": "월항 인선의 '동양(東洋)' 목적지가 필리핀·몰루카·칼리만탄이다. 몰루카 향료가 마닐라를 거쳐 복건으로 흘렀다.",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "몰루카 향료가 여기서 환적됐다. 산지가 아니라 중계값이라 아덴·캘리컷보다 높다.",
           "sources": [
             {
-              "title": "Yuegang — Wikipedia",
-              "url": "https://en.wikipedia.org/wiki/Yuegang"
-            },
-            {
-              "title": "東西洋考 卷七 — 維基文庫",
-              "url": "https://zh.wikisource.org/wiki/%E6%9D%B1%E8%A5%BF%E6%B4%8B%E8%80%83/%E5%8D%B7%E4%B8%83"
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
             }
           ]
         },
         "silk": {
-          "side": "demand",
-          "value": 1.46,
-          "verdict": "confirmed",
-          "basis": "1573년 첫 갈레온 두 척이 중국 비단 712필과 자기 22,300점을 실었다. Boxer는 마닐라를 '중국과 멕시코 사이에서 비단과 은이 바뀌는 중간역'이라 부른다. 1600년경 복건 정크 40~50척이 해마다 들어왔다.",
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "corrected",
+          "basis": "복건 정크가 부려 놓은 생사가 갤리온을 기다리는 자리다. 수요로 적혀 있으면 마닐라→아카풀코 구간에 실을 것이 없어진다 — 갤리온 화물의 대부분이 이 생사였다. 광저우(0.50)와 나란한 것이 환적값이라는 뜻이다.",
           "sources": [
             {
-              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
-              "url": "https://archive.org/details/dli.ernet.448023"
-            },
-            {
-              "title": "Manila galleon — Wikipedia",
+              "title": "Manila galleon",
               "url": "https://en.wikipedia.org/wiki/Manila_galleon"
             }
           ]
         },
         "ceramic": {
           "side": "demand",
-          "value": 1.38,
-          "verdict": "confirmed",
-          "basis": "같은 1573년 화물에 자기 22,300점이 있다. 아카풀코행 화물의 부피를 채운 것이 자기였다.",
+          "value": 1.4,
+          "verdict": "probable",
+          "basis": "자기는 반대로 사들인다 — 취안저우 덕화요에서 정크가 싣고 오고 그것이 갤리온으로 옮겨진다.",
           "sources": [
             {
-              "title": "C.R. Boxer, The Great Ship from Amacon (1959) — 전문 (부록 B의 1600년경 상인 각서 포함)",
-              "url": "https://archive.org/details/dli.ernet.448023"
+              "title": "Dehua porcelain",
+              "url": "https://en.wikipedia.org/wiki/Dehua_porcelain"
             },
             {
-              "title": "Manila galleon — Wikipedia",
+              "title": "Manila galleon",
               "url": "https://en.wikipedia.org/wiki/Manila_galleon"
             }
           ]
         },
         "lacquer": {
-          "side": "demand",
-          "value": 1.3,
+          "side": "supply",
+          "value": 0.58,
           "verdict": "probable",
-          "basis": "남만칠기가 갈레온에 실려 누에바에스파냐로 건너갔다. 다만 마닐라에서의 수량·시세는 확인하지 못했다.",
+          "basis": "유럽행 남만칠기가 여기서 실렸다. 일본에서 온 물건을 다시 내보내는 자리이므로 산지로 적되 배율은 얕다.",
           "sources": [
             {
-              "title": "Nanban trade — Wikipedia",
-              "url": "https://en.wikipedia.org/wiki/Nanban_trade"
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
             }
           ]
         },
         "musk": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "probable",
+          "basis": "중국 사향이 정크에 실려 와 갤리온으로 넘어갔다. 부피가 작고 값이 커 태평양 화물로 알맞았다.",
+          "sources": [
+            {
+              "title": "Musk",
+              "url": "https://en.wikipedia.org/wiki/Musk"
+            },
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
+            }
+          ]
+        },
+        "cochineal": {
           "side": "demand",
           "value": 1.28,
           "verdict": "probable",
-          "basis": "광저우 시장에서 유럽 상인이 사향을 사 갔다는 목록에 기대어 그 종착지의 하나로 두었다. 시세는 못 찾았다.",
+          "basis": "아메리카 코치닐이 갤리온에 실려 와 중국 비단을 물들였다. 은 다음가는 서행 화물이 염료였다.",
           "sources": [
             {
-              "title": "Japan voyage (나우 두 트라투) — Wikipedia",
-              "url": "https://en.wikipedia.org/wiki/Japan_voyage"
+              "title": "Cochineal",
+              "url": "https://en.wikipedia.org/wiki/Cochineal"
+            },
+            {
+              "title": "Manila galleon",
+              "url": "https://en.wikipedia.org/wiki/Manila_galleon"
             }
           ]
         }
