@@ -11,7 +11,7 @@ import { blit } from '../pixel.js';
 import {
   SHIPS, CITY_BY_ID, GOOD_BY_ID, CANNONS, CANNON_KEYS, CANNON_REFUND,
   TROOPS, RECRUITS, TROOP_REFUND, MELEE_SLOTS,
-  REFITS, REFIT_KEYS, SHOTS, SHOT_KEYS,
+  REFITS, REFIT_KEYS, SHOTS, SHOT_KEYS, REGION_OF_CITY,
 } from '../data.js';
 import {
   state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT, repairUnit,
@@ -270,11 +270,30 @@ function yardUpgradeCard() {
   ]);
 }
 
+/* ★ **이 바다의 배가 먼저 온다.**
+   목록은 `Object.entries(SHIPS)` 순서, 곧 권역 파일이 합쳐진 순서 그대로였다. 지중해·대서양이
+   앞이고 동아시아가 맨 뒤라, 나가사키 조선소를 열면 **화면 첫 스무 줄이 전부 유럽 배**다.
+   실플레이에서 테스터가 첫 갈아탈 배로 **스페인 카라벨**을 골랐고 *"동아시아 배가 한 척도 없다"*고
+   적었다(ISSUES #5). 실제로는 스물여덟 척이 살 수 있었고 **마흔 줄 아래에 있었다.**
+   ⇒ 후보에서 빠지는 문제가 아니라 **순서** 문제였으므로 `sellsShip`은 그대로 두고 여기서 정렬한다.
+   ★ 단순한 UX가 아니다 — 권역 패권의 조건 ④가 *"그 권역 최고 tier 배를 몬다"*(`hegemonyOf: topShip`)라,
+     그 바다 배가 눈에 안 띄면 완주 조건이 화면에서 막힌다.
+   순서: ① 지금 가진 배 ② 이 바다에서 난 배 ③ 지금 살 수 있는 배 ④ 나머지 — 그 안에서는 원래 순서. */
+function shipOrder(cityId) {
+  const here = REGION_OF_CITY[cityId];
+  const idx = Object.keys(SHIPS);
+  const rank = (k) => (state.fleet[k] ? 0
+    : SHIPS[k].home === here ? 1
+    : sellsShip(k, cityId) ? 2 : 3);
+  return (a, b) => (rank(a) - rank(b)) || (idx.indexOf(a) - idx.indexOf(b));
+}
+
 function shipTab() {
   const upgradeCard = yardUpgradeCard();
   const rows = [];
   const seenKey = preview || state.shipKey;
-  for (const [key, s] of Object.entries(SHIPS)) {
+  const order = Object.keys(SHIPS).sort(shipOrder(state.at)).map((k) => [k, SHIPS[k]]);
+  for (const [key, s] of order) {
     const rec = state.fleet[key];
     const aboard = state.shipKey === key;
     const here = rec && rec.at === state.at;
