@@ -15,6 +15,7 @@ import {
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
+  tamedIn, passOff, tipOff, regionHasHolding, huntLegs,
   knowPort, holdingTip,
   /* 동료 — 코멘다(P3). 규칙은 `state.js`, 값은 `data.js: COMMENDA` */
   matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
@@ -407,15 +408,23 @@ function mateCard() {
 
   const rows = [];
   if (mine.length) {
+    /* ★ **밑절미를 정직하게 적는다**(ISSUES #30). *"이익의 50%"*는 순이익으로 읽히는데
+       실제로 떼는 것은 **매매차익**이고 항해비·급여·보험·유지비는 전부 플레이어가 문다.
+       그리고 **지금까지 그가 가져간 액수**를 보여 준다 — 실플레이에서 19일에 3,263닢이었는데
+       화면 어디에도 그 수가 없었다. 「언제 내릴 것인가」는 그 수를 봐야 정해진다. */
+    const took = crewMates().reduce((a, m) => a + (m.earned || 0), 0);
     rows.push(el('div.ctr-sub', {
-      text: `함께 가는 사람 ${mateCount()}/${mateCap()}명 — 이익의 ${Math.round(mateCut() * 100)}%가 이들 몫이다`,
+      text: `함께 가는 사람 ${mateCount()}/${mateCap()}명 — **매매차익**의 ${Math.round(mateCut() * 100)}%가 이들 몫이다`
+          + ' (항해비·급여·보험은 내가 문다)'
+          + (took ? ` · 여태 ${took.toLocaleString('ko-KR')}닢 가져갔다` : ''),
       style: { color: mateCut() > 0.5 ? '#c98a6a' : '#8f8878' },
     }));
     for (const m of mine) {
       rows.push(svcRow(`${m.name} · ${m.title}`,
-        `${m.joint ? '쌍무' : '편무'} — 이익의 ${Math.round((m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole) * 100)}%`
-        + (m.stake ? ` · 밑천 ${m.stake.toLocaleString('ko-KR')}닢을 댔다` : '')
-        + ` · 일당 ${m.wage}닢`,
+        `${m.joint ? '쌍무' : '편무'} — 매매차익의 ${Math.round((m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole) * 100)}%`
+        + (m.stake ? ` · 밑천 ${m.stake.toLocaleString('ko-KR')}닢을 댔다(내리면 돌려준다)` : '')
+        + ` · 일당 ${m.wage}닢`
+        + (m.earned ? ` · 여태 ${m.earned.toLocaleString('ko-KR')}닢` : ''),
         '내린다', false, () => {
           const r = dismissMate(m.id);
           if (!r.ok) return toast(r.reason, 'bad');
@@ -432,7 +441,7 @@ function mateCard() {
     /* ★ **두 계약을 나란히 놓는다.** 초반엔 쌍무가 자본을 주고(밑천 > 계약금) 후반엔 그 절반이
        순손실이 된다 — 같은 사람이 단계마다 다른 값이라는 것이 이 장치의 전부다. */
     rows.push(svcRow(`편무 — 계약금 ${(m.hire ?? 0).toLocaleString('ko-KR')}닢`,
-      `이익의 ${Math.round(COMMENDA.cutSole * 100)}%를 가져간다. 밑천은 안 댄다.`,
+      `**매매차익**의 ${Math.round(COMMENDA.cutSole * 100)}%를 가져간다(항해비는 내가 문다). 밑천은 안 댄다.`,
       '태운다', full || (m.hire ?? 0) > state.gold, () => {
         const r = hireMate(m.id, { joint: false });
         if (!r.ok) return toast(r.reason, 'bad');
@@ -440,8 +449,8 @@ function mateCard() {
         refreshHUD(); refreshLog(); after();
       }));
     rows.push(svcRow(`쌍무 — 계약금 ${(m.hire ?? 0).toLocaleString('ko-KR')}닢 · 밑천 +${stake.toLocaleString('ko-KR')}닢`,
-      `그가 ${stake.toLocaleString('ko-KR')}닢을 대고 이익의 ${Math.round(COMMENDA.cutJoint * 100)}%를 가져간다.`
-      + ' 내릴 때 밑천은 돌려준다.',
+      `그가 ${stake.toLocaleString('ko-KR')}닢을 대고 **매매차익**의 ${Math.round(COMMENDA.cutJoint * 100)}%를 가져간다`
+      + '(항해비는 내가 문다). 내릴 때 밑천은 돌려준다 — 다만 **파산하면 그도 함께 잃는다**.',
       '태운다', full || (m.hire ?? 0) > state.gold, () => {
         const r = hireMate(m.id, { joint: true });
         if (!r.ok) return toast(r.reason, 'bad');
@@ -681,12 +690,28 @@ function hegemonyCard() {
        ★ 해적을 약하게 만들지 않는다 — 강한 채로 **고를 수 있게** 하는 것이다.
        ★ 자리를 새 카드로 빼지 않은 이유: 사이드패널은 이미 카드 열둘이라 열셋째가 넘으면
          출항 단추가 화면 밖으로 밀린다(947행 주석의 사고). 그래서 **명부 줄에 두 줄만** 얹는다. */
+    /* ★ **초무는 지우는 것이 아니라 내 편으로 만드는 것이다**(P6-4) — 그 효과를 화면이 말해야
+       24,000닢이 선택이 된다. 안 적으면 값만 나가고 아무 일도 안 난 것으로 보인다. */
+    const tamedN = tamedIn(rid);
+    if (tamedN) {
+      rows.push(el('div.ctr-sub', { style: { color: '#8fbf8a' },
+        text: `   초무 ${tamedN}명 — 과소기로 이 바다 조우 −${Math.round(passOff(rid) * 100)}%`
+            + ` · 남은 명부의 소식값 −${Math.round(tipOff(rid) * 100)}%`
+            + (regionHasHolding(rid) ? '' : ` (이 바다에 거점이 없으면 ${ROSTER.tameGraceDays}일 뒤 식는다)`) }));
+    }
     const chase = activeBounty();
     const chased = chase ? rosterOpenIn(rid).find((d) => d.id === chase.id) : null;
     if (chased) {
+      /* ★ **사냥터를 이름으로 적어 준다**(P6-1·P6-5). `huntedOnLeg`는 `riskKey`가 `def.hunt`와
+         **정확히 일치**해야 열리므로, 어느 구간인지를 화면이 말해 주지 않으면 그 규칙은 없는 것과 같다.
+         그리고 그 구간은 **무역으로도 흑자**다(명부 40명 전수 적자 0) — 빈 배로 돌 이유가 없다. */
+      const legs = huntLegs(chased);
       rows.push(el('div.ctr-sub', { style: { color: '#c9b98a' },
         text: `   쫓는 중 — ${chased.name} · ${CITY_BY_ID[chased.base]?.name ?? chased.base} 언저리`
-            + ` (${chase.until - state.day}일 남음). 그 구간으로 나가면 만난다.` }));
+            + ` (${chase.until - state.day}일 남음)`
+            + (legs.length ? ` · 사냥터 ${legs.map(([a, b]) => `${CITY_BY_ID[a].name}↔${CITY_BY_ID[b].name}`).join(' · ')}` : '') }));
+      rows.push(el('div.ctr-sub', { style: { opacity: 0.75 },
+        text: '   그 구간을 **짐을 싣고** 도는 것이 순찰이다 — 값나가는 짐일수록 그자가 붙는다.' }));
     }
     const opens = rosterOpenIn(rid);
     const den = opens.filter((d) => d.base === city.id);
@@ -705,7 +730,8 @@ function hegemonyCard() {
     }
     for (const d of den) {
       rows.push(svcRow(`${d.name}을 초무한다 — ${tamePrice(d).toLocaleString('ko-KR')}닢`,
-        '여기가 그자의 소굴이다. 값을 치르면 명부에서 이름이 지워진다 — 격파보다 비싸지만 이길 필요가 없다.',
+        '여기가 그자의 소굴이다. 값을 치르면 **그가 내 편이 된다** — 사라지는 것이 아니라'
+        + ` 이 바다에서 일한다(조우 −${Math.round(ROSTER.passOddsOff * 100)}% · 남은 명부의 소식값 −${Math.round(ROSTER.tipOffPer * 100)}%).`,
         '값을 친다', tamePrice(d) > state.gold, () => {
           const r = tamePirate(d, city.id);
           if (!r.ok) return toast(r.reason, 'bad');

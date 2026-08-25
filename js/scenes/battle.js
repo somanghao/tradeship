@@ -10,7 +10,7 @@ import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS } from '../data.js';
 import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
   shotStock, useShot, fleeBonus, fleeOdds, fleeWord, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL, regionOf,
-  originPerk, matePerk, recordSlain,
+  originPerk, matePerk, recordSlain, oweBounty,
   /* 동행 선단 — **규칙은 전부 state.js의 순수 함수**이고 여기서는 부르기만 한다.
      포화력이 얹히고(consortGunBonus), 갑판이 두꺼워지고(consortMeleeBoost),
      맞는 것을 나눠 받는다(spreadDamage — 크게 상한 배는 여기서 가라앉는다). */
@@ -623,6 +623,11 @@ function finish(kind) {
   const mult = kind === 'capture' ? 1 : 0.45;
   const coin = Math.round((lo + Math.random() * (hi - lo)) * mult);
   state.gold += coin;
+  /* ★ **현상금은 여기서 안 준다** — 목에 걸린 값은 나포심판 뒤 **항구에서** 받는다(P6-2).
+     격침이면 시신을 못 내놓으므로 격파와 같은 비율(`mult`)을 그대로 문다. */
+  const bounty = e.bounty
+    ? oweBounty(e.name, Math.round((e.bounty[0] + Math.random() * (e.bounty[1] - e.bounty[0])) * mult))
+    : 0;
 
   const gained = [];
   if (kind === 'capture') {
@@ -642,6 +647,10 @@ function finish(kind) {
 
   const rows = el('div.result-list', {}, [
     el('div.result-row', {}, [el('span', { text: '노획 금화' }), el('b', { text: coin.toLocaleString('ko-KR') + '닢' })]),
+    bounty && el('div.result-row', {}, [
+      el('span', { text: '목에 걸린 값' }),
+      el('b', { text: `${bounty.toLocaleString('ko-KR')}닢 — 항구에서 받는다` }),
+    ]),
     gained.length && el('div.result-row', {}, [el('span', { text: '노획 화물' }), el('b', { text: gained.join(', ') })]),
     prize && el('div.result-row', {}, [
       el('span', { text: '적선' }),

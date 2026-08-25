@@ -14,7 +14,7 @@ import {
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  knowPort, priceKnown, priceOf,
+  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey, activeBounty,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
@@ -342,6 +342,8 @@ function arrive(cityId) {
   /* ★ 닿으면 **그 항구와 가까운 이웃 몇 곳**의 값이 함께 열린다(`state.js: knowPort` → P5).
      `state.known.add`를 손으로 쓰면 이웃이 안 열려 초행 벌금이 그대로 남는다. */
   const scouted = knowPort(cityId).opened;
+  /* ★ 밀린 현상금은 **입항해서** 받는다(P6-2) — 이기고 나서 항구까지 살아 돌아와야 한다. */
+  const bounties = payBounties();
   const c = CITY_BY_ID[cityId];
   pushLog(`${days}일 항해 끝에 ${c.name}에 입항했다.`
         + ` (일당 ${cost.wages} · 보급 ${cost.supplies}`
@@ -362,6 +364,10 @@ function arrive(cityId) {
   }
   if (cost.expired) {
     pushLog(`${CITY_BY_ID[cost.expired.to].name} 납품 기한을 넘겨 위약금 ${cost.expired.fine}닢을 물었다.`, 'bad');
+  }
+  if (bounties) {
+    const who = bounties.list.map((d) => d.name).join(' · ');
+    pushLog(`관에서 목에 걸렸던 값을 치렀다 — ${who} · ${bounties.total.toLocaleString('ko-KR')}닢.`, 'good');
   }
   if (scouted.length) {
     const names = scouted.map((id) => CITY_BY_ID[id].name).join(' · ');
@@ -917,6 +923,20 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
 원한다 — ${dem.join(' · ')}` : '') + line;
   };
 
+  /* ★ **사냥터를 항로 카드에 짚어 준다**(P6-5). `huntedOnLeg`는 `riskKey(a,b)`가 `def.hunt`와
+     **정확히 일치**해야 열리므로, 어느 줄이 그 구간인지를 화면이 말해 주지 않으면 그 규칙은
+     사실상 없는 것과 같다 — **이 표시가 실제 성공률을 정한다.** 규칙은 한 줄도 안 바뀐다.
+     그리고 그 구간은 무역으로도 흑자다(명부 40명 전수 적자 0) — 짐을 싣고 도는 것이 순찰이다. */
+  const chased = (() => {
+    const b = activeBounty();
+    if (!b) return null;
+    return ALL_PIRATES.find((d) => d.id === b.id) ?? null;
+  })();
+  const huntHere = (to) => {
+    if (!chased) return null;
+    return ((chased.hunt ?? []).includes(riskKey(state.at, to)) || chased.base === to) ? chased.name : null;
+  };
+
   const rows = inSea.map((id) => {
     const c = CITY_BY_ID[id];
     const d = voyageDays(state.at, id);
@@ -935,7 +955,9 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
            + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
            + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')'
            + goodsHint(c)
-           + (state.known.has(id) ? '' : '\n★ 아직 못 가 본 항구다 — 시세는 닿아야 안다'),
+           + (huntHere(id) ? `\n★ ${huntHere(id)}의 사냥터다 — 여기서 그자를 만난다.`
+                             + '\n   짐이 값나갈수록 그자가 붙는다 — 빈 배로 돌 이유가 없다.' : '')
+           + (priceKnown(id) ? '' : '\n★ 아직 값을 모르는 항구다 — 시세는 닿거나 거점을 세워야 안다'),
       onclick: () => startVoyage(id),
     }, [
       /* 처음 가는 곳은 이름 옆에 표를 단다 — 값을 모르고 들어간다는 것이 곧 위험이다 */
@@ -944,6 +966,9 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
         priceKnown(id) ? null : el('span', {
           text: ' 초행', style: { color: '#8fb4d8', fontSize: '10.5px' },
         }),
+        huntHere(id) ? el('span', {
+          text: ' 사냥터', style: { color: '#d0a04a', fontSize: '10.5px' },
+        }) : null,
       ].filter(Boolean)),
       el(`span.rw.${w.kind || 'calm'}`, { text: w.text }),
       el(`span.rw.${dg.kind || 'calm'}`, { text: threat ? `${dg.text}·${threat}` : dg.text }),

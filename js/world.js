@@ -497,14 +497,14 @@ export function removeNpc(id) {
   state.npcs = (state.npcs || []).filter((n) => n.id !== id);
 }
 
-/* ── 닫힌 이름은 바다에서도 내린다 ────────────────────────────
+/* ── 꺾은 이름은 바다에서도 내린다 ────────────────────────────
    ★ `pickDef`는 **새로 만들 때** 닫힌 명부를 후보에서 빼지만, **이미 떠 있는 배**는 그대로 둔다.
-     그래서 초무한 자가 며칠 뒤 내 항로를 막았다 — 920닢을 치르고 *"이제 우리 배는 건드리지 않는다"*를
-     받았는데 39일 뒤 그자와 싸워 나포했고 `tamed`와 `slain`이 **둘 다 박혔다**(supremacy ISSUES #26).
-     **돈을 치르고 산 약속이 안 지켜지면 초무라는 길 자체를 아무도 안 산다.**
-   ⇒ 명부를 닫는 순간 그 이름의 배를 세계에서 지운다. 정원은 안 줄인다 — 다음 `worldTick`이
-     그 자리를 **얼굴 없는 배**로 채운다(`makePirate`의 `standIn` 폴백). 곧 바다가 안전해지지는 않는다:
-     사라지는 것은 **이름과 현상금**뿐이라는 `rosterOf` 주석의 규약 그대로다. */
+     그래서 꺾은 자가 다음 날 소굴에 서 있었다.
+   ⚠️ **격파에만 쓴다 — 초무에는 안 쓴다.** 초무한 자는 사라지는 것이 아니라 **내 편이 되어
+     그 바다에서 일한다**(과소기·토벌 협조 → `data.js: ROSTER`). 지워 봐야 정원이 안 줄어
+     `standIn`이 얼굴 없는 배로 그 자리를 채우므로 **바다가 하나도 안 안전해진다** —
+     24,000닢을 내고 체크리스트에서 이름 하나가 지워질 뿐이다. (한 번 그렇게 고쳤다가 되돌렸다.)
+   정원은 안 줄인다 — 사라지는 것은 **이름과 현상금**뿐이라는 `rosterOf` 주석의 규약 그대로다. */
 setRetireHook((id) => retireRosterShip(id));   // 명부가 닫히면 `state.js`가 이것을 부른다
 
 export function retireRosterShip(pirateId) {
@@ -592,11 +592,16 @@ export function pirateEnemy(n) {
     crew: Math.max(10, Math.round(s.crewMax * (0.35 + lv * 0.09))),
     level: lv, prize: n.shipKey,
     troops: PIRATE_TROOPS[lv],
+    /* ★ **현상금은 지갑에 안 섞는다**(P6-2). 전에는 `loot.gold`에 더해 넣고 `capLoot`이 통째로
+       눌렀는데, 그 상한의 정당화는 *"낡은 바사 갑판에 여섯이 서서 갤리엇의 금고를 통째로 옮길 수는
+       없다"* — **옮겨 싣는 것**이라 상한이 있는 것이다. 그런데 **현상금은 옮겨 싣는 물건이 아니다.**
+       사료: 나포 포상(prize money)은 **나포심판소의 판결 뒤 항구에서** 관이 장부로 치른 돈이고
+       갑판 인원과 무관했다. 그래서 `bounty`로 따로 들려 보내고 `capLoot`을 안 지난다.
+       ⚠️ **액수는 한 닢도 안 바꾼다.** 상한을 안 걸 뿐이다. 대신 **입항해서 받는다** —
+         이기고 나서 항구까지 살아 돌아와야 한다는 대가가 하나 생긴다. */
+    bounty: n.bounty ? [...n.bounty] : null,
     loot: {
-      // 현상금이 걸린 자는 잡으면 그만큼 더 나온다 — 일부러 찾아갈 이유가 생긴다
-      gold: n.bounty
-        ? [Math.round(gold * 0.6) + n.bounty[0], gold + n.bounty[1]]
-        : [Math.round(gold * 0.6), gold],
+      gold: [Math.round(gold * 0.6), gold],
       goods: Object.keys(n.cargo).length ? Object.keys(n.cargo)
            : (n.lootGoods ?? ['salt', 'wine']),
     },

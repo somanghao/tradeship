@@ -123,6 +123,10 @@ export const state = {
      ★ **평범한 객체다(Set이 아니다)** — `save.js`가 `state`를 통째로 JSON으로 눕히므로
        Set을 새로 만들면 `SET_KEYS`에 손을 대야 하고, 그 목록은 조용히 낡는다.
        날짜를 값으로 두면 "언제 꺾었나"까지 남아 나중에 화면이 쓸 수 있다. */
+  /* 아직 못 받은 **현상금** — `[{ name, coin }]`. 나포심판이 항구에서 치르는 돈이라
+     싸움터가 아니라 **다음 입항**에서 들어온다(`payBounties`). 옮겨 싣는 것이 아니므로
+     `capLoot`을 안 지난다(P6-2 · `data.js: SPOILS_*` 주석의 정당화가 여기엔 안 맞는다). */
+  bountyDue: [],
   /* 들러 보진 않았지만 **값은 아는 항구** — `{ <도시id>: 들은 날 }`.
      ★ `known`(실제로 들른 곳)과 **갈라 둔다.** `metFactions()`가 `known`을 세어
        「만난 세력」을 내므로, 소문으로 들은 항구를 거기 섞으면 **가 본 적 없는 세력을
@@ -1600,7 +1604,11 @@ export function sell(goodId, qty) {
   }
   /* ★ **동료의 코멘다 몫** — 부관 성과급과 **같은 자리**에서, 오직 남은 이익에서만 나간다.
      밑진 거래에서는 떼지 않는다(손해에 수수료까지 물면 되팔기가 아예 막힌다).
-     편무 25% · 쌍무 50%는 사료 그대로다 → `data.js: COMMENDA`. */
+     편무 25% · 쌍무 50%는 사료 그대로다 → `data.js: COMMENDA`.
+     ⚠️ **밑절미는 「매매차익」이지 「순이익」이 아니다** — 항해비·급여·보험·유지비는 플레이어가 문다.
+       근거 JSON(`commendaSplit`)에 **경비를 누가 물었는지가 없어서** 비율을 못 바꾼다
+       (없는 근거로 수치를 만들지 않는다는 이 저장소 규약). 대신 **화면이 그렇게 말한다** —
+       *"매매차익의 N% · 항해비는 내가 문다"*. 실플레이가 *"이익의 50%"*를 순이익으로 읽었다(ISSUES #30). */
   let mcut = 0;
   const mrate = mateCut();
   if (profit - cut > 0 && mrate > 0) {
@@ -1923,6 +1931,17 @@ export function liquidate() {
   state.contract = null;
   state.gold = BANKRUPT.seedGold;
   if (state.boons) state.boons.loan = null;    // ★ 배가 사라지면 채무도 사라진다
+  /* ★ **코멘다도 여기서 끝난다** — 안 끝내면 청산 뒤에도 동료가 갑판에 남아 50%를 떼고,
+     내리는 순간 밑천이 **빚으로 부활한다**(실플레이 663일차: 1,800닢 · supremacy ISSUES #29).
+     그러면 *"셈이 끝났다 — 빚은 없다"*가 거짓이 되고, ★3이 세운 「끝이 있는 실패」가 무너진다.
+     ★ **사료가 그 답을 준다 — 코멘다는 대차가 아니라 공동 위험 인수다.** 쌍무 콜레간자에서
+       항해자가 댄 1/3은 *그도 그 항해에 건 자본*이라, 배와 짐이 사라지면 **양쪽이 함께 잃는다** —
+       그가 투자자에게 물어낼 것이 없다. 해상대차(배가 사라지면 채무 소멸)와 **같은 논리의 다른 얼굴**이다.
+     ⇒ 밑천은 **돌려주지 않는다**(`dismissMate`를 안 거친다). 전략적 파산이 되지도 않는다 —
+       거기 닿으려면 금고·정박선·창고 짐·배를 먼저 다 잃어야 한다. */
+  const mateN = mateCount();
+  const mateStakes = Object.values(state.mates ?? {}).reduce((a, m) => a + (m.stake || 0), 0);
+  state.mates = {};
   /* 선원 — 대부분 떠나고 배를 뜨게 할 최소 인원만 남는다. **삯은 못 받은 채로다**
      (소설 `story/CHARACTERS.md` — *"아덴의 파산 뒤에도 삯을 못 받은 채 남는 셋"*). */
   state.crewMax = s.crewMax;
@@ -1932,8 +1951,13 @@ export function liquidate() {
   state.everOwned?.add(keep);
 
   pushLog('파산했다. 채권자가 배와 짐을 가져가고 셈이 끝났다 — 빚은 없다.', 'bad');
+  if (mateN) {
+    pushLog(`함께 걸었던 ${mateN}명도 부두에 내렸다.`
+          + (mateStakes ? ` 그들이 댄 밑천 ${mateStakes.toLocaleString('ko-KR')}닢도 같이 잃었다 —`
+                          + ' 코멘다는 빌린 돈이 아니라 함께 건 돈이다.' : ''), 'bad');
+  }
   pushLog(`남은 것은 ${s.name} 한 척과 ${BANKRUPT.seedGold}닢, 그리고 여태 열어 둔 항구들이다.`, 'warn');
-  return { lostShips, kept: keep, gold: state.gold };
+  return { lostShips, kept: keep, gold: state.gold, mates: mateN, mateStakes };
 }
 
 /* ── 명부 사냥 — 찾아갈 수 있게 한다 ───────────────────────────
@@ -1947,12 +1971,30 @@ export function liquidate() {
      (b) `bounty-tip`  그자가 지금 어느 구간을 도는지를 산다 → 그 구간에 나가면 **그자가 온다**
      (c) 초무(招撫)     못 이길 상대는 **소굴 항구에서 값을 치러** 명부를 닫는다(격파보다 비싸다)
    ⚠️ **해적을 약하게 만들지 않는다.** 문제는 강해서 못 잡는 것이 아니라 만날 수가 없는 것이었다.
-   값은 `data.js: ROSTER`(`tipRate`·`tipFloor`·`tipDays`·`tameMult`). */
+   값은 `data.js: ROSTER`(`tipRate`·`bountyFloorRate`·`tipDays`·`tameMult`·과소기). */
 
 /** 이 바다에서 아직 이름이 안 지워진 자들 — 명부(`ALL_PIRATES`)가 정본이다 */
 export function rosterOpenIn(regionId) {
   return ALL_PIRATES.filter((d) => (!regionId || d.region === regionId)
     && !state.slain?.[`pirate:${d.id}`] && !state.tamed?.[d.id]);
+}
+
+/** 목에 걸린 값을 적어 둔다 — **항구에서 받는다**(나포심판 뒤 관이 치르는 돈) */
+export function oweBounty(name, coin) {
+  if (!(coin > 0)) return 0;
+  (state.bountyDue ??= []).push({ name: name ?? '이름 없는 자', coin: Math.round(coin) });
+  return Math.round(coin);
+}
+
+/** 입항하면 밀린 현상금을 받는다. `arrive`가 부른다 — 이기고 **살아 돌아와야** 받는다. */
+export function payBounties() {
+  const due = state.bountyDue ?? [];
+  if (!due.length) return null;
+  const total = due.reduce((a, d) => a + d.coin, 0);
+  state.gold += total;
+  book('income', 'loot', total);
+  state.bountyDue = [];
+  return { total, list: due };
 }
 
 /** 명부가 닫힐 때 그 배를 세계에서 내리는 자리 — `world.js`가 꽂는다(`setRetireHook`).
@@ -1961,9 +2003,54 @@ export function rosterOpenIn(regionId) {
 let retireHook = null;
 export const setRetireHook = (fn) => { retireHook = fn; };
 
-/** 소식 값 — 현상금의 일부. 정보상 `fee`(70~240)와 같은 자릿수가 되게 하한을 둔다 */
-export const bountyTipPrice = (def) =>
-  Math.max(ROSTER.tipFloor, Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tipRate));
+/* ── 초무한 자가 그 바다에서 일한다 (과소기 · 토벌 협조) ────────
+   ★ 효과는 **그 권역에 매인다** — 무라카미의 과소기가 카리브에서 통할 리 없다.
+     그리고 **갱신해야 산다**: 그 바다에 거점이 없으면 `ROSTER.tameGraceDays` 뒤에 식는다
+     (이름을 대 줄 사람이 그 항구에 없기 때문이다 · `BOON.permitDays`와 같은 논리). */
+
+/** 그 권역에서 **지금 효과가 살아 있는** 초무의 수 */
+export function tamedIn(regionId) {
+  if (!regionId) return 0;
+  let n = 0;
+  for (const [id, day] of Object.entries(state.tamed ?? {})) {
+    const def = ALL_PIRATES.find((d) => d.id === id);
+    if (!def || def.region !== regionId) continue;
+    const fresh = state.day - day <= (ROSTER.tameGraceDays ?? Infinity);
+    if (fresh || regionHasHolding(regionId)) n++;
+  }
+  return n;
+}
+
+/** 그 권역에 내 거점이 하나라도 있나 — 과소기를 갱신해 줄 자리 */
+export function regionHasHolding(regionId) {
+  for (const id of Object.keys(state.holdings ?? {})) {
+    if (REGION_OF_CITY[id] === regionId) return true;
+  }
+  return false;
+}
+
+/** 과소기 — 그 권역 해적 조우 확률의 **상대감소**(0~cap) */
+export function passOff(regionId) {
+  return Math.min(ROSTER.passOddsCap ?? 0, tamedIn(regionId) * (ROSTER.passOddsOff ?? 0));
+}
+
+/** 토벌 협조 — 그 권역 **남은 명부**의 소식값 할인(0~cap) */
+export function tipOff(regionId) {
+  return Math.min(ROSTER.tipOffCap ?? 0, tamedIn(regionId) * (ROSTER.tipOffPer ?? 0));
+}
+
+/** 소식 값 — 현상금의 일부. 정보상 `fee`(70~240)와 같은 자릿수가 되게 하한을 둔다.
+    ★ **초무한 자가 동료의 소재를 안다** — 그 권역에 초무가 있으면 소식이 싸진다(토벌 협조). */
+export const bountyTipPrice = (def) => {
+  const b = def?.bounty ?? [0, 0];
+  /* 하한은 **그자의 현상금 하한**에 묶인다 — 잔챙이 소식이 잔챙이 값보다 비싸면 사다리가 거꾸로 선다 */
+  const base = Math.max(
+    ROSTER.tipFloorAbs ?? 0,
+    Math.round((b[0] ?? 0) * (ROSTER.bountyFloorRate ?? 0)),
+    Math.round((b[1] ?? 0) * ROSTER.tipRate),
+  );
+  return Math.max(1, Math.round(base * (1 - tipOff(def?.region))));
+};
 
 /** 초무 값 — 격파하면 현상금을 **받고**, 초무하면 그 상한의 두 배를 **낸다** */
 export const tamePrice = (def) => Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tameMult);
@@ -1975,7 +2062,26 @@ export function activeBounty() {
   return b;
 }
 
-/** 소식을 산다 — 그자를 `ROSTER.tipDays` 동안 **만날 수 있게** 된다 */
+/** 그자의 사냥터 구간들 — `'a|b'` 키를 도시 쌍으로 편다(실재하는 항로만) */
+export function huntLegs(def) {
+  const out = [];
+  for (const key of def?.hunt ?? []) {
+    const [a, b] = String(key).split('|');
+    if (!CITY_BY_ID[a] || !CITY_BY_ID[b]) continue;
+    out.push([a, b]);
+  }
+  return out;
+}
+
+/** 소식을 산다 — 그자를 `ROSTER.tipDays` 동안 **만날 수 있게** 된다.
+    ★ **그 구간의 시세도 함께 판다**(P6-1). 실플레이에서 삼도의 왜구 사냥이 −301닢이었는데,
+      명부 40명의 사냥터를 무역으로 뛰어 보면 **적자가 하나도 없다**(중앙 1,986닢/일 · 기준선의 1.16배).
+      당연하다 — **해적은 털 것이 지나가는 곳에 앉아 있다.** 게임이 그 사실을 화면에서 말하지 않아
+      플레이어가 **빈 배로 순찰**했을 뿐이다. 그러니 고칠 것은 현상금이 아니라 **정보**다.
+    ★ 사료도 한 사람이다 — 상관망(팩토리아)의 편지에는 *"어느 항로에 코르세어가 있다"*와
+      *"그 항구의 후추 값이 얼마다"*가 **같은 장에** 적혔다. 상인에게 둘은 같은 정보였기 때문이다
+      (`voyage-evidence.json: lossCause` — 손실 원인의 60%가 코르세어).
+    ⚠️ **값은 한 닢도 안 올렸다**(`tipRate` 그대로 · 하한은 P6-4에서 *내렸다*). 주는 것은 정보뿐이다. */
 export function buyBountyTip(def) {
   if (!def?.id) return { ok: false, reason: '이 소식은 팔 것이 없다' };
   const fee = bountyTipPrice(def);
@@ -1984,11 +2090,25 @@ export function buyBountyTip(def) {
   state.gold -= fee;
   book('outgo', 'port', fee);
   b.bounty = { id: def.id, until: state.day + ROSTER.tipDays };
+  /* ★ 소식에 **그 구간의 시세가 딸려 온다** — 정보상이 위험과 시세를 같이 팔았다. */
+  const legs = huntLegs(def);
+  const opened = [];
+  const m = (state.scouted ??= {});
+  for (const [a, c] of legs) {
+    for (const id of [a, c]) {
+      if (priceKnown(id)) continue;
+      m[id] = state.day;
+      opened.push(id);
+    }
+  }
   const where = CITY_BY_ID[def.base]?.name ?? def.base;
+  const legWord = legs.map(([a, c]) => `${CITY_BY_ID[a].name}↔${CITY_BY_ID[c].name}`).join(' · ');
   pushLog(`${def.name}의 소식을 샀다 — ${where} 언저리를 돈다고 한다 (${ROSTER.tipDays}일).`, 'warn');
-  return { ok: true, fee, kind: 'bounty-tip', def,
+  if (legWord) pushLog(`그자가 노리는 구간: ${legWord}. 그 항구들 시세도 함께 들었다.`, 'good');
+  return { ok: true, fee, kind: 'bounty-tip', def, legs, opened,
            line: `${def.name}${josa(def.name, '이/가')} ${where} 언저리에 있다.`
-               + ` ${ROSTER.tipDays}일 안에 그 구간으로 나가면 만난다.` };
+               + ` ${ROSTER.tipDays}일 안에 그 구간으로 나가면 만난다.`
+               + (legWord ? ` 사냥터는 ${legWord} — **그 구간을 무역하며 도는 것이 순찰이다.**` : '') };
 }
 
 /** 초무 — **그자의 소굴 항구에서만** 값을 치른다. 명부가 닫히고 악명은 안 오른다 */
@@ -2005,10 +2125,10 @@ export function tamePirate(def, cityId = state.at) {
   state.gold -= fee;
   book('outgo', 'port', fee);
   (state.tamed ??= {})[def.id] = state.day;
-  /* ★ **바다에 떠 있는 그 배도 내린다.** `pickDef`는 새로 만들 때만 닫힌 명부를 거르므로,
-     이미 떠 있던 배는 그대로 남아 초무한 자가 며칠 뒤 항로를 막았다(ISSUES #26).
-     `state`는 `world`를 모르므로(모듈 방향) **후크로 받는다** — `world.js`가 자기를 꽂는다. */
-  retireHook?.(def.id);
+  /* ★ **그자를 지우지 않는다.** 초무는 「돈으로 사라지게 하는 것」이 아니라 「내 편으로 만드는 것」이고,
+     지워 봐야 `standIn`이 얼굴 없는 배로 그 자리를 채워 **바다가 하나도 안 안전해진다.**
+     대신 **그자가 내 배를 안 건드리고**(조우 갈래가 `rosterClosed`로 거른다) **그 바다에서 일한다**
+     (`passOff`·`tipOff` → `data.js: ROSTER`). ISSUES #26이 그 규칙으로 풀린다. */
   pushLog(`${def.name}${josa(def.name, '을/를')} 초무했다 — ${fee.toLocaleString('ko-KR')}닢.`
         + ' 그자는 하던 일을 바꾸지 않았지만, 이제 우리 배는 건드리지 않는다.', 'good');
   return { ok: true, fee, kind: 'tame', def };
@@ -3405,8 +3525,12 @@ export function encounterOdds({ from, to, threat = 0, lure = null } = {}) {
   if (risk === null) return 0;                       // 오스만 내해·육로
   const bait = lure == null ? cargoLure() : cargoLure(lure);
   /* 악명이 조우를 부른다 — 털린 쪽이 배를 띄워 찾아다닌다 */
-  return Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait
-                          + infamyOdds(from, to));
+  const raw = Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait
+                                + infamyOdds(from, to));
+  /* ★ **과소기** — 초무한 자가 있는 바다에서는 덜 만난다(`data.js: ROSTER.passOddsOff`).
+     `infamyOdds`와 **부호만 반대인 자리**이고, 악명은 더하고 과소기는 곱해서 던다
+     (악명은 "찾아온다"이고 과소기는 "그냥 지나간다"라 성질이 다르다). */
+  return raw * (1 - passOff(REGION_OF_CITY[from] ?? REGION_OF_CITY[to]));
 }
 
 /** 위험도 라벨 — 출항 카드에 띄운다. 확률이 달라져도 못 읽으면 판단이 안 생긴다. */
@@ -4096,7 +4220,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
     regard: {}, _regardAge: 0,
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
-    mates: {}, scouted: {}, slain: {}, tamed: {}, ended: 0, endedNine: 0,
+    mates: {}, scouted: {}, bountyDue: [], slain: {}, tamed: {}, ended: 0, endedNine: 0,
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
