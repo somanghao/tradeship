@@ -22,8 +22,13 @@ const DOCS = join(ROOT, '.claude', 'docs');
 /* CRLF를 세지 않는 크기 — git이 줄끝을 바꾸므로 `wc -c`만 보면 잘못 판정한다 */
 const sizeOf = (p) => {
   const b = readFileSync(p);
-  const lines = b.toString('utf8').split('\n').length - 1;
-  return b.length - lines;
+  /* ⚠️ **줄 수가 아니라 `
+`의 수를 뺀다.** 줄 수를 빼면 LF로 체크아웃된 트리에서
+     같은 파일이 줄 수만큼 작게 잡힌다 — 워크트리(LF)에서 통과한 문서가 메인(CRLF)에서
+     실패했고, 그 130B 차이를 실제 초과로 오인해 멀쩡한 줄을 깎을 뻔했다. */
+  let crlf = 0;
+  for (let i = 1; i < b.length; i++) if (b[i] === 10 && b[i - 1] === 13) crlf++;
+  return b.length - crlf;
 };
 
 const ALWAYS = join(DOCS, 'claude-memory.md');
