@@ -6,11 +6,15 @@ import {
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf,
-  contractOffer, START_GOLD,
+  contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
   millBatchCap, runMill, collectMill, worksUpkeepDue, settleWorks,
+  /* 거점의 유예·매각과 파산 — 「바닥에는 바닥의 규칙이 있다」 */
+  hasHolding, ownsHolding, holdingIdle, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
+  storeCap, payFine, debtOwed, nothingLeft, enforceDebt, settlePayroll, resaleOf,
 } from '../js/state.js';
+import { HOLDING, BANKRUPT, MONTH_DAYS } from '../js/data.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
    `node tools/test-rules.mjs`가 **exit 0**을 돌려주었고, 자동 회차와 문서는 그것을
@@ -355,7 +359,7 @@ resetGame();
   ok(due === Math.round(67230 * 0.10 * (30 / 360)), `30일 유지비 ${due}닢 = 들인 돈의 연 10%`);
   state.gold = 0;
   const s1 = settleWorks('venezia');
-  ok(s1.idle && !s1.seized, '못 내면 곧바로 압류가 아니라 **휴업**이다 (거점과 다른 자리)');
+  ok(s1.idle && !s1.seized, '못 내면 곧바로 압류가 아니라 **휴업**이다');
   state.day += 30;
   ok(worksUpkeepDue('venezia') === Math.round(due * 0.5), '휴업 중에는 유지비를 절반만 문다 — 그래도 0은 아니다');
   const s2 = settleWorks('venezia');
@@ -373,4 +377,99 @@ resetGame();
   // ★ 패권 조건을 건드리지 않는다 — 시설은 `works`에 있고 `hegemonyOf`는 `holdings`만 센다
   ok(!('works' in (state.holdings.venezia ?? {})),
      '시설은 `state.works`에 있고 `state.holdings`에 얹히지 않는다 — 패권 조건이 안 바뀐다');
+}
+
+/* ── 바닥에는 바닥의 규칙이 있다 — 거점 유예·매각과 파산 ────────
+   ★ 실플레이(supremacy ISSUES #3·#4)가 낸 두 구멍을 지킨다:
+     ① 유지비 **3닢**을 못 내 2,000닢짜리 거점이 그 자리에서 압류됐다
+     ② 금고 0 · 빚만 30일마다 ×1.25로 불면서 **36일이 그냥 비었다**
+   여기서 보는 것은 값이 아니라 **규칙의 뼈대**다 — 유예가 있나 · 되팔 수 있나 ·
+   빚에 끝이 있나 · 청산이 판을 끝내지 않나. 근거는 `data.js: HOLDING·BANKRUPT`의 주석. */
+{
+  // ① 거점 — 한 번은 문을 닫고, 두 번째에 넘어간다 (`settleWorks`와 같은 모양)
+  resetGame('venezia');
+  state.gold = 300000; state.crew = 10;
+  buyHolding('rental', 'venezia');
+  const spent = state.holdings.venezia.spent;
+  state.day += HOLDING.upkeepEvery; state.gold = 0;
+  const h1 = settleHolding('venezia');
+  ok(h1.idle && !h1.seized && !!state.holdings.venezia,
+     `거점도 못 내면 곧바로 압류가 아니라 **문을 닫는다** (미납 ${h1.due - h1.paid}닢)`);
+  ok(!hasHolding('rental', 'venezia') && ownsHolding('rental', 'venezia'),
+     '문을 닫으면 특전은 멈추고 소유는 남는다 — 유예가 공짜가 아닌 자리');
+  ok(storeCap('venezia') === 0, '문을 닫은 창고에는 새로 맡길 수 없다');
+  ok(holdingUpkeepDue('venezia')
+       === Math.round(spent * HOLDING.upkeepRate * (HOLDING.upkeepEvery / 360) * HOLDING.idleRate),
+     '문을 닫은 동안에는 유지비를 절반만 문다 — 그래도 0은 아니다');
+  state.gold = 5000;
+  const h2 = settleHolding('venezia');
+  ok(!h2.idle && hasHolding('rental', 'venezia'),
+     '밀린 것을 내면 **그 자리에서** 다시 문을 연다 — 다음 청구일까지 기다리지 않는다');
+
+  resetGame('venezia');
+  state.gold = 300000; buyHolding('rental', 'venezia');
+  state.day += HOLDING.upkeepEvery; state.gold = 0; settleHolding('venezia');
+  state.day += HOLDING.upkeepEvery;
+  ok(settleHolding('venezia').seized && !state.holdings.venezia,
+     `두 번 연속 못 내면 그때 넘어간다 (seizeAfter ${HOLDING.seizeAfter})`);
+
+  // ② 거점 매각 — 들인 돈의 40%만 돌아온다(저금통이 되지 않게)
+  resetGame('venezia');
+  state.gold = 300000; buyHolding('rental', 'venezia');
+  const put = state.holdings.venezia.spent, purse = state.gold;
+  const sold = sellHolding('venezia');
+  ok(sold.ok && sold.back === Math.round(put * HOLDING.sellBack) && state.gold === purse + sold.back,
+     `거점을 되팔면 들인 ${put.toLocaleString('en-US')}의 ${Math.round(HOLDING.sellBack * 100)}%인 `
+     + `${sold.back.toLocaleString('en-US')}닢만 돌아온다`);
+  ok(!state.holdings.venezia && holdingsValue('venezia') === 0, '판 거점은 패권 집계에서도 빠진다');
+
+  // ③ 빚에 끝이 있다 — 채권자가 집행하고, 배를 넘기면 셈이 끝난다
+  resetGame('venezia');
+  state.crew = 6; state.gold = 0;
+  payFine(900, '시험');
+  ok(debtOwed() > 0 && nothingLeft(),
+     '금고 0 · 짐 0 · 정박선 0 · 거점 0이면 「팔 것이 하나도 없다」로 잡힌다');
+  state.day += MONTH_DAYS;
+  const pay1 = settlePayroll(() => 1);
+  ok(pay1.enforced?.liquidated,
+     '팔 것이 없으면 유예를 기다리지 않고 곧바로 집행한다 — 빈 30일을 만들지 않는다');
+  ok(debtOwed() === 0 && state.shipKey === BANKRUPT.keepShip && state.gold === BANKRUPT.seedGold,
+     `청산: 배를 넘기면 빚이 사라지고 ${SHIPS[BANKRUPT.keepShip].name} 한 척과 `
+     + `${BANKRUPT.seedGold}닢이 남는다 (해상대차)`);
+  ok(state.payroll.arrears === 0 && cargoUsed() === 0 && !state.contract,
+     '체불·실은 짐·맡은 주문도 그 자리에서 정리된다 — 판은 끝나지 않는다');
+
+  // ④ 값나가는 배를 작은 빚에 통째로 잃지 않는다 — 잉여는 돌아온다
+  resetGame('venezia');
+  state.crew = 10; state.gold = 500000;
+  purchaseShip('carrack'); boardShip('carrack');
+  delete state.fleet.hulk;
+  state.gold = 0;
+  payFine(400, '작은 위약금');
+  state.day += MONTH_DAYS;
+  const pay2 = settlePayroll(() => 1);
+  ok(pay2.enforced?.liquidated && pay2.enforced.surplus > resaleOf('carrack') * 0.8,
+     `배를 넘기고 남은 ${pay2.enforced?.surplus?.toLocaleString('en-US')}닢이 돌아온다`
+     + ` (캐랙 매각가 ${resaleOf('carrack').toLocaleString('en-US')})`);
+
+  // ⑤ 채권자는 부동산을 못 가져간다 — 그 대신 내가 던질 수 있다
+  resetGame('venezia');
+  state.crew = 6; state.gold = 300000;
+  buyHolding('rental', 'venezia');
+  state.gold = 0;
+  payFine(9000, '큰 위약금');
+  for (let i = 0; i < 4 && debtOwed() > 0; i++) { state.day += MONTH_DAYS; settlePayroll(() => 1); }
+  ok(!!state.holdings.venezia,
+     '청산해도 거점은 남는다 — 해상대차의 담보는 **배와 화물**이지 부동산이 아니다');
+
+  // ⑥ 기한을 넘긴 위약금도 빚으로 남는다 (스스로 파기한 것과 같은 취급)
+  resetGame('venezia');
+  state.crew = 6; state.gold = 0;
+  acceptContract();
+  const adv = state.contract?.advance ?? 0;
+  state.gold = 0;
+  state.day = state.contract.due + 1;
+  advanceDays(1, { from: 'venezia', to: 'venezia' });
+  ok(adv === 0 || debtOwed() > 0,
+     '기한을 넘긴 위약금도 증발하지 않고 빚으로 남는다 — 자진 파기와 같은 취급');
 }

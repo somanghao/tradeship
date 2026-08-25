@@ -13,6 +13,8 @@
 |---|---|---|
 | 시세 · 가격 공식 · 산지/수요 · `wobble` · 매매 · 손익 · 매입가 · 화물/적재 · 항해 일수 · 항해비 · 초기 조건 · 무역 곡선 | [wiki/economy-trade.md](wiki/economy-trade.md) | `js/data.js`(GOODS·CITY_TRADE·SPREAD·MARKET·TARIFF) · `js/state.js`(priceOf·buy/sell·voyageCost) |
 | **부관 · 부선장 · 에이미** · 급여 · 성과급 · 입항세 감면 · 시장압력 감면 | [wiki/officer.md](wiki/officer.md) | `js/data.js: OFFICER` · `js/state.js`(officerPerk·voyageCost의 officer·sell의 cut) |
+| **거점**(임차창고·창고·상관·조선대·부두) · 유지비 · 문 닫음 · 압류 · **되팔기** · 창고 보관 | [wiki/economy-trade.md](wiki/economy-trade.md) §거점 | `js/data.js: HOLDINGS·HOLDING` · `js/state.js`(buyHolding·settleHolding·**sellHolding**·ownsHolding/hasHolding·storeGoods) · 화면 `scenes/port.js: holdingCard` |
+| **빚 · 파산 · 채권자 집행 · 청산** · 금고 0에서 무슨 일이 일어나나 · 왜 배를 넘기면 셈이 끝나나 | [wiki/payroll.md](wiki/payroll.md) §7 | `js/data.js: BANKRUPT·BOON`(loan*) · `js/state.js`(payFine·debtOwed·**nothingLeft·enforceDebt·liquidate**·settlePayroll) · 화면 `js/payday.js` |
 | **급여 정산 · 급여일 · 체불 · 불만 · 이탈 · 화물 절도 · 장부 · 결산 화면** | [wiki/payroll.md](wiki/payroll.md) | `js/state.js`(payroll·ledger·`book`·`settlePayroll`·`stealCargo`·`MONTH_DAYS`·`DESERT_AT`) · 화면 `js/payday.js` · 검증 `node tools/test-payroll.mjs` |
 | **술집 · 선원 등용 · 무리 · 기질 · 계약금 · 요구 일당** · 선원이 왜 0명으로 시작하나 · 부두 인부 | [wiki/crew-tavern.md](wiki/crew-tavern.md) | `js/data.js: TAVERN·CREW_TRAITS·CREW_NAMES` · `js/state.js`(tavernCrews·recruitBand·avgCrewWage·trimBands) · 씬 `js/scenes/tavern.js` · 검증 `node tools/test-tavern.mjs` |
 | **교역품 물가 고증** · 밀·소금·기름·와인·후추가 서로 몇 배였나 · 화물 1칸은 실제로 얼마인가 · **대조 2축의 정본** | 근거 JSON이 곧 문서다(주석이 상세) | **`content/goods-evidence.json`** → 검증 `node tools/check-prices.mjs` |
@@ -33,12 +35,14 @@
 | 교역품 추가 | `data.js: GOODS` + `sprites/icons.js`에 아이콘 |
 | 차익 폭(돈 버는 속도) | `data.js: SPREAD` — 이 한 계수가 무역 곡선 전체를 좌우한다 |
 | 시세 변동폭·주기 | `state.js: wobble()` (3일 주기 ±15%) |
-| 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`) |
+| 대량 거래 벌점 | `data.js: MARKET` (`depthPerSize`·`impact`·`cap`·`decay`·`gateDepth`) — **선단이 이것을 뚫는지 재는 도구는 `node tools/sim-fleet.mjs 30 40`.** 만지기 전에 §3의 함정을 읽을 것 |
 | 입항세 | **두 겹** — `data.js: TARIFF`(size별 기본율) + `CITY_TARIFF`(그 도시만의 오버라이드). 오버라이드를 적으면 `content/regions/<권역>-evidence.json`의 `cities[id].tariff`에도 같은 값과 근거를 적는다 |
 | 입항세를 읽는 함수 | 항구의 성질 → **`state.js: baseTariff()`** · 지금 실제로 무는 값(부관 특전 포함) → `tariffRate()` |
 | 항해비 갈래 | `state.js: voyageCost()` — 일당(**`avgCrewWage()`** — 술집에서 누구를 태웠나로 갈린다·기본 `CREW_WAGE` 1.2)·보급(`SUPPLY_UNIT` 1.3)·선체(`HULL_UPKEEP`×`SHIPS[].upkeep`)·무장(`ARM_UPKEEP`)·선단·**적하보험**(`INSURANCE_RATE`×항로요율×화물가치)·부관 |
 | 시작 조건(금화·선원·배) | `state.js: START_GOLD`(200) · `resetGame()` — **선원 0명**으로 시작한다. 값의 근거는 [payroll.md](wiki/payroll.md) §6 |
 | **한반도 갈래 다섯**(신분 특전·시작 항구) | `data.js: ORIGINS` — 특전은 **조선 항구에서만**(`joseonOnly`). 소설 쪽 사본표(`story/PROTAGONISTS.md` §6-1 · `story/GAME-LINK.md` 갈래표)와 어긋나면 `node tools/check-origins.mjs`가 실패시킨다 |
+| 거점 값·유지비·유예·매각 회수율 | `data.js: HOLDINGS`(값·특전) · `HOLDING`(유지비 연 6% · `idleRate` 0.5 · `seizeAfter` 2 · **`sellBack` 0.40**) |
+| 빚·파산 문턱 | `data.js: BANKRUPT`(`rollsBefore` 2 · `keepShip` hulk · `seedGold` = `START_GOLD`) · 이자·주기는 `BOON.loanRate/loanDays` |
 | 급여 주기·불만·이탈 문턱 | `state.js: MONTH_DAYS`(30) · `UNREST_PER_MISS`·`UNREST_HEAL`·`DESERT_AT` · 참을성은 `data.js: CREW_TRAITS[].temper` |
 | 선원 무리의 값·기질 | `data.js: TAVERN`(cycle·slots·band·emptyOdds·**advanceUnit**) · `CREW_TRAITS`(wageMul·advMul·troop·temper) → [crew-tavern.md](wiki/crew-tavern.md) |
 | 부관 급여·성과급·능력 | `data.js: OFFICER` — `wage`·`cut`·`perks`는 **한 묶음**이라 함께 재측정. 고치면 `content/wage-evidence.json`도 같은 커밋에서 → [officer.md](wiki/officer.md) |
@@ -52,6 +56,10 @@
 > (예전에 `QUICKMAP-trade.md §3`으로 인용된 *"수요만 있고 산지가 0이면 그 칸은 아예 죽는다"* 등).
 
 - **★ 짝지어 잰 뒤에는 「짝지은 차이의 중앙값」을 봐라 — 두 중앙값을 나누면 짝짓기가 도로 풀린다.** 같은 자료에서 `median(B) ÷ median(A)`가 **−14%**, 짝지은 차이가 **+0.0%**였다(다른 판이 중앙에 온다). 시드를 맞추는 것은 절반이고 **비교도 짝 안에서** 해야 한다.
+- **★ 못 낸 돈에 「끝」을 두지 않으면 *게임 오버 없는 게임 오버*가 된다.** 빚 규칙(`payFine`)만 넣고 갚을 수단을 안 넣어, 금고 0·화물 0인 판이 **36일을 그냥 떠다녔다**(supremacy ISSUES #3 — 살 돈이 없어 못 사고 실은 것이 없어 못 팔고, 빚만 30일마다 ×1.25로 불었다). 지금은 **집행과 청산**이 있다(`enforceDebt`·`liquidate` → [wiki/payroll.md](wiki/payroll.md) §7). ⇒ **새로 "못 내면 빚"을 만들 때는 그 빚이 어디서 끝나는지를 같은 커밋에서 정해라.**
+- **★ 압류액과 미납액의 자릿수가 달라지면 그것은 규칙이 아니라 사고다.** 유지비 **3닢**을 못 내 **2,000닢**짜리 거점이 그 자리에서 넘어갔다(ISSUES #4). 지금은 거점도 시설(`settleWorks`)과 같은 모양으로 **한 번은 문을 닫고 두 번째에 압류**한다. 같은 이유로 청산도 **넘긴 배값이 빚보다 크면 잉여를 돌려준다** — 빚 500닢에 갈레온(매각가 10,725닢)을 통째로 잃지 않게. **자산을 몰수하는 규칙을 쓸 때는 미납액과의 비를 먼저 계산해 볼 것.**
+- **거점은 `ownsHolding`(소유)과 `hasHolding`(일함)이 갈린다.** 유지비가 밀려 문을 닫으면 소유는 남고 특전만 멈춘다 — **목록·중복구매 판정은 `ownsHolding`**, 세 감면·시장 깊이·공업력 같은 **특전은 `hasHolding`**이다. 섞으면 문 닫힌 거점이 화면에서 사라지고 "세운다" 단추가 다시 떠 **같은 거점을 두 번 사서 `spent`가 두 배**가 된다.
+- **★ `planFor()`는 한계마진이 0이 되면 멈춘다 — 「칸당 이익 × 화물칸」을 항차 이익으로 적지 마라.** 화물칸을 45→2,298로 키워도 **실제로 채우는 칸은 45→128**밖에 안 되므로, 곱셈으로 적으면 없는 수입이 생긴다. 이 한 줄이 「2,298칸 선단이 한 항차 69,124닢(갈레온의 7.1배)을 벌어 시장 깊이를 뚫는다」는 판정을 낳았지만 **실제 항차 순이익은 1,504→2,102닢**이고, 동행 여덟을 **공짜로** 얹은 판은 오히려 **1,842 → −355닢**이었다(유지비만 늘고 팔 곳이 없다). ⇒ **`MARKET.cap`을 완만한 곡선이나 점근선으로 바꾸면 벌점이 지금보다 *낮아져* 수익이 오른다 — 고칠 자리가 아니다.** 물량 벌점을 재는 스크립트는 **반드시 `used`(채운 칸)를 함께 출력**해야 한다. 정본 도구 `node tools/sim-fleet.mjs 30 40`. (2026-08-25 정정)
 - **★ 밸런스를 재기 전에 `sim-core.mjs`의 *플레이 전략*부터 의심하라.** 곡선이 나쁘게 나오면 게임이 아니라 시뮬의 행동 규칙이 범인일 수 있다. 실제로 "선체 60% 미만이면 전액 수리"가 **누수 2pt/일짜리 시작배**에 적용돼 하루 28닢(급여의 3배)을 태웠고, 그 탓에 20판 중 18판이 배를 한 척도 못 샀다 — 게임은 멀쩡했다. 지금은 **누수 있는 배는 수리하지 않는다**. ⇒ `START_GOLD = 200`의 근거("완주 8/12")도 그 잘못된 전략으로 잰 값이라 **다시 재야 한다**. → [wiki/playtest-log.md](wiki/playtest-log.md) §4-2
 - **★ 수직계열화 시설은 `state.works`다 — `HOLDINGS`에 얹지 말고 `state.industry`라 부르지도 마라.** `hegemonyOf()`가 `state.holdings`를 세므로 같은 그릇에 담으면 **권역 패권 조건이 조용히 바뀐다.** 이름 쪽은 `city.industry`·`state.yards`와 셋이 뒤섞이는 함정이다. 함정 넷 더(신규 가공품 산지 배율·`settleWorks` 배선·`SET_KEYS`·양쪽 tick) → [wiki/vertical-chain.md](wiki/vertical-chain.md) §6
 - **★ 항구에는 시간이 없다 — 고정비를 설계할 때 이것부터 본다.** `advanceDays()`는 **`js/scenes/map.js:318` 한 곳에서만** 불린다. 곧 날·보급·유지비·급여 발생은 **항해할 때만** 일어나고 정박은 공짜가 아니라 **존재하지 않는다.** "정박 중에도 삯이 나간다" 류의 규칙은 비용 한 줄이 아니라 *체류 일수·그 일수를 쓰는 행동·표시*까지 붙는 **시간 모델 신설**이다. 배관은 절반 깔려 있다 — 급여는 발생주의(`state.payroll.due`)에 월 정산(`settlePayroll`)이고 체불·이탈까지 있다. 없는 것은 **항구에서 날을 흘리는 입구 하나**뿐이다. → 사양은 `story/GAME-LINK.md` §8 A-1b

@@ -13,7 +13,7 @@
 // ★ 화면은 규칙을 다시 구현하지 않는다. 금액 판정은 전부 `state.js`가 하고
 //   여기서는 그 값을 읽어 배치할 뿐이다(대시보드와 같은 원칙).
 
-import { GOOD_BY_ID, CITY_BY_ID, OFFICER, CREW_TRAITS } from './data.js';
+import { GOOD_BY_ID, CITY_BY_ID, OFFICER, CREW_TRAITS, SHIPS } from './data.js';
 import {
   state, settlePayroll, payrollOwed, ledgerTotal, MONTH_DAYS,
   pushLog, cargoUsed, priceOf, DESERT_AT, cargoCapTotal,
@@ -286,9 +286,34 @@ function report(r, onDone) {
     }));
   }
 
+  /* ★ **채권자의 집행은 이 게임에서 가장 무거운 한 줄이다.** 항해일지에만 적으면
+     "왜 배가 사라졌나"를 모달에서 못 읽는다 — 급여일 화면이 그 자리를 갖는 이유가 그것이다.
+     규칙은 `state.js: enforceDebt·liquidate`, 근거는 `data.js: BANKRUPT`. */
+  const e = r.enforced;
+  if (e) {
+    if (e.liquidated) {
+      lines.push(el('p.pay-danger', {
+        html: '<b>파산했다.</b> 채권자가 배와 짐을 가져가고 셈이 끝났다 — 빚은 없다. '
+            + '남은 것은 낡은 바사 한 척과 밑천, 그리고 여태 열어 둔 항구들이다.',
+      }));
+      if (e.surplus) {
+        lines.push(el('p.pay-warn', { html: `배를 넘기고 남은 <b>${won(e.surplus)}닢</b>이 돌아왔다.` }));
+      }
+    } else {
+      const lost = e.ships.map((k) => SHIPS[k].name).join(' · ');
+      lines.push(el('p.pay-danger', {
+        html: `<b>채권자가 빚 ${won(e.need)}닢을 집행했다.</b>`
+            + (lost ? ` <b>${lost}</b>${josa(lost, '을/를')} 넘겼다.` : '')
+            + (e.stored ? ` 창고에 둔 짐 ${e.stored}개도 갔다.` : '')
+            + (e.surplus ? ` 남은 ${won(e.surplus)}닢이 돌아왔다.` : ''),
+      }));
+    }
+  }
+
   refreshLog();
   modal({
-    title: r.missed > 0 ? '급여를 다 치르지 못했다' : '급여 지급 완료',
+    title: e ? (e.liquidated ? '파산 — 셈이 끝났다' : '채권자가 집행했다')
+             : r.missed > 0 ? '급여를 다 치르지 못했다' : '급여 지급 완료',
     body: el('div', {}, lines),
     actions: [{ label: '알겠다' }],
   });

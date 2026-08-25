@@ -4,7 +4,7 @@ import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS,
+import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
          WORK, FACTIONS, REGARD } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
@@ -14,8 +14,8 @@ import {
   hasOfficer, paydayDue, paydayDeferred, daysToPayday, payrollOwed, regionOf,
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
-  hasHolding, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
-  storeGoods, takeGoods, holdingUpkeepDue, settleHolding,
+  hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
+  storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   portDayCost, waitDays, dischargeCrew, recallCrew, settleYard,
   endingProgress, markEnded,
   /* 권역 패권 — 규칙은 `state.js`, 값은 `data.js: HEGEMONY`. 여기서는 보여주기만 한다 */
@@ -740,8 +740,12 @@ function waitCard() {
    ★ **후반에 금화가 갈 곳**이자 *"짐을 쪼갠다"*를 처음 전략으로 만드는 자리다 —
    창고에 둔 짐은 시장을 누르지 않는다(`state.js: storeGoods`). 값과 효과는 `data.js: HOLDINGS`. */
 function holdingCard() {
-  const mine = HOLDING_KEYS.filter((k) => hasHolding(k, city.id));
-  const next = HOLDING_KEYS.filter((k) => !hasHolding(k, city.id));
+  /* ★ 목록은 **소유**(`ownsHolding`)로 센다. `hasHolding`은 특전용이라 유지비가 밀려
+     문을 닫은 동안 false가 되는데, 그것으로 세면 있는 거점이 화면에서 사라지고
+     "세운다" 단추가 다시 떠서 같은 거점을 두 번 사게 된다. */
+  const idle = holdingIdle(city.id);
+  const mine = HOLDING_KEYS.filter((k) => ownsHolding(k, city.id));
+  const next = HOLDING_KEYS.filter((k) => !ownsHolding(k, city.id));
   const cap = storeCap(city.id);
   const used = storedUsed(city.id);
   const stored = state.stored?.[city.id] ?? {};
@@ -753,10 +757,25 @@ function holdingCard() {
           + (cap ? ` <span style="opacity:.7">창고 ${used}/${cap}칸</span>` : ''),
     }));
     const due = holdingUpkeepDue(city.id);
+    if (idle) {
+      rows.push(el('div.ctr-sub', { style: { color: '#d05a4a' },
+        text: '유지비가 밀려 **문을 닫았다** — 특전이 멈췄고, 한 번 더 밀리면 넘어간다' }));
+    }
     if (due > 0) {
       rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
-        text: `유지비 ${due.toLocaleString('ko-KR')}닢이 밀려 있다 — 못 내면 빼앗긴다` }));
+        text: `유지비 ${due.toLocaleString('ko-KR')}닢이 밀려 있다 — 못 내면 ${idle ? '빼앗긴다' : '문을 닫는다'}` }));
     }
+    /* ★ **되팔 수 있다 — 헐값에.** 금고가 0이면 자산을 갖고도 굶는 자리가 있었다(ISSUES #3).
+       값이 들인 돈의 40%뿐이라 이득이 될 수 없고, 그래서 저금통이 아니라 탈출구다.
+       패권 집계에서 그 항구가 빠진다는 것을 **누르기 전에** 적어 준다 — 값을 숨기면 선택이 아니라 도박이다. */
+    rows.push(svcRow(`거점을 넘긴다 — +${holdingsValue(city.id).toLocaleString('ko-KR')}닢`,
+      `들인 돈의 ${Math.round(HOLDING.sellBack * 100)}%만 돌아온다. 창고에 둔 짐도 함께 넘어가고, 이 항구가 패권 집계에서 빠진다.`,
+      '넘긴다', false, () => {
+        const r = sellHolding(city.id);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`거점을 넘겼다 · +${r.back.toLocaleString('ko-KR')}닢`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
   }
 
   /* 창고에 맡기고 찾는다 — 시장 행마다 단추를 다는 대신 **한 칸씩** 옮긴다.

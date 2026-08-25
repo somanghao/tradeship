@@ -5,7 +5,7 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
-  HOLDINGS, HOLDING_KEYS, HOLDING, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  HOLDINGS, HOLDING_KEYS, HOLDING, BANKRUPT, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
   laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
@@ -428,8 +428,20 @@ export function boonTariffOff(cityId = state.at) {
 /* ── 거점 (A-1) ────────────────────────────────────────────────
    후반에 금화가 갈 곳. **자산이면서 고정비**라, 사고 나면 더 벌어야 지킬 수 있다. */
 
-/** 이 항구에 그 거점이 있나 */
-export const hasHolding = (kind, cityId = state.at) => !!state.holdings?.[cityId]?.[kind];
+/** 이 항구에 그 거점을 **가지고 있나** — 소유만 본다(문을 닫았어도 내 것이다).
+    패권 집계(`hegemonyOf`)가 세는 것이 이쪽이다. */
+export const ownsHolding = (kind, cityId = state.at) => !!state.holdings?.[cityId]?.[kind];
+
+/** 그 거점이 지금 **일하고 있나** — 특전을 읽는 자리는 전부 이쪽이다.
+    ★ 유지비가 밀려 문을 닫으면(`settleHolding`) 소유는 유지되지만 특전은 멈춘다.
+      "문을 닫은 상관은 상관이 아니다" — 유예가 공짜가 아니게 하는 자리다. */
+export const hasHolding = (kind, cityId = state.at) => {
+  const m = state.holdings?.[cityId];
+  return !!m?.[kind] && !m.idle;
+};
+
+/** 유지비가 밀려 문을 닫았나 */
+export const holdingIdle = (cityId = state.at) => !!state.holdings?.[cityId]?.idle;
 
 /** 그 거점의 값 — 도시 규모(또는 공업력)에 따라 다르다 */
 export function holdingPrice(kind, cityId = state.at) {
@@ -444,8 +456,11 @@ export function holdingPrice(kind, cityId = state.at) {
 export function canBuyHolding(kind, cityId = state.at) {
   const h = HOLDINGS[kind];
   if (!h) return { ok: false, reason: '그런 거점은 없다' };
-  if (hasHolding(kind, cityId)) return { ok: false, reason: '이미 있다' };
-  if (h.requires && !hasHolding(h.requires, cityId)) {
+  /* ★ 여기서만 `ownsHolding`을 쓴다 — 문을 닫은 거점도 **내 것**이라 다시 살 수 없다.
+     `hasHolding`(특전용)으로 보면 휴업 중에 같은 거점을 또 사서 `spent`가 두 배가 된다. */
+  if (ownsHolding(kind, cityId)) return { ok: false, reason: '이미 있다' };
+  if (holdingIdle(cityId)) return { ok: false, reason: '유지비가 밀려 문을 닫았다' };
+  if (h.requires && !ownsHolding(h.requires, cityId)) {
     const need = HOLDINGS[h.requires].name;
     return { ok: false, reason: `${need}${josa(need, '이/가')} 먼저다` };
   }
@@ -473,7 +488,7 @@ export function buyHolding(kind, cityId = state.at) {
 /** 이 항구에서 보관할 수 있는 칸 */
 export function storeCap(cityId = state.at) {
   const m = state.holdings?.[cityId];
-  if (!m) return 0;
+  if (!m || m.idle) return 0;      // 문을 닫으면 **새로 맡을 수 없다**(맡긴 것은 `takeGoods`로 찾아온다)
   let cap = 0;
   for (const k of HOLDING_KEYS) if (m[k]) cap = Math.max(cap, HOLDINGS[k].store ?? 0);
   return cap;
@@ -507,17 +522,24 @@ export function takeGoods(goodId, qty, cityId = state.at) {
   return { ok: true, n };
 }
 
-/** 30일마다 무는 거점 유지비 — 못 내면 압류된다 */
+/** 30일마다 무는 거점 유지비 — 못 내면 문을 닫고, 두 번째에 압류된다 */
 export function holdingUpkeepDue(cityId) {
   const m = state.holdings?.[cityId];
   if (!m) return 0;
   const days = state.day - (m.paid ?? state.day);
-  if (days < HOLDING.upkeepEvery) return 0;
-  const periods = Math.floor(days / HOLDING.upkeepEvery);
-  return Math.round((m.spent ?? 0) * HOLDING.upkeepRate * (HOLDING.upkeepEvery / 360) * periods);
+  if (!m.idle && days < HOLDING.upkeepEvery) return 0;
+  /* ★ 문을 닫은 동안에는 **언제 들러도 밀린 몫이 걸려 있다**(최소 한 몫). 안 그러면 다음 청구일이
+     올 때까지 낼 방법이 없어 "돈을 들고 왔는데 못 여는" 30일이 생기고, 그 30일 끝에 압류된다. */
+  const periods = Math.max(m.idle ? 1 : 0, Math.floor(days / HOLDING.upkeepEvery));
+  const full = (m.spent ?? 0) * HOLDING.upkeepRate * (HOLDING.upkeepEvery / 360) * periods;
+  // 문을 닫은 동안에는 절반만 문다 — 사람이 덜 붙기 때문이다. 대신 **0은 아니다**(방치가 답이 되지 않게).
+  return Math.round(full * (m.idle ? HOLDING.idleRate : 1));
 }
 
-/** 이 항구의 거점 유지비를 치른다(항구에 들어올 때). 못 내면 압류. */
+/** 이 항구의 거점 유지비를 치른다(항구에 들어올 때 · `settleWorks` 옆).
+    ★ 시설과 **같은 모양으로 유예를 한 번 거친다** — 한 번은 문을 닫고, 두 번째에 압류다.
+      전에는 유예가 없어 **3닢을 못 내 2,000닢짜리 거점이 그 자리에서 넘어갔다**(ISSUES #4).
+      근거와 값은 `data.js: HOLDING`의 주석. */
 export function settleHolding(cityId = state.at) {
   const m = state.holdings?.[cityId];
   if (!m) return null;
@@ -527,18 +549,61 @@ export function settleHolding(cityId = state.at) {
   state.gold -= paid;
   if (paid) book('outgo', 'port', paid);
   m.paid = state.day;
+  const name = CITY_BY_ID[cityId].name;
   if (paid >= due) {
-    pushLog(`${CITY_BY_ID[cityId].name} 거점 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'warn');
-    return { due, paid, seized: false };
+    if (m.idle) {
+      m.idle = false;
+      pushLog(`${name} 거점이 다시 문을 열었다 — 밀린 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'good');
+    } else {
+      pushLog(`${name} 거점 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'warn');
+    }
+    m.missed = 0;
+    return { due, paid, idle: false, seized: false };
   }
-  /* ★ 못 내면 **압류**다. 거점은 자산이면서 고정비라, 후반이 "그냥 부자"가 아니라
-     "더 벌지 않으면 지킬 수 없는" 구조가 된다. 짐도 함께 넘어간다. */
+  m.missed = (m.missed ?? 0) + 1;
+  if (m.missed >= HOLDING.seizeAfter) {
+    /* ★ 두 번째에 **압류**다. 거점은 자산이면서 고정비라, 후반이 "그냥 부자"가 아니라
+       "더 벌지 않으면 지킬 수 없는" 구조가 된다. 짐도 함께 넘어간다. */
+    delete state.holdings[cityId];
+    const lostGoods = state.stored?.[cityId];
+    if (lostGoods) delete state.stored[cityId];
+    pushLog(`${name} 거점을 유지비 ${(due - paid).toLocaleString('ko-KR')}닢 때문에 빼앗겼다.`
+          + (lostGoods && Object.keys(lostGoods).length ? ' 창고에 둔 짐도 함께 넘어갔다.' : ''), 'bad');
+    return { due, paid, idle: false, seized: true };
+  }
+  m.idle = true;
+  pushLog(`${name} 거점이 유지비 ${(due - paid).toLocaleString('ko-KR')}닢을 못 채워 **문을 닫는다**.`
+        + ' 한 번 더 밀리면 넘어간다.', 'bad');
+  return { due, paid, idle: true, seized: false };
+}
+
+/** 이 항구의 거점을 통째로 판다 — **헐값이다**(`HOLDING.sellBack`).
+    ★ 금고가 0일 때 자산을 갖고도 굶는 자리를 여는 문이다(ISSUES #3). 되파는 값이 들인 돈의
+      40%뿐이라 이득이 될 수 없고, 그래서 **위기의 탈출구일 뿐 전략이 되지 않는다.**
+      `sellMill`과 같은 갈래(`loot`)에 적는다 — 장부 항목을 늘리면 정산 모달도 함께 봐야 한다. */
+export function sellHolding(cityId = state.at) {
+  const m = state.holdings?.[cityId];
+  if (!m) return { ok: false, reason: '이 항구엔 거점이 없다' };
+  const back = Math.round((m.spent ?? 0) * HOLDING.sellBack);
+  const kinds = HOLDING_KEYS.filter((k) => m[k]).map((k) => HOLDINGS[k].name);
+  const lost = state.stored?.[cityId];
+  const lostN = lost ? Object.values(lost).reduce((a, b) => a + b, 0) : 0;
   delete state.holdings[cityId];
-  const lostGoods = state.stored?.[cityId];
-  if (lostGoods) delete state.stored[cityId];
-  pushLog(`${CITY_BY_ID[cityId].name} 거점을 유지비 ${(due - paid).toLocaleString('ko-KR')}닢 때문에 빼앗겼다.`
-        + (lostGoods && Object.keys(lostGoods).length ? ' 창고에 둔 짐도 함께 넘어갔다.' : ''), 'bad');
-  return { due, paid, seized: true };
+  if (lost) delete state.stored[cityId];
+  state.gold += back;
+  if (back) book('income', 'loot', back);
+  pushLog(`${CITY_BY_ID[cityId].name}의 ${kinds.join('·')}${josa(kinds.join('·'), '을/를')} 넘겼다`
+        + ` (+${back.toLocaleString('ko-KR')}닢 — 들인 돈의 ${Math.round(HOLDING.sellBack * 100)}%).`
+        + (lostN ? ` 창고에 둔 짐 ${lostN}개도 함께 넘어갔다.` : ''), 'warn');
+  return { ok: true, back, kinds, storedLost: lostN };
+}
+
+/** 지금 거점을 다 넘기면 얼마가 돌아오나 — 화면·검증이 읽는다 */
+export function holdingsValue(cityId = null) {
+  const ids = cityId ? [cityId] : Object.keys(state.holdings ?? {});
+  let v = 0;
+  for (const id of ids) v += (state.holdings?.[id]?.spent ?? 0) * HOLDING.sellBack;
+  return Math.round(v);
 }
 
 /* ── 수직계열화 ① 가공장 (A-9 1단계) ───────────────────────────
@@ -1518,20 +1583,44 @@ export function contractOffer(cityId = state.at, day = state.day) {
 
   const r1 = hash(cityId, slot, 'dest');
   const to = dests[Math.floor(r1 * dests.length)];
-  const wants = Object.keys(CITY_BY_ID[to].demand);
-  const goods = wants.length ? wants : GOODS.map((g) => g.id);
-  const goodId = goods[Math.floor(hash(cityId, slot, 'good') * goods.length)];
 
   const [pl, ph] = CONTRACT.payMul;
   const mul = pl + hash(cityId, slot, 'pay') * (ph - pl);
-  const unit = priceOf(to, goodId);
 
-  // 보수를 먼저 정하고 수량을 역산한다 — 품목이 비싸다고 계약이 통째로 커지지 않게.
+  /* 보수를 먼저 정하고 수량을 역산한다 — 품목이 비싸다고 계약이 통째로 커지지 않게.
+     ★ 그 보수의 크기를 **선복(船腹)**이 정한다 — 상관은 "이 배를 채워 오라"고 발주했지
+       상인의 재산을 보고 발주하지 않았다. 근거와 계수는 `data.js: CONTRACT`의 주석. */
   const [vl, vh] = CONTRACT.value;
   const scale = 0.6 + CITY_BY_ID[cityId].size * 0.28;          // 큰 항구일수록 큰 일감
-  const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale;
-  const [ql, qh] = CONTRACT.qty;
-  const qty = Math.max(ql, Math.min(qh, Math.round(target / Math.max(1, unit * mul))));
+  /* ★ 선단 전체(`cargoCapTotal`)가 아니라 **기함 한 척의 선복**이다.
+     사료가 말하는 것은 "단일 계약 = 선단 **한 척분** 화물값"이고, 선단 합으로 재면
+     동행을 늘리는 것이 그대로 계약 수입의 배수가 된다 — §5-L이 시장 깊이에서 지적한 것과
+     똑같은 구멍을 계약 쪽에 새로 파는 셈이다. 동행선의 몫은 "그 일감을 실을 수 있느냐"
+     (`acceptContract`의 `cargoCapTotal`)로만 온다. */
+  const cap = Math.max(1, state.cargoCap);
+  const [ml, mh] = CONTRACT.holdMul;
+  const hold = Math.min(mh, Math.max(ml, (cap / CONTRACT.holdRef) ** CONTRACT.holdPow));
+  const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale * hold;
+
+  /* ★ 작은 일감에는 값싼 물건이 걸린다.
+     수량에 하한(`qtyFloor`)이 있어서, 목표 보수가 작을 때 금괴·비단이 걸리면 다섯 개만으로도
+     규모가 통째로 튀어 오른다(금괴 5개 = 3,432닢). 그래서 **그 일감 크기로 다섯 개를 살 수 있는
+     물건**만 후보로 둔다. 사료 쪽도 같다 — 작은 배에 오는 주문은 곡물·소금·목재 같은 부피화물이었고
+     귀중품 위탁은 큰 상관이 큰 배에 맡겼다. 후보가 하나도 없으면 그 항구에서 가장 싼 것으로 간다
+     (일감이 사라지지는 않게 — 콘텐츠를 줄이지 않는다). */
+  const wants = Object.keys(CITY_BY_ID[to].demand);
+  const all = wants.length ? wants : GOODS.map((g) => g.id);
+  const room = target * 1.25;
+  const fits = all.filter((id) => priceOf(to, id) * CONTRACT.qtyFloor * mul <= room);
+  const goods = fits.length ? fits
+    : [all.reduce((a, b) => (priceOf(to, a) <= priceOf(to, b) ? a : b))];
+  const goodId = goods[Math.floor(hash(cityId, slot, 'good') * goods.length)];
+  const unit = priceOf(to, goodId);
+
+  /* 수량 상한도 선복이 정한다 — 기함 화물칸의 1.2배까지(고정 64였다. 그 고정값이 값싼 부피화물이
+     걸린 큰 배의 일감을 눌러 놓고 있었다). 값싼 물건이 걸렸을 때만 실제로 문다. */
+  const qhi = Math.max(CONTRACT.qtyFloor, Math.round(cap * CONTRACT.qtyCap));
+  const qty = Math.max(CONTRACT.qtyFloor, Math.min(qhi, Math.round(target / Math.max(1, unit * mul))));
   // 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
   const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp') + originPerk('contractUp', cityId)));
 
@@ -1541,7 +1630,9 @@ export function contractOffer(cityId = state.at, day = state.day) {
 
   return {
     from: cityId, to, goodId, qty, pay, due,
-    advance: Math.round(pay * CONTRACT.advance),
+    /* ★ 선금은 담보를 넘지 못한다 — 해상대차의 담보는 배다(`data.js: CONTRACT.advanceCap`). */
+    advance: Math.min(Math.round(pay * CONTRACT.advance),
+                      Math.round(fleetCollateral() * CONTRACT.advanceCap)),
     id: `${cityId}:${slot}`,
     /* ★ 일감에 **임자가 생긴다.** 이 한 줄이 "누가 낸 일인가"이고, 납품하면 그가 +1이 된다.
        임자가 없는 항구(어느 세력에도 안 걸리는 도시)는 `null`이라 지금과 똑같이 굴러간다. */
@@ -1637,6 +1728,135 @@ export function payFine(amount, why = '', { ledger = true } = {}) {
   return { paid, owed };
 }
 
+/** 지금 지고 있는 빚 */
+export const debtOwed = () => state.boons?.loan?.owed ?? 0;
+
+/** 팔 것이 하나도 없나 — 금고·실은 짐·창고 짐·정박선·거점이 전부 비었다.
+    ★ 이 상태에서는 **기다림이 판단이 아니라 빈 시간**이다. 실플레이의 36일이 그 시간이었다. */
+export function nothingLeft() {
+  if (state.gold > 0 || cargoUsed() > 0) return false;
+  if (Object.keys(state.holdings ?? {}).length) return false;
+  for (const m of Object.values(state.stored ?? {})) if (Object.keys(m).length) return false;
+  return Object.keys(state.fleet).every((k) => k === state.shipKey);
+}
+
+/* ── 바닥에는 바닥의 규칙이 있다 ────────────────────────────────
+   ★ 빚은 30일마다 ×1.25로 불기만 하고 **끝이 없었다.** 금고 0·화물 0이 되면 살 돈이 없어
+   못 사고 실은 것이 없어 못 팔아, 실플레이에서 **36일이 그냥 비었다**(ISSUES #3).
+   답은 해상대차(bottomry)에 있다 — **담보는 배와 화물이고, 배가 사라지면 채무도 사라진다.**
+   근거·값·"왜 이 형태인가"는 `data.js: BANKRUPT`의 주석이 정본이다. */
+
+/** 채권자의 집행 — 금고 → 정박선 → 창고 짐 → (그래도 모자라면) 청산.
+    ★ **거점은 손대지 않는다.** 부동산은 해상대차의 담보가 아니다 — 그 대신 내가 스스로
+      헐값에 팔 수 있다(`sellHolding`). 채권자는 못 가져가고 나는 던질 수 있다는 이 비대칭이
+      「파산 전에 무엇을 버릴 것인가」를 판단으로 만든다. */
+export function enforceDebt() {
+  const loan = state.boons?.loan;
+  if (!loan || loan.owed <= 0) return null;
+  const out = { need: loan.owed, gold: 0, ships: [], stored: 0, surplus: 0, liquidated: false };
+  let need = loan.owed;
+
+  // ① 금고부터
+  const g = Math.min(state.gold, need);
+  state.gold -= g; need -= g; out.gold = g;
+
+  /* ② 정박해 둔 배 — **싼 것부터** 넘긴다.
+     채권자는 값을 채우면 그만이므로, 좋은 배를 남기는 쪽이 "다시 일어설 수 있게" 한다.
+     그것이 이 규칙의 목적이다(벌이 아니라 바닥의 형태). 바다에 함께 나선 동행선(`consorts`)과
+     지금 타고 있는 기함은 여기서 안 건드린다 — 그 둘은 ④의 청산에서 한꺼번에 간다. */
+  if (need > 0) {
+    const keys = Object.keys(state.fleet)
+      .filter((k) => k !== state.shipKey && !isConsort(k))
+      .sort((a, b) => resaleOf(a) - resaleOf(b));
+    for (const k of keys) {
+      if (need <= 0) break;
+      need -= resaleOf(k);
+      delete state.fleet[k];
+      out.ships.push(k);
+    }
+  }
+
+  // ③ 창고에 둔 짐 — 담보의 나머지 절반이 '화물'이다
+  if (need > 0) {
+    for (const [cid, m] of Object.entries(state.stored ?? {})) {
+      if (need <= 0) break;
+      for (const [gid, n] of Object.entries(m)) {
+        if (need <= 0) break;
+        const unit = state.prices[cid]?.[gid] ?? GOOD_BY_ID[gid]?.base ?? 0;
+        const take = Math.min(n, Math.ceil(need / Math.max(1, unit)));
+        m[gid] -= take;
+        if (!m[gid]) delete m[gid];
+        need -= unit * take;
+        out.stored += take;
+      }
+      if (!Object.keys(m).length) delete state.stored[cid];
+    }
+  }
+
+  if (need > 0) {
+    /* ④ 그래도 모자라면 **기함과 동행선까지** 넘기고 셈이 끝난다(해상대차의 마지막 조항).
+       ★ 넘긴 배값이 빚보다 크면 **잉여를 돌려준다.** 이것이 없으면 빚 500닢에 갈레온
+         한 척(매각가 10,725닢)을 통째로 잃는다 — 압류액과 미납액의 자릿수가 어긋나는
+         바로 그 결함(ISSUES #4)을 여기 다시 파는 셈이다. */
+    for (const k of Object.keys(state.fleet)) {
+      if (k !== BANKRUPT.keepShip) need -= resaleOf(k);
+    }
+    out.liquidated = true;
+    liquidate();
+    if (need < 0) {
+      out.surplus = Math.round(-need);
+      state.gold += out.surplus;
+      pushLog(`배를 넘기고 남은 ${out.surplus.toLocaleString('ko-KR')}닢이 돌아왔다.`, 'warn');
+    }
+    return out;
+  }
+  /* 값을 채우고 남으면 돌려준다 — 경매 잉여금이다. 이것이 있어야 집행이 곧바로
+     "금고 0"으로 되돌아가지 않고, 배 한 척을 잃은 대가로 다시 나설 밑천이 남는다. */
+  out.surplus = Math.round(-need);
+  state.gold += out.surplus;
+  state.boons.loan = null;
+  const lost = out.ships.map((k) => SHIPS[k].name).join('·');
+  pushLog(`빚 ${out.need.toLocaleString('ko-KR')}닢을 채권자가 집행했다`
+        + (lost ? ` — ${lost}${josa(lost, '을/를')} 넘겼다.` : '.')
+        + (out.stored ? ` 창고에 둔 짐 ${out.stored}개도 갔다.` : '')
+        + (out.surplus ? ` 남은 ${out.surplus.toLocaleString('ko-KR')}닢이 돌아왔다.` : ''), 'bad');
+  return out;
+}
+
+/** 청산 — 배를 넘기면 셈이 끝난다. **판은 끝나지 않고 1일차의 조건으로 돌아간다.**
+    남는 것: 거점 · 세력 관계 · 악명 · 아는 항구 · 해적 명부 · 공업력 승급.
+    가는 것: 배 전부(낡은 바사만 남는다) · 실은 짐 · 창고 짐 · 대부분의 선원 · 맡은 주문. */
+export function liquidate() {
+  const keep = BANKRUPT.keepShip;
+  const s = SHIPS[keep];
+  const lostShips = Object.keys(state.fleet).filter((k) => k !== keep);
+  const arms = { light: s.guns, medium: 0, long: 0 };
+
+  state.fleet = { [keep]: { at: state.at, hp: s.hp, arms: { ...arms }, refits: {} } };
+  state.consorts = {};
+  state.towing = null;
+  state.shipKey = keep;
+  state.hp = s.hp; state.maxHp = s.hp; state.cargoCap = s.cargo;
+  state.guns = s.guns; state.arms = { ...arms }; state.refits = {};
+  state.shots = { grape: 0, chain: 0, heated: 0 };
+  state.cargo = {}; state.buyPrice = {};
+  state.stored = {};
+  state.contract = null;
+  state.gold = BANKRUPT.seedGold;
+  if (state.boons) state.boons.loan = null;    // ★ 배가 사라지면 채무도 사라진다
+  /* 선원 — 대부분 떠나고 배를 뜨게 할 최소 인원만 남는다. **삯은 못 받은 채로다**
+     (소설 `story/CHARACTERS.md` — *"아덴의 파산 뒤에도 삯을 못 받은 채 남는 셋"*). */
+  state.crewMax = s.crewMax;
+  state.crew = Math.min(state.crew, s.crewMin ?? 0);
+  state.payroll.due = 0; state.payroll.arrears = 0;
+  trimLoadout();
+  state.everOwned?.add(keep);
+
+  pushLog('파산했다. 채권자가 배와 짐을 가져가고 셈이 끝났다 — 빚은 없다.', 'bad');
+  pushLog(`남은 것은 ${s.name} 한 척과 ${BANKRUPT.seedGold}닢, 그리고 여태 열어 둔 항구들이다.`, 'warn');
+  return { lostShips, kept: keep, gold: state.gold };
+}
+
 /** 기한이 지났는지 — advanceDays가 부른다.
     ★ 예전에는 `{ expired: c, fine }`를 돌려주었는데, 부르는 쪽(`advanceDays`)이
       그것을 다시 `expired`라는 이름으로 감싸 **두 겹**이 됐다. 그래서 화면이
@@ -1647,9 +1867,12 @@ function checkContractDue() {
   const c = state.contract;
   if (!c || state.day <= c.due) return null;
   const fine = Math.round(c.advance * CONTRACT.penalty);
-  state.gold = Math.max(0, state.gold - fine);
+  /* ★ 여기만 `Math.max(0, …)`로 잘려 **기한을 넘긴 위약금은 증발**하고 있었다 —
+     스스로 파기하면(`abandonContract`) 빚으로 남는데 기한을 넘기면 공짜라 규칙이 자기모순이었다
+     (곧 "받아 놓고 안 갚고 버티는" 쪽이 언제나 이득이다). 같은 `payFine`을 지난다. */
+  const r = payFine(fine, `${CITY_BY_ID[c.to]?.name ?? c.to} 주문의 기한을 넘겼다`);
   state.contract = null;
-  return { ...c, fine };
+  return { ...c, fine, owed: r.owed };
 }
 
 /* ── 부관 ─────────────────────────────────────────────────────
@@ -2114,7 +2337,16 @@ export function fleetRecord(key) {
   return state.fleet[key];
 }
 export function resaleOf(key) {
-  return Math.round(SHIPS[key].price * SHIP_RESALE);
+  return Math.round((SHIPS[key]?.price ?? 0) * SHIP_RESALE);
+}
+
+/** 지금 함께 나서는 배들의 매각가 합 — **해상대차의 담보**다(`contractOffer`의 선금 상한).
+    ★ 정박해 둔 배(`state.fleet`)까지 세지 않는다. 담보로 잡히는 것은 그 항해에 나서는 선복이고,
+      항구에 남겨 둔 배까지 세면 "배를 팔지 않고 담보만 늘리는" 자리가 생긴다. */
+export function fleetCollateral() {
+  let v = resaleOf(state.shipKey);
+  for (const k of consortKeys()) v += resaleOf(k);
+  return v;
 }
 
 /** 기함의 현재 상태(선체·무장·개장·정박지)를 선단 기록에 적어 둔다 */
@@ -3397,7 +3629,7 @@ export function settlePayroll(rand = Math.random) {
      그것이 이 돈이 무이자가 아닌 이유이자 빌리는 것이 위험한 이유다.
      금고가 모자라면 갚은 만큼만 줄고 나머지는 이자가 한 번 더 붙어 다음 달로 넘어간다. */
   const loan = state.boons?.loan;
-  let loanPaid = 0, loanLeft = 0;
+  let loanPaid = 0, loanLeft = 0, enforced = null;
   if (loan && state.day >= loan.due) {
     loanPaid = Math.min(state.gold, loan.owed);
     state.gold -= loanPaid;
@@ -3407,8 +3639,21 @@ export function settlePayroll(rand = Math.random) {
       loan.owed = Math.round(rest * BOON.loanRate);
       loan.due = state.day + BOON.loanDays;
       loanLeft = loan.owed;
+      /* ★ **빚에는 끝이 있다.** 전에는 여기서 ×1.25로 불기만 하고 아무 일도 안 일어나
+         금고 0인 판이 영영 떠다녔다(ISSUES #3). 두 번 연속 못 넘기면 채권자가 집행한다 —
+         금고·정박선·창고 짐을 가져가고, 그래도 모자라면 배까지 가져가고 **셈이 끝난다**
+         (해상대차: 배가 사라지면 채무도 사라진다 → `data.js: BANKRUPT`). */
+      loan.rolled = (loan.rolled ?? 0) + 1;
+      /* ★ **팔 것이 하나도 없으면 곧바로 집행한다.** 유예는 "무엇을 버릴지 고르라"는 시간인데,
+         고를 것이 없으면 그 30일은 판단이 아니라 빈 시간이다 — 실플레이의 36일이 그 시간이었다. */
+      const now = loan.rolled >= BANKRUPT.rollsBefore || nothingLeft();
       pushLog(`빚 ${rest.toLocaleString('ko-KR')}닢을 못 갚아 `
-            + `${loan.owed.toLocaleString('ko-KR')}닢으로 불었다.`, 'bad');
+            + `${loan.owed.toLocaleString('ko-KR')}닢으로 불었다.`
+            + (now ? '' : ' 다음 급여일에도 못 갚으면 채권자가 집행한다.'), 'bad');
+      if (now) {
+        enforced = enforceDebt();
+        loanLeft = debtOwed();
+      }
     } else {
       state.boons.loan = null;
       pushLog(`빌린 돈 ${loanPaid.toLocaleString('ko-KR')}닢을 갚았다.`, 'good');
@@ -3447,7 +3692,7 @@ export function settlePayroll(rand = Math.random) {
 
   const closed = state.ledger;
   state.ledger = newLedger(state.day);
-  return { owed, paid, missed, deserted, ledger: closed, arrears: missed, loanPaid, loanLeft };
+  return { owed, paid, missed, deserted, ledger: closed, arrears: missed, loanPaid, loanLeft, enforced };
 }
 
 /* ── 저 혼자 일어나는 사건 ────────────────────────────────────
