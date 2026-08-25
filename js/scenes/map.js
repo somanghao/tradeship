@@ -14,7 +14,7 @@ import {
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey, activeBounty,
+  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
