@@ -21,7 +21,7 @@ import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
-import { seasonOf, inSeason } from './state.js';
+import { seasonOf, inSeason, activeBounty } from './state.js';
 import { riskKey } from './map/geo.js';
 
 let seq = 0;
@@ -381,6 +381,43 @@ export function npcsOnLeg(aId, bId, kind = null) {
   return (state.npcs || []).filter((n) =>
     n.to && ((n.at === aId && n.to === bId) || (n.at === bId && n.to === aId))
     && (!kind || n.kind === kind));
+}
+
+/* ── 쫓는 자를 만난다 ─────────────────────────────────────────
+   ★ 명부 해적은 `npcsOnLeg`가 **`at`·`to`가 정확히 내 두 항구일 때만** 잡는다. 264 도시에서
+   그 일치는 사실상 안 나서, 실플레이 **984 게임일에 명부 조우 0회**였다(supremacy ISSUES #12).
+   상선이 겪던 것과 같은 문제인데(C-15) 상선만 세 단 폴백을 받았다.
+
+   ★ **밀도를 올려 푸는 것이 아니다.** 해적을 더 띄우면 그냥 더 자주 털린다 —
+     *"사람은 이길 수 있는 상대만 싸운다"*는 전제가 깨진다. 대신 **고른 사람에게만** 열어 준다:
+     `bounty-tip`으로 소식을 산 자에 한해, 그자의 사냥터(`hunt`)나 소굴(`base`)에 닿는 구간에서
+     **그자가 온다.** 찾아갈 수 있게 되면 고를 수 있게 된다(SPEC-supremacy §1-3 (b)).
+   ⚠️ 조우 확률 자체는 안 건드린다 — 해적 사건이 났을 때 **누가 오는가**만 바뀐다. */
+export function huntedOnLeg(aId, bId) {
+  const b = activeBounty();
+  if (!b) return null;
+  const def = ALL_PIRATES.find((d) => d.id === b.id);
+  if (!def || rosterClosed(def.id)) return null;
+  const key = riskKey(aId, bId);
+  const onHunt = (def.hunt ?? []).includes(key);
+  const nearBase = def.base === aId || def.base === bId;
+  if (!onHunt && !nearBase) return null;
+
+  /* 이미 그 배가 세계에 떠 있으면 그 배를 쓴다 — 같은 사람이 둘이 되지 않게 */
+  const live = (state.npcs || []).find((n) => n.kind === 'pirate' && n.defId === def.id);
+  if (live) return live;
+
+  const shipKey = (def.ship && SHIPS[def.ship]) ? def.ship : pick(PIRATE_SHIPS);
+  return {
+    id: `hunt-${++seq}`, kind: 'pirate', defId: def.id, name: def.name,
+    flag: def.flag ?? 'pirate', nation: null, lootGoods: null,
+    strength: def.strength ?? 2, bounty: def.bounty ?? null,
+    base: def.base, hunt: def.hunt ?? null, season: def.season ?? null,
+    scope: def.scope ?? 'region', circuit: null, circuitIdx: 0,
+    shipKey, at: aId, to: bId, days: 0, legs: 0,
+    gold: def.purse ? between(def.purse) : between(PURSE.pirate),
+    cargo: {}, hp: SHIPS[shipKey]?.hp ?? 90, kills: 0, stray: true,
+  };
 }
 
 /** 그 항구에 정박 중인 NPC */

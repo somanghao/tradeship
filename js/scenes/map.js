@@ -19,7 +19,7 @@ import {
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy,
 } from '../state.js';
 import {
-  worldTick, npcsOnLeg, tradersNearLeg, strayTrader, npcPos, removeNpc,
+  worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, npcPos, removeNpc,
   pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
@@ -348,6 +348,15 @@ function arrive(cityId) {
         + (cost.insurance ? ` · 보험 ${cost.insurance}` : '')
         + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢)`, 'good');
   if (cost.leak > 0) pushLog(`항해 중 선체로 물이 새어 ${cost.leak}pt 삭았다. 배를 갈아타야 한다.`, 'bad');
+  /* ★ **경고가 참이 되게 하는 두 줄.** 선체가 바닥이면 짐이 젖고 배가 느려진다
+     (`state.js: soakCargo`·`hullFactor` → 근거 `data.js: HULL`). 전에는 "갈아타야 한다"고만
+     적고 아무 일도 안 나서, 선체 1/55로 열여섯 항차를 뛰어도 잃는 것이 없었다(ISSUES #9). */
+  if (cost.soaked) {
+    const what = Object.entries(cost.soaked.lost)
+      .map(([gid, n]) => `${GOOD_BY_ID[gid].name} ${n}개`).join(' · ');
+    pushLog(`선창에 물이 들어 ${what}${josa(what, '이/가')} 상했다`
+          + ` (${cost.soaked.value.toLocaleString('ko-KR')}닢어치).`, 'bad');
+  }
   if (cost.expired) {
     pushLog(`${CITY_BY_ID[cost.expired.to].name} 납품 기한을 넘겨 위약금 ${cost.expired.fine}닢을 물었다.`, 'bad');
   }
@@ -713,8 +722,10 @@ function resolveEvent(ev0, voyage) {
       break;
     }
     case 'pirate': {
-      // 이 구간에 실제 해적이 떠 있으면 그놈이 온다. 없으면 떠돌이 해적.
-      const npc = voyage.foes?.[0] || null;
+      /* 이 구간에 실제 해적이 떠 있으면 그놈이 온다. 없으면 떠돌이 해적.
+         ★ **소식을 사 둔 자가 있으면 그자가 먼저다**(`huntedOnLeg` → SPEC-supremacy §1-3 (b)).
+           조우 확률은 그대로이고 **누가 오는가**만 바뀐다 — 찾아갈 수 있게 되면 고를 수 있게 된다. */
+      const npc = voyage.foes?.[0] || huntedOnLeg(voyage.from.id, voyage.to.id) || null;
       const enemy = npc ? pirateEnemy(npc) : pickEnemy();
       const pdef = defOf(npc);
       if (npc) {
