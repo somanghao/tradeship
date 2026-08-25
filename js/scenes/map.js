@@ -14,12 +14,13 @@ import {
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
+  knowPort, priceKnown, priceOf,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
-  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy,
+  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
 } from '../state.js';
 import {
-  worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, npcPos, removeNpc,
+  worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
   pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
@@ -338,7 +339,9 @@ function arrive(cityId) {
     pushLog(`나포한 ${prizeName}${josa(prizeName, '을/를')} ${CITY_BY_ID[cityId].name} 부두에 매어 두었다.`, 'good');
   }
   state.towing = null;
-  state.known.add(cityId);
+  /* ★ 닿으면 **그 항구와 가까운 이웃 몇 곳**의 값이 함께 열린다(`state.js: knowPort` → P5).
+     `state.known.add`를 손으로 쓰면 이웃이 안 열려 초행 벌금이 그대로 남는다. */
+  const scouted = knowPort(cityId).opened;
   const c = CITY_BY_ID[cityId];
   pushLog(`${days}일 항해 끝에 ${c.name}에 입항했다.`
         + ` (일당 ${cost.wages} · 보급 ${cost.supplies}`
@@ -359,6 +362,10 @@ function arrive(cityId) {
   }
   if (cost.expired) {
     pushLog(`${CITY_BY_ID[cost.expired.to].name} 납품 기한을 넘겨 위약금 ${cost.expired.fine}닢을 물었다.`, 'bad');
+  }
+  if (scouted.length) {
+    const names = scouted.map((id) => CITY_BY_ID[id].name).join(' · ');
+    pushLog(`부두에서 소문을 들었다 — ${names}${josa(names, '의')} 시세가 열렸다.`, 'good');
   }
   for (const line of newsLines(news, 2)) pushLog(`[소문] ${line.text}`, line.kind);
   refreshHUD();
@@ -725,7 +732,11 @@ function resolveEvent(ev0, voyage) {
       /* 이 구간에 실제 해적이 떠 있으면 그놈이 온다. 없으면 떠돌이 해적.
          ★ **소식을 사 둔 자가 있으면 그자가 먼저다**(`huntedOnLeg` → SPEC-supremacy §1-3 (b)).
            조우 확률은 그대로이고 **누가 오는가**만 바뀐다 — 찾아갈 수 있게 되면 고를 수 있게 된다. */
-      const npc = voyage.foes?.[0] || huntedOnLeg(voyage.from.id, voyage.to.id) || null;
+      /* ★ **닫힌 이름은 다시 안 온다.** `retireRosterShip`이 명부를 닫는 순간 그 배를 지우지만,
+         그 규칙이 생기기 전에 저장된 판에는 아직 떠 있을 수 있다 — 여기서 한 번 더 거른다
+         (돈을 치르고 산 약속이 세이브 하나로 깨지면 안 된다 · ISSUES #26). */
+      const live = (voyage.foes ?? []).find((n) => !n.defId || !rosterClosed(n.defId));
+      const npc = live || huntedOnLeg(voyage.from.id, voyage.to.id) || null;
       const enemy = npc ? pirateEnemy(npc) : pickEnemy();
       const pdef = defOf(npc);
       if (npc) {
@@ -882,10 +893,28 @@ function routeCards() {
       .slice(0, n).map(([g]) => GOOD_BY_ID[g]?.name).filter(Boolean);
     const sup = pick(c.supply, 2);
     const dem = pick(c.demand, 2);
+    /* ★ **값을 아는 항구에만 값을 준다**(P5). 닿아 봤거나 거점이 선 곳이다 —
+       정보상(`price-tip`)이 파는 것을 공짜로 주지 않으면서, 초행 벌금만 없앤다.
+       여기 실은 짐이 저기서 얼마인지가 그 한 줄이다. */
+    let line = '';
+    if (priceKnown(c.id)) {
+      const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
+      const best = held.map(([g, n]) => ({ g, n, at: priceOf(c.id, g) }))
+        .sort((a, b) => b.at * b.n - a.at * a.n)[0];
+      if (best) {
+        line = `
+실은 ${GOOD_BY_ID[best.g].name}${josa(GOOD_BY_ID[best.g].name, '을/를')} 여기서 `
+             + `${Math.round(best.at).toLocaleString('ko-KR')}닢에 산다`;
+      } else {
+        const top = Object.keys(c.demand ?? {})[0];
+        if (top) line = `
+${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString('ko-KR')}닢`;
+      }
+    }
     return (sup.length ? `
 난다 — ${sup.join(' · ')}` : '')
          + (dem.length ? `
-원한다 — ${dem.join(' · ')}` : '');
+원한다 — ${dem.join(' · ')}` : '') + line;
   };
 
   const rows = inSea.map((id) => {
@@ -912,7 +941,7 @@ function routeCards() {
       /* 처음 가는 곳은 이름 옆에 표를 단다 — 값을 모르고 들어간다는 것이 곧 위험이다 */
       el('span.rn', {}, [
         el('span', { text: c.name }),
-        state.known.has(id) ? null : el('span', {
+        priceKnown(id) ? null : el('span', {
           text: ' 초행', style: { color: '#8fb4d8', fontSize: '10.5px' },
         }),
       ].filter(Boolean)),
@@ -936,7 +965,7 @@ function routeCards() {
     /* ★ 대양은 **사람과 배가 성해야** 건넌다(`state.js: oceanReady`).
        근해는 막지 않는다 — 막으면 항구에 갇혀 빠져나갈 길이 없어진다. 선원 1명·선체 44/231로도
        원양이 열려 있어서 "백병전에 사람을 갈아 넣는 것이 늘 옳았다"(완주 플레이 ISSUES #24). */
-    const ready = oceanReady();
+    const ready = oceanReady(id);   // ★ 호위 의무까지 본다 (P2-a)
     return el('div.route-row', {
       title: [
         lane.note,
@@ -944,6 +973,7 @@ function routeCards() {
         `해적 조우 ${Math.round(dg.odds * 100)}%`,
         lane.monsoon ? '★ 계절풍 구간 — 철을 잘못 잡으면 훨씬 오래 걸린다' : null,
         lane.overland ? '★ 육로 환적 — 배가 아니라 짐이 넘어간다' : null,
+        ready.escort ? `★ 함대 구간 — 동행 ${ready.escort}척이 있어야 건넌다 (지금 ${consortCount()}척)` : null,
         ready.ok ? null : `⚑ ${ready.why}`,
       ].filter(Boolean).join('\n'),
       style: ready.ok ? null : { opacity: 0.55 },
@@ -972,10 +1002,15 @@ function routeCards() {
        (먼 소식을 아주 지우지는 않는다 — "저 바다에서 무슨 일이 나고 있다"는 세계가 산다는 감각이다.) */
   const nbSet = new Set(nb);
   const hereRegion = curRegion();
-  const reach = (sh) => (nbSet.has(sh.city) ? 0 : REGION_OF_CITY[sh.city] === hereRegion ? 1 : 2);
+  /* ★ **내 거점이 선 바다를 먼저 세운다**(P5). 거점이 늘수록 「닿을 수 있는 소식」이 늘어,
+     순회(패권)가 벌이를 깨는 대신 **회로의 재료**가 된다. */
+  const myRegions = new Set(Object.keys(state.holdings ?? {}).map((id) => REGION_OF_CITY[id]));
+  const reach = (sh) => (nbSet.has(sh.city) ? 0
+    : REGION_OF_CITY[sh.city] === hereRegion ? 1
+    : myRegions.has(REGION_OF_CITY[sh.city]) ? 2 : 3);
   const sorted = activeShocks().sort((a, b) => reach(a) - reach(b) || b.mult - a.mult);
-  const near = sorted.filter((sh) => reach(sh) < 2);
-  const far = sorted.filter((sh) => reach(sh) === 2);
+  const near = sorted.filter((sh) => reach(sh) < 3);
+  const far = sorted.filter((sh) => reach(sh) === 3);
   const shocks = [...near.slice(0, 5), ...far.slice(0, Math.max(1, 6 - Math.min(near.length, 5)) - 1 + 1)]
     .slice(0, 6);
   const shockRows = shocks.map((sh) => el('div.route-row', {
@@ -986,7 +1021,7 @@ function routeCards() {
     el('span.rn', { text: sh.cityName }),
     el(`span.rw.${sh.mult >= 1 ? 'bad' : 'good'}`, { text: sh.goodName }),
     el(`span.rw.${sh.mult >= 1 ? 'bad' : 'good'}`, { text: `×${sh.mult.toFixed(2)}` }),
-    el('span.rd', { text: `${sh.daysLeft}일 남음${nb.includes(sh.city) ? '' : ' · 멀다'}` }),
+    el('span.rd', { text: `${sh.daysLeft}일 남음${nb.includes(sh.city) ? '' : (myRegions.has(REGION_OF_CITY[sh.city]) ? ' · 내 바다' : ' · 멀다')}` }),
   ]));
 
   const cards = [

@@ -21,7 +21,7 @@ import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
-import { seasonOf, inSeason, activeBounty } from './state.js';
+import { seasonOf, inSeason, activeBounty, setRetireHook } from './state.js';
 import { riskKey } from './map/geo.js';
 
 let seq = 0;
@@ -495,6 +495,23 @@ export function npcPos(n) {
 /** 플레이어가 잡거나 격침시킨 NPC를 세계에서 지운다 */
 export function removeNpc(id) {
   state.npcs = (state.npcs || []).filter((n) => n.id !== id);
+}
+
+/* ── 닫힌 이름은 바다에서도 내린다 ────────────────────────────
+   ★ `pickDef`는 **새로 만들 때** 닫힌 명부를 후보에서 빼지만, **이미 떠 있는 배**는 그대로 둔다.
+     그래서 초무한 자가 며칠 뒤 내 항로를 막았다 — 920닢을 치르고 *"이제 우리 배는 건드리지 않는다"*를
+     받았는데 39일 뒤 그자와 싸워 나포했고 `tamed`와 `slain`이 **둘 다 박혔다**(supremacy ISSUES #26).
+     **돈을 치르고 산 약속이 안 지켜지면 초무라는 길 자체를 아무도 안 산다.**
+   ⇒ 명부를 닫는 순간 그 이름의 배를 세계에서 지운다. 정원은 안 줄인다 — 다음 `worldTick`이
+     그 자리를 **얼굴 없는 배**로 채운다(`makePirate`의 `standIn` 폴백). 곧 바다가 안전해지지는 않는다:
+     사라지는 것은 **이름과 현상금**뿐이라는 `rosterOf` 주석의 규약 그대로다. */
+setRetireHook((id) => retireRosterShip(id));   // 명부가 닫히면 `state.js`가 이것을 부른다
+
+export function retireRosterShip(pirateId) {
+  const gone = (state.npcs || []).filter((n) => n.kind === 'pirate' && n.defId === pirateId);
+  if (!gone.length) return 0;
+  state.npcs = state.npcs.filter((n) => !(n.kind === 'pirate' && n.defId === pirateId));
+  return gone.length;
 }
 
 /** 항구에서 듣는 소문 — 최근 사건을 문장으로 */

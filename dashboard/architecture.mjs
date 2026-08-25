@@ -251,6 +251,8 @@ export const STATE_FIELDS = [
   { k: 'ended', g: '진행', d: '끝을 본 날(0이면 아직) — 「여덟 항구와 한 척」 조건 셋을 채우면 찍힌다(`data.js: ENDING`). 한 번만 축하하고 판은 계속된다' },
   { k: 'endedNine', g: '진행', d: '두 번째 끝 「아홉 바다」를 본 날(0이면 아직) — 아홉 권역 전부에서 패권(`state.js: hegemonyAll`)을 잡으면 찍힌다. 조선의 끝(`ended`)과 따로 논다 — 둘이 겹치지 않아야 기존 밸런스가 안 움직인다' },
   { k: 'slain', g: '진행', d: '꺾은 상대의 기록 — `{ "<권역>:t<등급>": 날, "pirate:<명부id>": 날 }`. 권역 패권 조건 ③("그 바다의 최상급 적을 꺾었다")이 읽는다. **Set이 아니라 평범한 객체**다(`save.js`가 통째로 직렬화하므로). 상선은 적지 않는다' },
+  { k: 'scouted', g: '진행', d: '**소문으로 값만 아는 항구** — `{ "<도시id>": 들은 날 }`. 닿은 항구(`known`)와 갈라 둔다: `metFactions()`가 `known`을 세므로 섞으면 **가 본 적 없는 세력을 만난 것으로** 센다. 초행 벌금을 없애는 자리(`knowPort` · `HOLDING.scoutNeighbors`)이고 **보너스가 아니라 정보**다' },
+  { k: 'mates', g: '진행', d: '태운 **동료**(항해사) — `{ "<동료id>": { day, joint, stake, earned } }`. 계약 모양은 **코멘다**다(`data.js: COMMENDA` · 편무 25% · 쌍무 50%+밑천). 특전은 부관·갈래와 같은 자리에서 더해지고(`matePerk`), 동행선의 선장 자리를 채운다(`FLEET.requireCaptain` — **선단 규모가 동료 수에 묶인다**). 명부 51명의 정본은 권역 `npc-mates.js`' },
   { k: 'tamed', g: '진행', d: '**초무**한 명부 해적 — `{ "<명부id>": 날 }`. 격파(`slain`)와 같은 무게로 명부를 닫는다(`world.js: rosterClosed`). 못 이길 상대도 소굴에서 값을 치르면 지워진다 — *"이길 수 있는 상대만 싸운다"*와 목표를 양립시키는 자리(SPEC-supremacy §1-3 (c))' },
   { k: 'yards', g: '진행', d: '공업력 승급(A-2) — `{cityId: {boost, building:{to,until}}}`. 자재를 실물로 부어야 오르고, 공사 중에는 그 부두가 배를 짓지도 팔지도 않는다' },
   { k: 'works', g: '진행', d: '수직계열화 시설(A-9) — `{cityId: {paid, spent, missed, "<종>:<품목>": {level, since, idle, job}}}`. 유지비는 들인 돈의 **연 10%**를 30일마다(거점 6%보다 무겁다), 못 내면 **휴업** → 두 번 연속이면 압류. ★ `holdings`와 갈라 둔 것이 이 필드의 존재 이유다 — `hegemonyOf`가 `holdings`를 세므로 같은 그릇에 담으면 **권역 패권 조건이 조용히 바뀐다**. 이름을 `industry`로 짓지 않은 것도 같은 이유(`city.industry`·`state.yards`와 뒤섞인다)' },

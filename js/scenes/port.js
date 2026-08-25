@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         WORK, FACTIONS, REGARD, ROSTER } from '../data.js';
+         WORK, FACTIONS, REGARD, ROSTER, COMMENDA } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -15,6 +15,9 @@ import {
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
+  knowPort, holdingTip,
+  /* 동료 — 코멘다(P3). 규칙은 `state.js`, 값은 `data.js: COMMENDA` */
+  matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   portDayCost, waitDays, dischargeCrew, recallCrew, settleYard,
@@ -66,7 +69,7 @@ export const portScene = {
     city = CITY_BY_ID[state.at];
     bg = portSprite(city.style, city.seed);
     dockers = pickDockers(city.seed);
-    state.known.add(city.id);
+    knowPort(city.id);   // 닿으면 이웃 몇 곳의 시세도 열린다 (P5)
     /* ★ **동행선의 정박지를 여기서 맞춘다.** 도착 처리(`scenes/map.js: arrive`)는 기함과
        예인선만 옮기므로, 함께 다닌 배들은 항구 화면이 열릴 때 이 한 줄로 따라온다.
        세이브를 불러온 판에서도 어긋나지 않는 자리다. */
@@ -390,6 +393,69 @@ function contractCard() {
         },
       }),
     ]),
+  ]);
+}
+
+/* ── 동료 (P3 · 코멘다) ────────────────────────────────────────
+   ★ **에이미와 다른 자리다.** 부관은 주어진 동행이라 카드에 단추가 없지만, 동료는 **고르는 사람**이다.
+     계약 모양이 둘이고(편무 25% · 쌍무 50%+밑천) 그 고름이 이 카드의 전부다.
+   ★ 이 항구에 사람이 없고 태운 사람도 없으면 **카드를 안 띄운다** — 빈 패널은 벽지다. */
+function mateCard() {
+  const here = matesAt(city.id);
+  const mine = crewMates();
+  if (!here.length && !mine.length) return null;
+
+  const rows = [];
+  if (mine.length) {
+    rows.push(el('div.ctr-sub', {
+      text: `함께 가는 사람 ${mateCount()}/${mateCap()}명 — 이익의 ${Math.round(mateCut() * 100)}%가 이들 몫이다`,
+      style: { color: mateCut() > 0.5 ? '#c98a6a' : '#8f8878' },
+    }));
+    for (const m of mine) {
+      rows.push(svcRow(`${m.name} · ${m.title}`,
+        `${m.joint ? '쌍무' : '편무'} — 이익의 ${Math.round((m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole) * 100)}%`
+        + (m.stake ? ` · 밑천 ${m.stake.toLocaleString('ko-KR')}닢을 댔다` : '')
+        + ` · 일당 ${m.wage}닢`,
+        '내린다', false, () => {
+          const r = dismissMate(m.id);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${m.name}${josa(m.name, '이/가')} 내렸다`, 'warn');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+  }
+  for (const m of here) {
+    const stake = mateStake(m);
+    const full = mateCount() >= mateCap();
+    rows.push(el('div.ctr-line', { html: `<b>${m.name}</b> · ${m.title} <span style="opacity:.7">${m.origin}</span>` }));
+    rows.push(el('div.ctr-sub', { text: m.blurb, style: { opacity: 0.8 } }));
+    /* ★ **두 계약을 나란히 놓는다.** 초반엔 쌍무가 자본을 주고(밑천 > 계약금) 후반엔 그 절반이
+       순손실이 된다 — 같은 사람이 단계마다 다른 값이라는 것이 이 장치의 전부다. */
+    rows.push(svcRow(`편무 — 계약금 ${(m.hire ?? 0).toLocaleString('ko-KR')}닢`,
+      `이익의 ${Math.round(COMMENDA.cutSole * 100)}%를 가져간다. 밑천은 안 댄다.`,
+      '태운다', full || (m.hire ?? 0) > state.gold, () => {
+        const r = hireMate(m.id, { joint: false });
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${m.name}${josa(m.name, '이/가')} 올랐다`, 'good');
+        refreshHUD(); refreshLog(); after();
+      }));
+    rows.push(svcRow(`쌍무 — 계약금 ${(m.hire ?? 0).toLocaleString('ko-KR')}닢 · 밑천 +${stake.toLocaleString('ko-KR')}닢`,
+      `그가 ${stake.toLocaleString('ko-KR')}닢을 대고 이익의 ${Math.round(COMMENDA.cutJoint * 100)}%를 가져간다.`
+      + ' 내릴 때 밑천은 돌려준다.',
+      '태운다', full || (m.hire ?? 0) > state.gold, () => {
+        const r = hireMate(m.id, { joint: true });
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${m.name} — 밑천 ${r.stake.toLocaleString('ko-KR')}닢`, 'good');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '동료' }),
+      el('span', { text: `${mateCount()}/${mateCap()}`,
+                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, rows),
   ]);
 }
 
@@ -802,9 +868,22 @@ function holdingCard() {
       rows.push(el('div.ctr-sub', { style: { color: '#d05a4a' },
         text: '유지비가 밀려 **문을 닫았다** — 특전이 멈췄고, 한 번 더 밀리면 넘어간다' }));
     }
+    /* ★ **밀린 것을 그 자리에서 낼 단추가 없었다.** 규칙은 *"밀린 것을 내면 그 자리에서 다시 연다"*인데
+       화면에 낼 방법이 없어, 금고가 7,105닢인데도 나갔다 와야(6일) 문이 열렸다(supremacy ISSUES #22).
+       「한 번 더 밀리면 압류」이므로 **항로가 긴 자리에서는 돈이 있어도 넘어간다** — 막으려던 바로 그 사고다.
+       ★ 액수가 청구 때 3닢, 문 닫은 뒤 1닢인 것은 어긋난 것이 아니라 **`HOLDING.idleRate`(절반)**다
+         (ISSUES #23 — 확인 결과 설계대로다). 그래서 문구에 그 이유를 적어 둔다. */
     if (due > 0) {
-      rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
-        text: `유지비 ${due.toLocaleString('ko-KR')}닢이 밀려 있다 — 못 내면 ${idle ? '빼앗긴다' : '문을 닫는다'}` }));
+      rows.push(svcRow(`밀린 유지비 ${due.toLocaleString('ko-KR')}닢`,
+        (idle ? `문을 닫은 동안이라 절반만 문다(${Math.round(HOLDING.idleRate * 100)}%). 내면 그 자리에서 다시 연다.`
+              : '못 내면 문을 닫는다 — 특전이 멈추고, 한 번 더 밀리면 넘어간다.'),
+        '낸다', due > state.gold, () => {
+          const r = settleHolding(city.id);
+          if (!r) return toast('밀린 것이 없다', 'warn');
+          toast(r.seized ? '거점을 빼앗겼다' : r.idle ? '아직 모자란다' : '유지비를 냈다',
+                r.seized || r.idle ? 'bad' : 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
     }
     /* ★ **되팔 수 있다 — 헐값에.** 금고가 0이면 자산을 갖고도 굶는 자리가 있었다(ISSUES #3).
        값이 들인 돈의 40%뿐이라 이득이 될 수 없고, 그래서 저금통이 아니라 탈출구다.
@@ -1183,6 +1262,7 @@ function sidePanel() {
     payrollCard(),
     officerCard(),
     contractCard(),
+    mateCard(),
     endingCard(),
     hegemonyCard(),
     factionCard(),

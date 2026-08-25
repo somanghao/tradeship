@@ -117,7 +117,15 @@
 - ★ **선장 자리는 뚫려 있고 비어 있다** — `consorts[key].captain`과 `FLEET.requireCaptain(false)`.
   A-5가 채우면 `true`로 올리는 것만으로 "선장 없는 동행"이 막힌다(코드 수정 불필요).
 
-### A-5. NPC 동료 등용 — `데이터 완료 · 배선 없음` ★다음 세션의 첫 일
+### A-5. NPC 동료 등용 — ✅ **해소**(2026-08-25) · 남은 것은 perk 둘
+> ★ 배선이 들어왔다 — `regions/index.js: ALL_MATES`(51명) · 등용/해고(`hireMate`·`dismissMate`) ·
+> 항구 카드(`scenes/port.js: mateCard`) · `consorts[].captain` 연결 · **`FLEET.requireCaptain: true`**.
+> 계약 모양은 **코멘다**다(`data.js: COMMENDA` — 편무 25% · 쌍무 50%+밑천 · 사료 `commendaSplit`).
+> 서술은 [wiki/world-npc.md](wiki/world-npc.md) §동료가 정본.
+> **남은 것**: perk 열 중 **`gunUp`·`crewLossOff` 둘**이 아직 안 붙었다(전투 씬 안쪽) ·
+> ⑥ `content/regions/*-evidence.json`에 근거를 적는 일.
+
+### A-5(원문). NPC 동료 등용 — `데이터 완료 · 배선 없음`
 사용자가 **"npc동료 등용해서 안되면 구현해야 돼"**라고 명시했다. 지금 동행 인물은 **에이미 하나**고
 등용·해고 함수 자체가 없다(`state.js` 주석이 그 이유를 적어 두었다 — 에이미는 *주어진 동행*이다).
 - **데이터는 아홉 권역이 다 있다**(`js/regions/<권역>/npc-mates.js` · **51명** · id 중복 0 · 2026-08-23 카리브·남미 12명 추가).
