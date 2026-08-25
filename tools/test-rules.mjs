@@ -1,4 +1,4 @@
-import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
@@ -16,9 +16,13 @@ import {
   /* 삭은 배와 명부 사냥 */
   hullFactor, soakCargo, shipSpeed as speedOf,
   rosterOpenIn, bountyTipPrice, tamePrice, buyBountyTip, tamePirate, activeBounty,
+  /* 성장 설계 — P5 초행 정보 · P2 선단 · P3 동료 */
+  knowPort, priceKnown, holdingTip, metFactions, escortNeed, oceanReady, convoyInsureOff, insuranceFor,
+  matesAt, hireMate, dismissMate, mateCut, matePerk, mateStake, mateCap, freeMates,
+  canConsort, setConsort, consortCount, voyageDays as legDays,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER } from '../js/data.js';
-import { huntedOnLeg, rosterOf } from '../js/world.js';
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT } from '../js/data.js';
+import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg } from '../js/world.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
    `node tools/test-rules.mjs`가 **exit 0**을 돌려주었고, 자동 회차와 문서는 그것을
@@ -405,10 +409,18 @@ resetGame();
   ok(holdingUpkeepDue('venezia')
        === Math.round(spent * HOLDING.upkeepRate * (HOLDING.upkeepEvery / 360) * HOLDING.idleRate),
      '문을 닫은 동안에는 유지비를 절반만 문다 — 그래도 0은 아니다');
+  const idleDue = holdingUpkeepDue('venezia');
   state.gold = 5000;
   const h2 = settleHolding('venezia');
   ok(!h2.idle && hasHolding('rental', 'venezia'),
      '밀린 것을 내면 **그 자리에서** 다시 문을 연다 — 다음 청구일까지 기다리지 않는다');
+  /* ★ 청구 때 3닢인데 낼 때 1닢이라는 보고(ISSUES #23)는 **어긋난 것이 아니다** —
+     문을 닫은 동안에는 `HOLDING.idleRate`(절반)만 문다. 화면 문구가 그 이유를 안 적어
+     같은 값이 두 자리에서 다르게 보였을 뿐이다. 검사로 박아 둔다. */
+  const exact = spent * HOLDING.upkeepRate * (HOLDING.upkeepEvery / 360);
+  ok(idleDue === Math.round(exact * HOLDING.idleRate) && idleDue < h1.due,
+     `문을 닫으면 청구가 ${h1.due}닢 → ${idleDue}닢이 된다 — 어긋난 것이 아니라 절반(idleRate)이다`
+     + ` (반올림 전 값 ${exact.toFixed(2)}에 곱한다 — 반올림한 뒤 곱하면 ${Math.round(h1.due * HOLDING.idleRate)}이 되어 어긋난다)`);
 
   resetGame('venezia');
   state.gold = 300000; buyHolding('rental', 'venezia');
@@ -548,5 +560,164 @@ resetGame();
 {
   resetGame('busanpo');
   ok(state.known.has('busanpo') && !state.known.has('venezia'),
-     '부산포에서 시작하면 `known`에 부산포만 있다 — 가 본 적 없는 베네치아가 안 박힌다');
+     '부산포에서 시작하면 `known`에 부산포가 들어간다 — 가 본 적 없는 베네치아가 안 박힌다');
+}
+
+/* ── 닫힌 이름은 바다에서도 내려간다 (ISSUES #26) ────────────────
+   ★ 920닢을 치르고 *"이제 우리 배는 건드리지 않는다"*를 받았는데 39일 뒤 그자와 싸워 나포했다 —
+     `tamed`와 `slain`이 **둘 다 박혔다.** `pickDef`는 **새로 만들 때만** 닫힌 명부를 거르고
+     **이미 떠 있는 배**는 그대로 뒀기 때문이다. 돈을 치르고 산 약속이 안 지켜지면 초무를 아무도 안 산다. */
+{
+  resetGame('sakai');
+  state.gold = 100000;
+  initWorld();
+  const def = rosterOpenIn('eastasia').find((d) => d.id === 'murakami');
+  state.npcs.push({ id: 9999, kind: 'pirate', defId: def.id, name: def.name, shipKey: def.ship,
+                    at: def.base, to: 'hirado', gold: 1000, cargo: {}, hp: 90,
+                    strength: def.strength, bounty: def.bounty });
+  ok(state.npcs.some((n) => n.defId === 'murakami'), '초무하기 전에는 그 배가 바다에 떠 있다');
+  state.at = def.base;
+  ok(tamePirate(def, def.base).ok, `소굴에서 초무한다 (${tamePrice(def).toLocaleString('en-US')}닢)`);
+  ok(!state.npcs.some((n) => n.defId === 'murakami') && !npcsOnLeg(def.base, 'hirado', 'pirate').some((n) => n.defId === 'murakami'),
+     '**닫힌 이름은 그 자리에서 바다에서도 내려간다** — 산 약속이 지켜진다');
+}
+
+/* ── P5 초행 정보 — 임차창고가 값을 알려 준다 ────────────────────
+   ★ 실클릭 테스터가 *"처음 가는 항구는 시세를 알 방법이 없어 초행이 늘 손해"*라고 적었다
+     (conquest ISSUES #16 · 8항차 23일에 6,661 → 5,448닢). **보너스가 아니라 정보**다 —
+     차익 자체는 한 톨도 안 바뀐다. 근거는 `data.js: HOLDINGS.rental`의 주석. */
+{
+  resetGame('busanpo');
+  ok(state.known.has('busanpo') && state.known.size === 1 && Object.keys(state.scouted).length > 0,
+     `부두에 서 있으면 이웃 소문은 들린다 — 들른 곳 ${state.known.size} · 소문으로 아는 곳 ${Object.keys(state.scouted).length}`);
+  ok(metFactions().length === 0,
+     '소문은 세력을 만난 것이 아니다 — `known`과 `scouted`를 갈라 두는 이유');
+  const far = CITIES.find((c) => !priceKnown(c.id));
+  ok(!priceKnown(far.id), `아직 못 들은 항구는 값을 모른다 (${far.name})`);
+
+  state.gold = 300000;
+  buyHolding('rental', far.id);
+  ok(holdingTip(far.id) && priceKnown(far.id),
+     '임차창고가 선 항구는 그 값이 내게 온다 — 팩토리아의 첫 값어치가 가격 정보였다');
+  state.holdings[far.id].idle = true;
+  ok(!priceKnown(far.id), '문을 닫으면 소식도 끊긴다 — 유예가 공짜가 아닌 자리');
+
+  resetGame('venezia');
+  const nb = neighborsOf('venezia').find((id) => !state.known.has(id));
+  const r = knowPort(nb);
+  ok(state.known.has(nb) && !state.scouted[nb] && r.opened.every((id) => !state.known.has(id) && state.scouted[id]),
+     `닿으면 그곳은 「들른 곳」이 되고 가까운 이웃 ${r.opened.length}곳은 「소문」이 된다`
+     + ` (HOLDING.scoutNeighbors ${HOLDING.scoutNeighbors})`);
+}
+
+/* ── P2 선단이 「한 척으로는 못 하는 일」을 갖는다 ────────────────
+   ★ 실측에서 동행 8척은 하루 +733닢을 먹고 적재 200→1,588칸이 **전부 무용**이었다.
+     ⚠️ **적재 배수는 주지 않는다**(161칸 천장 유지 = 사용자 요구 ⑤). 대신 입장권 셋. */
+{
+  // ⓐ 원양은 혼자 못 간다 (사료: 1561년 이후 카레라의 함대 편성 의무)
+  resetGame('sevilla');
+  state.gold = 1e7; state.crew = 10;
+  purchaseShip('galleon'); boardShip('galleon');
+  while (shorthanded()) if (!hire(1).ok) break;
+  ok(escortNeed('sevilla', 'havana') === 2 && routeRisk('sevilla', 'havana') > 8.5,
+     `요율이 높은 원양은 동행 ${escortNeed('sevilla', 'havana')}척을 요구한다 (세비야~아바나 risk ${routeRisk('sevilla', 'havana')})`);
+  ok(!oceanReady('havana').ok, '동행이 없으면 그 바다를 못 건넌다 — 항로를 막는 것이 아니라 조건을 붙인 것이다');
+  const near = neighborsOf('sevilla')[0];
+  ok(oceanReady(near).ok && escortNeed('sevilla', near) === 0,
+     '근해는 그대로 열려 있다 — 막으면 항구에 갇힌다');
+
+  // ⓒ 선단이 보험료를 깎는다
+  for (const k of ['carrack', 'fluyt']) {
+    const sh = SHIPS[k];
+    state.fleet[k] = { at: state.at, hp: sh.hp, arms: { light: sh.guns, medium: 0, long: 0 }, refits: {} };
+    state.consorts[k] = { crew: sh.crewMin, captain: null };
+  }
+  ok(oceanReady('havana').ok, '동행 둘을 채우면 건널 수 있다');
+  ok(Math.abs(convoyInsureOff() - 2 * FLEET.insureOffPer) < 1e-9,
+     `동행 2척이면 보험료를 ${Math.round(convoyInsureOff() * 100)}% 깎는다 (척당 ${Math.round(FLEET.insureOffPer * 100)}%)`);
+  for (let i = 0; i < 12; i++) {
+    const k = Object.keys(SHIPS)[i + 20];
+    if (!k || state.consorts[k] || consortCount() >= 20) continue;
+    state.consorts[k] = { crew: 1, captain: null };
+  }
+  ok(convoyInsureOff() <= FLEET.insureOffCap + 1e-9,
+     `아무리 많아도 ${Math.round(FLEET.insureOffCap * 100)}%까지다 — 깎아 주되 본전은 아니다`);
+
+  // ⓑ 계약 수량이 선복을 따라 큰다 — 다만 **배수는 아니다**
+  resetGame('sevilla');
+  state.gold = 1e7; state.crew = 10;
+  purchaseShip('galleon'); boardShip('galleon');
+  /* ★ 한 장으로 재면 품목이 바뀌며 튄다 — **게시판 여러 장의 중앙값**으로 본다.
+     지켜야 하는 선은 하나다: **보수 배수 < 적재 배수.** 넘으면 「동행이 곧 계약 배수」가 된다. */
+  const ratios = [];
+  for (let d = 1; d <= 60; d++) {
+    resetGame('sevilla');
+    state.gold = 1e7; state.crew = 10;
+    purchaseShip('galleon'); boardShip('galleon');
+    const a = contractOffer('sevilla', d);
+    const sh2 = SHIPS.indiaman;
+    state.fleet.indiaman = { at: state.at, hp: sh2.hp, arms: { light: sh2.guns, medium: 0, long: 0 }, refits: {} };
+    state.consorts.indiaman = { crew: sh2.crewMin, captain: null };
+    ratios.push(contractOffer('sevilla', d).pay / Math.max(1, a.pay));
+  }
+  ratios.sort((a, b) => a - b);
+  const payRatio = ratios[Math.floor(ratios.length / 2)];
+  const holdRatio = (200 + 320) / 200;                        // 적재는 2.6배
+  ok(payRatio > 1.05 && payRatio < holdRatio,
+     `동행이 계약을 키우되 **배수는 아니다** — 적재 ×${holdRatio.toFixed(2)}에 보수 ×${payRatio.toFixed(2)}`
+     + ` (consortHold ${CONTRACT.consortHold})`);
+}
+
+/* ── P3 동료 = 코멘다 ────────────────────────────────────────
+   사료: `commendaSplit` — 편무 75/25 · 쌍무 50/50(항해자 자본 1/3).
+   ★ 같은 동료가 **초반엔 자본이고 후반엔 비용**이다. 그 고름이 이 장치의 전부다. */
+{
+  resetGame('gunsan');
+  state.gold = 5000; state.crew = 10;
+  const m = matesAt('gunsan')[0];
+  ok(!!m, `그 항구에서 만나는 동료가 있다 (${m?.name})`);
+
+  const purse0 = state.gold;
+  const joint = hireMate(m.id, { joint: true });
+  ok(joint.ok && state.gold > purse0,
+     `쌍무로 태우면 **자본이 늘어난다** — 계약금 ${joint.fee}닢 내고 밑천 ${joint.stake}닢을 받는다`
+     + ` (초반엔 칸이 남고 돈이 없다)`);
+  ok(Math.abs(mateCut() - COMMENDA.cutJoint) < 1e-9,
+     `그 대신 이익의 ${Math.round(COMMENDA.cutJoint * 100)}%가 그의 몫이다 — 후반에는 이것이 순손실이다`);
+  ok(matePerk('sailDaysOff') === (m.perks?.sailDaysOff ?? 0),
+     '동료 특전은 부관·갈래와 같은 자리에서 더해진다 (새 계산 경로를 안 판다)');
+
+  const back = dismissMate(m.id);
+  ok(back.ok && back.back === joint.stake && mateCut() === 0,
+     `내리면 밑천 ${back.back}닢을 돌려준다 — 코멘다는 출자이지 증여가 아니다`);
+
+  const sole = hireMate(m.id, { joint: false });
+  ok(sole.ok && sole.stake === 0 && Math.abs(mateCut() - COMMENDA.cutSole) < 1e-9,
+     `편무는 밑천 없이 이익의 ${Math.round(COMMENDA.cutSole * 100)}%다 (사료 75/25 그대로)`);
+
+  // 이익 분배가 실제로 돈다
+  resetGame('gunsan');
+  state.gold = 500000; state.crew = 10;
+  buy('grain', 30);
+  const noMate = sell('grain', 30);
+  resetGame('gunsan');
+  state.gold = 500000; state.crew = 10;
+  hireMate(matesAt('gunsan')[0].id, { joint: false });
+  buy('grain', 30);
+  const withMate = sell('grain', 30);
+  ok(withMate.mateCut >= 0 && (noMate.profit <= 0 || withMate.profit < noMate.profit),
+     `매각 이익에서 동료 몫을 뗀다 (${withMate.mateCut}닢) — 밑진 거래에서는 안 뗀다`);
+
+  // 선장 자리 — 선단 규모가 동료 수에 묶인다
+  resetGame('gunsan');
+  state.gold = 500000; state.crew = 30;
+  const sh = SHIPS.cocca;
+  state.fleet.cocca = { at: 'gunsan', hp: sh.hp, arms: { light: sh.guns, medium: 0, long: 0 }, refits: {} };
+  ok(FLEET.requireCaptain && !canConsort('cocca').ok,
+     '동료가 없으면 배를 데려갈 수 없다 — **선단 규모가 동료 수에 묶인다**');
+  hireMate(matesAt('gunsan')[0].id, { joint: false });
+  const cr = setConsort('cocca');
+  ok(cr.ok && !!cr.captain && freeMates().length === 0,
+     `동료를 태우면 그가 키를 잡는다 (${cr.captain}) — 배 하나에 선장 하나`);
+  ok(mateCap() === FLEET.max, `데리고 다닐 수 있는 동료는 동행 상한과 같다 (${mateCap()}명)`);
 }

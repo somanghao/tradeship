@@ -3,7 +3,7 @@
 import { VW, VH } from './sprites/scene.js';
 import { loadAssetPack } from './assets.js';
 import { loadEvidence } from './evidence.js';
-import { state, resetGame, START_GOLD, neighborsOf, grantShip, grantCrew } from './state.js';
+import { state, resetGame, START_GOLD, neighborsOf, grantShip, grantCrew, knowPort } from './state.js';
 import { CITY_BY_ID, SHIPS, CITIES, START_PORTS, REGION_BY_ID, ORIGINS, ORIGIN_BY_ID } from './data.js';
 import { savedHead, loadGame, clearSave } from './save.js';
 
@@ -192,7 +192,7 @@ function applyDebugStart() {
   const at = q.get('start');
   if (at && CITY_BY_ID[at]) {
     state.at = at;
-    state.known.add(at);
+    knowPort(at);
   } else if (at) {
     console.warn(`[debug] '${at}'라는 항구가 없다 — 시작 항구를 그대로 둔다.`);
   }

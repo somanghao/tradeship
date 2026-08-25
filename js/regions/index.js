@@ -31,6 +31,7 @@ import * as medShips from './mediterranean/ships.js';
 import * as medTrd from './mediterranean/npc-traders.js';
 import * as medPir from './mediterranean/npc-pirates.js';
 import * as medFig from './mediterranean/npc-figures.js';
+import * as medMat from './mediterranean/npc-mates.js';
 
 import * as atlGeo from './atlantic/geo.js';
 import * as atlTrade from './atlantic/trade.js';
@@ -39,6 +40,7 @@ import * as atlShips from './atlantic/ships.js';
 import * as atlTrd from './atlantic/npc-traders.js';
 import * as atlPir from './atlantic/npc-pirates.js';
 import * as atlFig from './atlantic/npc-figures.js';
+import * as atlMat from './atlantic/npc-mates.js';
 
 import * as afrGeo from './africa/geo.js';
 import * as afrTrade from './africa/trade.js';
@@ -47,6 +49,7 @@ import * as afrShips from './africa/ships.js';
 import * as afrTrd from './africa/npc-traders.js';
 import * as afrPir from './africa/npc-pirates.js';
 import * as afrFig from './africa/npc-figures.js';
+import * as afrMat from './africa/npc-mates.js';
 
 import * as midGeo from './mideast/geo.js';
 import * as midTrade from './mideast/trade.js';
@@ -55,6 +58,7 @@ import * as midShips from './mideast/ships.js';
 import * as midTrd from './mideast/npc-traders.js';
 import * as midPir from './mideast/npc-pirates.js';
 import * as midFig from './mideast/npc-figures.js';
+import * as midMat from './mideast/npc-mates.js';
 
 import * as indGeo from './indian/geo.js';
 import * as indTrade from './indian/trade.js';
@@ -63,6 +67,7 @@ import * as indShips from './indian/ships.js';
 import * as indTrd from './indian/npc-traders.js';
 import * as indPir from './indian/npc-pirates.js';
 import * as indFig from './indian/npc-figures.js';
+import * as indMat from './indian/npc-mates.js';
 
 import * as seaGeo from './seasia/geo.js';
 import * as seaTrade from './seasia/trade.js';
@@ -71,6 +76,7 @@ import * as seaShips from './seasia/ships.js';
 import * as seaTrd from './seasia/npc-traders.js';
 import * as seaPir from './seasia/npc-pirates.js';
 import * as seaFig from './seasia/npc-figures.js';
+import * as seaMat from './seasia/npc-mates.js';
 
 import * as carGeo from './caribbean/geo.js';
 import * as carTrade from './caribbean/trade.js';
@@ -79,6 +85,7 @@ import * as carShips from './caribbean/ships.js';
 import * as carTrd from './caribbean/npc-traders.js';
 import * as carPir from './caribbean/npc-pirates.js';
 import * as carFig from './caribbean/npc-figures.js';
+import * as carMat from './caribbean/npc-mates.js';
 
 import * as samGeo from './southamerica/geo.js';
 import * as samTrade from './southamerica/trade.js';
@@ -87,6 +94,7 @@ import * as samShips from './southamerica/ships.js';
 import * as samTrd from './southamerica/npc-traders.js';
 import * as samPir from './southamerica/npc-pirates.js';
 import * as samFig from './southamerica/npc-figures.js';
+import * as samMat from './southamerica/npc-mates.js';
 
 import * as easGeo from './eastasia/geo.js';
 import * as easTrade from './eastasia/trade.js';
@@ -95,6 +103,7 @@ import * as easShips from './eastasia/ships.js';
 import * as easTrd from './eastasia/npc-traders.js';
 import * as easPir from './eastasia/npc-pirates.js';
 import * as easFig from './eastasia/npc-figures.js';
+import * as easMat from './eastasia/npc-mates.js';
 
 /* ── 권역 ──────────────────────────────────────────────────────
    order  지도 화면에서 나열하는 순서 (서→동)
@@ -106,55 +115,55 @@ export const REGIONS = [
     id: 'mediterranean', name: '지중해', order: 2, home: true,
     blurb: '유럽과 아프리카와 아시아가 만나는 안쪽 바다. 이 게임이 시작되는 곳.',
     tone: 'inland',
-    mod: { geo: medGeo, trade: medTrade, goods: medGoods, ships: medShips, traders: medTrd, pirates: medPir, figures: medFig },
+    mod: { geo: medGeo, trade: medTrade, goods: medGoods, ships: medShips, traders: medTrd, pirates: medPir, figures: medFig, mates: medMat },
   },
   {
     id: 'caribbean', name: '카리브·누에바에스파냐', order: -1,
     blurb: '서인도 함대가 은을 싣고 떠나는 바다. 지협 하나가 두 대양을 가른다.',
     tone: 'antilles',
-    mod: { geo: carGeo, trade: carTrade, goods: carGoods, ships: carShips, traders: carTrd, pirates: carPir, figures: carFig },
+    mod: { geo: carGeo, trade: carTrade, goods: carGoods, ships: carShips, traders: carTrd, pirates: carPir, figures: carFig, mates: carMat },
   },
   {
     id: 'southamerica', name: '남아메리카', order: 0,
     blurb: '포토시의 은과 브라질의 설탕. 세계의 은이 여기서 나 태평양과 대서양으로 갈린다.',
     tone: 'newworld',
-    mod: { geo: samGeo, trade: samTrade, goods: samGoods, ships: samShips, traders: samTrd, pirates: samPir, figures: samFig },
+    mod: { geo: samGeo, trade: samTrade, goods: samGoods, ships: samShips, traders: samTrd, pirates: samPir, figures: samFig, mates: samMat },
   },
   {
     id: 'atlantic', name: '대서양·북해', order: 1,
     blurb: '이베리아에서 발트까지. 모직과 청어와 목재의 바다, 그리고 대양으로 나가는 문.',
     tone: 'cold',
-    mod: { geo: atlGeo, trade: atlTrade, goods: atlGoods, ships: atlShips, traders: atlTrd, pirates: atlPir, figures: atlFig },
+    mod: { geo: atlGeo, trade: atlTrade, goods: atlGoods, ships: atlShips, traders: atlTrd, pirates: atlPir, figures: atlFig, mates: atlMat },
   },
   {
     id: 'africa', name: '아프리카', order: 3,
     blurb: '기니만의 금과 상아, 스와힐리 해안의 항구들. 희망봉이 두 대양을 잇는다.',
     tone: 'warm',
-    mod: { geo: afrGeo, trade: afrTrade, goods: afrGoods, ships: afrShips, traders: afrTrd, pirates: afrPir, figures: afrFig },
+    mod: { geo: afrGeo, trade: afrTrade, goods: afrGoods, ships: afrShips, traders: afrTrd, pirates: afrPir, figures: afrFig, mates: afrMat },
   },
   {
     id: 'mideast', name: '중동·홍해', order: 4,
     blurb: '홍해와 페르시아만. 향신료가 유럽으로 올라가던 옛 길목이자 대상로의 끝.',
     tone: 'arid',
-    mod: { geo: midGeo, trade: midTrade, goods: midGoods, ships: midShips, traders: midTrd, pirates: midPir, figures: midFig },
+    mod: { geo: midGeo, trade: midTrade, goods: midGoods, ships: midShips, traders: midTrd, pirates: midPir, figures: midFig, mates: midMat },
   },
   {
     id: 'indian', name: '인도양', order: 5,
     blurb: '후추와 면포의 해안. 계절풍이 반년마다 방향을 바꾼다.',
     tone: 'monsoon',
-    mod: { geo: indGeo, trade: indTrade, goods: indGoods, ships: indShips, traders: indTrd, pirates: indPir, figures: indFig },
+    mod: { geo: indGeo, trade: indTrade, goods: indGoods, ships: indShips, traders: indTrd, pirates: indPir, figures: indFig, mates: indMat },
   },
   {
     id: 'seasia', name: '동남아·향료제도', order: 6,
     blurb: '정향과 육두구가 나는 유일한 섬들. 말라카 해협이 두 바다를 잇는 병목이다.',
     tone: 'tropic',
-    mod: { geo: seaGeo, trade: seaTrade, goods: seaGoods, ships: seaShips, traders: seaTrd, pirates: seaPir, figures: seaFig },
+    mod: { geo: seaGeo, trade: seaTrade, goods: seaGoods, ships: seaShips, traders: seaTrd, pirates: seaPir, figures: seaFig, mates: seaMat },
   },
   {
     id: 'eastasia', name: '동아시아', order: 7,
     blurb: '비단과 자기와 은. 감합과 해금 사이로 밀무역이 흐른다.',
     tone: 'temperate',
-    mod: { geo: easGeo, trade: easTrade, goods: easGoods, ships: easShips, traders: easTrd, pirates: easPir, figures: easFig },
+    mod: { geo: easGeo, trade: easTrade, goods: easGoods, ships: easShips, traders: easTrd, pirates: easPir, figures: easFig, mates: easMat },
   },
 ];
 
@@ -325,6 +334,9 @@ const npcOf = (slot, key) => each(slot).flatMap(({ r, m }) =>
 export const ALL_TRADERS = npcOf('traders', 'TRADERS');
 export const ALL_PIRATES = npcOf('pirates', 'PIRATES');
 export const ALL_FIGURES = npcOf('figures', 'FIGURES');
+/** 동료(항해사) — **배에 타는 사람**이다. 항구 인물(`FIGURES`)이 머무는 사람이라면 이쪽은 함께 나선다.
+    `state.consorts[].captain`의 빈 자리에 앉는 것이 이 사람들이고, 값은 `data.js: COMMENDA`가 정한다. */
+export const ALL_MATES = npcOf('mates', 'MATES');
 
 /** 권역별 **이름 없는 적** — 그 바다에 이름난 해적이 떠 있지 않을 때 붙는 얼굴.
     `data.js: ENEMIES`의 등급(세기·병력·전리품 금액)을 그대로 쓰고 이름·국적·선체만 바꾼다.

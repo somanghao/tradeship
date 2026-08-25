@@ -10,7 +10,7 @@ import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS } from '../data.js';
 import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
   shotStock, useShot, fleeBonus, fleeOdds, fleeWord, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL, regionOf,
-  originPerk, recordSlain,
+  originPerk, matePerk, recordSlain,
   /* 동행 선단 — **규칙은 전부 state.js의 순수 함수**이고 여기서는 부르기만 한다.
      포화력이 얹히고(consortGunBonus), 갑판이 두꺼워지고(consortMeleeBoost),
      맞는 것을 나눠 받는다(spreadDamage — 크게 상한 배는 여기서 가라앉는다). */
@@ -509,7 +509,7 @@ function meleeRound(stance) {
     const target = fl[Math.floor(Math.random() * fl.length)];
     /* 갈래가 백병을 거든다 — 좌수영의 군관은 갑판 싸움을 배운 사람이다
        (`ORIGINS.navy.perks.meleeUp`). 이 루프는 **우리 측 공격**이라 적에게는 안 붙는다. */
-    const raw = u.atk * mult * (1 + originPerk('meleeUp')) * (0.8 + Math.random() * 0.45);
+    const raw = u.atk * mult * (1 + originPerk('meleeUp') + matePerk('meleeUp')) * (0.8 + Math.random() * 0.45);
     const d = Math.max(1, Math.round(raw - target.def * 0.42));
     target.hp -= d; ydmg += d;
     u.pose = 'attack'; u.offset = 5;

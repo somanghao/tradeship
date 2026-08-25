@@ -8,8 +8,8 @@ import {
   HOLDINGS, HOLDING_KEYS, HOLDING, BANKRUPT, HULL, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
-  laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
-  FOES_BY_REGION, ALL_PIRATES,
+  laneOf, sameRegion, isOceanLane, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
+  FOES_BY_REGION, ALL_PIRATES, ALL_MATES, COMMENDA,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL, PIRATE_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
   START_GOLD, START_PORTS, DEFAULT_START, REPAIR_UNIT, HIRE_UNIT,
@@ -123,6 +123,14 @@ export const state = {
      ★ **평범한 객체다(Set이 아니다)** — `save.js`가 `state`를 통째로 JSON으로 눕히므로
        Set을 새로 만들면 `SET_KEYS`에 손을 대야 하고, 그 목록은 조용히 낡는다.
        날짜를 값으로 두면 "언제 꺾었나"까지 남아 나중에 화면이 쓸 수 있다. */
+  /* 들러 보진 않았지만 **값은 아는 항구** — `{ <도시id>: 들은 날 }`.
+     ★ `known`(실제로 들른 곳)과 **갈라 둔다.** `metFactions()`가 `known`을 세어
+       「만난 세력」을 내므로, 소문으로 들은 항구를 거기 섞으면 **가 본 적 없는 세력을
+       만난 것으로** 센다(실제로 그렇게 깨졌다). 소문은 소문의 자리에 둔다. */
+  scouted: {},
+  /* 태운 동료 — `{ <동료id>: { day, joint, stake, earned } }`. 코멘다 계약이 그 모양이다
+     (`data.js: COMMENDA`). 동행선의 선장 자리를 채우는 것도 이들이다(`consorts[].captain`). */
+  mates: {},
   slain: {},
   /* 초무(招撫)한 자 — `{ <명부id>: 날 }`. 격파(`slain`)와 **같은 무게로 명부를 닫는다**
      (SPEC-supremacy §1-3 (c) · `world.js: rosterClosed`가 둘을 함께 읽는다).
@@ -324,7 +332,7 @@ export function impactFactor(cityId, goodId, n = 0) {
   const p = pressureOf(cityId, goodId) + Math.max(0, n - 1) / 2;
   const raw = Math.min(MARKET.cap, (MARKET.impact * p) / marketDepth(cityId));
   // 부관이 물량을 나눠 넘기고, 경강상인은 나눠 넘길 자리를 안다
-  return raw * (1 - Math.min(0.75, officerPerk('impactOff') + originPerk('impactOff')));
+  return raw * (1 - Math.min(0.75, officerPerk('impactOff') + originPerk('impactOff') + matePerk('impactOff')));
 }
 
 export function addPressure(cityId, goodId, n) {
@@ -394,7 +402,7 @@ export function tariffRate(cityId = state.at) {
   /* 부관이 깎고, **문서와 밀수가 또 깎는다.** 셋은 곱이 아니라 합으로 두되 바닥을 둔다 —
      감합·카르타스를 쥐고 밀수업자까지 끼면 세가 0이 되어 제도가 사라지기 때문이다.
      제도는 피해 갈 수 있어야 하지만 **없어지면 안 된다**(그것이 이 세계의 이야기다). */
-  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + boonTariffOff(cityId);
+  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + matePerk('tariffOff') + boonTariffOff(cityId);
   return tariffFromOff(off, cityId);
 }
 
@@ -414,7 +422,7 @@ export function tariffCutPreview(kind, cityId = state.at) {
     ? (state.boons?.permit?.[REGION_OF_CITY[cityId]] ?? 0) > state.day
     : (state.boons?.smuggle?.[cityId] ?? 0) > state.day;
   // 이미 갖고 있으면 그 몫은 지금 세율에 이미 반영돼 있다 — 다시 더하면 두 번 깎는 꼴이 된다.
-  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + boonTariffOff(cityId)
+  const off = officerPerk('tariffOff') + originPerk('tariffOff', cityId) + matePerk('tariffOff') + boonTariffOff(cityId)
             + (active ? 0 : addOff);
   const after = tariffFromOff(off, cityId);
   return { before, after, delta: Math.max(0, before - after), active };
@@ -444,6 +452,42 @@ export const hasHolding = (kind, cityId = state.at) => {
   const m = state.holdings?.[cityId];
   return !!m?.[kind] && !m.idle;
 };
+
+/* ── 시세를 아는 항구 (P5) ────────────────────────────────────
+   ★ `state.known`은 원래 「가 본 항구」였는데, 그것이 곧 **「값을 아는 항구」**다 —
+   못 가 본 곳은 항로 카드가 *"시세는 닿아야 안다"*로 막는다. 그래서 초행이 늘 손해였다
+   (conquest ISSUES #16 · 8항차 23일에 6,661 → 5,448닢).
+   두 길로 연다. **둘 다 보너스가 아니라 정보다** — 차익 자체는 한 톨도 안 바뀐다.
+     ① 거점(임차창고 이상)이 선 항구는 그 값이 내게 온다 (`HOLDINGS.rental.priceTip` · 사료: 팩토리아)
+     ② 처음 닿은 항구가 **직항 이웃 몇 곳**의 값을 함께 연다 (`HOLDING.scoutNeighbors` · 부두의 소문) */
+
+/** 그 항구에 「값을 알려 주는」 거점이 서 있나 — 문을 닫았으면(`idle`) 소식도 끊긴다 */
+export function holdingTip(cityId) {
+  const m = state.holdings?.[cityId];
+  if (!m || m.idle) return false;
+  return HOLDING_KEYS.some((k) => m[k] && HOLDINGS[k].priceTip);
+}
+
+/** 지금 이 항구의 시세를 알 수 있나 — **들렀거나 · 소문을 들었거나 · 거점이 섰거나** */
+export const priceKnown = (cityId) =>
+  state.known.has(cityId) || !!state.scouted?.[cityId] || holdingTip(cityId);
+
+/** 항구에 닿았다 — 그 항구와 **가까운 직항 이웃 몇 곳**의 값이 열린다.
+    ★ 도착 처리가 있는 자리(`scenes/map.js: arrive` · `port.js`)는 전부 이 함수를 부른다.
+      `state.known.add`를 손으로 쓰면 이웃이 안 열려 초행 벌금이 그대로 남는다. */
+export function knowPort(cityId = state.at) {
+  state.known.add(cityId);                 // 여기는 **들른** 곳이다
+  delete state.scouted?.[cityId];          // 소문으로만 알던 곳이면 이제 진짜로 안다
+  const n = HOLDING.scoutNeighbors ?? 0;
+  if (n <= 0) return { opened: [] };
+  const opened = neighborsOf(cityId)
+    .filter((to) => !priceKnown(to))
+    .sort((a, b) => voyageDays(cityId, a) - voyageDays(cityId, b))
+    .slice(0, n);
+  const m = (state.scouted ??= {});
+  for (const to of opened) m[to] = state.day;   // 이쪽은 **소문**이다 — 세력을 만난 것이 아니다
+  return { opened };
+}
 
 /** 유지비가 밀려 문을 닫았나 */
 export const holdingIdle = (cityId = state.at) => !!state.holdings?.[cityId]?.idle;
@@ -1094,6 +1138,8 @@ export function recordSlain(enemy, regionId = currentRegion()) {
   if (enemy.face) keys.push(rosterKey(enemy.face));
   const box = (state.slain ??= {});
   for (const k of keys) box[k] ??= state.day;    // 처음 꺾은 날을 남긴다
+  // 꺾은 이름도 바다에서 내린다 — 초무와 같은 자리다(ISSUES #26)
+  if (enemy.face) retireHook?.(enemy.face);
   return keys;
 }
 
@@ -1552,7 +1598,21 @@ export function sell(goodId, qty) {
     state.gold -= cut;
     state.officer.earned += cut;
   }
-  state.stats.profit += profit - cut;
+  /* ★ **동료의 코멘다 몫** — 부관 성과급과 **같은 자리**에서, 오직 남은 이익에서만 나간다.
+     밑진 거래에서는 떼지 않는다(손해에 수수료까지 물면 되팔기가 아예 막힌다).
+     편무 25% · 쌍무 50%는 사료 그대로다 → `data.js: COMMENDA`. */
+  let mcut = 0;
+  const mrate = mateCut();
+  if (profit - cut > 0 && mrate > 0) {
+    mcut = Math.round((profit - cut) * mrate);
+    state.gold -= mcut;
+    const ms = crewMates();
+    for (const m of ms) {
+      const share = (m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole) / Math.max(1e-9, mrate);
+      state.mates[m.id].earned += Math.round(mcut * share);
+    }
+  }
+  state.stats.profit += profit - cut - mcut;
   /* 매출·관세·성과급은 한 거래에서 세 갈래로 갈린다 — 장부에도 셋으로 적는다.
      순이익 한 줄로 뭉치면 "관세로 얼마가 나갔나"를 정산 화면이 못 보여준다.
 
@@ -1561,11 +1621,11 @@ export function sell(goodId, qty) {
        (실제로 이 버그로 장부가 금고와 8닢 어긋났다 — tools/test-payroll.mjs ⑥이 잡았다). */
   book('income', 'sales', raw);
   book('outgo', 'tariff', tariff);
-  book('outgo', 'officer', cut);
+  book('outgo', 'officer', cut + mcut);
   addPressure(state.at, goodId, max);
   return {
-    ok: true, qty: max, gain, tariff, cut, unit: Math.round(gain / max),
-    base: state.prices[state.at][goodId], profit: profit - cut,
+    ok: true, qty: max, gain, tariff, cut, mateCut: mcut, unit: Math.round(gain / max),
+    base: state.prices[state.at][goodId], profit: profit - cut - mcut,
   };
 }
 
@@ -1611,7 +1671,12 @@ export function contractOffer(cityId = state.at, day = state.day) {
      동행을 늘리는 것이 그대로 계약 수입의 배수가 된다 — §5-L이 시장 깊이에서 지적한 것과
      똑같은 구멍을 계약 쪽에 새로 파는 셈이다. 동행선의 몫은 "그 일감을 실을 수 있느냐"
      (`acceptContract`의 `cargoCapTotal`)로만 온다. */
-  const cap = Math.max(1, state.cargoCap);
+  /* ★ **선복 = 기함 + 동행의 일부**(P2-b). ★1에서는 기함만 셌는데, 그러면 선금 상한만
+     `fleetCollateral()`(선단 전체)에 묶이고 **수량은 기함 기준이라 반쪽**이었다.
+     동행 적재를 **전량이 아니라 `consortHold`(0.6)만** 세는 것이 그때의 걱정(「동행이 곧 배수」)에
+     대한 답이다 — 적재가 7.9배일 때 계약은 4배가 된다. 근거·수치는 `data.js: CONTRACT.consortHold`. */
+  let cap = Math.max(1, state.cargoCap);
+  for (const k of consortKeys()) cap += (SHIPS[k]?.cargo || 0) * (CONTRACT.consortHold ?? 0);
   const [ml, mh] = CONTRACT.holdMul;
   const hold = Math.min(mh, Math.max(ml, (cap / CONTRACT.holdRef) ** CONTRACT.holdPow));
   const target = (vl + hash(cityId, slot, 'val') * (vh - vl)) * scale * hold;
@@ -1890,6 +1955,12 @@ export function rosterOpenIn(regionId) {
     && !state.slain?.[`pirate:${d.id}`] && !state.tamed?.[d.id]);
 }
 
+/** 명부가 닫힐 때 그 배를 세계에서 내리는 자리 — `world.js`가 꽂는다(`setRetireHook`).
+    ★ 모듈 방향(`data → state → world → scenes`)을 안 깨려고 후크로 둔다. 안 꽂혀 있으면
+      아무 일도 안 일어나므로 시뮬·검증 스크립트가 `world`를 안 불러도 그대로 돈다. */
+let retireHook = null;
+export const setRetireHook = (fn) => { retireHook = fn; };
+
 /** 소식 값 — 현상금의 일부. 정보상 `fee`(70~240)와 같은 자릿수가 되게 하한을 둔다 */
 export const bountyTipPrice = (def) =>
   Math.max(ROSTER.tipFloor, Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tipRate));
@@ -1934,6 +2005,10 @@ export function tamePirate(def, cityId = state.at) {
   state.gold -= fee;
   book('outgo', 'port', fee);
   (state.tamed ??= {})[def.id] = state.day;
+  /* ★ **바다에 떠 있는 그 배도 내린다.** `pickDef`는 새로 만들 때만 닫힌 명부를 거르므로,
+     이미 떠 있던 배는 그대로 남아 초무한 자가 며칠 뒤 항로를 막았다(ISSUES #26).
+     `state`는 `world`를 모르므로(모듈 방향) **후크로 받는다** — `world.js`가 자기를 꽂는다. */
+  retireHook?.(def.id);
   pushLog(`${def.name}${josa(def.name, '을/를')} 초무했다 — ${fee.toLocaleString('ko-KR')}닢.`
         + ' 그자는 하던 일을 바꾸지 않았지만, 이제 우리 배는 건드리지 않는다.', 'good');
   return { ok: true, fee, kind: 'tame', def };
@@ -1970,6 +2045,90 @@ export function hasOfficer() {
 /** 부관이 있으면 그 계수, 없으면 0 — 호출하는 쪽은 부관 유무를 몰라도 된다 */
 export function officerPerk(key) {
   return state.officer ? (OFFICER.perks[key] || 0) : 0;
+}
+
+/* ── 동료 — 코멘다(commenda) ────────────────────
+   값과 근거는 `data.js: COMMENDA`의 주석이 정본이다. 여기는 **규칙**만 둔다.
+   ★ 특전은 부관·갈래와 **같은 자리에서 더해진다** — 읽는 쪽은
+     `officerPerk(k) + originPerk(k) + matePerk(k)` 꼴로 쓴다. 새 계산 경로를 파지 않는다. */
+
+/** 그 항구에서 만나는 동료 — 이미 태운 사람은 빼고 보여 준다 */
+export function matesAt(cityId = state.at) {
+  return ALL_MATES.filter((m) => m.at === cityId && !state.mates?.[m.id]);
+}
+
+/** 지금 태운 동료들 (명부 정의 + 계약 상태) */
+export function crewMates() {
+  const out = [];
+  for (const [id, rec] of Object.entries(state.mates ?? {})) {
+    const def = ALL_MATES.find((m) => m.id === id);
+    if (def) out.push({ ...def, ...rec });
+  }
+  return out;
+}
+export const mateCount = () => Object.keys(state.mates ?? {}).length;
+export const mateCap = () => Math.round((FLEET.max ?? 0) * (COMMENDA.maxRatio ?? 1));
+
+/** 동료 특전의 합 — 부관·갈래와 같은 키를 쓴다(새 키를 만들면 규칙이 조용히 무시한다) */
+export function matePerk(key) {
+  let v = 0;
+  for (const m of crewMates()) v += m.perks?.[key] || 0;
+  return v;
+}
+
+/** 동료가 가져가는 이익 몫의 합 (0~1) — 편무 25% · 쌍무 50% */
+export function mateCut() {
+  let v = 0;
+  for (const m of crewMates()) v += m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole;
+  return Math.min(0.9, v);
+}
+
+/** 쌍무로 태울 때 그가 내놓는 밑천 */
+export const mateStake = (def) => Math.round((def?.hire ?? 0) * (COMMENDA.stakeMul ?? 0));
+
+/** 동료를 태운다. `joint`면 쌍무 콜레간자 — **그가 밑천을 대고 절반을 가져간다.**
+    ★ 계약금(`hire`)은 내가 내고, 쌍무면 그의 밑천이 그 자리에서 들어온다 —
+      그래서 **초반에는 태우는 것이 순자본 유입**이고(340닢 내고 1,020닢을 받는다)
+      후반에는 그 밑천이 아무것도 아니면서 이익의 절반이 나간다. */
+export function hireMate(mateId, { joint = false } = {}) {
+  const def = ALL_MATES.find((m) => m.id === mateId);
+  if (!def) return { ok: false, reason: '그런 사람이 없다' };
+  if (state.mates?.[mateId]) return { ok: false, reason: '이미 함께 가고 있다' };
+  if (def.at !== state.at) return { ok: false, reason: `${CITY_BY_ID[def.at]?.name ?? def.at}에 있는 사람이다` };
+  if (mateCount() >= mateCap()) return { ok: false, reason: `데리고 다닐 수 있는 사람은 ${mateCap()}명까지다` };
+  const fee = def.hire ?? 0;
+  if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  const stake = joint ? mateStake(def) : 0;
+  state.gold -= fee;
+  book('outgo', 'wages', fee);
+  if (stake) { state.gold += stake; book('income', 'contracts', stake); }
+  (state.mates ??= {})[mateId] = { day: state.day, joint: !!joint, stake, earned: 0 };
+  pushLog(`${def.name}${josa(def.name, '이/가')} 갑판에 올랐다 (계약금 ${fee.toLocaleString('ko-KR')}닢`
+        + (stake ? ` · 쌍무 — 밑천 ${stake.toLocaleString('ko-KR')}닢을 대고 이익의 `
+                   + `${Math.round(COMMENDA.cutJoint * 100)}%를 가져간다`
+                 : ` · 편무 — 이익의 ${Math.round(COMMENDA.cutSole * 100)}%를 가져간다`) + ').', 'good');
+  return { ok: true, fee, stake, def };
+}
+
+/** 내려보낸다 — 쌍무였으면 **밑천을 돌려준다**(출자이지 증여가 아니다).
+    그가 선장으로 앉아 있던 배는 동행에서 내려진다(`FLEET.requireCaptain`). */
+export function dismissMate(mateId) {
+  const rec = state.mates?.[mateId];
+  if (!rec) return { ok: false, reason: '함께 가는 사람이 아니다' };
+  const def = ALL_MATES.find((m) => m.id === mateId);
+  const back = COMMENDA.refundStake ? (rec.stake || 0) : 0;
+  const r = back ? payFine(back, `${def?.name ?? mateId}의 밑천을 돌려줬다`) : { owed: 0 };
+  delete state.mates[mateId];
+  for (const k of consortKeys()) if (state.consorts[k]?.captain === mateId) state.consorts[k].captain = null;
+  pushLog(`${def?.name ?? mateId}${josa(def?.name ?? mateId, '이/가')} 부두로 내렸다.`
+        + (back ? ` 밑천 ${back.toLocaleString('ko-KR')}닢을 돌려줬다.` : ''), 'warn');
+  return { ok: true, back, owed: r.owed };
+}
+
+/** 동행선에 선장으로 앉지 않은 동료 — 배 하나에 선장 하나 */
+export function freeMates() {
+  const taken = new Set(consortKeys().map((k) => state.consorts[k]?.captain).filter(Boolean));
+  return crewMates().filter((m) => !taken.has(m.id));
 }
 
 /* ── 출신 갈래의 특전 ──────────────────────────────────────
@@ -2011,7 +2170,7 @@ export function initialOfficer() {
 
 /** 이 항구의 수리 단가 — 선장인에게 말을 넣어 두었으면 깎인다 */
 export function repairUnit(cityId = state.at) {
-  const off = ((state.boons?.repair?.[cityId] ?? 0) > state.day ? BOON.repairOff : 0)
+  const off = matePerk('repairOff') + ((state.boons?.repair?.[cityId] ?? 0) > state.day ? BOON.repairOff : 0)
             + originPerk('repairCut', cityId)        // 좌수영의 손은 제 배를 싸게 고친다
             + (hasHolding('slipway', cityId) ? (HOLDINGS.slipway.repairCut ?? 0) : 0);
   return Math.max(1, Math.round(REPAIR_UNIT * (1 - Math.min(0.7, off))));
@@ -2228,7 +2387,9 @@ export function buyRefit(key) {
 /** 개장까지 반영한 선체 최대치 */
 export function maxHullOf(shipKey = state.shipKey, refits = state.refits) {
   const base = SHIPS[shipKey].hp;
-  return Math.round(base * (refits.oakArmor ? 1.25 : 1) * (refits.razee ? 0.90 : 1));
+  // 선장인(shipwright)이 타면 널을 두껍게 댄다 — 동료 특전 `hullUp`
+  return Math.round(base * (refits.oakArmor ? 1.25 : 1) * (refits.razee ? 0.90 : 1)
+                         * (1 + Math.min(0.35, matePerk('hullUp'))));
 }
 
 /** 선체 최대치를 다시 계산해 상태에 반영 (개장·승선 시) */
@@ -2301,7 +2462,18 @@ export function shorthanded() {
 export const OCEAN_CREW_MIN = 0.6;      // 그 배 최소 인원의 이 비율
 export const OCEAN_HULL_MIN = 0.25;     // 선체가 이보다 상하면 대양은 못 건넌다
 
-export function oceanReady() {
+/** 이 원양 항로가 요구하는 동행 척수 — 위험이 곧 호위 요구다(`data.js: FLEET.escortAt`) */
+export function escortNeed(from = state.at, to = null) {
+  if (to == null || !isOceanLane(from, to)) return 0;
+  const risk = routeRisk(from, to) ?? 0;
+  for (const [over, n] of FLEET.escortAt ?? []) if (risk > over) return n;
+  return 0;
+}
+
+/** 대양을 건널 수 있나 — **사람 · 배 · 그리고 호위**.
+    ★ `to`를 주면 그 항로의 호위 의무까지 본다(안 주면 예전처럼 사람·배만 — 호출부 호환).
+      근해는 여전히 안 막는다. 막으면 항구에 갇혀 빠져나갈 길이 없어진다. */
+export function oceanReady(to = null) {
   const need = Math.max(3, Math.ceil((ship().crewMin || 0) * OCEAN_CREW_MIN));
   if (state.crew < need) {
     return { ok: false, need, why: `대양을 건너려면 선원이 ${need}명은 있어야 한다 (지금 ${state.crew}명)` };
@@ -2309,12 +2481,20 @@ export function oceanReady() {
   if (state.maxHp > 0 && state.hp / state.maxHp < OCEAN_HULL_MIN) {
     return { ok: false, why: `선체가 ${state.hp}/${state.maxHp}다. 이 배로는 뭍이 안 보이는 곳에 못 나간다` };
   }
-  return { ok: true };
+  /* ★ **혼자서는 못 건넌다**(DESIGN-growth P2-a · 사료: 1561년 이후 카레라의 함대 편성 의무).
+     이 한 줄이 원양을 「큰 판돈」으로 묶는다 — 벌이가 큰 만큼 입장권이 있어야 한다.
+     ⚠️ 항로를 **막는 것이 아니라 조건을 붙이는 것**이다. 콘텐츠는 한 줄도 안 준다. */
+  const esc = escortNeed(state.at, to);
+  if (esc > consortCount()) {
+    return { ok: false, escort: esc,
+             why: `이 바다는 혼자 못 건넌다 — 동행 ${esc}척이 있어야 한다 (지금 ${consortCount()}척)` };
+  }
+  return { ok: true, escort: esc };
 }
 
 /** 도주 성공률 보정 (돛 증축) */
 export function fleeBonus() {
-  return state.refits.sails ? 0.14 : 0;
+  return (state.refits.sails ? 0.14 : 0) + Math.min(0.25, matePerk('fleeUp'));
 }
 
 /** 도주 성공 확률. 멀수록·빠를수록 잘 도망치고, 찢긴 돛은 양쪽 모두에 반영된다.
@@ -2834,9 +3014,12 @@ export function canConsort(key) {
   if (consortCount() >= FLEET.max) {
     return { ok: false, reason: `한 번에 데리고 나갈 수 있는 배는 ${FLEET.max}척까지다 (기함까지 ${FLEET.max + 1}척)` };
   }
-  /* 선장 규칙은 **열려 있다** — Dev-B가 NPC 동료를 붙이면 `FLEET.requireCaptain`만 켜면 된다. */
-  if (FLEET.requireCaptain && !captainOf(key)) {
-    return { ok: false, reason: '이 배를 맡길 선장이 없다' };
+  /* ★ **배 하나에 선장 하나.** `FLEET.requireCaptain`을 켰으므로(2026-08-25 · A-5 배선 완료)
+     동행선에는 태운 동료 중 아직 배를 안 맡은 사람이 있어야 한다.
+     ⇒ **선단 규모가 동료 수에 묶인다** — 사용자가 *"동료를 모으고 여러배를 같이 운용하고"*를
+       한 문장에 붙여 쓴 구조가 이것이다. 자동으로 앉히되(고를 것이 없다), 없으면 막는다. */
+  if (FLEET.requireCaptain && !captainOf(key) && !freeMates().length) {
+    return { ok: false, reason: '이 배를 맡길 선장이 없다 — 항구에서 동료를 태워야 한다' };
   }
   const cost = consortHireCost(key);
   if (cost > state.gold) {
@@ -2851,11 +3034,16 @@ export function setConsort(key) {
   if (!can.ok) return can;
   state.gold -= can.cost;
   book('outgo', 'port', can.cost);       // 부두에서 뽑는 값이다 — `hire()`·술집 계약금과 같은 갈래
-  state.consorts[key] = { crew: can.crew, captain: null };
+  /* 배를 맡을 사람을 그 자리에서 앉힌다 — 아직 배가 없는 동료 중 앞엣사람이다.
+     고를 것이 없으므로(누가 어느 배를 맡든 특전은 선단 전체에 붙는다) 화면을 늘리지 않는다. */
+  const cap = FLEET.requireCaptain ? (freeMates()[0] ?? null) : null;
+  state.consorts[key] = { crew: can.crew, captain: cap?.id ?? null };
   const n = SHIPS[key].name;
   pushLog(`${n}${josa(n, '이/가')} 뱃머리를 나란히 했다. 선원 ${can.crew}명을 태우는 데 `
-        + `${can.cost.toLocaleString('ko-KR')}닢. 선단 ${fleetSize()}척.`, 'good');
-  return { ok: true, cost: can.cost, crew: can.crew };
+        + `${can.cost.toLocaleString('ko-KR')}닢`
+        + (cap ? ` · 키는 ${cap.name}${josa(cap.name, '이/가')} 잡는다` : '')
+        + `. 선단 ${fleetSize()}척.`, 'good');
+  return { ok: true, cost: can.cost, crew: can.crew, captain: cap?.id ?? null };
 }
 
 /** 다시 매어 둔다 — 태운 사람은 내리고 계약금은 돌아오지 않는다.
@@ -3171,7 +3359,10 @@ export function routeWindLabel(aId, bId, day = state.day) {
     동행선이 없으면 1이라 기존 계산과 한 치도 다르지 않다. */
 export function voyageDays(aId, bId, day = state.day) {
   const base = distanceBetween(aId, bId) / (13 * shipSpeed() * fleetSpeedPenalty());
-  return Math.max(1, Math.round(base / routeFactor(aId, bId, day)));
+  /* 물길을 외운 사람은 **서 있는 날을 없앤다** — 빠른 배를 모는 것이 아니다(`sailDaysOff`).
+     상한을 두는 이유: 아홉을 모아 항해가 하루가 되면 거리가 뜻을 잃는다. */
+  const off = Math.min(0.30, matePerk('sailDaysOff'));
+  return Math.max(1, Math.round((base / routeFactor(aId, bId, day)) * (1 - off)));
 }
 
 /* ── 항해 이벤트 ────────────────────────────────────────────
@@ -3403,7 +3594,12 @@ export function insuranceFor({ from = state.at, to = null, value = null } = {}) 
   const risk = to == null ? null : routeRisk(from, to);
   if (!risk) return 0;
   const v = value == null ? cargoValue(from) : value;
-  return Math.round((v * risk / 100) * INSURANCE_RATE);
+  return Math.round((v * risk / 100) * INSURANCE_RATE * (1 - convoyInsureOff()));
+}
+
+/** 함께 가는 배가 많을수록 인수업자가 덜 뗀다 (`data.js: FLEET.insureOffPer/Cap` · P2-c) */
+export function convoyInsureOff() {
+  return Math.min(FLEET.insureOffCap ?? 0, consortCount() * (FLEET.insureOffPer ?? 0));
 }
 
 /* ── 공동해손 — 보험이 실제로 보상하는 사건 ────────────────────
@@ -3506,8 +3702,10 @@ export function voyageCost(days, crew = state.crew, leg = null) {
   // 기함 선체 유지 — 삭구·타르·펌프질. 예전에는 "기함은 선원 급여로 갈음한다"며 뺐는데,
   // 그러면 배를 키워도 고정비가 안 늘어 후반이 너무 풍족해진다(실측 90항차 +65%).
   // 큰 배를 몰수록 무거워지는 값이라 성장에 브레이크를 거는 자리다.
-  const hull = Math.round((SHIPS[state.shipKey].upkeep || 0) * HULL_UPKEEP * days);
-  const arms = Math.round(armsUpkeep() * days);
+  // 갑판장·화물장이 배를 아낀다 — 동료 특전 `upkeepOff`(선체·무장 유지비에만 붙는다)
+  const upOff = 1 - Math.min(0.30, matePerk('upkeepOff'));
+  const hull = Math.round((SHIPS[state.shipKey].upkeep || 0) * HULL_UPKEEP * days * upOff);
+  const arms = Math.round(armsUpkeep() * days * upOff);
   const insurance = leg ? insuranceFor(leg) : 0;
   // 부관 급여 — 벌든 못 벌든 나간다. 선원 급여와 섞지 않고 따로 세운다:
   // 뭉뚱그리면 "부관을 데리고 있는 값"이 얼마인지 플레이어가 읽을 수 없다.
@@ -3898,7 +4096,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
     regard: {}, _regardAge: 0,
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
-    slain: {}, tamed: {}, ended: 0, endedNine: 0,
+    mates: {}, scouted: {}, slain: {}, tamed: {}, ended: 0, endedNine: 0,
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
@@ -3916,6 +4114,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
   });
   trimLoadout();
   refreshPrices();
+  knowPort(at);        // 부두에 서 있으면 이웃 소문은 들린다 (P5)
   pushLog(`${CITY_BY_ID[at]?.name ?? at} 부두. 물이 새는 낡은 바사 한 척과 금화 ${state.gold}닢으로 시작한다.`, 'warn');
   pushLog('갑판에 사람이 없다. 술집에서 선원을 모으지 않으면 배는 뜨지 않는다.', 'warn');
   pushLog(`${OFFICER.name}${josa(OFFICER.name, '이/가')} 장부를 안고 갑판에 올라섰다. 급여 ${OFFICER.wage}닢/일.`, 'good');
