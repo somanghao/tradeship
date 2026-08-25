@@ -16,13 +16,14 @@ import {
   /* 삭은 배와 명부 사냥 */
   hullFactor, soakCargo, shipSpeed as speedOf,
   rosterOpenIn, bountyTipPrice, tamePrice, buyBountyTip, tamePirate, activeBounty,
+  tamedIn, passOff, tipOff, regionHasHolding,
   /* 성장 설계 — P5 초행 정보 · P2 선단 · P3 동료 */
   knowPort, priceKnown, holdingTip, metFactions, escortNeed, oceanReady, convoyInsureOff, insuranceFor,
   matesAt, hireMate, dismissMate, mateCut, matePerk, mateStake, mateCap, freeMates,
   canConsort, setConsort, consortCount, voyageDays as legDays,
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT } from '../js/data.js';
-import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg } from '../js/world.js';
+import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
    `node tools/test-rules.mjs`가 **exit 0**을 돌려주었고, 자동 회차와 문서는 그것을
@@ -563,23 +564,49 @@ resetGame();
      '부산포에서 시작하면 `known`에 부산포가 들어간다 — 가 본 적 없는 베네치아가 안 박힌다');
 }
 
-/* ── 닫힌 이름은 바다에서도 내려간다 (ISSUES #26) ────────────────
+/* ── 초무는 「지우는 것」이 아니라 「내 편으로 만드는 것」 (ISSUES #26 · P6-4) ────
    ★ 920닢을 치르고 *"이제 우리 배는 건드리지 않는다"*를 받았는데 39일 뒤 그자와 싸워 나포했다 —
-     `tamed`와 `slain`이 **둘 다 박혔다.** `pickDef`는 **새로 만들 때만** 닫힌 명부를 거르고
-     **이미 떠 있는 배**는 그대로 뒀기 때문이다. 돈을 치르고 산 약속이 안 지켜지면 초무를 아무도 안 산다. */
+     `tamed`와 `slain`이 **둘 다 박혔다.** 고칠 자리는 「그자를 지우는 것」이 아니라
+     **「그자가 내 배를 안 건드리는 것」**이었다: 지워 봐야 정원이 안 줄어 `standIn`이 얼굴 없는 배로
+     그 자리를 채우므로 **바다가 하나도 안 안전해진다.**
+   ★ 사료가 그 답을 명부 `blurb`에 이미 적어 뒀다 — 정지룡은 관군이 되어 **다른 해적을 소탕했고**,
+     무라카미 수군은 **과소기(過所旗)**를 주고 안전 통행을 보장했다. **둘 다 일해 준 사람이다.** */
 {
   resetGame('sakai');
-  state.gold = 100000;
+  state.gold = 500000; state.crew = 10;
   initWorld();
   const def = rosterOpenIn('eastasia').find((d) => d.id === 'murakami');
+  const wang = rosterOpenIn('eastasia').find((d) => d.id === 'wangzhi');
+  const odds0 = encounterOdds({ from: 'sakai', to: 'hirado' });
+  const tip0 = bountyTipPrice(wang);
   state.npcs.push({ id: 9999, kind: 'pirate', defId: def.id, name: def.name, shipKey: def.ship,
-                    at: def.base, to: 'hirado', gold: 1000, cargo: {}, hp: 90,
+                    at: 'sakai', to: 'hirado', gold: 1000, cargo: {}, hp: 90,
                     strength: def.strength, bounty: def.bounty });
-  ok(state.npcs.some((n) => n.defId === 'murakami'), '초무하기 전에는 그 배가 바다에 떠 있다');
   state.at = def.base;
   ok(tamePirate(def, def.base).ok, `소굴에서 초무한다 (${tamePrice(def).toLocaleString('en-US')}닢)`);
-  ok(!state.npcs.some((n) => n.defId === 'murakami') && !npcsOnLeg(def.base, 'hirado', 'pirate').some((n) => n.defId === 'murakami'),
-     '**닫힌 이름은 그 자리에서 바다에서도 내려간다** — 산 약속이 지켜진다');
+
+  ok(state.npcs.some((n) => n.defId === 'murakami'),
+     '**그자는 바다에 남는다** — 초무는 사라지게 하는 것이 아니라 내 편으로 만드는 것이다');
+  ok(!npcsOnLeg('sakai', 'hirado', 'pirate').some((n) => n.defId === 'murakami' && !rosterClosed(n.defId)),
+     '**다만 내 배는 안 건드린다** — 산 약속이 지켜진다 (ISSUES #26)');
+
+  const odds1 = encounterOdds({ from: 'sakai', to: 'hirado' });
+  ok(Math.abs(odds1 / odds0 - (1 - ROSTER.passOddsOff)) < 1e-6,
+     `과소기 — 그 바다 조우가 ${(odds0 * 100).toFixed(1)}% → ${(odds1 * 100).toFixed(1)}%`
+     + ` (초무 1명당 −${Math.round(ROSTER.passOddsOff * 100)}% 상대감소)`);
+  ok(bountyTipPrice(wang) === Math.round(tip0 * (1 - ROSTER.tipOffPer)),
+     `토벌 협조 — 남은 명부의 소식값이 ${tip0} → ${bountyTipPrice(wang)}닢`
+     + ' (그자가 동료의 소재를 안다)');
+  ok(Math.abs(encounterOdds({ from: 'venezia', to: 'napoli' })
+              - (() => { const t = state.tamed; state.tamed = {}; const v = encounterOdds({ from: 'venezia', to: 'napoli' }); state.tamed = t; return v; })()) < 1e-9,
+     '다른 바다는 그대로다 — 과소기는 **그 권역에 매인다**');
+
+  state.day += (ROSTER.tameGraceDays ?? 180) + 1;
+  ok(tamedIn('eastasia') === 0,
+     `거점이 없으면 ${ROSTER.tameGraceDays}일 뒤 식는다 — 과소기는 갱신하는 것이었다`);
+  buyHolding('rental', 'sakai');
+  ok(tamedIn('eastasia') === 1, '그 바다에 거점을 세우면 다시 산다 — 이름을 대 줄 자리가 생긴다');
+  ok(!!state.tamed.murakami, '식어도 명부는 닫힌 채다 — 값을 치른 것은 사라지지 않는다');
 }
 
 /* ── P5 초행 정보 — 임차창고가 값을 알려 준다 ────────────────────

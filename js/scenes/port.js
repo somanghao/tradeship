@@ -15,6 +15,7 @@ import {
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
+  tamedIn, passOff, tipOff, regionHasHolding,
   knowPort, holdingTip,
   /* 동료 — 코멘다(P3). 규칙은 `state.js`, 값은 `data.js: COMMENDA` */
   matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
@@ -681,6 +682,15 @@ function hegemonyCard() {
        ★ 해적을 약하게 만들지 않는다 — 강한 채로 **고를 수 있게** 하는 것이다.
        ★ 자리를 새 카드로 빼지 않은 이유: 사이드패널은 이미 카드 열둘이라 열셋째가 넘으면
          출항 단추가 화면 밖으로 밀린다(947행 주석의 사고). 그래서 **명부 줄에 두 줄만** 얹는다. */
+    /* ★ **초무는 지우는 것이 아니라 내 편으로 만드는 것이다**(P6-4) — 그 효과를 화면이 말해야
+       24,000닢이 선택이 된다. 안 적으면 값만 나가고 아무 일도 안 난 것으로 보인다. */
+    const tamedN = tamedIn(rid);
+    if (tamedN) {
+      rows.push(el('div.ctr-sub', { style: { color: '#8fbf8a' },
+        text: `   초무 ${tamedN}명 — 과소기로 이 바다 조우 −${Math.round(passOff(rid) * 100)}%`
+            + ` · 남은 명부의 소식값 −${Math.round(tipOff(rid) * 100)}%`
+            + (regionHasHolding(rid) ? '' : ` (이 바다에 거점이 없으면 ${ROSTER.tameGraceDays}일 뒤 식는다)`) }));
+    }
     const chase = activeBounty();
     const chased = chase ? rosterOpenIn(rid).find((d) => d.id === chase.id) : null;
     if (chased) {
@@ -705,7 +715,8 @@ function hegemonyCard() {
     }
     for (const d of den) {
       rows.push(svcRow(`${d.name}을 초무한다 — ${tamePrice(d).toLocaleString('ko-KR')}닢`,
-        '여기가 그자의 소굴이다. 값을 치르면 명부에서 이름이 지워진다 — 격파보다 비싸지만 이길 필요가 없다.',
+        '여기가 그자의 소굴이다. 값을 치르면 **그가 내 편이 된다** — 사라지는 것이 아니라'
+        + ` 이 바다에서 일한다(조우 −${Math.round(ROSTER.passOddsOff * 100)}% · 남은 명부의 소식값 −${Math.round(ROSTER.tipOffPer * 100)}%).`,
         '값을 친다', tamePrice(d) > state.gold, () => {
           const r = tamePirate(d, city.id);
           if (!r.ok) return toast(r.reason, 'bad');

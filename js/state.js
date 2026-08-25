@@ -1961,9 +1961,48 @@ export function rosterOpenIn(regionId) {
 let retireHook = null;
 export const setRetireHook = (fn) => { retireHook = fn; };
 
-/** 소식 값 — 현상금의 일부. 정보상 `fee`(70~240)와 같은 자릿수가 되게 하한을 둔다 */
+/* ── 초무한 자가 그 바다에서 일한다 (과소기 · 토벌 협조) ────────
+   ★ 효과는 **그 권역에 매인다** — 무라카미의 과소기가 카리브에서 통할 리 없다.
+     그리고 **갱신해야 산다**: 그 바다에 거점이 없으면 `ROSTER.tameGraceDays` 뒤에 식는다
+     (이름을 대 줄 사람이 그 항구에 없기 때문이다 · `BOON.permitDays`와 같은 논리). */
+
+/** 그 권역에서 **지금 효과가 살아 있는** 초무의 수 */
+export function tamedIn(regionId) {
+  if (!regionId) return 0;
+  let n = 0;
+  for (const [id, day] of Object.entries(state.tamed ?? {})) {
+    const def = ALL_PIRATES.find((d) => d.id === id);
+    if (!def || def.region !== regionId) continue;
+    const fresh = state.day - day <= (ROSTER.tameGraceDays ?? Infinity);
+    if (fresh || regionHasHolding(regionId)) n++;
+  }
+  return n;
+}
+
+/** 그 권역에 내 거점이 하나라도 있나 — 과소기를 갱신해 줄 자리 */
+export function regionHasHolding(regionId) {
+  for (const id of Object.keys(state.holdings ?? {})) {
+    if (REGION_OF_CITY[id] === regionId) return true;
+  }
+  return false;
+}
+
+/** 과소기 — 그 권역 해적 조우 확률의 **상대감소**(0~cap) */
+export function passOff(regionId) {
+  return Math.min(ROSTER.passOddsCap ?? 0, tamedIn(regionId) * (ROSTER.passOddsOff ?? 0));
+}
+
+/** 토벌 협조 — 그 권역 **남은 명부**의 소식값 할인(0~cap) */
+export function tipOff(regionId) {
+  return Math.min(ROSTER.tipOffCap ?? 0, tamedIn(regionId) * (ROSTER.tipOffPer ?? 0));
+}
+
+/** 소식 값 — 현상금의 일부. 정보상 `fee`(70~240)와 같은 자릿수가 되게 하한을 둔다.
+    ★ **초무한 자가 동료의 소재를 안다** — 그 권역에 초무가 있으면 소식이 싸진다(토벌 협조). */
 export const bountyTipPrice = (def) =>
-  Math.max(ROSTER.tipFloor, Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tipRate));
+  Math.max(1, Math.round(
+    Math.max(ROSTER.tipFloor, Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tipRate))
+    * (1 - tipOff(def?.region))));
 
 /** 초무 값 — 격파하면 현상금을 **받고**, 초무하면 그 상한의 두 배를 **낸다** */
 export const tamePrice = (def) => Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tameMult);
@@ -2005,10 +2044,10 @@ export function tamePirate(def, cityId = state.at) {
   state.gold -= fee;
   book('outgo', 'port', fee);
   (state.tamed ??= {})[def.id] = state.day;
-  /* ★ **바다에 떠 있는 그 배도 내린다.** `pickDef`는 새로 만들 때만 닫힌 명부를 거르므로,
-     이미 떠 있던 배는 그대로 남아 초무한 자가 며칠 뒤 항로를 막았다(ISSUES #26).
-     `state`는 `world`를 모르므로(모듈 방향) **후크로 받는다** — `world.js`가 자기를 꽂는다. */
-  retireHook?.(def.id);
+  /* ★ **그자를 지우지 않는다.** 초무는 「돈으로 사라지게 하는 것」이 아니라 「내 편으로 만드는 것」이고,
+     지워 봐야 `standIn`이 얼굴 없는 배로 그 자리를 채워 **바다가 하나도 안 안전해진다.**
+     대신 **그자가 내 배를 안 건드리고**(조우 갈래가 `rosterClosed`로 거른다) **그 바다에서 일한다**
+     (`passOff`·`tipOff` → `data.js: ROSTER`). ISSUES #26이 그 규칙으로 풀린다. */
   pushLog(`${def.name}${josa(def.name, '을/를')} 초무했다 — ${fee.toLocaleString('ko-KR')}닢.`
         + ' 그자는 하던 일을 바꾸지 않았지만, 이제 우리 배는 건드리지 않는다.', 'good');
   return { ok: true, fee, kind: 'tame', def };
@@ -3405,8 +3444,12 @@ export function encounterOdds({ from, to, threat = 0, lure = null } = {}) {
   if (risk === null) return 0;                       // 오스만 내해·육로
   const bait = lure == null ? cargoLure() : cargoLure(lure);
   /* 악명이 조우를 부른다 — 털린 쪽이 배를 띄워 찾아다닌다 */
-  return Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait
-                          + infamyOdds(from, to));
+  const raw = Math.min(ODDS_CAP, ODDS_BASE + risk * ODDS_PER_PCT + threat * THREAT_PER_SHIP + bait
+                                + infamyOdds(from, to));
+  /* ★ **과소기** — 초무한 자가 있는 바다에서는 덜 만난다(`data.js: ROSTER.passOddsOff`).
+     `infamyOdds`와 **부호만 반대인 자리**이고, 악명은 더하고 과소기는 곱해서 던다
+     (악명은 "찾아온다"이고 과소기는 "그냥 지나간다"라 성질이 다르다). */
+  return raw * (1 - passOff(REGION_OF_CITY[from] ?? REGION_OF_CITY[to]));
 }
 
 /** 위험도 라벨 — 출항 카드에 띄운다. 확률이 달라져도 못 읽으면 판단이 안 생긴다. */
