@@ -13,8 +13,12 @@ import {
   /* 거점의 유예·매각과 파산 — 「바닥에는 바닥의 규칙이 있다」 */
   hasHolding, ownsHolding, holdingIdle, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   storeCap, payFine, debtOwed, nothingLeft, enforceDebt, settlePayroll, resaleOf,
+  /* 삭은 배와 명부 사냥 */
+  hullFactor, soakCargo, shipSpeed as speedOf,
+  rosterOpenIn, bountyTipPrice, tamePrice, buyBountyTip, tamePirate, activeBounty,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS } from '../js/data.js';
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER } from '../js/data.js';
+import { huntedOnLeg, rosterOf } from '../js/world.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
    `node tools/test-rules.mjs`가 **exit 0**을 돌려주었고, 자동 회차와 문서는 그것을
@@ -472,4 +476,77 @@ resetGame();
   advanceDays(1, { from: 'venezia', to: 'venezia' });
   ok(adv === 0 || debtOwed() > 0,
      '기한을 넘긴 위약금도 증발하지 않고 빚으로 남는다 — 자진 파기와 같은 취급');
+}
+
+/* ── 삭은 배에도 값이 붙는다 (C-13 · supremacy ISSUES #9) ────────
+   ★ 선체 1/55로 열여섯 항차를 뛰어도 잃는 것이 없었다 — 경고 문장이 거짓이었다.
+     막지 않고 **값을 물리는** 두 갈래로 세운다(근거 `data.js: HULL`). */
+{
+  resetGame('venezia');
+  state.crew = 12; state.gold = 200000;
+  ok(hullFactor() === 1, '멀쩡한 배는 속력 벌점이 없다');
+  const far0 = voyageDays('venezia', 'istanbul');
+  state.hp = Math.round(state.maxHp * (HULL.slowAt - 0.05));
+  ok(hullFactor() === HULL.slowMul, `선체가 ${Math.round(HULL.slowAt * 100)}% 밑이면 느려진다 (×${HULL.slowMul})`);
+  state.hp = 1;
+  ok(hullFactor() === HULL.crawlMul, `더 밑이면 더 느려진다 (×${HULL.crawlMul})`);
+  const far1 = voyageDays('venezia', 'istanbul');
+  ok(far1 > far0, `삭은 배로는 먼 길이 길어진다 (${far0}일 → ${far1}일) — 삯·보급이 그만큼 는다`);
+
+  /* ★ **짧은 항로는 안 막힌다.** 실플레이가 금고 0 · 선체 1에서 1일 항로 열여섯 항차로
+     빠져나왔다(ISSUES #14). 그 탈출구를 닫으면 고친 것이 아니라 새 데드락이다. */
+  const near = neighborsOf('venezia').map((to) => voyageDays('venezia', to));
+  ok(Math.min(...near) >= 1, '가장 짧은 항로는 여전히 다닐 수 있다 — 항구에 갇히지 않는다');
+
+  // 물이 스민다 — 값싼 것부터
+  resetGame('venezia');
+  state.crew = 12; state.gold = 200000;
+  state.hp = Math.max(1, Math.round(state.maxHp * (HULL.soakAt - 0.05)));
+  buy('grain', 40); buy('silk', 4);
+  const before = state.cargo.grain;
+  const soak = soakCargo(4);
+  ok(soak && soak.lost.grain > 0 && !soak.lost.silk,
+     `선창에 물이 들면 **값싼 것부터** 상한다 (곡물 ${before}→${state.cargo.grain} · 비단은 그대로)`);
+  resetGame('venezia');
+  state.crew = 12; state.gold = 200000; buy('grain', 40);
+  ok(soakCargo(4) === null, '멀쩡한 배는 짐이 안 젖는다');
+}
+
+/* ── 명부를 찾아갈 수 있다 (SPEC-supremacy §1-3 · ISSUES #12) ────
+   ★ 984 게임일에 명부 조우 0회였다. 강하게 두되 **고를 수 있게** 한다 —
+     해적을 약하게 만드는 것이 아니라 만날 길을 여는 것이다. */
+{
+  resetGame('busanpo');
+  state.crew = 12; state.gold = 400000;
+  const open = rosterOpenIn('eastasia');
+  const wang = open.find((d) => d.id === 'wangzhi');
+  ok(!!wang && wang.hunt?.length, `명부에 사냥터가 적혀 있다 (${wang?.name} · 구간 ${wang?.hunt?.length}개)`);
+  ok(bountyTipPrice(wang) === Math.max(ROSTER.tipFloor, Math.round(wang.bounty[1] * ROSTER.tipRate)),
+     `소식 값은 현상금에서 나온다 (${bountyTipPrice(wang).toLocaleString('en-US')}닢)`);
+  ok(huntedOnLeg('hirado', 'shuangyu') === null, '소식을 사기 전에는 그자를 찾아갈 수 없다 — 지금까지의 규칙 그대로');
+  const tip = buyBountyTip(wang);
+  ok(tip.ok && activeBounty()?.id === 'wangzhi', '소식을 사면 그자를 쫓는다');
+  const met = huntedOnLeg('hirado', 'shuangyu');
+  ok(met?.defId === 'wangzhi' && met.shipKey === wang.ship,
+     '그 구간으로 나가면 **그자가** 온다 (제 배를 타고 · 현상금째로)');
+  ok(huntedOnLeg('busanpo', 'naeipo') === null, '엉뚱한 구간에서는 안 나온다 — 조우 확률은 안 건드린다');
+  ok(met.strength === wang.strength && met.bounty === wang.bounty,
+     `세기와 현상금은 명부 그대로다 (세기 ${met.strength}) — 찾아갈 수 있게 했을 뿐 약하게 만들지 않았다`);
+
+  // 초무 — 소굴에서만, 격파보다 비싸게
+  ok(!tamePirate(wang, 'busanpo').ok, '소굴이 아닌 곳에서는 초무가 안 된다');
+  ok(tamePrice(wang) > wang.bounty[1], `초무는 격파보다 비싸다 (${tamePrice(wang).toLocaleString('en-US')}닢 지출 : 현상금 ${wang.bounty[1].toLocaleString('en-US')}닢 수입)`);
+  const t = tamePirate(wang, 'hirado');
+  ok(t.ok && state.tamed.wangzhi > 0, '소굴에서 값을 치르면 명부가 닫힌다 — 이길 필요가 없다');
+  ok(huntedOnLeg('hirado', 'shuangyu') === null && !rosterOpenIn('eastasia').some((d) => d.id === 'wangzhi'),
+     '닫힌 이름은 다시 안 뜬다 (격파와 같은 무게)');
+  resetGame('busanpo');
+  ok(!state.tamed.wangzhi, '새 판은 초무 기록을 물려받지 않는다 — `slain`과 같은 규약');
+}
+
+/* ── 시작 항구가 곧 아는 항구다 (ISSUES #10) ──────────────────── */
+{
+  resetGame('busanpo');
+  ok(state.known.has('busanpo') && !state.known.has('venezia'),
+     '부산포에서 시작하면 `known`에 부산포만 있다 — 가 본 적 없는 베네치아가 안 박힌다');
 }

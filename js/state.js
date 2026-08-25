@@ -4,12 +4,12 @@ import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
-  ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
-  HOLDINGS, HOLDING_KEYS, HOLDING, BANKRUPT, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
+  HOLDINGS, HOLDING_KEYS, HOLDING, BANKRUPT, HULL, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
   laneOf, sameRegion, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
-  FOES_BY_REGION,
+  FOES_BY_REGION, ALL_PIRATES,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL, PIRATE_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
   START_GOLD, START_PORTS, DEFAULT_START, REPAIR_UNIT, HIRE_UNIT,
@@ -124,6 +124,11 @@ export const state = {
        Set을 새로 만들면 `SET_KEYS`에 손을 대야 하고, 그 목록은 조용히 낡는다.
        날짜를 값으로 두면 "언제 꺾었나"까지 남아 나중에 화면이 쓸 수 있다. */
   slain: {},
+  /* 초무(招撫)한 자 — `{ <명부id>: 날 }`. 격파(`slain`)와 **같은 무게로 명부를 닫는다**
+     (SPEC-supremacy §1-3 (c) · `world.js: rosterClosed`가 둘을 함께 읽는다).
+     ★ `slain`과 나란히 **여기 선언해 두어야** `resetGame`이 비우는 것을 빠뜨리지 않는다 —
+       `??=`로만 만들면 새 판에 옛 판의 초무가 살아남는다. Set이 아니라 평범한 객체다. */
+  tamed: {},
   ended: 0,                  // 끝을 본 날 (0이면 아직)
   endedNine: 0,              // 두 번째 끝 「아홉 바다」를 본 날 (0이면 아직)
   boons: {
@@ -1478,6 +1483,15 @@ export function buyService(f, cityId = state.at) {
       pay();
       return { ok: true, fee, kind: 'price-tip', tips: priceTips(cityId) };
     }
+    /* ★ `bounty-tip` — **찾아갈 수 있게 한다**(SPEC-supremacy §1-3 (b) · `UNIMPLEMENTED N5`).
+       값은 `figureFee`가 아니라 그자의 현상금에서 나오므로, 인물이 팔 때도 `buyBountyTip`을 거친다.
+       인물 카드는 "누구의 소식인가"를 못 고르므로 **이 바다에서 아직 안 닫힌 자 중 가장 싼 쪽**을 판다. */
+    case 'bounty-tip': {
+      const open = rosterOpenIn(rid);
+      if (!open.length) return { ok: false, reason: '이 바다에는 이름이 남은 자가 없다' };
+      const def = open.reduce((a, b) => (bountyTipPrice(a) <= bountyTipPrice(b) ? a : b));
+      return buyBountyTip(def);
+    }
     case 'route-tip': {
       pay();
       return { ok: true, fee, kind: 'route-tip', tips: routeTips(cityId) };
@@ -1857,6 +1871,74 @@ export function liquidate() {
   return { lostShips, kept: keep, gold: state.gold };
 }
 
+/* ── 명부 사냥 — 찾아갈 수 있게 한다 ───────────────────────────
+   ★ 실플레이 **984 게임일 동안 명부 해적을 한 번도 못 만났다**(supremacy ISSUES #12).
+   조우는 나는데, 이름 있는 자는 `npcsOnLeg`가 **그 배의 `at`·`to`가 정확히 내 두 항구일 때만**
+   잡고 아니면 `pickEnemy()`가 **이름 없는 적**을 낸다. 세계가 264 도시라 그 일치는 사실상 안 난다 —
+   상선이 겪던 것과 같은 문제이고(C-15), 상선만 폴백을 받았다.
+   패권 조건 ③(등급5 격파)과 목표 ④(명부 40)가 여기 걸려 있으므로 **우연에 맡길 수 없다.**
+
+   해법은 SPEC-supremacy §1-3이 이미 적어 두었다 — **강하게 두되 찾아갈 수 있게 한다.**
+     (b) `bounty-tip`  그자가 지금 어느 구간을 도는지를 산다 → 그 구간에 나가면 **그자가 온다**
+     (c) 초무(招撫)     못 이길 상대는 **소굴 항구에서 값을 치러** 명부를 닫는다(격파보다 비싸다)
+   ⚠️ **해적을 약하게 만들지 않는다.** 문제는 강해서 못 잡는 것이 아니라 만날 수가 없는 것이었다.
+   값은 `data.js: ROSTER`(`tipRate`·`tipFloor`·`tipDays`·`tameMult`). */
+
+/** 이 바다에서 아직 이름이 안 지워진 자들 — 명부(`ALL_PIRATES`)가 정본이다 */
+export function rosterOpenIn(regionId) {
+  return ALL_PIRATES.filter((d) => (!regionId || d.region === regionId)
+    && !state.slain?.[`pirate:${d.id}`] && !state.tamed?.[d.id]);
+}
+
+/** 소식 값 — 현상금의 일부. 정보상 `fee`(70~240)와 같은 자릿수가 되게 하한을 둔다 */
+export const bountyTipPrice = (def) =>
+  Math.max(ROSTER.tipFloor, Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tipRate));
+
+/** 초무 값 — 격파하면 현상금을 **받고**, 초무하면 그 상한의 두 배를 **낸다** */
+export const tamePrice = (def) => Math.round((def?.bounty?.[1] ?? 0) * ROSTER.tameMult);
+
+/** 지금 쫓고 있는 자 — `{ id, until }` 또는 null (날이 차면 스스로 식는다) */
+export function activeBounty() {
+  const b = state.boons?.bounty;
+  if (!b || b.until <= state.day) return null;
+  return b;
+}
+
+/** 소식을 산다 — 그자를 `ROSTER.tipDays` 동안 **만날 수 있게** 된다 */
+export function buyBountyTip(def) {
+  if (!def?.id) return { ok: false, reason: '이 소식은 팔 것이 없다' };
+  const fee = bountyTipPrice(def);
+  if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null });
+  state.gold -= fee;
+  book('outgo', 'port', fee);
+  b.bounty = { id: def.id, until: state.day + ROSTER.tipDays };
+  const where = CITY_BY_ID[def.base]?.name ?? def.base;
+  pushLog(`${def.name}의 소식을 샀다 — ${where} 언저리를 돈다고 한다 (${ROSTER.tipDays}일).`, 'warn');
+  return { ok: true, fee, kind: 'bounty-tip', def,
+           line: `${def.name}${josa(def.name, '이/가')} ${where} 언저리에 있다.`
+               + ` ${ROSTER.tipDays}일 안에 그 구간으로 나가면 만난다.` };
+}
+
+/** 초무 — **그자의 소굴 항구에서만** 값을 치른다. 명부가 닫히고 악명은 안 오른다 */
+export function tamePirate(def, cityId = state.at) {
+  if (!def?.id) return { ok: false, reason: '그런 자가 없다' };
+  if (state.slain?.[`pirate:${def.id}`] || state.tamed?.[def.id]) {
+    return { ok: false, reason: '이미 명부에서 지워진 이름이다' };
+  }
+  if (def.base !== cityId) {
+    return { ok: false, reason: `${CITY_BY_ID[def.base]?.name ?? def.base}까지 가야 말이 닿는다` };
+  }
+  const fee = tamePrice(def);
+  if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  state.gold -= fee;
+  book('outgo', 'port', fee);
+  (state.tamed ??= {})[def.id] = state.day;
+  pushLog(`${def.name}${josa(def.name, '을/를')} 초무했다 — ${fee.toLocaleString('ko-KR')}닢.`
+        + ' 그자는 하던 일을 바꾸지 않았지만, 이제 우리 배는 건드리지 않는다.', 'good');
+  return { ok: true, fee, kind: 'tame', def };
+}
+
 /** 기한이 지났는지 — advanceDays가 부른다.
     ★ 예전에는 `{ expired: c, fine }`를 돌려주었는데, 부르는 쪽(`advanceDays`)이
       그것을 다시 `expired`라는 이름으로 감싸 **두 겹**이 됐다. 그래서 화면이
@@ -2163,7 +2245,44 @@ export function shipSpeed() {
   if (state.refits.sails) v *= 1.05;
   if (state.refits.razee) v *= 1.15;
   if (shorthanded()) v *= 0.75;     // 최소 인원 미달 — 돛을 다 못 편다
+  v *= hullFactor();                // 삭은 배는 느리다 (data.js: HULL)
   return v;
+}
+
+/** 선체가 상한 만큼의 속력 배율 (1 이하).
+    ★ **선원 미달(×0.75)과 같은 모양이다** — 막는 것이 아니라 값을 물린다.
+      일수가 늘면 삯·보급·유지비가 함께 늘므로 *"수리비를 아끼는 것이 늘 옳다"*가 깨진다.
+      짧은 항로는 `voyageDays`의 `max(1, …)`에 걸려 거의 안 변하고 먼 길만 무거워진다 —
+      곧 **삭은 배로는 먼 길을 못 간다**가 규칙이 된다. 근거는 `data.js: HULL`. */
+export function hullFactor() {
+  if (!state.maxHp) return 1;
+  const r = state.hp / state.maxHp;
+  if (r < HULL.crawlAt) return HULL.crawlMul;
+  if (r < HULL.slowAt) return HULL.slowMul;
+  return 1;
+}
+
+/** 선체가 바닥이면 실은 짐에 물이 스민다 — **값싼 것부터**(폭풍 투하와 같은 규약).
+    성장에 비례하는 대가라, 큰 배에 값나가는 짐을 싣고 삭은 채 다니면 항차마다 크게 문다. */
+export function soakCargo(days = 1) {
+  if (!state.maxHp || state.hp / state.maxHp >= HULL.soakAt) return null;
+  let take = Math.floor(cargoUsed() * HULL.soakRate * days);
+  if (take <= 0) return null;
+  const order = Object.keys(state.cargo)
+    .filter((g) => state.cargo[g] > 0)
+    .sort((a, b) => (GOOD_BY_ID[a]?.base ?? 0) - (GOOD_BY_ID[b]?.base ?? 0));
+  const lost = {};
+  let value = 0;
+  for (const gid of order) {
+    if (take <= 0) break;
+    const n = Math.min(state.cargo[gid], take);
+    state.cargo[gid] -= n;
+    if (!state.cargo[gid]) { delete state.cargo[gid]; delete state.buyPrice[gid]; }
+    lost[gid] = n;
+    value += (state.prices[state.at]?.[gid] ?? GOOD_BY_ID[gid].base) * n;
+    take -= n;
+  }
+  return Object.keys(lost).length ? { lost, value: Math.round(value) } : null;
 }
 
 /** 운항 최소 인원에 못 미치는가 */
@@ -3553,6 +3672,10 @@ export function advanceDays(n, leg = null) {
     leak = Math.min(state.hp - 1, lk * n);
     if (leak > 0) state.hp -= leak;
   }
+  /* ★ 선체가 바닥이면 **실은 짐이 젖는다.** 누수가 hp를 1 밑으로 안 깎아 선체가 눈금이
+     아니게 된 자리(C-13)를, 막는 대신 **값을 물려서** 세운다 → `data.js: HULL`.
+     ⚠️ 누수(`leak`)와 다르다 — 이쪽은 **어느 배든** 선체가 상하면 문다(전투·폭풍으로 삭은 캐랙도). */
+  const soaked = soakCargo(n);
 
   // 시장은 날이 지나면 회복한다 (그래서 같은 항구를 계속 쥐어짜지 못한다)
   const keep = MARKET.decay ** n;
@@ -3571,7 +3694,7 @@ export function advanceDays(n, leg = null) {
 
   const expired = checkContractDue();
   refreshPrices();
-  return { ...c, leak, expired, shocks };
+  return { ...c, leak, soaked, expired, shocks };
 }
 
 /* ── 급여 정산 ────────────────────────────────────────────────
@@ -3775,7 +3898,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
     regard: {}, _regardAge: 0,
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
-    slain: {}, ended: 0, endedNine: 0,
+    slain: {}, tamed: {}, ended: 0, endedNine: 0,
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
@@ -3785,12 +3908,15 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     consorts: {},                // 새 판에는 따라 나선 배가 없다 — 안 비우면 옛 선단이 남는다
     towing: null,
     loadout: ['captain', null, null, null, null, null],
-    known: new Set(['venezia']), everOwned: new Set(['hulk']), log: [],
+    /* ★ **시작 항구가 곧 아는 항구다.** 'venezia'가 하드코딩돼 있어, 부산포에서 시작해도
+       가 본 적 없는 베네치아가 `known`에 박혔다(supremacy ISSUES #10). `known`은
+       「가 본 항구」를 재는 값이라 정보 화면·지도 표시가 안 가 본 곳을 아는 것으로 셌다. */
+    known: new Set([at]), everOwned: new Set(['hulk']), log: [],
     stats: { battles: 0, wins: 0, profit: 0, distance: 0 },
   });
   trimLoadout();
   refreshPrices();
-  pushLog(`베네치아 부두. 물이 새는 낡은 바사 한 척과 금화 ${START_GOLD}닢으로 시작한다.`, 'warn');
+  pushLog(`${CITY_BY_ID[at]?.name ?? at} 부두. 물이 새는 낡은 바사 한 척과 금화 ${state.gold}닢으로 시작한다.`, 'warn');
   pushLog('갑판에 사람이 없다. 술집에서 선원을 모으지 않으면 배는 뜨지 않는다.', 'warn');
   pushLog(`${OFFICER.name}${josa(OFFICER.name, '이/가')} 장부를 안고 갑판에 올라섰다. 급여 ${OFFICER.wage}닢/일.`, 'good');
 }

@@ -42,6 +42,8 @@
 | 시작 조건(금화·선원·배) | `state.js: START_GOLD`(200) · `resetGame()` — **선원 0명**으로 시작한다. 값의 근거는 [payroll.md](wiki/payroll.md) §6 |
 | **한반도 갈래 다섯**(신분 특전·시작 항구) | `data.js: ORIGINS` — 특전은 **조선 항구에서만**(`joseonOnly`). 소설 쪽 사본표(`story/PROTAGONISTS.md` §6-1 · `story/GAME-LINK.md` 갈래표)와 어긋나면 `node tools/check-origins.mjs`가 실패시킨다 |
 | 거점 값·유지비·유예·매각 회수율 | `data.js: HOLDINGS`(값·특전) · `HOLDING`(유지비 연 6% · `idleRate` 0.5 · `seizeAfter` 2 · **`sellBack` 0.40**) |
+| 삭은 배의 대가 | `data.js: HULL`(`slowAt`·`slowMul`·`crawlAt`·`crawlMul`·`soakAt`·`soakRate`) · 규칙 `state.js: hullFactor`(속력)·`soakCargo`(짐이 젖는다) · 원양 금지선은 따로다(`OCEAN_HULL_MIN`) |
+| 첫 배까지 걸리는 시간 | 관측 `node tools/sim-firstship.mjs 12 40` — 시작 항구마다 **계약 없이** 몇 항차에 첫 배를 사나 · 「가까운 둘만 왕복」했을 때의 자산 천장 |
 | 빚·파산 문턱 | `data.js: BANKRUPT`(`rollsBefore` 2 · `keepShip` hulk · `seedGold` = `START_GOLD`) · 이자·주기는 `BOON.loanRate/loanDays` |
 | 급여 주기·불만·이탈 문턱 | `state.js: MONTH_DAYS`(30) · `UNREST_PER_MISS`·`UNREST_HEAL`·`DESERT_AT` · 참을성은 `data.js: CREW_TRAITS[].temper` |
 | 선원 무리의 값·기질 | `data.js: TAVERN`(cycle·slots·band·emptyOdds·**advanceUnit**) · `CREW_TRAITS`(wageMul·advMul·troop·temper) → [crew-tavern.md](wiki/crew-tavern.md) |
@@ -56,6 +58,8 @@
 > (예전에 `QUICKMAP-trade.md §3`으로 인용된 *"수요만 있고 산지가 0이면 그 칸은 아예 죽는다"* 등).
 
 - **★ 짝지어 잰 뒤에는 「짝지은 차이의 중앙값」을 봐라 — 두 중앙값을 나누면 짝짓기가 도로 풀린다.** 같은 자료에서 `median(B) ÷ median(A)`가 **−14%**, 짝지은 차이가 **+0.0%**였다(다른 판이 중앙에 온다). 시드를 맞추는 것은 절반이고 **비교도 짝 안에서** 해야 한다.
+- **★ 「첫 배를 못 산다」는 대개 *두 항구만 왕복해서*다 — 밸런스로 오진하지 마라.** 실플레이가 여수↔강진만 오가다 자본이 800닢에서 멈춰 다음 배(1,150닢)를 못 샀다(supremacy ISSUES #16·#11). 그런데 `sim-firstship.mjs` 실측은 **열한 시작 항구 전부에서 계약 없이 12판 중 12판이 첫 배를 산다**(부산포 10항차/21일 · 여수 8항차/17일). 같은 도구로 이웃을 **둘로 잠그면**(`runSim`의 `only`) 자산 천장이 부산포 46,926 → **6,650닢**으로 무너진다. ⇒ 한 쌍의 시장은 `MARKET.decay`로 마르므로 **항구를 셋 이상 엮어야** 한다. `sim-core`가 왕복에 15% 벌점을 두는 이유가 이것이고(`bestRun`의 `lastPort`), 하네스가 밟는 함정도 같은 자리다(`wiki/playtest-harness.md` §3).
+- **★ 삭은 배는 *막지 말고 값을 물려라*.** 선체가 1에서 멈추고 아무 일도 안 나던 자리를(C-13 · ISSUES #9) **속력 벌점 + 짐 침수**로 세웠다(`data.js: HULL`). ⛔ **출항 금지·강제 정박은 고르지 않았다** — 실플레이가 금고 0·선체 1에서 **1일 항로 열여섯 항차로 0 → 1,720닢**을 벌어 빠져나왔고(ISSUES #14), 막으면 3일 항로뿐인 항구에서 영영 못 나가는 **새 데드락**이 된다(`oceanReady` 주석의 *"항구에 갇히는 일이 없어야 한다"*와 같은 원칙). ⛔ **침몰도 아직 아니다** — 폭풍은 항차당 12%라(`SEA_EVENTS`) 선체 1에서 치명적으로 만들면 그 열여섯 항차가 **87% 확률로 끊긴다.** 침몰은 우연이 아니라 **플레이어가 고른 자리**에 붙어야 한다.
 - **★ 못 낸 돈에 「끝」을 두지 않으면 *게임 오버 없는 게임 오버*가 된다.** 빚 규칙(`payFine`)만 넣고 갚을 수단을 안 넣어, 금고 0·화물 0인 판이 **36일을 그냥 떠다녔다**(supremacy ISSUES #3 — 살 돈이 없어 못 사고 실은 것이 없어 못 팔고, 빚만 30일마다 ×1.25로 불었다). 지금은 **집행과 청산**이 있다(`enforceDebt`·`liquidate` → [wiki/payroll.md](wiki/payroll.md) §7). ⇒ **새로 "못 내면 빚"을 만들 때는 그 빚이 어디서 끝나는지를 같은 커밋에서 정해라.**
 - **★ 압류액과 미납액의 자릿수가 달라지면 그것은 규칙이 아니라 사고다.** 유지비 **3닢**을 못 내 **2,000닢**짜리 거점이 그 자리에서 넘어갔다(ISSUES #4). 지금은 거점도 시설(`settleWorks`)과 같은 모양으로 **한 번은 문을 닫고 두 번째에 압류**한다. 같은 이유로 청산도 **넘긴 배값이 빚보다 크면 잉여를 돌려준다** — 빚 500닢에 갈레온(매각가 10,725닢)을 통째로 잃지 않게. **자산을 몰수하는 규칙을 쓸 때는 미납액과의 비를 먼저 계산해 볼 것.**
 - **거점은 `ownsHolding`(소유)과 `hasHolding`(일함)이 갈린다.** 유지비가 밀려 문을 닫으면 소유는 남고 특전만 멈춘다 — **목록·중복구매 판정은 `ownsHolding`**, 세 감면·시장 깊이·공업력 같은 **특전은 `hasHolding`**이다. 섞으면 문 닫힌 거점이 화면에서 사라지고 "세운다" 단추가 다시 떠 **같은 거점을 두 번 사서 `spent`가 두 배**가 된다.

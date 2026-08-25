@@ -10,13 +10,17 @@ import {
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
 } from './map/geo.js';
-import { ALL_GOODS, ALL_SHIPS, ALL_CITY_TRADE, ALL_CITY_TARIFF, FOES_BY_REGION } from './regions/index.js';
+import { ALL_GOODS, ALL_SHIPS, ALL_CITY_TRADE, ALL_CITY_TARIFF, FOES_BY_REGION, ALL_PIRATES } from './regions/index.js';
 
 export {
   ROUTES, CURRENTS, ROUTE_RISK, riskKey,
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
   FOES_BY_REGION,
+  /* ★ 해적 **명부**를 여기서도 내보낸다 — `state.js`가 현상금·초무 값을 재려면 그 정의가 필요한데,
+     `state`는 `world`를 몰라야 하기 때문이다(모듈 방향 `data → state → world → scenes`).
+     정본은 여전히 권역 `npc-pirates.js`이고 여기는 지나가는 자리다. */
+  ALL_PIRATES,
 };
 
 /* 교역품 — **권역마다 갈라져 있다.** 그 물건이 나온 권역의 `js/regions/<권역>/goods.js`가
@@ -1305,6 +1309,40 @@ export const HOLDING = {
      사료 쪽도 이 방향이다 — 임차창고는 임차라 돌려받을 것이 거의 없고, 급매한 상관·창고는
      제값을 못 받았다. */
   sellBack: 0.40,
+};
+
+/* ── 삭은 배 ──────────────────────────────────────────────────
+   ★ **선체가 눈금이 아니었다.** 누수는 `advanceDays`에서 `Math.min(state.hp - 1, …)`이라
+   hp를 1 밑으로 안 깎고, 전투·폭풍도 전부 1(또는 12)에서 잘린다. 그래서 실플레이에서
+   **선체 1/55로 16항차를 뛰었고** 가라앉지도 막히지도 않았다(supremacy ISSUES #9 · `UNIMPLEMENTED` C-13).
+   매 항해 *"물이 새어 2pt 삭았다. 배를 갈아타야 한다"*만 반복되니 **경고 문장이 거짓이 되고,
+   수리비를 아끼는 것이 언제나 옳아진다.**
+
+   ── 무엇을 골랐나 ────────────────────────────────────────────
+   C-13의 설계 메모가 셋을 적어 두었다(① 느려진다 ② 짐이 젖어 상한다 ③ 펌프질에 사람이 묶인다).
+   **①과 ②를 쓴다** — 둘 다 *막지 않고 값을 물리는* 쪽이라, 이 저장소가 `oceanReady` 주석에
+   못박아 둔 원칙(*"항구에 갇히는 일이 없어야 한다"*)을 안 깬다.
+   ★ **막는 쪽(강제 정박·출항 금지)을 안 고른 이유가 실측에 있다** — 테스터가 92일차에
+     금고 0 · 선체 1에서 **1일 항로 열여섯 항차로 0 → 1,720닢**을 벌어 빠져나왔다. 출항을 막았으면
+     그 탈출구가 닫힌다. 3일 항로뿐인 항구에 삭은 배로 서 있으면 영영 못 나가는 새 데드락이 된다.
+   ★ **침몰(N4)도 아직 아니다** — 폭풍은 항차당 12%로 나므로(`SEA_EVENTS`) 선체 1에서
+     치명적으로 만들면 위 열여섯 항차가 **87% 확률로 끊긴다.** 침몰은 우연이 아니라
+     플레이어가 고른 자리(전투)에 붙어야 하고, 그것은 따로 설계할 몫이다.
+
+   ── 왜 이 두 갈래인가 ────────────────────────────────────────
+   ①은 **고정비**를 늘린다(일수 ↑ → 삯·보급·유지비 ↑). 짧은 항로는 `max(1, …)`에 걸려 거의 안 변하고
+     먼 길만 무거워진다 — *"삭은 배로는 먼 길을 못 간다"*가 규칙이 된다.
+   ②는 **성장에 비례**한다. 물이 스미면 상하는 것은 곡물·소금·직물 같은 부피화물이라
+     값싼 것부터 잃는다(폭풍 투하 `jettisonCargo`와 같은 규약). 낡은 바사로 곡물 스물을 나르면
+     몇 닢이지만, 캐랙에 향신료를 가득 싣고 다니면 항차마다 크게 문다.
+     ⇒ **부자일수록 수리한다.** 이 저장소가 반복해 쓰는 "성장할수록만 무거워지는 브레이크"다. */
+export const HULL = {
+  slowAt: 0.25,     // 선체가 이 비율 밑이면 느려진다 (원양 금지선 `OCEAN_HULL_MIN`과 같은 눈금)
+  slowMul: 0.85,
+  crawlAt: 0.10,    // 더 밑이면 더 느려진다
+  crawlMul: 0.70,
+  soakAt: 0.20,     // 이 비율 밑이면 실은 짐에 물이 스민다
+  soakRate: 0.02,   // 하루에 실은 칸의 이만큼 (값싼 것부터)
 };
 
 /* ── 파산 — 해상대차의 마지막 조항 ────────────────────────────────

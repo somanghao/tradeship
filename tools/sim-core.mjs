@@ -79,11 +79,16 @@ export function planFor(to, room, budget, minMargin = 0) {
 let lastPort = null;
 export const setLastPort = (id) => { lastPort = id; };
 
-export function bestRun(minMargin = 0, carry = false) {
+/* `only`는 **갈 수 있는 항구를 좁히는 자물쇠**다(기본 null = 이웃 전부).
+   실플레이가 밟은 *"가까운 두 항구만 왕복한다"*를 재현하려면 이것이 있어야 한다 —
+   되돌아가기 벌점만 끄면 시뮬은 여전히 이웃 여럿을 돌아 그 벽이 재현되지 않는다.
+   → `tools/sim-firstship.mjs` */
+export function bestRun(minMargin = 0, carry = false, only = null) {
   let best = null;
   const room = cargoFree();
   if (room <= 0) return null;
   for (const to of neighborsOf(state.at)) {
+    if (only && !only.has(to)) continue;
     const days = voyageDays(state.at, to);
     const cost = voyageCost(days).total;
     const p = planFor(to, room, state.gold, minMargin);
@@ -310,7 +315,7 @@ export function totalAssets() {
    §1-6 그대로다 — 직물 사슬의 원료가 나는 자리가 지중해·구자라트라, 부산포에서 60항차를
    굴리면 **시뮬이 동아시아를 못 벗어나** 사슬을 한 번도 안 짓는다(실측). 그러면 "±5%"라는
    합격 판정이 *"아무 일도 안 일어났다"*는 뜻이 되어 아무것도 검증하지 못한다. */
-export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0, chain = false, start = null } = {}) {
+export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0, chain = false, start = null, only = null } = {}) {
   if (start) resetGame(start); else resetGame();
   initWorld();
   manCrew();               // 첫 배를 몰 사람부터 태운다
@@ -362,7 +367,7 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0, chain = fal
       repairSpend += g - state.gold;
     }
 
-    const run = bestRun(minMargin, !!chain);
+    const run = bestRun(minMargin, !!chain, only);
     /* ★ 사슬 모드에서는 **가공품만 싣고 떠나는 항차**가 성립한다 — 원료값이 이미
        창고에 묶여 있어 새로 살 것이 없을 수 있기 때문이다. 그때 `take`가 비었다고
        판을 끝내면 시뮬이 사슬을 쓴 판만 일찍 죽어 곡선이 거짓으로 나쁘게 나온다. */

@@ -115,8 +115,17 @@ resetGame();
     + ` · 부산포=${got.busanpo}(조선의 바다에는 세력이 없다)`);
   ok(factionsOfCity('sevilla').length === 2 && factionsOfCity('ambon').length === 2,
     '한 도시에 둘이 걸리는 자리를 그대로 들고 있다 (세비야 · 암본)');
+  /* ★ 2026-08-25 정정 — 전에는 `resetGame`이 `known`에 **'venezia'를 하드코딩**해서, 부산포에서
+     시작해도 새 판이 베네치아를 "가 본 곳"으로 알고 그 세력을 **만난 것으로** 셌다
+     (supremacy ISSUES #10). 지금은 시작 항구만 아는데, **조선의 바다에는 세력이 없으므로**
+     (바로 위 검사가 `부산포=null`을 지킨다) 새 판이 아는 세력은 **0**이 맞다.
+     지중해에서 시작하면 그때 하나가 된다 — 그것이 *"관계도는 바다를 넓힐수록 자란다"*의 본뜻이다. */
+  ok(metFactions().length === 0,
+    `새 판은 아무도 모른다 — 시작 항구(${state.at})만 안다 (${metFactions().length}/10)`);
+  resetGame('venezia');
   ok(metFactions().length === 1 && metFactions()[0] === 'venezia',
-    `새 판에서 만난 세력은 하나다 — 관계도는 바다를 넓힐수록 자란다 (${metFactions().length}/10)`);
+    `베네치아에서 시작하면 그때 하나가 된다 — 관계도는 바다를 넓힐수록 자란다`);
+  resetGame();
 }
 
 /* ── ③ 덮치면 내려간다 (악명을 그대로 읽는다) ───────────────── */

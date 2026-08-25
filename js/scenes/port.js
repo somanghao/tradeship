@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         WORK, FACTIONS, REGARD } from '../data.js';
+         WORK, FACTIONS, REGARD, ROSTER } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -14,6 +14,7 @@ import {
   hasOfficer, paydayDue, paydayDeferred, daysToPayday, payrollOwed, regionOf,
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
+  activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   portDayCost, waitDays, dischargeCrew, recallCrew, settleYard,
@@ -606,6 +607,46 @@ function hegemonyCard() {
           + ` (아홉 바다 ${seas.have}/${seas.need}`
           + (seas.done ? ' — 명부가 비었다' : '') + ')',
     }));
+
+    /* ── 찾아갈 수 있게 한다 (SPEC-supremacy §1-3 (b)·(c)) ──────────────
+       ★ 실플레이 **984 게임일에 명부 조우 0회**였다(ISSUES #12). 조우는 나는데 이름 있는 자가
+         안 왔다 — 그러면 명부 40은 목표가 아니라 복권이다. 두 문을 여기 둔다:
+           **소식**(`bounty-tip`) 그자의 사냥터로 나가면 그자가 온다 · **초무** 소굴에서 값을 치른다.
+       ★ 해적을 약하게 만들지 않는다 — 강한 채로 **고를 수 있게** 하는 것이다.
+       ★ 자리를 새 카드로 빼지 않은 이유: 사이드패널은 이미 카드 열둘이라 열셋째가 넘으면
+         출항 단추가 화면 밖으로 밀린다(947행 주석의 사고). 그래서 **명부 줄에 두 줄만** 얹는다. */
+    const chase = activeBounty();
+    const chased = chase ? rosterOpenIn(rid).find((d) => d.id === chase.id) : null;
+    if (chased) {
+      rows.push(el('div.ctr-sub', { style: { color: '#c9b98a' },
+        text: `   쫓는 중 — ${chased.name} · ${CITY_BY_ID[chased.base]?.name ?? chased.base} 언저리`
+            + ` (${chase.until - state.day}일 남음). 그 구간으로 나가면 만난다.` }));
+    }
+    const opens = rosterOpenIn(rid);
+    const den = opens.filter((d) => d.base === city.id);
+    if (!chased) {
+      for (const d of [...opens].sort((a, b) => bountyTipPrice(a) - bountyTipPrice(b)).slice(0, 2)) {
+        rows.push(svcRow(`${d.name}의 소식 — ${bountyTipPrice(d).toLocaleString('ko-KR')}닢`,
+          `어느 구간을 도는지 산다. ${ROSTER.tipDays}일 안에 그리로 나가면 만난다`
+          + (d.bounty ? ` (현상금 ${d.bounty[0].toLocaleString('ko-KR')}~${d.bounty[1].toLocaleString('ko-KR')}닢).` : '.'),
+          '산다', bountyTipPrice(d) > state.gold, () => {
+            const r = buyBountyTip(d);
+            if (!r.ok) return toast(r.reason, 'bad');
+            toast(r.line, 'warn');
+            refreshHUD(); refreshLog(); after();
+          }));
+      }
+    }
+    for (const d of den) {
+      rows.push(svcRow(`${d.name}을 초무한다 — ${tamePrice(d).toLocaleString('ko-KR')}닢`,
+        '여기가 그자의 소굴이다. 값을 치르면 명부에서 이름이 지워진다 — 격파보다 비싸지만 이길 필요가 없다.',
+        '값을 친다', tamePrice(d) > state.gold, () => {
+          const r = tamePirate(d, city.id);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${d.name}${josa(d.name, '을/를')} 초무했다`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
   }
 
   /* ── 한반도 줄 ────────────────────────────────────────────
