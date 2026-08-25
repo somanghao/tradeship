@@ -592,11 +592,16 @@ export function pirateEnemy(n) {
     crew: Math.max(10, Math.round(s.crewMax * (0.35 + lv * 0.09))),
     level: lv, prize: n.shipKey,
     troops: PIRATE_TROOPS[lv],
+    /* ★ **현상금은 지갑에 안 섞는다**(P6-2). 전에는 `loot.gold`에 더해 넣고 `capLoot`이 통째로
+       눌렀는데, 그 상한의 정당화는 *"낡은 바사 갑판에 여섯이 서서 갤리엇의 금고를 통째로 옮길 수는
+       없다"* — **옮겨 싣는 것**이라 상한이 있는 것이다. 그런데 **현상금은 옮겨 싣는 물건이 아니다.**
+       사료: 나포 포상(prize money)은 **나포심판소의 판결 뒤 항구에서** 관이 장부로 치른 돈이고
+       갑판 인원과 무관했다. 그래서 `bounty`로 따로 들려 보내고 `capLoot`을 안 지난다.
+       ⚠️ **액수는 한 닢도 안 바꾼다.** 상한을 안 걸 뿐이다. 대신 **입항해서 받는다** —
+         이기고 나서 항구까지 살아 돌아와야 한다는 대가가 하나 생긴다. */
+    bounty: n.bounty ? [...n.bounty] : null,
     loot: {
-      // 현상금이 걸린 자는 잡으면 그만큼 더 나온다 — 일부러 찾아갈 이유가 생긴다
-      gold: n.bounty
-        ? [Math.round(gold * 0.6) + n.bounty[0], gold + n.bounty[1]]
-        : [Math.round(gold * 0.6), gold],
+      gold: [Math.round(gold * 0.6), gold],
       goods: Object.keys(n.cargo).length ? Object.keys(n.cargo)
            : (n.lootGoods ?? ['salt', 'wine']),
     },

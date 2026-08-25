@@ -17,12 +17,13 @@ import {
   hullFactor, soakCargo, shipSpeed as speedOf,
   rosterOpenIn, bountyTipPrice, tamePrice, buyBountyTip, tamePirate, activeBounty,
   tamedIn, passOff, tipOff, regionHasHolding,
+  huntLegs, oweBounty, payBounties, capLoot, spoilsCap,
   /* 성장 설계 — P5 초행 정보 · P2 선단 · P3 동료 */
   knowPort, priceKnown, holdingTip, metFactions, escortNeed, oceanReady, convoyInsureOff, insuranceFor,
-  matesAt, hireMate, dismissMate, mateCut, matePerk, mateStake, mateCap, freeMates,
+  matesAt, hireMate, dismissMate, mateCut, matePerk, mateStake, mateCap, mateCount, crewMates, freeMates,
   canConsort, setConsort, consortCount, voyageDays as legDays,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT } from '../js/data.js';
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES } from '../js/data.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
@@ -534,7 +535,11 @@ resetGame();
   const open = rosterOpenIn('eastasia');
   const wang = open.find((d) => d.id === 'wangzhi');
   ok(!!wang && wang.hunt?.length, `명부에 사냥터가 적혀 있다 (${wang?.name} · 구간 ${wang?.hunt?.length}개)`);
-  ok(bountyTipPrice(wang) === Math.max(ROSTER.tipFloor, Math.round(wang.bounty[1] * ROSTER.tipRate)),
+  /* 하한도 **그자의 현상금**에 묶인다(P6-4) — 고정 200닢이던 시절 그 값이 세기 1의 현상금
+     하한보다 비싸 사다리의 첫 칸이 마이너스였다. */
+  ok(bountyTipPrice(wang) === Math.max(ROSTER.tipFloorAbs,
+                                       Math.round(wang.bounty[0] * ROSTER.bountyFloorRate),
+                                       Math.round(wang.bounty[1] * ROSTER.tipRate)),
      `소식 값은 현상금에서 나온다 (${bountyTipPrice(wang).toLocaleString('en-US')}닢)`);
   ok(huntedOnLeg('hirado', 'shuangyu') === null, '소식을 사기 전에는 그자를 찾아갈 수 없다 — 지금까지의 규칙 그대로');
   const tip = buyBountyTip(wang);
@@ -747,4 +752,86 @@ resetGame();
   ok(cr.ok && !!cr.captain && freeMates().length === 0,
      `동료를 태우면 그가 키를 잡는다 (${cr.captain}) — 배 하나에 선장 하나`);
   ok(mateCap() === FLEET.max, `데리고 다닐 수 있는 동료는 동행 상한과 같다 (${mateCap()}명)`);
+}
+
+/* ── 파산 청산이 코멘다도 끝낸다 (ISSUES #29) ────────────────────
+   ★ *"셈이 끝났다 — 빚은 없다"* 뒤에도 동료가 갑판에 남아 50%를 떼고, 내리는 순간
+     밑천 1,800닢이 **빚으로 부활**했다. 그러면 ★3이 세운 「끝이 있는 실패」가 무너진다.
+   ★ 사료가 답을 준다 — **코멘다는 대차가 아니라 공동 위험 인수**다. 쌍무 콜레간자에서
+     항해자가 댄 1/3은 *그도 그 항해에 건 자본*이라 배와 짐이 사라지면 **양쪽이 함께 잃는다**. */
+{
+  resetGame('quanzhou');
+  state.gold = 5000; state.crew = 10;
+  const m = matesAt('quanzhou')[0];
+  ok(!!m, `취안저우에서 동료를 만난다 (${m?.name})`);
+  const r = hireMate(m.id, { joint: true });
+  ok(r.ok && mateCut() > 0, `쌍무로 태운다 — 밑천 ${r.stake}닢 · 몫 ${Math.round(mateCut() * 100)}%`);
+  state.gold = 0;
+  payFine(9000, '큰 위약금');
+  for (let i = 0; i < 4 && debtOwed() > 0; i++) { state.day += MONTH_DAYS; settlePayroll(() => 1); }
+  ok(mateCount() === 0 && mateCut() === 0,
+     '청산은 **코멘다도 끝낸다** — 동료가 갑판에 남아 50%를 떼지 않는다');
+  ok(debtOwed() === 0,
+     '밑천이 빚으로 부활하지 않는다 — 그도 그 항해에 걸었던 자본이라 함께 잃는다');
+}
+
+/* ── P6-1 소식이 그 구간 시세를 함께 판다 ────────────────────────
+   ★ 실플레이에서 세기 1 사냥이 −301닢이었는데, 명부 40명의 사냥터를 무역으로 뛰면 **적자가 0**이다.
+     해적은 털 것이 지나가는 곳에 앉아 있다 — 고칠 것은 현상금이 아니라 **정보**였다. */
+{
+  resetGame('busanpo');
+  state.gold = 100000;
+  const wang = rosterOpenIn('eastasia').find((d) => d.id === 'wangzhi');
+  const legs = huntLegs(wang);
+  ok(legs.length > 0, `명부에 사냥터가 도시 쌍으로 적혀 있다 (${legs.length}구간)`);
+  const ports = [...new Set(legs.flat())];
+  ok(ports.every((id) => !priceKnown(id)), '소식을 사기 전에는 그 구간 항구들의 값을 모른다');
+  const r = buyBountyTip(wang);
+  ok(r.ok && ports.every((id) => priceKnown(id)),
+     `소식이 **그 구간 시세를 함께 판다** — ${ports.length}곳이 열렸다 (값은 그대로다)`);
+  ok(r.legs?.length === legs.length, '어느 구간인지도 함께 알려 준다 — 안 알려 주면 찾아갈 수 없다');
+}
+
+/* ── P6-2 현상금은 `capSpoils` 밖이다 ────────────────────────────
+   ★ `capLoot`의 정당화는 *"갑판에 여섯이 금고를 통째로 못 옮긴다"* — **옮겨 싣는 것**이라 상한이 있다.
+     현상금은 옮겨 싣는 물건이 아니다(나포심판 뒤 항구에서 관이 장부로 치른 돈이다). */
+{
+  resetGame('venezia');
+  state.gold = 8000; state.crew = 10;
+  const def = ALL_PIRATES.filter((d) => (d.strength ?? 2) === 5)[0];
+  const purse = (def.purse[0] + def.purse[1]) / 2;
+  const mixed = capLoot({ loot: { gold: [Math.round(purse * 0.6) + def.bounty[0], purse + def.bounty[1]], goods: [] } });
+  const split = capLoot({ loot: { gold: [Math.round(purse * 0.6), purse], goods: [] }, bounty: def.bounty });
+  const mixedTake = (mixed.loot.gold[0] + mixed.loot.gold[1]) / 2;
+  const splitTake = (split.loot.gold[0] + split.loot.gold[1]) / 2 + (def.bounty[0] + def.bounty[1]) / 2;
+  ok(split.bounty && split.bounty[1] === def.bounty[1],
+     '현상금은 `capLoot`을 안 지난다 — 액수가 그대로 실려 온다');
+  ok(splitTake > mixedTake,
+     `가난할 때 가장 크게 갈린다 — 금고 8,000닢에서 실수령 ${Math.round(mixedTake).toLocaleString('en-US')}`
+     + ` → ${Math.round(splitTake).toLocaleString('en-US')}닢 (상한 ${spoilsCap().toLocaleString('en-US')})`);
+
+  // 받는 자리는 **항구**다 — 이기고 살아 돌아와야 받는다
+  resetGame('venezia');
+  state.gold = 1000;
+  const before = state.gold;
+  oweBounty('시험', 5000);
+  ok(state.gold === before && state.bountyDue.length === 1,
+     '싸움터에서는 안 준다 — 목에 걸린 값은 항구에서 받는다');
+  const paid = payBounties();
+  ok(paid.total === 5000 && state.gold === before + 5000 && state.bountyDue.length === 0,
+     `입항하면 받는다 (${paid.total.toLocaleString('en-US')}닢) — 이기고 **살아 돌아와야** 한다`);
+}
+
+/* ── P6-4 소식값 하한을 현상금에 묶는다 ─────────────────────────
+   ★ 고정 200닢이 **세기 1의 현상금 하한(180닢)보다 비쌌다** — 사다리의 첫 칸이 마이너스였다. */
+{
+  resetGame('venezia');
+  const bad = ALL_PIRATES.filter((d) => (d.bounty?.[0] ?? 0) && bountyTipPrice(d) > d.bounty[0]);
+  ok(bad.length === 0, `소식이 현상금 하한보다 비싼 자가 없다 (전에는 6명이었다)`);
+  const t1 = ALL_PIRATES.filter((d) => (d.strength ?? 2) === 1)[0];
+  const t5 = ALL_PIRATES.filter((d) => (d.strength ?? 2) === 5)[0];
+  ok(bountyTipPrice(t1) < bountyTipPrice(t5),
+     `소식값도 사다리다 — ${t1.name} ${bountyTipPrice(t1)}닢 < ${t5.name} ${bountyTipPrice(t5).toLocaleString('en-US')}닢`);
+  ok(bountyTipPrice(t1) >= ROSTER.tipFloorAbs,
+     `그래도 공짜는 아니다 (절대 바닥 ${ROSTER.tipFloorAbs}닢)`);
 }
