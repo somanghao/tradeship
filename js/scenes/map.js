@@ -14,7 +14,7 @@ import {
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey,
+  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey, insuranceShare,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
@@ -879,12 +879,24 @@ function routeCards() {
   const costCell = (d, cost) => {
     const now = cost.supplies + cost.fleet + cost.hull + cost.arms + cost.insurance;
     const short = now > state.gold;
+    /* ★ **비용의 몇 할이 「내가 실은 짐」 때문인지**를 셀에 드러낸다(P8-2).
+       조운선은 항해비의 **83%가 보험**이고 갈레온은 56%다 — 작은 배가 적은 칸에서 최대 이익을
+       내려고 칸당 비싼 물건을 싣기 때문이고, 그래서 **초반 플레이어가 가장 크게 당한다.**
+       합계 한 줄만 보여 주면 그 83%가 안 보이고, 안 보이면 「짐을 두고 갈까」라는 판단이 안 생긴다.
+       ⚠️ 규칙은 한 줄도 안 바뀐다 — `voyageCost()`가 이미 갈래로 돌려주던 것을 꺼내 놓을 뿐이다. */
+    const share = insuranceShare(cost);
+    const heavy = share >= 0.40 && cost.insurance > 0;
     return el(`span.rd${short ? '.short' : ''}`, {
-      text: `${d}일 · ${cost.total}닢`,
-      style: short ? { color: '#d98a6a' } : null,
-      title: short
-        ? `금고 ${state.gold.toLocaleString('ko-KR')}닢으로는 출항하며 나갈 ${now.toLocaleString('ko-KR')}닢을 못 댄다`
-        : null,
+      text: `${d}일 · ${cost.total}닢${heavy ? ` (보험 ${Math.round(share * 100)}%)` : ''}`,
+      style: short ? { color: '#d98a6a' } : heavy ? { color: '#c9a06a' } : null,
+      title: (short
+        ? `금고 ${state.gold.toLocaleString('ko-KR')}닢으로는 출항하며 나갈 ${now.toLocaleString('ko-KR')}닢을 못 댄다\n`
+        : '')
+        + (heavy
+          ? `이 항차 비용 ${cost.total.toLocaleString('ko-KR')}닢 가운데 적하보험이 `
+            + `${cost.insurance.toLocaleString('ko-KR')}닢(${Math.round(share * 100)}%)이다.\n`
+            + '실은 짐이 값나갈수록 오른다 — 값나가는 것을 두고 가면 그만큼 준다.'
+          : ''),
     });
   };
   /* ★ **가기 전에 그곳이 무엇을 내고 무엇을 원하는지 알려 준다.**
