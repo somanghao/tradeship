@@ -11,6 +11,102 @@
 
 import * as med from './mediterranean.js';
 
+/* 점에서 꺾은선까지의 거리 — 강줄기 같은 **가늘고 긴 지대**를 사각형이 아니라 선으로 놓는다.
+   사각형으로 놓으면 그것이 곧 디자이너가 지적한 "F-8 벽지"가 된다. */
+function distToPath(x, y, pts) {
+  let best = Infinity;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    const dx = x1 - x0, dy = y1 - y0, len2 = dx * dx + dy * dy;
+    let t = len2 ? ((x - x0) * dx + (y - y0) * dy) / len2 : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const d = Math.hypot(x - (x0 + dx * t), y - (y0 + dy * t));
+    if (d < best) best = d;
+  }
+  return best;
+}
+
+/* ── 색 램프 ───────────────────────────────────────────────────
+   기준색 **하나**에서 4단(그늘 · 중간그늘 · 기준 · 빛)을 만든다.
+
+   ★ 명도만 올리고 내린 램프가 "값싼 그라데이션"으로 보이는 가장 흔한 원인이다.
+     그래서 **어두울수록 색상을 청록 쪽으로 밀고 채도를 올리고, 밝을수록 노랑 쪽으로** 민다.
+     이렇게 하면 색 수를 늘리지 않고도 면이 살아난다.
+
+   이 램프가 있기 전에는 지대 하나가 색 하나였다 — 육지 전체가 고유색 6~12개인데
+   바다 그라데이션이 120~250개를 쓰고 있었다. 정보를 안 지닌 쪽이 예산의 96%를 쓴 셈이다. */
+const hex2rgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+function rgb2hsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+  if (mx === mn) return [0, 0, l];
+  const d = mx - mn;
+  const s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+  const h = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, s, l];
+}
+
+function hsl2hex(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  const t = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x]
+    : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return `#${t.map((v) => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('')}`;
+}
+
+const RAMP = new Map();
+/** 기준색 → [그늘, 중간그늘, 기준, 빛] 4색. 같은 색이면 같은 배열을 돌려준다(색 예산 유지). */
+export function ramp(base) {
+  let r = RAMP.get(base);
+  if (r) return r;
+  const [h, s, l] = rgb2hsl(hex2rgb(base));
+  const mk = (dl, dh, ds) => hsl2hex(h + dh, clamp01(s + ds), clamp01(l * (1 + dl)));
+  r = [mk(-0.22, -8, 0.08), mk(-0.10, -4, 0.04), base, mk(0.12, 6, -0.03)];
+  RAMP.set(base, r);
+  return r;
+}
+
+/** 수심 5단 — 그 기후의 **가장 얕은 물빛에서 가장 깊은 물빛까지** 고르게 끊는다.
+    ★ 처음에는 `shore[1] · shore[2] · sea[1] · sea[0] · sea[2]`를 그냥 얕은 순으로 꿰었다.
+      색은 다섯이 됐지만 **단 사이 간격이 들쭉날쭉**해서(여울→얕은물이 명도 45 차이)
+      그 경계가 `check-map.py` §6의 "바다 소음"으로 잡혔다 — 1px NPC 점이 묻히는 자리다.
+      양끝만 기후에서 받아 HSL로 고르게 나누면 간격이 균일해지고 그 경고가 내려간다. */
+const SEARAMP = new Map();
+export function seaRampOf(clim) {
+  const key = clim.shore[1] + clim.sea[2];
+  let out = SEARAMP.get(key);
+  if (out) return out;
+  const a = rgb2hsl(hex2rgb(clim.shore[1])), b = rgb2hsl(hex2rgb(clim.sea[2]));
+  // 색상은 짧은 쪽으로 돈다 — 안 그러면 청록에서 주황을 거쳐 가는 단이 생긴다
+  let dh = b[0] - a[0];
+  if (dh > 180) dh -= 360; else if (dh < -180) dh += 360;
+  const at = (t) => hsl2hex(a[0] + dh * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+  /* ★ HSL을 **선형으로** 나누면 안 된다 — 채도가 높은 바다(카리브·동남아)는 가운데가 뭉쳐
+     단 간격이 26·35·48·45로 벌어졌고, 42를 넘는 두 단 사이가 그대로 "바다 소음"이 됐다.
+     밝기(평균 RGB)가 고르게 떨어지도록 `t`를 되찾아 쓴다. */
+  const mean = (hex) => { const [r, g, bl] = hex2rgb(hex); return (r + g + bl) / 3; };
+  const m0 = mean(clim.shore[1]), m1 = mean(clim.sea[2]);
+  out = [0, 1, 2, 3, 4].map((i) => {
+    const target = m0 + (m1 - m0) * (i / 4);
+    let lo = 0, hi = 1;
+    for (let k = 0; k < 22; k++) {
+      const mid = (lo + hi) / 2;
+      if (mean(at(mid)) > target) lo = mid; else hi = mid;   // t가 커질수록 어두워진다
+    }
+    return at((lo + hi) / 2);
+  });
+  SEARAMP.set(key, out);
+  return out;
+}
+
+/** 암반 램프 — **기후에서 파생한다.** 전 권역이 같은 회색 셋을 쓰면 사막에도 알프스가 선다. */
+export function rockOf(clim) {
+  const [h, s, l] = rgb2hsl(hex2rgb(clim.land));
+  return ramp(hsl2hex(h + 4, clamp01(s * 0.34), clamp01(l * 1.22 + 0.06)));
+}
+
 /* ── 기후 ──────────────────────────────────────────────────────
    land   육지 기본색 · alt 얼룩 · 지대별 색
    sea    외해 그라데이션 세 단계(위·가운데·아래)
@@ -39,7 +135,22 @@ export const CLIMATE = {
     zone: { forest: '#4a6b34', scrub: null, desert: '#cdb079' },
     sea: ['#155a6b', '#1d6b7d', '#0b2a38'],
     shore: ['#eadaa8', '#74cdd0', '#3f9aad', '#2a7288'],
-    zones: { desertY: (x) => 62 + Math.sin(x * 0.026) * 12, forestY: (x) => 108 + Math.sin(x * 0.02 + 2) * 14 },
+    /* ★ `desertY` + `forestY`를 같이 쓰면 안 된다 — `scene.js`의 `zoneOf`가
+       `y > desertY`를 **먼저** 보므로 그 선 아래가 통째로 사막이 되고 `forestY` 분기는
+       영영 닿지 않는 죽은 코드가 된다. 아프리카는 **북쪽만** 마르고 적도는 밀림인데
+       그 조합이 정확히 반대 그림을 그렸다 — 사하라가 남으로 대륙 전체(80%)를 덮었다.
+       동아시아가 이미 같은 함정을 `extra`로 피해 뒀다(아래 `temperate` 주석). 여기도 직접 가른다.
+       띠는 위에서 아래로: 사하라 → 사헬 → 적도 우림 → 잠베지 사바나, 그리고 서남쪽만 나미브. */
+    zones: {
+      extra: (x, y) => {
+        if (y < 48 + Math.sin(x * 0.026) * 10) return 'desert';          // 사하라
+        if (y < 74 + Math.sin(x * 0.021 + 2) * 8) return 'scrub';        // 사헬 — 기본 사바나색
+        if (y < 126 + Math.sin(x * 0.019 + 1) * 12) return 'forest';     // 기니만~콩고 우림
+        // 나미브·칼라하리는 **서남쪽에만** 있다. 동안(모잠비크)까지 사막으로 칠하면 또 반대가 된다
+        if (x < 140 && y > 162 + Math.sin(x * 0.03) * 6) return 'desert';
+        return 'scrub';                                                   // 잠베지~남부 사바나
+      },
+    },
   },
   // 중동·홍해 — 거의 다 사막이고 물가에만 초록이 있다
   arid: {
@@ -47,7 +158,22 @@ export const CLIMATE = {
     zone: { forest: null, scrub: '#9a9455', desert: null },
     sea: ['#176073', '#1f7186', '#0c2c3a'],
     shore: ['#f0dcac', '#7ad2d4', '#43a0b0', '#2d788c'],
-    zones: { scrubY: () => -1 },     // 지대를 안 가른다 — 전부 사막
+    /* ★ 여기 있던 `scrubY: () => -1`은 "지대를 안 가른다"는 뜻으로 적혔지만 실제로는
+       **모든 픽셀을 `scrub`으로 만든다**(`y > -1`은 늘 참). 그래서 의도한 사막색 `#c2a26c`가
+       화면에 한 픽셀도 안 나오고 올리브 카키 `#9a9455`가 육지 전체를 덮고 있었다.
+       기본색이 곧 사막이므로 **안 가르는 것**이 사막이다 — `desert`는 `zone`에서 null이라
+       덮지 않고 `land`가 그대로 나온다. 초록은 이 바다의 문장 그대로 **물가에만** 둔다:
+       나일 강줄기 · 티그리스~유프라테스 · 레반트 해안 · 예멘 고지 · 오만 하자르. */
+    zones: {
+      extra: (x, y) => {
+        if (distToPath(x, y, [[14, 8], [18, 60], [12, 110], [20, 168]]) < 5) return 'scrub';   // 나일
+        if (distToPath(x, y, [[168, 24], [196, 40], [222, 48], [238, 54]]) < 5) return 'scrub'; // 메소포타미아
+        if (distToPath(x, y, [[108, 30], [118, 44], [126, 58]]) < 6) return 'scrub';            // 레반트
+        if (distToPath(x, y, [[100, 172], [112, 184], [130, 190]]) < 7) return 'scrub';         // 예멘 고지
+        if (distToPath(x, y, [[286, 156], [298, 172], [304, 184]]) < 6) return 'scrub';         // 오만 하자르
+        return 'desert';
+      },
+    },
   },
   // 인도양 — 계절풍이 적시는 초록, 데칸은 건조하다
   monsoon: {
@@ -60,16 +186,22 @@ export const CLIMATE = {
   // 동남아 — 진한 열대림과 산호초
   tropic: {
     land: '#3f7a3a', alt: ['#2f6130', '#4f8c45', '#6a9c4e'],
+    /* ★ 여기 `zones: null`이면 육지가 통짜 초록 하나다 — 색 예산이 바다로만 간다.
+       군도에는 위도 띠가 없으므로 **해안까지의 거리**로 가른다(맹그로브 → 밭 → 밀림).
+       `extra`의 셋째 인자가 그 거리다(`scene.js`가 거리장에서 넘겨준다). */
     sea: ['#0f6b7c', '#178294', '#08313f'],
     shore: ['#f4e6bc', '#8ae0dc', '#4bb0ba', '#2f8496'],
-    zones: null,
+    zone: { shore: '#6a9c4e', forest: '#2b5f30' },
+    zones: { extra: (x, y, d) => (d > 19 ? 'forest' : d < 6 ? 'shore' : 'mid') },
   },
   // 카리브 — 산호초와 밝은 옥빛 바다, 섬마다 짙은 열대림
   antilles: {
     land: '#3f7e42', alt: ['#2e6234', '#519149', '#74a355'],
     sea: ['#12798c', '#1b8fa2', '#0a3a4a'],
     shore: ['#f6ecc4', '#96e8de', '#52bcc2', '#33909e'],
-    zones: null,
+    // 섬은 작아 임계도 작다 — tropic과 같은 잣대를 쓰면 앤틸리스 전체가 해안 지대가 된다
+    zone: { shore: '#74a355', forest: '#2b6034' },
+    zones: { extra: (x, y, d) => (d > 13 ? 'forest' : d < 4 ? 'shore' : 'mid') },
   },
   // 남아메리카 — 밀림과 안데스, 남쪽으로 갈수록 마른 팜파스
   newworld: {
@@ -201,7 +333,9 @@ export const MAPS = {
   seasia: {
     climate: 'tropic',
     auto: {
-      seed: 0x5EA5, lane: 9.5, bay: 11, isles: 12,
+      /* lane을 9.5에서 낮췄다 — 군도라 바다가 원래 79%인데 회랑 폭을 저주파로 변조하자
+         80%를 넘어 검수기가 "뭍이 거의 없다"로 반려했다(상한이 80%다). */
+      seed: 0x5EA5, lane: 8.6, bay: 11, isles: 12,
       // 군도다 — 섬을 하나하나 놓는다. 뭍을 기본으로 두면 섬 사이가 다 메워진다
       // 솔로르는 소순다 열도의 작은 섬 하나가 통째로 항구다. `landmass` 사각형을 새로 깔면
       // 자바~술라웨시 사이의 열린 바다가 메워지므로, 섬을 그 자리에 박는다(쌍서와 같은 처리)
@@ -280,7 +414,10 @@ export const MAPS = {
         [132, 86, 6, 4],    // 쌍서 — 닝보 앞바다 육횡도
         [160, 154, 6, 4],   // 타요완 — 대만 남서안의 사주 만
         [228, 62, 5, 4],    // 쓰시마
-        [146, 140, 5, 3],   // 펑후
+        /* 펑후 — 항구(146,140)보다 **3px 남쪽**에 놓는다. 항구에 맞춰 정중앙에 두면
+           마카오~나가사키 항로가 섬 한복판을 지나고, 그 회랑을 비우면 섬이 통째로 사라진다
+           (실측 잔여 0px). 섬을 항로 남쪽으로 비켜 두면 항구는 그 북쪽 물가에 앉는다. */
+        [146, 143, 5, 3],   // 펑후
         [188, 62, 4, 3],    // 제주 — 7×5로 두면 반경 6px이 통째로 뭍이 되어 '물이 안 닿는 항구'가 된다
         [344, 8, 5, 4],     // 사도
       ],

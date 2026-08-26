@@ -35,7 +35,7 @@ export const VW = 400, VH = 225;
    해안선을 흔드는 데 쓴다. 격자에 난수를 깔고 이중선형으로 읽는다 —
    `Math.random()`을 픽셀마다 부르면 흰 잡음이라 해안이 톱니가 되고,
    이렇게 하면 파도치듯 굽이친다. 씨앗을 권역마다 달리해 바다마다 다른 해안을 얻는다. */
-function valueNoise(seed, cell) {
+export function valueNoise(seed, cell) {
   const r = rng(seed);
   const N = 96;
   const grid = new Float32Array(N * N);
@@ -103,6 +103,10 @@ export function autoLandMap(cities, routes, opts = {}) {
   // 해안을 굽이치게 하는 잡음 둘 — 큰 굴곡과 잔 요철을 겹친다
   const nBig = valueNoise(seed, 26);
   const nSmall = valueNoise(seed ^ 0x9E37, 7);
+  /* 해안을 만드는 옥타브 둘 — 이 둘이 없어서 지도에 반도가 없었다(④ 주석 참조).
+     `nBig`(26px)은 회랑 폭을 흔드는 데 이미 쓰고 있으므로 해안용으로 따로 판다. */
+  const nCoast = valueNoise(seed ^ 0x5A17, 58);
+  const nBay = valueNoise(seed ^ 0x2B0F, 21);
 
   const land = new Uint8Array(VW * VH);
 
@@ -114,11 +118,18 @@ export function autoLandMap(cities, routes, opts = {}) {
       const fine = (nSmall(x, y) - 0.5) * 2;
 
       // ① 항로 회랑 — 아무것도 이것을 덮지 못한다
-      let core = false;
-      const w = lane + wob * 3.5 + fine * 1.6;
+      let inLane = false;
+      /* ★ 폭을 **곱으로** 흔든다. 예전에는 `lane + wob*3.5 + fine*1.6`이라 변동계수가 0.15뿐이고
+         회랑이 어디나 같은 굵기여서 대륙이 **자로 그은 운하로 썰린 것**처럼 보였다.
+         파장 58px 잡음을 곱하면 같은 항로도 어떤 구간은 좁은 해협, 어떤 구간은 넓은 만이 된다.
+         검수기가 요구하는 것은 "항로가 바다를 지나는가"이므로 폭이 4px여도 통과한다. */
+      /* 곱의 **평균은 1.0**이어야 한다 — 0.55+1.05n(평균 1.075)로 뒀더니 회랑이 7% 넓어져
+         동남아 바다가 81%가 됐고 검수기가 "뭍이 거의 없다"로 반려했다(80%가 상한이다). */
+      const w = lane * (0.45 + 1.10 * nCoast(x, y)) + fine * 1.2;
       for (const s of segs) {
-        if (distToSeg(x, y, s[0], s[1], s[2], s[3]) < w) { core = true; break; }
+        if (distToSeg(x, y, s[0], s[1], s[2], s[3]) < w) { inLane = true; break; }
       }
+      let core = inLane;
 
       // ② 항구 앞바다 — **항로가 나가는 쪽만** 연다
       if (!core) {
@@ -151,11 +162,31 @@ export function autoLandMap(cities, routes, opts = {}) {
            그러면 사각형 가장자리 3~6px이 늘 물로 남는다 — 대륙을 계단 사각형 여러 장으로
            쌓으면 **장과 장 사이가 줄무늬 바다로 벌어진다.** 남아메리카가 가로줄 친 대륙으로
            보였던 것이 이것이다. 바깥으로 번지면 이웃 사각형과 저절로 이어지고,
-           잡음이 실려 자로 그은 티도 안 난다. */
-        const m = 3 + fine * 3.5;
+           잡음이 실려 자로 그은 티도 안 난다.
+
+           ★★ 여기 있던 것은 `x >= x0 - m && …`, 곧 사각형을 `m`만큼 부풀린 **AABB 판정**이었다.
+           `m = 3 + fine*3.5`이므로 해안을 밀어낼 수 있는 최대 거리가 **7px**이었고,
+           그래서 이 코드로는 **반도를 만들 수가 없었다**(반도는 40~70px짜리 사건이다).
+           "이탈리아 반도도 그리스 반도도 없다"는 판정의 원인은 미술이 아니라 **주파수**다.
+           사각형 목록도 도시 좌표도 그대로 두고 **판정만** 부호거리장 + 3옥타브로 바꾼다:
+             대 파장 58px ±13px  → 반도·큰 만·곶
+             중 파장 21px ±5px   → 작은 만·삼각주
+             소 파장  7px ±1.5px → 해안 요철
+           `sdf < push`면 뭍이다(sdf는 사각형 합집합 안에서 음수). */
+        let sdf = Infinity;
         for (const [x0, y0, x1, y1] of landmass) {
-          if (x >= x0 - m && x <= x1 + m && y >= y0 - m && y <= y1 + m) { sea = false; break; }
+          // 축정렬 사각형까지의 부호거리 — 안이면 음수
+          const dx = Math.max(x0 - x, 0, x - x1);
+          const dy = Math.max(y0 - y, 0, y - y1);
+          const d = (dx > 0 || dy > 0)
+            ? Math.hypot(dx, dy)
+            : -Math.min(x - x0, x1 - x, y - y0, y1 - y);
+          if (d < sdf) sdf = d;
         }
+        const push = (nCoast(x, y) - 0.5) * 2 * 13
+                   + (nBay(x, y) - 0.5) * 2 * 5
+                   + fine * 1.5;
+        if (sdf < push) sea = false;
       }
 
       /* ⑤ 항구 **뒤편**은 뭍이다 — 이것이 마지막이고 무엇보다 세다.
@@ -164,8 +195,14 @@ export function autoLandMap(cities, routes, opts = {}) {
            (검수 페이지가 "바다 한복판"으로 잡아냈다). 항구는 뭍에 붙어 있어야 항구다.
          그래서 그 도시의 **모든 항로 방향과 등지는 쪽**을 뭍으로 되돌린다.
          이웃이 사방에 있는 도시는 되돌릴 자리가 없어 섬이 되는데, 그것은 옳다 —
-         실제로 그런 항구는 섬이거나 곶이다. */
-      if (sea) {
+         실제로 그런 항구는 섬이거나 곶이다.
+         ★ 단, **항로 회랑(①)만은 못 덮는다**(`!inLane`). 이 규칙이 `core` 전체를 덮고 있어서
+           머리주석이 "아무것도 ①을 덮지 못한다"고 적어 둔 약속이 코드에서 깨져 있었다.
+           깨진 자리는 **자기 항구가 아니라 옆 항구**였다 — 어떤 도시의 뒤편 부채꼴이
+           그 도시와 무관한 남의 항로 위에 겹치면 그 항로가 뭍이 됐다. 브리스틀~포르투가
+           12px, 아바나~산티아고데쿠바가 12px, 쌍서~히라도가 12px 뭍을 지나던 것이 이것이다.
+           ②(항구 앞바다)는 여전히 덮는다 — 항구를 물가에 세우는 것이 이 규칙의 일이므로. */
+      if (sea && !inLane) {
         for (const c of cities) {
           const dx = x - c.x, dy = y - c.y;
           const dist = Math.hypot(dx, dy);
@@ -270,6 +307,30 @@ export function scatterIsles(land, cities, routes, opts = {}) {
     out.push([x, y, rx, ry]);
   }
   return out;
+}
+
+/**
+ * 섬을 찍을 때 **항로가 지나는 자리는 물로 남긴다.**
+ *
+ * ★ 지중해(손으로 찍은 격자)에서 배운 것을 자동 권역에는 안 옮겨 두었었다 —
+ *   `scene.js`가 `autoLandMap`이 판 회랑 **위에** 섬 타원을 나중에 덧그려서,
+ *   애써 판 물길을 섬이 도로 덮었다(쌍서·펑후·타요완·쓰시마·마데이라·바베이도스…).
+ *   그렇다고 섬을 통째로 지울 수는 없다. 섬 자체가 항구인 곳이라 지우면
+ *   항구가 바다 한가운데 뜬다(`check-map.py`가 31px로 잡던 그 증상).
+ *   그래서 **섬은 두고 물길만 낸다** — `carveHarbors`가 지중해에 하는 것과 같은 처리다.
+ *
+ * `berth`는 **접안 구간**이다. 항로의 끝점 둘레는 파지 않는다 — 섬 항구는 제 섬에 접안하는 것이
+ *   정상이고, 검수기도 항로 양끝 3표본을 빼고 센다(`check-map.py` §5). 이것이 없으면
+ *   반경 5px짜리 섬이 세 방향 물길에 갈려 통째로 사라진다(펑후가 실측 0px이 됐다).
+ *
+ * @returns (x,y) => boolean — true면 그 픽셀은 섬으로 찍지 않는다
+ */
+export function laneCutter(cities, routes, opts = {}) {
+  const { slot = 2, berth = 2.5 } = opts;
+  const { segs } = topology(cities, routes);
+  return (x, y) => segs.some((s) => distToSeg(x, y, s[0], s[1], s[2], s[3]) < slot
+    && Math.hypot(x - s[0], y - s[1]) >= berth
+    && Math.hypot(x - s[2], y - s[3]) >= berth);
 }
 
 /**

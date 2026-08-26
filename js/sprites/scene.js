@@ -2,8 +2,8 @@
 // 게임 논리 해상도 400x225 기준으로 그린 뒤 정수배 확대해서 쓴다.
 
 import { PAL as P, G, bake, outline, rng } from '../pixel.js';
-import { autoLandMap, scatterIsles, carveHarbors } from './maps/auto.js';
-import { mapDefOf, climateOf } from './maps/index.js';
+import { autoLandMap, scatterIsles, carveHarbors, laneCutter, valueNoise } from './maps/auto.js';
+import { mapDefOf, climateOf, ramp, rockOf, seaRampOf } from './maps/index.js';
 
 export const VW = 400, VH = 225;
 
@@ -67,39 +67,6 @@ function landFromSpans(spans, GW, GH, GS) {
   return land;
 }
 
-/** 산줄기를 자동으로 놓는다 — 손으로 찍은 폴리라인이 없는 권역용.
-    육지 덩어리의 안쪽(바다에서 먼 곳)을 따라 굽은 선을 몇 줄 앉힌다.
-    실제 산맥을 재현하는 게 아니라 **육지가 평평해 보이지 않게** 하는 장치다. */
-function autoRanges(land, seed) {
-  const r = rng(seed ^ 0x3A17);
-  const inland = [];
-  for (let y = 12; y < VH - 12; y += 3) {
-    for (let x = 12; x < VW - 12; x += 3) {
-      if (!land[y * VW + x]) continue;
-      // 사방 9px이 다 육지면 '안쪽'이다
-      let deep = true;
-      for (const [dx, dy] of [[9, 0], [-9, 0], [0, 9], [0, -9]]) {
-        if (!land[(y + dy) * VW + (x + dx)]) { deep = false; break; }
-      }
-      if (deep) inland.push([x, y]);
-    }
-  }
-  const out = [];
-  for (let n = 0; n < 7 && inland.length; n++) {
-    const [sx, sy] = inland[Math.floor(r() * inland.length)];
-    const path = [[sx, sy]];
-    let x = sx, y = sy;
-    const dx = (r() - 0.5) * 26, dy = (r() - 0.5) * 20;
-    for (let k = 0; k < 2; k++) {
-      x = Math.round(x + dx + (r() - 0.5) * 14);
-      y = Math.round(y + dy + (r() - 0.5) * 12);
-      path.push([x, y]);
-    }
-    out.push(path);
-  }
-  return out;
-}
-
 /**
  * 권역 지도.
  * @param regionId 권역 id. 없으면 지중해.
@@ -140,102 +107,298 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
          좌표로 박는다 — `landmass`에 넣으면 그쪽은 저해상 격자라 작은 섬이 스무딩에 먹혀
          사라지고, 항구가 바다 한가운데 떠 있게 된다(`check-map.py`가 31px로 잡았다). */
       isles = [...(def.auto?.pinIsles ?? []), ...isles];
-      ranges = autoRanges(land, seed);
+      ranges = [];        // 자동 권역의 산줄기는 8)에서 **고도장의 국소 최대점**에서 뽑는다
     }
 
-    // 2) 육지 찍기
-    for (let y = 0; y < VH; y++) {
-      let run = -1;
-      for (let x = 0; x <= VW; x++) {
-        const on = x < VW && land[y * VW + x];
-        if (on && run < 0) run = x;
-        else if (!on && run >= 0) { g.h(y, run, x - 1, clim.land); run = -1; }
-      }
-    }
-    // 3) 섬
-    for (const [cx, cy, rx, ry] of isles) g.ellipse(cx, cy, rx, ry, clim.land);
-
-    // 4) 육지 마스크 확보 — 이후 텍스처를 육지 안에만 찍기 위해
-    const mask = ctx.getImageData(0, 0, VW, VH).data;
-    const isLand = (x, y) =>
-      x >= 0 && y >= 0 && x < VW && y < VH && mask[((y | 0) * VW + (x | 0)) * 4 + 3] > 0;
-
-    /* 5) 지대 색조 — 삼림 / 관목 / 사막 / 툰드라.
-       경계를 직선으로 두면 띠처럼 보이므로 기후 정의가 파형 함수를 준다.
-       `zones`가 없는 기후(열대)는 통짜 초록이다 — 그것이 그 바다의 인상이다. */
-    const Z = clim.zones;
-    const zoneOf = (x, y) => {
-      if (!Z) return 'forest';
-      const extra = Z.extra?.(x, y);
-      if (extra) return extra;
-      if (Z.desertY && y > Z.desertY(x)) return 'desert';
-      if (Z.tundraY && y < Z.tundraY(x)) return 'tundra';
-      if (Z.forestY && y > Z.forestY(x)) return 'forest';
-      if (Z.scrubY && y > Z.scrubY(x)) return 'scrub';
-      return 'forest';
-    };
-    for (let y = 0; y < VH; y++) {
-      for (let x = 0; x < VW; x++) {
-        if (!isLand(x, y)) continue;
-        const c = clim.zone?.[zoneOf(x, y)];
-        if (c) g.px(x, y, c);
-      }
-    }
-    // 6) 내륙 얼룩 (육지 한정) — 통짜 색면을 깨서 손으로 칠한 느낌을 낸다
-    const [altD, altM, altL] = clim.alt;
-    for (let i = 0; i < 16000; i++) {
-      const x = Math.floor(r() * VW), y = Math.floor(r() * VH);
-      if (!isLand(x, y)) continue;
-      const v = r(), z = zoneOf(x, y);
-      if (z === 'desert') {
-        if (v < 0.32) g.px(x, y, P.sandD);
-        else if (v < 0.48) g.px(x, y, '#d4b47c');
-      } else if (v < 0.24) g.px(x, y, altD);
-      else if (v < 0.36) g.px(x, y, z === 'scrub' ? altL : altM);
-    }
-
-    // 7) 산맥 (육지 한정)
-    for (const path of ranges) {
-      for (let i = 0; i < path.length - 1; i++) {
-        const [x0, y0] = path[i], [x1, y1] = path[i + 1];
-        const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-        for (let s = 0; s <= steps; s += 3) {
-          const t = s / steps;
-          const x = Math.round(x0 + (x1 - x0) * t + (r() - 0.5) * 5);
-          const y = Math.round(y0 + (y1 - y0) * t + (r() - 0.5) * 5);
-          if (!isLand(x, y) || !isLand(x, y - 3)) continue;
-          const h = 2 + Math.floor(r() * 3);
-          for (let k = 0; k < h; k++) {
-            g.h(y - k, x - (h - k - 1), x + (h - k - 1), k === h - 1 ? '#8f8a72' : '#5d5a48');
-          }
-          g.px(x, y - h + 1, '#c9c4a8');
+    /* 2) 섬을 육지 마스크에 **넣는다** — 캔버스에 나중에 덧그리지 않는다.
+       덧그리면 `autoLandMap`이 판 항로 회랑을 섬이 도로 덮는다(`auto.js: laneCutter` 주석).
+       그래서 항로가 지나는 자리는 비우고 넣는다. 지중해는 이미 land에 들어가 있어 isles가 비었다. */
+    const cutLane = laneCutter(cities, routes);
+    /* ★ 섬 모양은 **타원이 아니다.** 전부 축정렬 타원으로 찍으면 같은 마름모가 스무 번 반복되고
+       그것이 카리브를 "보석 아이콘을 흩뿌린 판"으로 만들었다. 크기는 그대로 두고
+       (`pinIsles`는 항구가 앉는 자리라 크기를 바꾸면 안 된다) **각도별 반경만 흔든다** —
+       6~9개 정점을 잡아 ±22% 흔들고 부드럽게 잇는다. 섬마다 회전각도 다르게 준다. */
+    const rIsle = rng(seed ^ 0xB10B);
+    for (const [cx, cy, rx, ry] of isles) {
+      const n = 6 + Math.floor(rIsle() * 4);
+      const rot = rIsle() * Math.PI * 2;
+      const k = Array.from({ length: n }, () => 0.86 + rIsle() * 0.30);
+      const radAt = (th) => {
+        const t = (((th - rot) / (Math.PI * 2) * n) % n + n) % n;
+        const i0 = Math.floor(t), f = t - i0, s = f * f * (3 - 2 * f);
+        return k[i0 % n] * (1 - s) + k[(i0 + 1) % n] * s;
+      };
+      const R = Math.max(rx, ry) + 2;
+      for (let dy = -R; dy <= R; dy++) {
+        const y = cy + dy;
+        if (y < 0 || y >= VH) continue;
+        for (let dx = -R; dx <= R; dx++) {
+          const x = cx + dx;
+          if (x < 0 || x >= VW) continue;
+          const q = (dx / (rx || 1)) ** 2 + (dy / (ry || 1)) ** 2;
+          const rr = radAt(Math.atan2(dy, dx));
+          if (q > rr * rr || cutLane(x, y)) continue;
+          land[y * VW + x] = 1;
         }
       }
     }
+    const isLand = (x, y) => x >= 0 && y >= 0 && x < VW && y < VH && land[(y | 0) * VW + (x | 0)] === 1;
 
-    // 8) 해안선 → 얕은 바다 순으로 바깥으로 번지게
-    for (const c of clim.shore) outline(ctx, VW, VH, c);
+    /* 3) 거리장 — 이 지도의 **모든 색 판단이 여기서 나온다.**
+       예전에는 `outline()`을 네 번 불러 해안 띠를 **어디나 똑같이 4px**로 둘렀다.
+       그래서 대륙도 암초도 같은 굵기의 후광을 이고 있어 전부 "스티커 오려붙인 것"으로 보였고,
+       바다는 세로 그라데이션이라 고유색을 120~250개나 먹었다(육지는 6~12개였다).
+       거리장 한 번이면 띠 폭을 **덩어리 크기에 맞게** 줄이고 늘릴 수 있고,
+       바다도 수심 다섯 단으로 끊어 색 예산을 육지로 넘길 수 있다. */
+    const { lab, area } = components(land);
+    const shoreW = area.map((a) => Math.max(1, Math.min(7, Math.round(Math.sqrt(a / Math.PI) * 0.16))));
+    // 원천이 뭍이면 거리는 "가장 가까운 뭍까지"가 된다 — 바다 쪽에서 읽는 값이다(그 반대가 `inl`)
+    const sea = distField(land, 1, lab);        // 바다 픽셀 → 가장 가까운 뭍까지 거리 + 그 덩어리
+    const inl = distField(land, 0, null);       // 뭍 픽셀 → 가장 가까운 바다까지 거리
 
-    // 9) 남은 빈 픽셀 = 외해
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-over';
-    const grad = ctx.createLinearGradient(0, 0, 0, VH);
-    grad.addColorStop(0, clim.sea[0]);
-    grad.addColorStop(0.55, clim.sea[1]);
-    grad.addColorStop(1, clim.sea[2]);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, VW, VH);
-    ctx.restore();
+    /* 4) 바다 — 수심 다섯 단. 단 사이는 Bayer 4×4로 섞어 띠 자국을 없앤다.
+       양끝(여울·심해)은 그 기후가 이미 갖고 있던 색이라 바다마다의 인상은 그대로 남는다. */
+    const sand = clim.shore[0];
+    const depth = seaRampOf(clim);      // 여울 → 심해 5단 (간격이 고르다 — `seaRampOf` 주석)
+    /* ★★ 깊은 세 단은 **거리장에서 뗀다.**
+       한때 깊은 단도 `sea.d`(뭍까지의 거리)로 끊었다. 그러면 등심선이 **섬 윤곽을 그대로 복제**하고,
+       섬이 작을수록 그 복제가 완결된 동심원이 된다 — 카리브에 스무 개가 겹치자 화면이
+       물방울 무늬가 됐고, 그 점에서는 예전 판(얇은 4px 후광)보다 나빴다.
+       실제 바다의 깊이는 **해저 지형**이 정하지 섬 모양을 따라 돌지 않는다. 그래서 저주파 잡음
+       둘(파장 128px·66px)로 해저를 만들고, 거리는 **아주 멀리서만 천천히 듣는** 항으로만 남긴다
+       (`min(1, d/70)`에 가중치 0.12 — 작은 섬 둘레 20px 안에서는 0.03 이하라 띠를 못 만든다).
+       거리장은 이제 **얕은 세 단(백사·여울·대륙붕)에만** 쓴다. 그건 실제로 물가를 따라 도는 것이 맞다. */
+    const nFloorA = valueNoise(seed ^ 0x0CEA, 128);
+    const nFloorB = valueNoise(seed ^ 0x33F1, 66);
+    const bathy = (x, y, d) => 0.70 * nFloorA(x, y) + 0.18 * nFloorB(x, y)
+      + 0.12 * Math.min(1, d / 70);
+    /* 세 단의 경계는 그 바다의 **해저값 분포**에서 뽑는다 — 고정값으로 끊으면
+       잡음 씨앗에 따라 한 색이 바다를 통째로 먹는다. 앞의 세 단이 먹은 자리는 빼고 센다. */
+    const far = [];
+    for (let i = 0; i < land.length; i++) {
+      if (land[i]) continue;
+      const x = i % VW, y = (i / VW) | 0;
+      if (sea.d[i] >= (shoreW[sea.lb[i]] ?? 3) * 2.4) far.push(bathy(x, y, sea.d[i]));
+    }
+    far.sort((a, b) => a - b);
+    const q = (p) => (far.length ? far[Math.min(far.length - 1, Math.floor(far.length * p))] : 0.5);
+    const cMid = q(0.34), cDeep = q(0.67);
+    for (let y = 0; y < VH; y++) {
+      for (let x = 0; x < VW; x++) {
+        if (land[y * VW + x]) continue;
+        const i = y * VW + x;
+        const w = shoreW[sea.lb[i]] ?? 3;
+        const d = sea.d[i];
+        let c;
+        if (dstep(d, w * 0.35, 0.8, x, y) < 0) c = sand;              // 백사
+        else if (dstep(d, w, 1.1, x, y) < 0) c = depth[0];            // 여울
+        else if (dstep(d, w * 2.4, 1.8, x, y) < 0) c = depth[1];      // 얕은 바다
+        /* 여기부터는 거리가 아니라 **해저값**으로 끊는다(위 주석). 등심선이 섬을 복제하지 않는다.
+           전이대는 해저값 단위라 0.03~0.05 — 잡음이 저주파라 이 폭이면 화면에서 2~4px이 된다. */
+        else {
+          const b = bathy(x, y, d);
+          if (dstep(b, cMid, 0.05, x, y) < 0) c = depth[2];
+          else if (dstep(b, cDeep, 0.03, x, y) < 0) c = depth[3];
+          else c = depth[4];                                          // 심해
+        }
+        g.px(x, y, c);
+      }
+    }
 
-    // 10) 해류 결 — 바다 위에만
+    /* 5) 고도장 — 해안에서 멀수록 높고, 능선 잡음이 굴곡을 준다.
+       이것이 있어야 6·7단계가 "어디가 높은가"를 알고 그림자를 놓을 수 있다. */
+    const nRidge = valueNoise(seed ^ 0x81D6, 40);
+    const hAt = (x, y) => {
+      if (!isLand(x, y)) return 0;
+      const n = nRidge(x, y);
+      return 0.55 * Math.min(1, inl.d[y * VW + x] / 26) + 0.45 * (1 - Math.abs(1 - 2 * n));
+    };
+    const H = new Float32Array(VW * VH);
+    for (let y = 0; y < VH; y++) for (let x = 0; x < VW; x++) H[y * VW + x] = hAt(x, y);
+
+    /* 6) 육지 — 지대 램프 4단 × 명암. **광원은 좌상단 고정**(전 권역 동일)이라
+       북서 사면이 밝고 남동 사면이 그늘진다. 이 한 겹으로 "단색 뭉텅이"가 사라진다.
+       지대 경계도 Bayer로 3px 섞는다 — 하드 에지면 지대가 벽지 무늬로 읽힌다. */
+    const Z = clim.zones;
+    /* ★ 지대 경계를 **흔들어서** 읽는다. 그냥 `y`로 자르면 대륙을 가로지르는 자 자국이 남고
+       그것이 곧 "F-8 벽지"다. 파장 15px 잡음(±3.5px)에 Bayer를 얹어 3px 전이대를 만든다 —
+       색을 하나도 더 안 쓰고 경계가 손으로 칠한 것처럼 섞인다. */
+    const nZone = valueNoise(seed ^ 0x20E5, 15);
+    const zoneOf = (x, y) => {
+      if (!Z) return 'forest';
+      const d = inl.d[y * VW + x];
+      const yj = Math.round(y + (nZone(x, y) - 0.5) * 7
+        + ((BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5) * 3);
+      const extra = Z.extra?.(x, yj, d);
+      if (extra) return extra;
+      if (Z.desertY && yj > Z.desertY(x)) return 'desert';
+      if (Z.tundraY && yj < Z.tundraY(x)) return 'tundra';
+      if (Z.forestY && yj > Z.forestY(x)) return 'forest';
+      if (Z.scrubY && yj > Z.scrubY(x)) return 'scrub';
+      return 'forest';
+    };
+    const rampOf = (x, y) => ramp(clim.zone?.[zoneOf(x, y)] ?? clim.land);
+    const nPatch = valueNoise(seed ^ 0x9A70, 11);
+    const nDune = valueNoise(seed ^ 0x4D0E, 22);
+    for (let y = 0; y < VH; y++) {
+      for (let x = 0; x < VW; x++) {
+        if (!land[y * VW + x]) continue;
+        const R = rampOf(x, y);
+        const h = H[y * VW + x];
+        const slope = h - H[Math.max(0, y - 2) * VW + Math.max(0, x - 2)];
+        let k;
+        if (slope > 0.045) k = 3;
+        else if (slope < -0.045) k = 0;
+        else k = h < 0.30 ? 1 : 2;
+        /* 7) 질감 — **덩어리 패치**다. 예전에는 균등 난수로 1만 6천 점을 찍었는데
+           논리 1px이 화면 3px이라 그 점묘가 통째로 사포로 보였다.
+           밸류노이즈를 임계로 잘라 6~20px 덩어리로 칠하고, 램프의 ±1단만 쓴다.
+           사막은 x 파장을 y의 세 배로 늘려 사구가 되게 한다. */
+        const z = zoneOf(x, y);
+        const p = z === 'desert' ? nDune(x, y * 3) : nPatch(x, y);
+        if (p > 0.60 && k < 3) k += 1;
+        else if (p < 0.36 && k > 0) k -= 1;
+        g.px(x, y, R[k]);
+      }
+    }
+
+    /* 8) 산등성이 — 시작점을 균등 난수가 아니라 **내륙 거리장의 국소 최대점**에서 뽑는다.
+       그래야 산이 대륙 안쪽에 서고(안데스가 서안에 선다) 바닷가에 안 뜬다.
+       줄 수는 육지 면적에 비례시킨다 — 자바에 알프스가 열 줄 서면 축척이 무너진다. */
+    const rock = rockOf(clim);
+    const drawn = [];
+    if (def.hand) {
+      for (const path of ranges) ridge(g, path, land, rock, r);
+    } else {
+      const peaks = [];
+      for (let y = 8; y < VH - 8; y += 2) {
+        for (let x = 8; x < VW - 8; x += 2) {
+          const i = y * VW + x;
+          if (!land[i] || inl.d[i] < 9 || H[i] < 0.62) continue;
+          peaks.push([x, y, H[i]]);
+        }
+      }
+      peaks.sort((a, b) => b[2] - a[2]);
+      const want = Math.round(area.reduce((s, a) => s + a, 0) / 1400);
+      for (const [x, y] of peaks) {
+        if (drawn.length >= want) break;
+        if (drawn.some(([px, py]) => Math.hypot(x - px, y - py) < 22)) continue;
+        drawn.push([x, y]);
+        // 능선은 고도의 등고선을 따라간다 — 기울기와 직각으로 걷는다
+        const gx = H[y * VW + Math.min(VW - 1, x + 3)] - H[y * VW + Math.max(0, x - 3)];
+        const gy = H[Math.min(VH - 1, y + 3) * VW + x] - H[Math.max(0, y - 3) * VW + x];
+        const len = Math.hypot(gx, gy) || 1;
+        const ux = -gy / len, uy = gx / len;
+        const half = 8 + Math.floor(r() * 7);
+        ridge(g, [[Math.round(x - ux * half), Math.round(y - uy * half)],
+                  [Math.round(x + ux * half), Math.round(y + uy * half)]], land, rock, r);
+      }
+    }
+
+    /* 9) 바다 결 — 균등 난수 대시를 버리고 **등심선**을 따라 놓는다.
+       거리장이 18/34/52px인 자리에만 찍으면 대시가 "먼지"가 아니라 수심선으로 읽힌다.
+       깊어질수록 성기게 — 심해가 잔무늬로 시끄러우면 1px NPC 점이 묻힌다. */
     const r2 = rng(seed ^ 0x51DE);
-    for (let i = 0; i < 400; i++) {
-      const x = Math.floor(r2() * VW), y = Math.floor(r2() * VH);
-      if (isLand(x, y) || isLand(x, y - 4) || isLand(x, y + 4)) continue;
-      const len = 2 + Math.floor(r2() * 4);
-      g.h(y, x, x + len, clim.shore[3]);
+    for (const [band, keep, tone] of [[18, 0.09, depth[1]], [34, 0.05, depth[1]], [52, 0.03, depth[2]]]) {
+      for (let y = 2; y < VH - 2; y++) {
+        for (let x = 2; x < VW - 6; x++) {
+          const i = y * VW + x;
+          if (land[i] || Math.abs(sea.d[i] - band) > 0.9) continue;
+          if (r2() > keep) continue;
+          g.h(y, x, x + 1 + Math.floor(r2() * 3), tone);
+          x += 6;
+        }
+      }
     }
   });
+}
+
+/** 4-이웃 연결성분 — 덩어리마다 번호와 넓이. 해안 띠 폭을 덩어리 크기에 맞추는 데 쓴다. */
+function components(land) {
+  const lab = new Int32Array(VW * VH).fill(-1);
+  const area = [];
+  const stack = [];
+  for (let i = 0; i < land.length; i++) {
+    if (!land[i] || lab[i] >= 0) continue;
+    const id = area.length;
+    area.push(0);
+    lab[i] = id; stack.push(i);
+    while (stack.length) {
+      const j = stack.pop();
+      area[id]++;
+      const x = j % VW, y = (j / VW) | 0;
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        if (nx < 0 || ny < 0 || nx >= VW || ny >= VH) continue;
+        const n = ny * VW + nx;
+        if (!land[n] || lab[n] >= 0) continue;
+        lab[n] = id; stack.push(n);
+      }
+    }
+  }
+  return { lab, area };
+}
+
+/** 3-4 체임퍼 거리장. `mask[i] === want`인 곳이 0이고 거기서 번져 나간다.
+    8방향(직교 3 · 대각 4)이라 도시 블록 거리보다 원에 가깝다 — 해안 띠가 네모나지 않는다.
+    `labels`를 주면 "가장 가까운 원천이 어느 덩어리인가"도 함께 전파한다. */
+function distField(mask, want, labels) {
+  const INF = 1e7;
+  const d = new Float32Array(VW * VH);
+  const lb = labels ? new Int32Array(VW * VH) : null;
+  for (let i = 0; i < d.length; i++) {
+    const on = mask[i] === want;
+    d[i] = on ? 0 : INF;
+    if (lb) lb[i] = on ? labels[i] : -1;
+  }
+  const relax = (i, j, w) => { if (d[j] + w < d[i]) { d[i] = d[j] + w; if (lb) lb[i] = lb[j]; } };
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      const i = y * VW + x;
+      if (x > 0) relax(i, i - 1, 3);
+      if (y > 0) relax(i, i - VW, 3);
+      if (x > 0 && y > 0) relax(i, i - VW - 1, 4);
+      if (x < VW - 1 && y > 0) relax(i, i - VW + 1, 4);
+    }
+  }
+  for (let y = VH - 1; y >= 0; y--) {
+    for (let x = VW - 1; x >= 0; x--) {
+      const i = y * VW + x;
+      if (x < VW - 1) relax(i, i + 1, 3);
+      if (y < VH - 1) relax(i, i + VW, 3);
+      if (x < VW - 1 && y < VH - 1) relax(i, i + VW + 1, 4);
+      if (x > 0 && y < VH - 1) relax(i, i + VW - 1, 4);
+    }
+  }
+  for (let i = 0; i < d.length; i++) d[i] /= 3;
+  return { d, lb };
+}
+
+/* Bayer 4×4 정렬 디더. 논리 1px이 화면 3px이라 **백색잡음은 사포가 되고 정렬 디더는 무늬가 된다** —
+   경계를 섞을 때는 반드시 정렬 디더를 쓴다. */
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+/** `v`가 임계 `t`보다 큰가를 폭 `w`만큼 디더로 흐린다. 음수면 임계 아래. */
+function dstep(v, t, w, x, y) {
+  return (v - t) / w + 0.5 - (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+}
+
+/** 산등성이 한 줄 — 능선 위쪽이 밝고 아래가 그늘이다(광원 좌상단). */
+function ridge(g, path, land, rock, r) {
+  for (let i = 0; i < path.length - 1; i++) {
+    const [x0, y0] = path[i], [x1, y1] = path[i + 1];
+    const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let s = 0; s <= steps; s += 2) {
+      const t = steps ? s / steps : 0;
+      const x = Math.round(x0 + (x1 - x0) * t + (r() - 0.5) * 3);
+      const y = Math.round(y0 + (y1 - y0) * t + (r() - 0.5) * 3);
+      if (x < 2 || y < 4 || x >= VW - 2 || y >= VH - 1) continue;
+      if (!land[y * VW + x] || !land[(y - 3) * VW + x]) continue;
+      const h = 2 + Math.floor(r() * 3);
+      for (let k = 0; k < h; k++) {
+        g.h(y - k, x - (h - k - 1), x + (h - k - 1), k === h - 1 ? rock[2] : rock[0]);
+      }
+      g.px(x - 1, y - h + 1, rock[3]);
+    }
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════

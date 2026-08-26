@@ -287,6 +287,75 @@ if tot:
         warn("바다 소음", f"바다의 {ratio * 100:.0f}%가 국소 대비 42 초과 — "
                           f"1px 상인/해적 점이 묻힐 수 있다")
 
+
+# ── 7. 작은 섬이 완결된 동심원 띠를 두르는가 ────────────────
+# ★ 수심을 "뭍까지의 거리" 하나로 정하면 등심선이 **섬 윤곽을 그대로 복제**한다.
+#   섬이 작을수록 그 복제가 완결된 도넛이 되고, 스무 개가 겹치면 화면이 물방울 무늬가 된다
+#   (2026-08-26에 실제로 그렇게 만들었다 — 156개 중 21개, 카리브·동아시아는 22%였다).
+#   그림의 결함이라 반려가 아니라 경고다. 합격선은 0개다(진단서 S10).
+#   재는 법: 섬 바깥 고리 [2.4·shoreW, +5]의 최빈색이 80% 넘게 단일이고
+#           그 바깥 고리 [+7, +16]의 최빈색과 다르면 "완결된 띠"로 센다.
+from collections import Counter, deque
+
+_lab = [[-1] * W for _ in range(H)]
+_comps = []
+for _y in range(H):
+    for _x in range(W):
+        if is_sea(_x, _y) or _lab[_y][_x] >= 0:
+            continue
+        _i = len(_comps)
+        _lab[_y][_x] = _i
+        _st = [(_x, _y)]
+        _cells = [(_x, _y)]
+        while _st:
+            _cx, _cy = _st.pop()
+            for _nx, _ny in ((_cx + 1, _cy), (_cx - 1, _cy), (_cx, _cy + 1), (_cx, _cy - 1)):
+                if 0 <= _nx < W and 0 <= _ny < H and not is_sea(_nx, _ny) and _lab[_ny][_nx] < 0:
+                    _lab[_ny][_nx] = _i
+                    _st.append((_nx, _ny))
+                    _cells.append((_nx, _ny))
+        _comps.append(_cells)
+
+_rings, _small = 0, 0
+for _cells in _comps:
+    _a = len(_cells)
+    if not (6 <= _a <= 400):          # 얼룩(<6)과 대륙(>400)은 대상이 아니다
+        continue
+    _small += 1
+    _w = max(1, min(7, round((_a / 3.14159) ** 0.5 * 0.16)))
+    _d, _q = {}, deque()
+    for (_x, _y) in _cells:
+        for _nx, _ny in ((_x+1,_y),(_x-1,_y),(_x,_y+1),(_x,_y-1),
+                         (_x+1,_y+1),(_x-1,_y-1),(_x+1,_y-1),(_x-1,_y+1)):
+            if 0 <= _nx < W and 0 <= _ny < H and is_sea(_nx, _ny) and (_nx, _ny) not in _d:
+                _d[(_nx, _ny)] = 1
+                _q.append((_nx, _ny))
+    while _q:
+        _x, _y = _q.popleft()
+        if _d[(_x, _y)] >= 22:
+            continue
+        for _nx, _ny in ((_x+1,_y),(_x-1,_y),(_x,_y+1),(_x,_y-1),
+                         (_x+1,_y+1),(_x-1,_y-1),(_x+1,_y-1),(_x-1,_y+1)):
+            if 0 <= _nx < W and 0 <= _ny < H and is_sea(_nx, _ny) and (_nx, _ny) not in _d:
+                _d[(_nx, _ny)] = _d[(_x, _y)] + 1
+                _q.append((_nx, _ny))
+    _b = max(2, int(2.4 * _w))
+    _in = [px[_p] for _p, _v in _d.items() if _b <= _v <= _b + 5]
+    _out = [px[_p] for _p, _v in _d.items() if _b + 7 <= _v <= _b + 16]
+    if len(_in) < 20 or len(_out) < 20:
+        continue
+    _ci = Counter(_in).most_common(1)[0]
+    _co = Counter(_out).most_common(1)[0]
+    if _ci[1] / len(_in) >= 0.80 and _co[1] / len(_out) >= 0.55 and _ci[0] != _co[0]:
+        _rings += 1
+
+if _small:
+    notes.append(f"작은 섬 {_small}곳 · 동심원 띠 {_rings}곳")
+    if _rings:
+        warn("동심원 띠", f"작은 섬 {_rings}/{_small}곳이 **완결된 동심원 후광**을 두르고 있다 — "
+                          f"수심을 뭍까지의 거리로만 정하면 등심선이 섬 윤곽을 복제한다. "
+                          f"얕은 단만 거리장에 매달고 깊은 단은 해저 저주파장으로 정할 것(합격선 0곳)")
+
 # ── 결과 ───────────────────────────────────────────────────
 # 납품물을 리포 밖(다운로드·후처리 폴더)에 두고 검수하는 일이 잦다 — relative_to는 그때 죽는다
 try:
