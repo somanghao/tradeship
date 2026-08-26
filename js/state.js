@@ -358,6 +358,27 @@ export function gainFor(goodId, n, cityId = state.at) {
   return Math.round(state.prices[cityId][goodId] * n * (1 - impactFactor(cityId, goodId, n)));
 }
 
+/** 지금 팔면 **금고에 실제로 들어오는 돈** — `sell()`이 떼는 것을 다 뗀 뒤의 값.
+    입항세 → 부관 성과급 → 동료 코멘다 → 선원 사무역, **순서까지 `sell()`과 같다**(고칠 땐 둘을 함께).
+    ★ 미리보기와 실제가 갈리면 안내가 거짓말이 된다 — 바닥 안내(C-17 `salvage`)가 이 값을 적는다.
+      `gainFor`(세전 총액)를 그대로 적었더니 413닢이라 적고 368닢이 들어왔다. */
+export function sellNet(goodId, n, cityId = state.at) {
+  if (n <= 0) return 0;
+  const raw = gainFor(goodId, n, cityId);
+  const gain = raw - Math.round(raw * tariffRate(cityId));
+  const profit = gain - (state.buyPrice[goodId] || 0) * n;
+  if (profit <= 0) return gain;          // 밑진 거래에서는 아무도 떼지 않는다
+  let left = profit;
+  const cut = state.officer ? Math.round(left * OFFICER.cut) : 0;
+  left -= cut;
+  const mrate = mateCut();
+  const mcut = left > 0 && mrate > 0 ? Math.round(left * mrate) : 0;
+  left -= mcut;
+  const prate = privateTradeCut();
+  const pcut = left > 0 && prate > 0 ? Math.round(left * prate) : 0;
+  return gain - cut - mcut - pcut;
+}
+
 /* ── 거래 ─────────────────────────────────────────────────── */
 export function buy(goodId, qty) {
   const room = Math.min(qty, cargoFree());
@@ -621,11 +642,13 @@ export function settleHolding(cityId = state.at) {
   if (m.missed >= HOLDING.seizeAfter) {
     /* ★ 두 번째에 **압류**다. 거점은 자산이면서 고정비라, 후반이 "그냥 부자"가 아니라
        "더 벌지 않으면 지킬 수 없는" 구조가 된다. 짐도 함께 넘어간다. */
+    const before = hegemonyOf(regionOf(cityId));
     delete state.holdings[cityId];
     const lostGoods = state.stored?.[cityId];
     if (lostGoods) delete state.stored[cityId];
     pushLog(`${name} 거점을 유지비 ${(due - paid).toLocaleString('ko-KR')}닢 때문에 빼앗겼다.`
           + (lostGoods && Object.keys(lostGoods).length ? ' 창고에 둔 짐도 함께 넘어갔다.' : ''), 'bad');
+    hegemonyLoss(cityId, before);
     return { due, paid, idle: false, seized: true };
   }
   m.idle = true;
@@ -638,9 +661,24 @@ export function settleHolding(cityId = state.at) {
     ★ 금고가 0일 때 자산을 갖고도 굶는 자리를 여는 문이다(ISSUES #3). 되파는 값이 들인 돈의
       40%뿐이라 이득이 될 수 없고, 그래서 **위기의 탈출구일 뿐 전략이 되지 않는다.**
       `sellMill`과 같은 갈래(`loot`)에 적는다 — 장부 항목을 늘리면 정산 모달도 함께 봐야 한다. */
+/* ── 패권이 되돌아가는 것을 화면이 말한다 (A-8c) ────────────────
+   ★ 41/41을 채운 뒤 금고가 0이 되자 압류가 돌아 `ports` 41/41 → 39/41, 진행도 3/4 → 2/4로
+     내려갔다. **설계대로지만 로그 한 줄이 전부였다** — 무엇이 얼마나 되돌아갔는지 아무 데도 없었다.
+     거점이 사라지는 자리(압류·매각·집행) 전부가 이 한 줄을 부른다. */
+function hegemonyLoss(cityId, before) {
+  if (!before) return;
+  const after = hegemonyOf(before.region);
+  if (after.ports.have >= before.ports.have && after.steps >= before.steps) return;
+  pushLog(`${before.name}의 패권이 되돌아갔다 — 거점 ${before.ports.have}/${before.ports.need}`
+        + ` → ${after.ports.have}/${after.ports.need}`
+        + (after.steps < before.steps ? ` · 진행 ${before.steps}/4 → ${after.steps}/4` : '')
+        + (before.done && !after.done ? ' · **패자 자리를 잃었다**' : ''), 'bad');
+}
+
 export function sellHolding(cityId = state.at) {
   const m = state.holdings?.[cityId];
   if (!m) return { ok: false, reason: '이 항구엔 거점이 없다' };
+  const heg = hegemonyOf(regionOf(cityId));
   const back = Math.round((m.spent ?? 0) * HOLDING.sellBack);
   const kinds = HOLDING_KEYS.filter((k) => m[k]).map((k) => HOLDINGS[k].name);
   const lost = state.stored?.[cityId];
@@ -652,6 +690,7 @@ export function sellHolding(cityId = state.at) {
   pushLog(`${CITY_BY_ID[cityId].name}의 ${kinds.join('·')}${josa(kinds.join('·'), '을/를')} 넘겼다`
         + ` (+${back.toLocaleString('ko-KR')}닢 — 들인 돈의 ${Math.round(HOLDING.sellBack * 100)}%).`
         + (lostN ? ` 창고에 둔 짐 ${lostN}개도 함께 넘어갔다.` : ''), 'warn');
+  hegemonyLoss(cityId, heg);
   return { ok: true, back, kinds, storedLost: lostN };
 }
 
@@ -1845,6 +1884,97 @@ export function nothingLeft() {
   for (const m of Object.values(state.stored ?? {})) if (Object.keys(m).length) return false;
   return Object.keys(state.fleet).every((k) => k === state.shipKey);
 }
+
+/* ── 바닥에서 「팔 수 있는 것」을 값과 함께 (C-17) ──────────────
+   ★ **규칙은 한 줄도 새로 만들지 않는다.** 회복 경로는 이미 전부 있다 —
+     짐(`sell`) · 창고(`takeGoods`) · 정박선(`sellShip`) · 거점(`sellHolding`) ·
+     가공장(`sellMill`) · 청산(`liquidate`). 없던 것은 **그것을 말해 주는 화면**이다.
+     실플레이 960일차에 금고가 0이 되자 `금화가 모자란다`만 뜨고 *팔 수 있는 것이 있다*는
+     말이 어디에도 없어, 러너가 마지막 2,241닢까지 근해를 왕복하다 멈췄다(C-17).
+   ★ 값 계산이 화면에 있으면 시장 마찰(`gainFor`)·재판매율(`SHIP_RESALE`)·되사기율
+     (`HOLDING.sellBack`·`WORK.sellBack`)이 규칙과 갈라진다. 그래서 여기서 센다.
+     화면은 이 표를 줄로 옮기고 단추만 건다. */
+
+/** 이 항구에서 **가장 싸게 나갈 수 있는 한 항차**의 값 — "나갈 수 있나"의 기준.
+    ★ 출항 자체는 막히지 않는다(못 낸 몫은 `payFine`이 빚으로 넘긴다 — *"길은 열어 두되 값은 남긴다"*).
+      그래도 이 값을 못 채우면 **떠나는 순간 빚이 는다.** 안내를 띄울 자리가 거기다. */
+export function cheapestExit(cityId = state.at) {
+  let best = null;
+  for (const to of neighborsOf(cityId)) {
+    const d = voyageDays(cityId, to);
+    const c = voyageCost(d, state.crew, { from: cityId, to }).total;
+    if (best === null || c < best) best = c;
+  }
+  return best;   // 이웃이 없는 항구는 null (아홉 바다에는 없지만 방어)
+}
+
+/** 지금 이 항구에서 **당장 금화로 바꿀 수 있는 것**들 — 값이 큰 것부터.
+    돌려주는 줄: `{ kind, key, label, note, gold }`
+      cargo(실은 짐 · 품목마다 한 줄) · stored(창고 짐 · 한 줄) · ship(정박선 · 배마다)
+      · holding(이 항구 거점) · mill(가공장 · 사슬마다)
+    ★ 빚(`buyService('loan')`)과 청산(`liquidate`)은 **파는 것이 아니라서 여기 안 담는다** —
+      화면이 따로 덧붙인다(빚은 이 항구에 그 사람이 있어야 하고, 청산은 마지막 문이다). */
+export function salvage(cityId = state.at) {
+  const rows = [];
+
+  // ① 실은 짐 — **여기서 지금 팔면 금고에 들어오는 돈**(`sellNet` — 세·성과급·몫까지 뗀 값)
+  for (const [gid, n] of Object.entries(state.cargo)) {
+    if (!n) continue;
+    const gold = sellNet(gid, n, cityId);
+    if (gold <= 0) continue;
+    rows.push({ kind: 'cargo', key: gid, gold,
+                label: `${GOOD_BY_ID[gid]?.name ?? gid} ${n}칸`,
+                note: `${Math.round(gold / n).toLocaleString('ko-KR')}닢/칸 · 세·몫 뺀 값` });
+  }
+
+  // ② 창고에 둔 짐 — 꺼내서 팔아야 하므로 화물칸이 필요하다(그래서 note에 적는다)
+  const store = state.stored?.[cityId] ?? {};
+  let sn = 0, sv = 0;
+  for (const [gid, n] of Object.entries(store)) {
+    if (!n) continue;
+    sn += n;
+    sv += sellNet(gid, n, cityId);
+  }
+  if (sn > 0) rows.push({ kind: 'stored', key: cityId, gold: sv,
+                          label: `창고에 둔 짐 ${sn}칸`, note: '배로 옮겨 실은 뒤 판다' });
+
+  // ③ 정박해 둔 배 — **여기 있는 것만** 팔린다(다른 항구의 배는 그 항구로 가야 한다)
+  for (const key of Object.keys(state.fleet)) {
+    if (key === state.shipKey) continue;
+    if (state.fleet[key].at !== cityId) continue;
+    rows.push({ kind: 'ship', key, gold: resaleOf(key),
+                label: `${SHIPS[key]?.name ?? key} (정박)`,
+                note: `정가의 ${Math.round(SHIP_RESALE * 100)}%` });
+  }
+
+  // ④ 이 항구의 거점 — 헐값이지만 **채권자가 못 가져가는 것을 내가 던지는** 자리다
+  if (state.holdings?.[cityId]) {
+    const kinds = HOLDING_KEYS.filter((k) => state.holdings[cityId][k]).map((k) => HOLDINGS[k].name);
+    rows.push({ kind: 'holding', key: cityId, gold: holdingsValue(cityId),
+                label: `거점 — ${kinds.join('·')}`,
+                note: `들인 돈의 ${Math.round(HOLDING.sellBack * 100)}%`
+                    + (Object.keys(store).length ? ' · 창고 짐도 함께 넘어간다' : '') });
+  }
+
+  // ⑤ 가공장 — 돌리는 중이면 못 판다(원료가 사라진다). 그 사실을 note가 말한다.
+  for (const [k, w] of workList(cityId)) {
+    if (!k.startsWith('mill:')) continue;
+    const r = Object.values(CHAIN_BY_ID).find((c) => chainOut(c) === k.slice(5));
+    if (!r) continue;
+    let spent = 0;
+    for (let lv = 1; lv <= w.level; lv++) spent += millPrice(r.id, cityId, lv);
+    rows.push({ kind: 'mill', key: r.id, gold: w.job ? 0 : Math.round(spent * WORK.sellBack),
+                label: `${r.work} ${w.level}등급`,
+                note: w.job ? '가공 중이라 못 판다' : `들인 돈의 ${Math.round(WORK.sellBack * 100)}%` });
+  }
+
+  rows.sort((a, b) => b.gold - a.gold);
+  return rows;
+}
+
+/** 위 표의 합 — "지금 다 팔면 얼마인가" 한 줄 */
+export const salvageValue = (cityId = state.at) =>
+  salvage(cityId).reduce((a, r) => a + r.gold, 0);
 
 /* ── 바닥에는 바닥의 규칙이 있다 ────────────────────────────────
    ★ 빚은 30일마다 ×1.25로 불기만 하고 **끝이 없었다.** 금고 0·화물 0이 되면 살 돈이 없어
@@ -3701,18 +3831,39 @@ function localize(base, tier, regionId) {
   };
 }
 
+/** 해적이 재는 「털 값」 — 금고 + 실은 짐. 등급표를 고르는 축이다. */
+export const foeWealth = () => state.gold + cargoUsed() * 60;
+
+/** 그 자산이면 등급 1~5가 각각 얼마의 확률로 붙나.
+    ★ **표를 여기 한 곳에만 둔다.** 화면(패권 조건 ③)이 이 표를 그대로 읽는다 —
+      베끼면 규칙이 바뀔 때 화면만 옛 표를 말하게 된다.
+    ★ 이 표가 A-8c가 짚은 자리다: **자산 30,000닢 아래에서는 등급 5 확률이 0**이라
+      아무리 세도 두목을 못 만난다. "강해지면"이 아니라 **"부자가 되어야"** 열린다. */
+export function foeOdds(wealth = foeWealth(), shipKey = state.shipKey) {
+  // 볼품없는 배는 큰 놈이 상대해 주지 않는다 — 낡은 바사를 모는 동안은 잡배만 붙는다
+  if (SHIPS[shipKey]?.leak) return [0.90, 0.10, 0.00, 0.00, 0.00];
+  return wealth > 30000 ? [0.05, 0.10, 0.25, 0.35, 0.25]
+       : wealth > 14000 ? [0.10, 0.25, 0.40, 0.20, 0.05]
+       : wealth > 6000  ? [0.30, 0.42, 0.24, 0.04, 0.00]
+       : wealth > 2000  ? [0.62, 0.32, 0.06, 0.00, 0.00]
+                        : [0.88, 0.12, 0.00, 0.00, 0.00];
+}
+
+/** 그 등급이 붙기 시작하는 자산 문턱 — 화면이 *"얼마를 모아야 두목이 붙나"*를 적을 때 쓴다.
+    표를 훑어 **처음으로 확률이 0을 넘는 밴드의 하한**을 돌려준다(없으면 null). */
+export function foeWealthGate(tier) {
+  for (const w of [0, 2001, 6001, 14001, 30001]) {
+    if (foeOdds(w, 'carrack')[tier - 1] > 0) return w;
+  }
+  return null;
+}
+
 export function pickEnemy(rand = Math.random, regionId = currentRegion()) {
   const pick = (i) => capLoot(localize(ENEMIES[i], i, regionId));
   // 자산이 커질수록 거물이 붙는다. 낡은 배로 시작하는 초반엔 큰 놈이 아예 붙지 않는다
   // (해적도 털 값이 나오는 배를 고른다).
-  const wealth = state.gold + cargoUsed() * 60;
-  // 볼품없는 배는 큰 놈이 상대해 주지 않는다 — 낡은 바사를 모는 동안은 잡배만 붙는다
   if (SHIPS[state.shipKey].leak) return pick(rand() < 0.9 ? 0 : 1);
-  const table = wealth > 30000 ? [0.05, 0.10, 0.25, 0.35, 0.25]
-              : wealth > 14000 ? [0.10, 0.25, 0.40, 0.20, 0.05]
-              : wealth > 6000  ? [0.30, 0.42, 0.24, 0.04, 0.00]
-              : wealth > 2000  ? [0.62, 0.32, 0.06, 0.00, 0.00]
-                               : [0.88, 0.12, 0.00, 0.00, 0.00];
+  const table = foeOdds();
   let n = rand();
   for (let i = 0; i < table.length; i++) {
     n -= table[i];
@@ -4228,7 +4379,15 @@ function stealCargo(headcount, rand = Math.random) {
 
 /** 급여를 치른다. 금고가 모자라면 **낼 수 있는 만큼 내고** 나머지는 체불로 넘긴다.
     돌려주는 값이 그대로 정산 화면의 재료다. */
-export function settlePayroll(rand = Math.random) {
+/** 급여 정산.
+    @param opts.pay 이번 달에 **줄 상한**. 안 주면 낼 수 있는 만큼 전부 준다.
+      ★ **C-8의 답이 이 인자 하나다.** 화면 주석은 오래도록 *"안 주는 것도 선택이지 회피가 아니다"*라고
+        적어 두었는데 **안 주는 단추가 없었다.** 원양은 화물에 전 재산을 넣은 채 급여일을 맞으므로
+        20일 넘는 구간에서는 체납이 구조적으로 강제된다 — 그러면 그것은 선택이 아니라 사고다.
+      ★ **벌칙은 한 칸도 안 바뀐다.** 못 준 비율(`ratio`)이 그대로 불만·이탈로 간다.
+        유예 제도를 새로 만들지 않았다는 뜻이다 — 바뀌는 것은 *얼마를 주느냐*뿐이고,
+        덜 주면 그만큼 정확히 더 아프다. */
+export function settlePayroll(rand = Math.random, opts = {}) {
   /* ★ **빌린 돈이 먼저다.** 전주는 급여일에 맞춰 사람을 보내고, 선원보다 먼저 받아 간다 —
      그것이 이 돈이 무이자가 아닌 이유이자 빌리는 것이 위험한 이유다.
      금고가 모자라면 갚은 만큼만 줄고 나머지는 이자가 한 번 더 붙어 다음 달로 넘어간다. */
@@ -4265,7 +4424,8 @@ export function settlePayroll(rand = Math.random) {
   }
 
   const owed = payrollOwed();
-  const paid = Math.min(state.gold, owed);
+  const cap = opts.pay == null ? owed : Math.max(0, Math.min(owed, Math.round(opts.pay)));
+  const paid = Math.min(state.gold, cap);
   const missed = owed - paid;
   state.gold -= paid;
 

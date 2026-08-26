@@ -13,12 +13,16 @@
 // ★ 화면은 규칙을 다시 구현하지 않는다. 금액 판정은 전부 `state.js`가 하고
 //   여기서는 그 값을 읽어 배치할 뿐이다(대시보드와 같은 원칙).
 
-import { GOOD_BY_ID, CITY_BY_ID, OFFICER, CREW_TRAITS, SHIPS } from './data.js';
+import { GOOD_BY_ID, CITY_BY_ID, OFFICER, CREW_TRAITS, SHIPS, BOON } from './data.js';
 import {
   state, settlePayroll, payrollOwed, ledgerTotal, MONTH_DAYS,
   pushLog, cargoUsed, priceOf, DESERT_AT, cargoCapTotal,
+  /* C-8 — 급여일에 선택이 있으려면 **팔 것이 이 화면에 닿아야** 한다.
+     값 계산은 전부 `state.js: salvage`(C-17과 같은 표)이고 여기서는 줄로 옮기고 단추만 건다. */
+  salvage, sell, sellShip, sellHolding, sellMill, takeGoods, storedUsed, buyService,
 } from './state.js';
-import { el, modal, refreshHUD, refreshLog, iconEl, josa } from './ui.js';
+import { figuresAt } from './world.js';
+import { el, modal, refreshHUD, refreshLog, iconEl, josa, toast } from './ui.js';
 
 /* 장부 항목의 표시 이름. `LEDGER_*` 키와 1:1이라 여기 빠진 항목은 화면에서 사라진다 —
    state.js에 항목을 더하면 여기도 더한다(그러라고 §장부 주석에 적어 두었다). */
@@ -43,8 +47,15 @@ const OUTGO_LABEL = {
 
 const won = (n) => n.toLocaleString('ko-KR');
 
+/* 지금 떠 있는 급여일 모달. **다시 열 때는 먼저 지운다.**
+   ★ 안 지웠더니 실측에서 낡은 판이 **뒤에 그대로 남았다** — 화면에는 금고 300닢짜리 옛 모달과
+     1,015닢짜리 새 모달이 겹쳐 있었고, 자동 조종도 사람도 앞의 것(옛 값)을 먼저 잡는다.
+     여기서 파는 단추가 생긴 이상 이 화면은 **여러 번 다시 그려진다** — 그 전제가 새로 생긴 것이다. */
+let openModal = null;
+
 /** 급여일 화면을 띄운다. `onDone`은 정산이 끝난 뒤(모달이 닫힌 뒤) 불린다. */
 export function openPayday(onDone) {
+  openModal?.remove();
   const owed = payrollOwed();
   const short = Math.max(0, owed - state.gold);
 
@@ -52,6 +63,19 @@ export function openPayday(onDone) {
     ledgerPane(),
     holdPane(),
   ]);
+
+  /* ★ **C-8 — 급여일에 선택이 없다.** 단추가 하나뿐이라 늘 "낼 수 있는 만큼"이었다.
+     새 규칙(유예 제도)을 만들지 않는다 — **이미 있는 선택지들을 이 화면에 끌어온다.**
+       ① 팔 것 목록(`salvage`) — 짐·창고·정박선·거점·가공장을 **여기서 바로 판다**.
+          전에는 짐만, 그것도 "팔고 오겠다"로 화면을 나가야 닿았다.
+       ② 이 항구에 대금업자가 있으면 **빌린다**.
+       ③ 「이번 달은 미룬다 — 한 푼도 안 준다」. 규칙은 `settlePayroll(rand, {pay:0})` 한 인자이고
+          벌칙은 그대로다(못 준 비율이 그대로 불만·이탈로 간다). 화면 주석이
+          *"안 주는 것도 선택이지 회피가 아니다"*라고 적어 두고 **안 주는 단추가 없던** 자리를 채운다.
+     ★ 다시 그릴 때는 이 모달을 지우고 새로 연다 — 팔면 청구·금고·목록이 한꺼번에 바뀐다. */
+  const rows = short ? salvage(state.at) : [];
+  const redraw = () => { refreshHUD(); refreshLog(); openPayday(onDone); };
+  const sellPane = short && (rows.length || lenderHere()) ? salvagePane(rows, redraw) : null;
 
   const m = modal({
     title: `급여일 — ${state.day}일차 · ${CITY_BY_ID[state.at].name}`,
@@ -67,6 +91,7 @@ export function openPayday(onDone) {
             + '<b>돈 되는 짐을 들고</b> 배를 떠난다.',
       }) : null,
       box,
+      sellPane,
       unrestPane(),
     ].filter(Boolean)),
     closable: false,      // 급여일은 넘길 수 없다 — 안 주는 것도 선택이지 회피가 아니다
@@ -86,7 +111,7 @@ export function openPayday(onDone) {
          회피는 아니다 — **떠나려 하면 다시 뜬다**(`port.js`의 출항 단추가 막는다).
          이것이 `UNIMPLEMENTED.md` C-8("급여일에 선택이 없다")의 답이기도 하다. */
       short && Object.keys(state.cargo || {}).length ? {
-        label: '짐을 팔고 오겠다',
+        label: '나가서 팔고 오겠다',
         kind: 'dark',
         onClick: () => {
           state.payroll.deferredDay = state.day;
@@ -94,9 +119,100 @@ export function openPayday(onDone) {
           onDone?.();
         },
       } : null,
+      /* ★ **안 주는 것도 선택이다** — 그러나 회피는 아니다(`closable:false`가 그것을 지킨다).
+         모자랄 때만 낸다: 다 낼 수 있는데 안 내는 것은 판단이 아니라 그냥 벌점 줍기다. */
+      short ? {
+        label: `이번 달은 미룬다 — 한 푼도 안 준다 (체불 ${won(owed)}닢)`,
+        kind: 'danger',
+        onClick: () => report(settlePayroll(Math.random, { pay: 0 }), onDone, true),
+      } : null,
     ].filter(Boolean),
   });
+  openModal = m;
   return m;
+}
+
+/** 이 항구의 대금업자 — 있으면 급여일에 빌리는 것도 선택이 된다 */
+function lenderHere() {
+  if (state.boons?.loan) return null;      // 갚을 것이 있으면 더 못 빌린다
+  return figuresAt(state.at).find((f) => f.service === 'loan') ?? null;
+}
+
+/* ── 급여일에 팔 수 있는 것 (C-8) ────────────────────────────
+   ★ 값은 `state.js: salvage()`가 센다 — 바닥 안내(C-17)와 **같은 표**다.
+     두 화면이 다른 값을 말하면 어느 쪽도 못 믿는다. */
+function salvagePane(rows, redraw) {
+  const total = rows.reduce((a, r) => a + r.gold, 0);
+  const lender = lenderHere();
+  const line = (label, note, btn, disabled, onClick) => el('div.pay-sell', {}, [
+    el('span.k', { text: label }),
+    el('span.n', { text: note }),
+    el('button.btn.sm.dark', { text: btn, disabled, onclick: onClick }),
+  ]);
+
+  const kids = [
+    el('div.pay-sub', {
+      text: rows.length ? `지금 여기서 팔 수 있는 것 — 다 팔면 ${won(total)}닢` : '지금 여기서 팔 것은 없다',
+    }),
+  ];
+  for (const r of rows) {
+    kids.push(line(`${r.label} — ${won(r.gold)}닢`, r.note,
+      r.kind === 'stored' ? '싣는다' : '판다',
+      r.kind === 'mill' && r.gold <= 0,
+      () => { doSell(r); redraw(); }));
+  }
+  if (lender) {
+    kids.push(line(`${lender.name}에게 빌린다`,
+      `${Math.round((BOON.loanRate - 1) * 100)}% 얹어 ${BOON.loanDays}일 뒤에 갚는다 — 급여일에 선원보다 먼저 걷힌다`,
+      '빌린다', false, () => {
+        const b = buyService(lender);
+        if (!b.ok) return toast(b.reason, 'bad');
+        pushLog(b.line, 'warn');
+        redraw();
+      }));
+  }
+  kids.push(el('div.pay-note', {
+    text: '판 돈은 그 자리에서 금고에 들어간다 — 팔고 나서 다시 「급여를 치른다」를 누르면 된다.',
+  }));
+  return el('div.pay-sellpane', {}, kids);
+}
+
+/** 줄 하나를 실제로 판다 — 규칙은 전부 `state.js`, 여기서는 부르고 알릴 뿐이다 */
+function doSell(r) {
+  if (r.kind === 'cargo') {
+    const s = sell(r.key, state.cargo[r.key] || 0);
+    if (!s.ok) return toast(s.reason, 'bad');
+    pushLog(`${GOOD_BY_ID[r.key].name} ${s.qty}칸을 급여일에 풀었다 (+${won(s.gain)}닢).`, 'warn');
+    return;
+  }
+  if (r.kind === 'stored') {
+    const store = { ...(state.stored?.[state.at] ?? {}) };
+    let moved = 0;
+    for (const [gid, n] of Object.entries(store)) {
+      const t = takeGoods(gid, n, state.at);
+      if (t.ok) moved += t.n;
+    }
+    if (!moved) return toast('화물칸이 가득 차 창고 짐을 실을 수 없다', 'bad');
+    const left = storedUsed(state.at);
+    pushLog(`창고에서 ${moved}칸을 실었다.` + (left ? ` ${left}칸은 자리가 없어 남았다.` : ''), 'warn');
+    return;
+  }
+  if (r.kind === 'ship') {
+    const s = sellShip(r.key);
+    if (!s.ok) return toast(s.reason, 'bad');
+    pushLog(`삯을 채우려고 ${SHIPS[r.key].name}${josa(SHIPS[r.key].name, '을/를')} 넘겼다`
+          + ` (+${won(s.gain)}닢).`, 'warn');
+    return;
+  }
+  if (r.kind === 'holding') {
+    const s = sellHolding(state.at);
+    if (!s.ok) return toast(s.reason, 'bad');
+    return;
+  }
+  if (r.kind === 'mill') {
+    const s = sellMill(r.key, state.at);
+    if (!s.ok) return toast(s.reason, 'bad');
+  }
 }
 
 /* ── 왼쪽: 이 달 장부 ─────────────────────────────────── */
@@ -224,7 +340,7 @@ function unrestPane() {
 }
 
 /* ── 정산 결과 ───────────────────────────────────────── */
-function report(r, onDone) {
+function report(r, onDone, refused = false) {
   /* ★ 결과 모달을 띄우기 **전에** 뒤 화면을 새로 그린다.
      닫을 때 갱신하면 결과를 읽는 동안 사이드패널이 정산 전 값(쌓인 삯·금고)을
      그대로 보여줘, 방금 치른 돈이 안 나간 것처럼 보인다. */
@@ -235,15 +351,23 @@ function report(r, onDone) {
   if (r.missed > 0) {
     /* ★ "0닢을 치렀다"는 문장이 실제로 떴다. 금고가 비어 **한 푼도 못 준** 달이
        "얼마를 냈다"는 말투로 보고되면, 이 게임에서 가장 나쁜 소식이 회계 항목이 된다. */
+    /* ★ **못 준 것과 안 준 것은 다른 문장이다**(C-8). 「이번 달은 미룬다」로 온 자리에서
+       *"금고를 열어 보였다. 바닥이었다"*라고 적으면, 금고에 1,015닢이 있는데 화면이 거짓말을 한다.
+       선택을 만들었으면 그 선택이 무엇이었는지도 화면이 말해야 한다. */
     lines.push(el('p', {
-      html: r.paid > 0
-        ? `<b>${won(r.paid)}닢</b>을 치렀다. <span class="pay-warn">${won(r.missed)}닢이 밀렸다.</span>`
-        : `금고를 열어 보였다. 바닥이었다. `
-          + `<span class="pay-warn">${won(r.missed)}닢이 그대로 밀린 삯으로 남는다.</span>`,
+      html: refused
+        ? `금고를 열지 않았다. <span class="pay-warn">${won(r.missed)}닢이 그대로 밀린 삯으로 남는다.</span>`
+          + ` 이유는 말하지 않았고, 아무도 묻지 않았다.`
+        : r.paid > 0
+          ? `<b>${won(r.paid)}닢</b>을 치렀다. <span class="pay-warn">${won(r.missed)}닢이 밀렸다.</span>`
+          : `금고를 열어 보였다. 바닥이었다. `
+            + `<span class="pay-warn">${won(r.missed)}닢이 그대로 밀린 삯으로 남는다.</span>`,
     }));
-    pushLog(r.paid > 0
-      ? `급여 ${won(r.paid)}닢 지급 · ${won(r.missed)}닢 체불.`
-      : `급여를 한 푼도 못 치렀다 — ${won(r.missed)}닢 체불.`, 'bad');
+    pushLog(refused
+      ? `이번 달 삯 ${won(r.missed)}닢을 **주지 않기로** 했다.`
+      : r.paid > 0
+        ? `급여 ${won(r.paid)}닢 지급 · ${won(r.missed)}닢 체불.`
+        : `급여를 한 푼도 못 치렀다 — ${won(r.missed)}닢 체불.`, 'bad');
   } else {
     lines.push(el('p', { html: `삯 <b>${won(r.paid)}닢</b>을 남김없이 치렀다. 갑판이 조용하다.` }));
     pushLog(`급여 ${won(r.paid)}닢을 모두 치렀다.`, 'good');
