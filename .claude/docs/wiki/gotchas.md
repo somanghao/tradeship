@@ -16,11 +16,7 @@
 - **교훈**: 결과 모달 탐색은 반드시 `[...document.querySelectorAll('.modal')].find(m => m.id !== 'logmodal')`. 실제로 이걸로 "전투 결과 모달 없음"을 오판했다.
 - 정본 → [render-architecture.md](render-architecture.md), [dev-workflow.md](dev-workflow.md)
 
-## 3. 브라우저 스크린샷이 CDP 타임아웃
-
-- **원인**: 캔버스가 많은 페이지에서 `Page.captureScreenshot`이 30초 타임아웃으로 실패한다. 렌더러가 죽은 게 아니다.
-- **교훈**: **그대로 한 번 더 호출하면 대개 성공**한다. 페이지를 리로드하거나 코드를 의심하기 전에 재시도부터. 스크롤 직후 검은 화면이 찍히면 1틱 스크롤로 리페인트를 유도한다.
-- 정본 → [dev-workflow.md](dev-workflow.md)
+## 3. → **engine 도메인으로 옮겼다**(`QUICKMAP-engine.md` §3 — CDP 스크린샷 타임아웃은 재시도)
 
 ## 4. → **art 도메인으로 옮겼다**(`QUICKMAP-art.md` §3 — 렌더 확인 없이 품질을 단정하지 않는다)
 
@@ -35,5 +31,6 @@
 - **원인**: `python -m http.server`는 `Cache-Control`을 안 보내 브라우저가 .js를 휴리스틱 캐시한다. 새 `index.html`·`main.js`에 **낡은 `state.js`가 섞이면** 새 export를 못 찾아 import가 링크 단계에서 실패하고, 스크립트가 한 줄도 안 돌아 화면이 검게 남는다.
 - **판별**: 서버 로그가 `index.html`·`main.js`만 200이고 나머지 모듈 요청이 **아예 없으면** 캐시에서 쓴 것이다. 콘솔엔 `does not provide an export named ...`.
 - **교훈**: `serve.py`(no-store)로 띄운다. 이미 물린 탭은 `Ctrl+Shift+R`, 확실히 하려면 **다른 포트로**(포트가 다르면 캐시가 분리된다). **코드 버그로 오진하지 말 것** — 새 프로필로 열어 정상이면 캐시다.
-- ⚠️ **한 import 문에 같은 이름이 두 번**이어도 증상이 같다(`SyntaxError` · 한 줄도 안 돈다). **`check-*`는 파싱을 안 해 전부 통과** → 커밋 전 `check-dup-decl.mjs`.
+- ⚠️ **import 이름 하나로 게임이 통째로 안 뜬다** — 같은 이름이 두 번이거나(`check-dup-decl`), **없는 이름을 가져오거나**(`check-imports`). 둘 다 브라우저가 모듈 그래프를 통째로 거부해 한 줄도 안 돈다.
+  ★ **`check-*`와 규칙 테스트가 전부 통과해도 그렇다** — 그것들은 `data.js`·`state.js`를 직접 부르는 도구라 `scenes/*`를 한 번도 안 거친다. 실제로 `scenes/map.js`가 `riskKey`를 잘못 가져와 **게임이 죽은 채로 회차가 돌았고**, 지도가 낡은 채 굳은 것이 그 증상이었다(`gen-map-png.mjs`는 게임을 띄워서 굽는다). 커밋 전 **둘 다** 돌린다.
 - 정본 → [dev-workflow.md](dev-workflow.md)

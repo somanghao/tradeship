@@ -109,18 +109,18 @@
 - **`START_GOLD`는 난이도 손잡이가 아니다**(200 유지 · 근거 `wiki/playtest-log.md` §4-2-b).
 - **판은 항구에서 자동 저장된다**(`js/save.js`) — 캠페인이 한 세션에 안 끝난다.
 - **한글 조사는 `js/josa.js`(leaf)** — `ui.js`가 re-export. `을(를)`을 손으로 안 적는다.
-- ⚠️ **보험은 낸 것의 26~70%만 돌려주고 요율이 높을수록 나쁘다**(설계 의도의 반대 · **미해소**) → `.playtest/supremacy-balance/DESIGN-growth.md` P8-1
+- **보험은 낸 만큼 돌려준다** — 보상률이 구간별 **공정률 × 인수업자 이문**이다(`state.js: insureCover` · 전 구간 90%). 요율은 한 닢도 안 내렸다 → `QUICKMAP-trade.md`
 - **`story/`에 장편소설이 있다** — **게임 데이터를 바꾸지 않는 것이 규약**이고, 그 검수가 후반 사양을 값까지 냈다 → `story/GAME-LINK.md` §8 · `story/OUTLINE.md`
 
 ## 다음 후보
 
 **목록의 정본은 `UNIMPLEMENTED.md`다**(상태·순서·✅해소 진단까지). 여기는 **방향과 이어받을 자리**만.
 
-- **★ 이어받을 자리** — 밸런스 회차의 **미완성 셋이 워크트리 브랜치에 WIP로** 있다 — **검증 전이라 그대로 병합하지 않는다.** 설계 정본 `.playtest/supremacy-balance/DESIGN-growth.md`
+- **★ 밸런스 회차(P1~P8)는 전부 본선에 들어왔다.** 설계 정본 `.playtest/supremacy-balance/DESIGN-growth.md` — 남은 것은 그 문서의 **판단 보류**(값을 더 재야 하는 것)뿐이다
 - **★ 콘텐츠 확장 — 사용자가 명시한 방향.** 배·교역품·도시·해적의 *종류*를 늘린다.
 - **사람은 이길 수 있는 상대만 싸우고 나머지는 피한다 — 전투 설계·측정의 전제다**(도주율 정본 `state.js: fleeOdds` → `QUICKMAP-combat.md`).
 - **★ 소설 원고** — 착수 카드·부착표는 `story/ROADMAP.md`(68행 마스터 표·사본).
-- 코드 쪽은 **지도 질감**(F-8) · **기함이 침몰하지 않는다**(C-13 — 동행선만 격침된다).
+- 코드 쪽은 **지도 미학**(→ `.playtest/map-polish/`). ⓘ **기함이 안 가라앉는 것은 설계다**(`state.js: spreadDamage` — 패배 처리가 따로 있다). 결함으로 적지 말 것.
 
 ## 메모리 트립와이어
 
