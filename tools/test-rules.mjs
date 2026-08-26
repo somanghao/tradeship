@@ -108,8 +108,17 @@ const spd0 = shipSpeed(), cap0 = gunCap();
 buyRefit('copper'); buyRefit('sails');
 ok(shipSpeed() > spd0, `동판+돛 증축 → 속력 ${spd0.toFixed(2)} → ${shipSpeed().toFixed(2)}`);
 const max0 = state.maxHp;
+/* ★ **덧댄 만큼은 새것이다**(conquest ISSUES #23). 전에는 `maxHp`만 올라
+   2,400닢을 내고 나면 배가 "231 중 185"가 됐다 — **산 직후가 가장 약한 상태**였다.
+   낡은 부분은 그대로 낡아 있어야 하므로 **차액만** 채운다(전부 수리가 아니다). */
+state.hp = Math.round(state.maxHp * 0.6);
+const hpRefit0 = state.hp;
 buyRefit('oakArmor');
 ok(state.maxHp === Math.round(SHIPS.caravel.hp * 1.25 * 1), `떡갈나무 장갑 → 최대선체 ${max0} → ${state.maxHp}`);
+ok(state.hp === hpRefit0 + (state.maxHp - max0),
+   `덧댄 만큼은 성하다 — 선체 ${hpRefit0} → ${state.hp} (최대치가 ${state.maxHp - max0}pt 올랐다)`);
+ok(state.hp < state.maxHp,
+   '그래도 낡은 부분은 낡은 채다 — 개장이 수리를 대신하지 않는다');
 const armsBefore = armsTotal();
 const rz = buyRefit('razee');
 ok(gunCap() < cap0, `레이지 개조 → 포문 상한 ${cap0} → ${gunCap()}, 뜯긴 대포 ${rz.dropped}문 (${armsBefore}→${armsTotal()})`);

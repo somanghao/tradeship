@@ -15,7 +15,7 @@ let started = false;
 export const gameStarted = () => started;
 export const markStarted = () => { started = true; };
 import { initWorld } from './world.js';
-import { refreshHUD, refreshLog, clearOverlay, el, overlay } from './ui.js';
+import { refreshHUD, refreshLog, clearOverlay, el, overlay, josa } from './ui.js';
 import { speed, setSpeed, waitIdle, isBusy } from './speed.js';
 
 const canvas = document.getElementById('screen');
@@ -327,7 +327,13 @@ function originPicker(onPick) {
   });
   const here = ORIGINS.find((o) => o.id === cur);
   return el('div.sea-pickers', {}, [
-    el('div.sea-label', { text: '조선에서 누구로 시작할까' }),
+    /* ★ **누르면 그 자리에서 판이 시작된다는 것을 먼저 말한다**(supremacy ISSUES #1).
+       다섯 갈래를 *비교해 보려고* 카드를 누른 사람은 그대로 1일차로 떨어져 되돌릴 수 없었다.
+       아래에 「출항하기」가 보이니 그것이 시작 단추라고 읽는 것이 오히려 자연스럽다.
+       ⚠️ 확인 단추를 한 번 더 두는 쪽은 고르지 않았다 — 타이틀의 마지막 `.btn`은
+         자동 조종(`playtest.mjs: g.start()`)이 누르는 자리라, 뜻을 바꾸면 회차 러너가 통째로 갈린다.
+         **화면이 말하게 하는 쪽**으로 고친다. 되돌릴 자리는 이미 있다(아래 「잘못 눌렀나」). */
+    el('div.sea-label', { text: '조선에서 누구로 시작할까 — 카드를 누르면 그 자리에서 시작한다' }),
     el('div.sea-grid', {}, rows),
     el('div.sea-hook', {
       html: here
@@ -358,7 +364,7 @@ function startPicker(onPick) {
   }).filter(Boolean);
   const here = START_PORTS.find((p) => p.at === state.at);
   return el('div.sea-pickers', {}, [
-    el('div.sea-label', { text: '어느 바다에서 시작할까' }),
+    el('div.sea-label', { text: '어느 바다에서 시작할까 — 카드를 누르면 그 자리에서 시작한다' }),
     el('div.sea-grid', {}, rows),
     el('div.sea-hook', { text: here?.hook ?? '' }),
   ]);
@@ -467,6 +473,17 @@ function titleScreen() {
         ]),
       ]),
     ]) : null,
+    /* ★ 마지막 단추가 **무엇을 하는지**를 그 위에 적는다. 갈래·바다 카드를 안 누르고
+       이것만 누르면 기본 갈래로 시작하고, 저장된 판이 있으면 **그 판이 지워진다**
+       (supremacy ISSUES #1·#36 — 실제로 663일차 판을 이 순서로 날린 적이 있다). */
+    el('div.sea-hook', {
+      html: head
+        ? '<b style="color:#c98a6a">「새로 시작한다」는 위의 저장된 판을 지운다.</b>'
+          + ' 실수로 눌렀으면 타이틀을 다시 열어 「잘못 눌렀나」로 되돌릴 수 있다.'
+        : `아무것도 고르지 않고 누르면 <b>${ORIGINS[0].name}</b>${josa(ORIGINS[0].name, '으로/로')}`
+          + ` ${CITY_BY_ID[ORIGINS[0].at]?.name ?? ORIGINS[0].at}에서 시작한다.`,
+      style: { marginTop: '4px' },
+    }),
     el('button.btn', {
       text: head ? '새로 시작한다' : '출항하기',
       onclick: () => { if (head) { stashSave(); clearSave(); } markStarted(); scr.remove(); },
