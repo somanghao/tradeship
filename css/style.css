@@ -776,6 +776,19 @@ html, body {
 .pay-note { font-size: 10.5px; color: #6f6858; line-height: 1.6; margin-top: 8px; }
 .pay-note b { color: #a89a84; }
 
+/* 급여일에 지금 여기서 팔 수 있는 것 (C-8) — 두 칸 표 옆이 아니라 **아래 폭 전체**다.
+   판단의 재료(장부·선창)를 읽은 다음에 오는 것이 행동이라, 읽는 순서가 곧 배치다. */
+.pay-sellpane {
+  margin-top: 12px; padding: 9px 11px;
+  background: #d05a4a12; border-left: 2px solid var(--brass-d); border-radius: 2px;
+}
+.pay-sell {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+  font-size: 12px; padding: 4px 0; color: #b6ac9c;
+}
+.pay-sell .k { color: var(--parch); font-variant-numeric: tabular-nums; }
+.pay-sell .n { font-size: 11px; color: #8f8878; text-align: right; }
+
 .pay-hold {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; padding: 3px 0; color: #b6ac9c;

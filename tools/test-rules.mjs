@@ -10,7 +10,7 @@ if (!globalThis.localStorage) {
   };
 }
 
-import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, START_PORTS, DEFAULT_START, startShipAt } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
@@ -25,6 +25,10 @@ import {
   /* 거점의 유예·매각과 파산 — 「바닥에는 바닥의 규칙이 있다」 */
   hasHolding, ownsHolding, holdingIdle, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   storeCap, payFine, debtOwed, nothingLeft, enforceDebt, settlePayroll, resaleOf,
+  /* 바닥에서 나가는 문(C-17) — 안내가 적을 값을 규칙이 센다 */
+  salvage, salvageValue, sellNet, cheapestExit, voyageCost,
+  /* 패권이 화면에서 말을 안 하던 자리 둘(A-8c) */
+  foeWealth, foeOdds, foeWealthGate, hegemonyOf,
   /* 삭은 배와 명부 사냥 */
   hullFactor, soakCargo, shipSpeed as speedOf,
   rosterOpenIn, bountyTipPrice, tamePrice, buyBountyTip, tamePirate, activeBounty,
@@ -40,10 +44,10 @@ import {
   estateGrade, estateDef, estatePrice, estateUpgradeCost, canUpgradeEstate, upgradeEstate,
   vacancyOdds, estateRent, estateOccupied, holdingIncomeDue,
   netWorth, tariffScale, tariffShockFactor, baseTariff, seizureOdds, seizeCargo,
-  addShock, rollShockEvents, voyageCost, shockFactor, priceOf,
+  addShock, rollShockEvents, shockFactor, priceOf,   // voyageCost는 위 C-17 줄에서 이미 온다
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
-  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS,
+  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
@@ -62,17 +66,26 @@ process.on('exit', () => console.log(`
 규칙 — ${PASS}/${PASS + FAIL} 통과${FAIL ? ` · **실패 ${FAIL}건**` : ''}`));
 
 resetGame();
-ok(state.shipKey === 'hulk' && state.gold === START_GOLD,
+/* ★ 시작배는 **그 바다에서 가장 싼 배**다(`data.js: START_PORTS[].ship`).
+   전에는 아홉 어디서 시작해도 `hulk` 하나였다 — 그 시절 이 검사가 `'hulk'`를 박아 두었다. */
+ok(state.shipKey === startShipAt(DEFAULT_START) && state.gold === START_GOLD,
    `시작: ${state.shipKey} / ${state.gold}닢 / 선체 ${state.hp} / 화물칸 ${state.cargoCap}`);
 // 갑판이 빈 채로 시작하므로(술집에서 모은다) 이 아래 검사들은 선원을 세워 두고 돈다.
 // 술집 규칙 자체는 tools/test-tavern.mjs가 본다.
 state.crew = 10;
 ok(armsTotal() === state.guns, `포문 동기화 ${state.guns}문`);
 
-// 누수: 항해하면 선체가 삭는다
+/* 누수: 항해하면 선체가 삭는다.
+   ⚠️ **`leak`는 `hulk` 고유 속성이다** — 시작배가 바다마다 갈리면서 기본 시작배(사후선)에는
+   없어졌다. 그래도 이 규칙은 살아 있어야 한다: 청산하면 받는 배가 `hulk`이고
+   (`BANKRUPT.keepShip`), 중고로도 잡힌다. 그래서 **그 배를 직접 태워** 검사한다. */
+const leakWas = state.shipKey;
+state.fleet.hulk = { at: state.at, hp: SHIPS.hulk.hp, arms: { light: SHIPS.hulk.guns, medium: 0, long: 0 }, refits: {} };
+boardShip('hulk');
 const hp0 = state.hp;
 const c1 = advanceDays(4);
 ok(c1.leak === 8 && state.hp === hp0 - 8, `누수 4일 → ${c1.leak}pt (선체 ${hp0}→${state.hp}), 급여 ${c1.wages}닢`);
+boardShip(leakWas); delete state.fleet.hulk; state.hp = state.maxHp;
 
 // 조선소 — 도시 공업력이 무엇을 지을 수 있는지 정한다
 ok(industryOf('venezia') === 3 && industryOf('iznik') === 0,
@@ -110,8 +123,17 @@ const spd0 = shipSpeed(), cap0 = gunCap();
 buyRefit('copper'); buyRefit('sails');
 ok(shipSpeed() > spd0, `동판+돛 증축 → 속력 ${spd0.toFixed(2)} → ${shipSpeed().toFixed(2)}`);
 const max0 = state.maxHp;
+/* ★ **덧댄 만큼은 새것이다**(conquest ISSUES #23). 전에는 `maxHp`만 올라
+   2,400닢을 내고 나면 배가 "231 중 185"가 됐다 — **산 직후가 가장 약한 상태**였다.
+   낡은 부분은 그대로 낡아 있어야 하므로 **차액만** 채운다(전부 수리가 아니다). */
+state.hp = Math.round(state.maxHp * 0.6);
+const hpRefit0 = state.hp;
 buyRefit('oakArmor');
 ok(state.maxHp === Math.round(SHIPS.caravel.hp * 1.25 * 1), `떡갈나무 장갑 → 최대선체 ${max0} → ${state.maxHp}`);
+ok(state.hp === hpRefit0 + (state.maxHp - max0),
+   `덧댄 만큼은 성하다 — 선체 ${hpRefit0} → ${state.hp} (최대치가 ${state.maxHp - max0}pt 올랐다)`);
+ok(state.hp < state.maxHp,
+   '그래도 낡은 부분은 낡은 채다 — 개장이 수리를 대신하지 않는다');
 const armsBefore = armsTotal();
 const rz = buyRefit('razee');
 ok(gunCap() < cap0, `레이지 개조 → 포문 상한 ${cap0} → ${gunCap()}, 뜯긴 대포 ${rz.dropped}문 (${armsBefore}→${armsTotal()})`);
@@ -225,7 +247,11 @@ ok(state.officer.hiredDay === 0 && state.officer.paid === 0 && state.officer.ear
 ok(state.gold === START_GOLD, `계약금이 없다 — 시작 금화가 그대로 ${START_GOLD}닢`);
 
 // 물 새는 배를 몰아도 떠나지 않는다 (예전엔 이 조건에서 승선을 거절했다)
+const offWas = state.shipKey;
+state.fleet.hulk = { at: state.at, hp: SHIPS.hulk.hp, arms: { light: SHIPS.hulk.guns, medium: 0, long: 0 }, refits: {} };
+boardShip('hulk');
 ok(ship().leak && hasOfficer(), '물 새는 낡은 바사를 몰아도 함께 있다');
+boardShip(offWas); delete state.fleet.hulk;
 
 // 어느 항구에 있든 붙어 있다 — 리알토에 앉아 있던 사람이 아니다
 state.at = 'rodos';
@@ -488,7 +514,8 @@ resetGame();
   resetGame('venezia');
   state.crew = 10; state.gold = 500000;
   purchaseShip('carrack'); boardShip('carrack');
-  delete state.fleet.hulk;
+  // 시작배는 바다마다 다르다 — 베네치아면 타르타네다. 키를 박지 말고 지금 것을 지운다.
+  for (const k of Object.keys(state.fleet)) if (k !== 'carrack') delete state.fleet[k];
   state.gold = 0;
   payFine(400, '작은 위약금');
   state.day += MONTH_DAYS;
@@ -517,6 +544,151 @@ resetGame();
   advanceDays(1, { from: 'venezia', to: 'venezia' });
   ok(adv === 0 || debtOwed() > 0,
      '기한을 넘긴 위약금도 증발하지 않고 빚으로 남는다 — 자진 파기와 같은 취급');
+}
+
+/* ── 바닥에서 나가는 문을 화면이 말한다 (C-17) ──────────────────
+   ★ 규칙은 진작 다 있었고 없던 것은 **안내**였다. 그래서 여기서 재는 것은
+     *팔 수 있나*가 아니라 **화면이 적을 값이 실제와 맞나**다 —
+     안내가 적은 값과 눌렀을 때 들어오는 값이 다르면 그 안내는 거짓말이다. */
+{
+  resetGame('venezia');
+  state.crew = 8; state.gold = 300000;
+
+  // ① 미리보기(`sellNet`)와 실제 매각액이 **한 닢도 안 갈린다**
+  buy('grain', 20);
+  const pre = sellNet('grain', cargoUsed());
+  const purse0 = state.gold;
+  const sr = sell('grain', 999);
+  ok(sr.ok && state.gold - purse0 === pre,
+     `팔기 전에 적은 ${pre.toLocaleString('en-US')}닢이 그대로 들어온다`
+     + ` — 세·성과급·동료 몫·선원 사무역까지 뺀 값(실제 ${(state.gold - purse0).toLocaleString('en-US')})`);
+
+  // ② 「지금 팔 수 있는 것」이 짐·정박선·거점을 다 센다
+  resetGame('venezia');
+  state.crew = 8; state.gold = 300000;
+  buy('grain', 10);
+  purchaseShip('cog');                      // 정박선 한 척
+  buyHolding('rental', 'venezia');
+  const rows = salvage('venezia');
+  const kinds = new Set(rows.map((r) => r.kind));
+  ok(kinds.has('cargo') && kinds.has('ship') && kinds.has('holding'),
+     `바닥 안내가 갈래를 다 센다 — ${[...kinds].join('·')} (${rows.length}줄)`);
+  ok(rows.every((r, i) => i === 0 || rows[i - 1].gold >= r.gold),
+     '값이 큰 것부터 나온다 — 무엇을 먼저 던질지가 곧 판단이다');
+  ok(salvageValue('venezia') === rows.reduce((a, r) => a + r.gold, 0),
+     `다 팔면 ${salvageValue('venezia').toLocaleString('en-US')}닢 — 합이 줄과 맞는다`);
+
+  // ③ **정박한 배는 그 항구에서만** 줄이 된다 — 남의 항구 배를 팔라고 하면 안내가 거짓이 된다
+  state.fleet.cog.at = 'genova';
+  ok(!salvage('venezia').some((r) => r.kind === 'ship'),
+     '다른 항구에 둔 배는 여기 줄에 안 나온다 (`sellShip`이 거절하는 것과 같은 판정)');
+
+  // ④ 「팔 것이 하나도 없다」와 `nothingLeft()`가 같은 자리를 가리킨다
+  resetGame('venezia');
+  state.crew = 6; state.gold = 0;
+  ok(nothingLeft() && salvage('venezia').length === 0,
+     '팔 것이 없으면 안내도 빈 목록이다 — 둘이 어긋나면 없는 문을 가리키게 된다');
+
+  // ⑤ 「여기서 가장 싼 항차」가 실제 항해비와 같다
+  resetGame('venezia');
+  state.crew = 10;
+  const cheap = cheapestExit('venezia');
+  const each = neighborsOf('venezia')
+    .map((to) => voyageCost(voyageDays('venezia', to), state.crew, { from: 'venezia', to }).total);
+  ok(cheap === Math.min(...each),
+     `여기서 가장 싼 항차 ${cheap.toLocaleString('en-US')}닢 — 이웃 ${each.length}곳 중 최솟값과 같다`);
+}
+
+/* ── 패권이 화면에서 말을 안 하던 자리 둘 (A-8c) ────────────────
+   규칙은 그대로다. 잰 것은 **화면이 읽을 값이 실제 규칙과 같은가**뿐이다. */
+{
+  // ① 조건 ③의 자산 하한 — 화면이 적을 표가 `pickEnemy`가 쓰는 표와 같은가
+  resetGame('venezia');
+  state.crew = 12; state.gold = 300000;
+  purchaseShip('carrack'); boardShip('carrack');
+  state.gold = 1000;
+  ok(foeOdds()[HEGEMONY.bossTier - 1] === 0,
+     `가난하면 등급 ${HEGEMONY.bossTier}는 확률이 0이다 — "세지면"이 아니라 "부자가 되어야" 열린다`);
+  const gate = foeWealthGate(HEGEMONY.bossTier);
+  state.gold = gate;
+  ok(foeOdds()[HEGEMONY.bossTier - 1] > 0,
+     `문턱 ${gate.toLocaleString('en-US')}닢을 넘기면 붙기 시작한다`
+     + ` (${Math.round(foeOdds()[HEGEMONY.bossTier - 1] * 100)}%)`);
+  ok(foeWealth() === state.gold + cargoUsed() * 60,
+     '화면이 적는 자산은 `금고 + 실은 짐`이다 — `pickEnemy`가 재는 것과 같은 값');
+  /* 표가 규칙과 갈리지 않나 — 같은 난수로 `pickEnemy`를 굴려 표대로 나오는지 본다 */
+  {
+    const t = foeOdds();
+    let acc = 0; const cuts = t.map((v) => (acc += v));
+    const hit = pickEnemy(() => cuts[HEGEMONY.bossTier - 1] - 1e-9, 'mediterranean');
+    ok(!!hit, `표의 마지막 칸을 겨냥한 난수가 실제로 적을 낸다 — 표와 \`pickEnemy\`가 한 몸이다`);
+  }
+  // 삭은 배는 아예 안 붙는다 — 화면이 그 말을 따로 한다
+  ok(foeOdds(999999, 'hulk')[HEGEMONY.bossTier - 1] === 0,
+     '삭은 배로는 아무리 부자여도 두목이 안 붙는다 — 배부터 갈아야 한다');
+
+  // ② 거점을 잃으면 패권이 되돌아간다 — 그것을 항해일지가 적는가
+  resetGame('venezia');
+  state.crew = 6; state.gold = 300000;
+  buyHolding('rental', 'venezia');
+  const had = hegemonyOf('mediterranean').ports.have;
+  const n0 = state.log.length;
+  sellHolding('venezia');
+  const said = state.log.slice(0, state.log.length - n0)
+    .some((l) => l.text.includes('패권이 되돌아갔다'));
+  ok(had === 1 && hegemonyOf('mediterranean').ports.have === 0 && said,
+     '거점을 넘기면 **패권이 되돌아갔다고 항해일지가 적는다** — 전에는 아무 말이 없었다');
+
+  // 압류(유지비 두 번 체납)도 같은 줄을 낸다
+  resetGame('venezia');
+  state.gold = 300000; buyHolding('rental', 'venezia');
+  state.day += HOLDING.upkeepEvery; state.gold = 0; settleHolding('venezia');
+  state.day += HOLDING.upkeepEvery;
+  const n1 = state.log.length;
+  settleHolding('venezia');
+  ok(state.log.slice(0, state.log.length - n1).some((l) => l.text.includes('패권이 되돌아갔다')),
+     '압류로 잃어도 같은 줄이 뜬다 — 잃는 자리가 둘인데 한쪽만 말하면 반쪽이다');
+}
+
+/* ── 급여일에 선택이 있다 (C-8) ─────────────────────────────────
+   ★ 새 규칙(유예 제도)을 만들지 않았다. 바뀐 것은 **얼마를 주느냐** 한 인자뿐이고
+     벌칙은 그대로다 — 덜 주면 그만큼 정확히 더 아프다. */
+{
+  // ① 「이번 달은 미룬다」 — 금고가 있어도 한 푼도 안 준다
+  resetGame('venezia');
+  state.crew = 10; state.gold = 5000;
+  state.payroll.due = 900; state.payroll.nextDue = state.day;
+  const before = state.gold;
+  const r = settlePayroll(() => 1, { pay: 0 });
+  ok(r.paid === 0 && r.missed === 900 && state.gold === before,
+     '「미룬다」는 금고를 열지 않는다 — 5,000닢을 쥔 채 900닢이 그대로 체불로 남는다');
+  ok(state.payroll.arrears === 900,
+     '안 준 몫은 밀린 삯이 된다 — 사라지지도, 깎이지도 않는다');
+
+  // ② 벌칙은 그대로다 — 다 주면 불만이 안 오르고, 안 주면 오른다
+  resetGame('venezia');
+  state.crew = 10; state.gold = 5000;
+  state.payroll.due = 900; state.payroll.nextDue = state.day;
+  state.bands = [{ name: '시험 무리', n: 10, trait: 'steady', wage: 3, unrest: 0.2 }];
+  const calm0 = state.bands.reduce((a, b) => a + (b.unrest || 0), 0);
+  settlePayroll(() => 1);                     // 인자를 안 주면 예전 그대로 = 다 준다
+  const calm1 = state.bands.reduce((a, b) => a + (b.unrest || 0), 0);
+  resetGame('venezia');
+  state.crew = 10; state.gold = 5000;
+  state.payroll.due = 900; state.payroll.nextDue = state.day;
+  state.bands = [{ name: '시험 무리', n: 10, trait: 'steady', wage: 3, unrest: 0.2 }];
+  settlePayroll(() => 1, { pay: 0 });
+  const cross = state.bands.reduce((a, b) => a + (b.unrest || 0), 0);
+  ok(calm1 <= calm0 && cross > calm1,
+     `안 주면 그만큼 더 아프다 — 불만 ${calm1.toFixed(2)}(다 줌) vs ${cross.toFixed(2)}(안 줌)`);
+
+  // ③ 인자를 안 주면 **한 줄도 안 바뀐 예전 그대로**여야 한다(기존 판이 흔들리면 안 된다)
+  resetGame('venezia');
+  state.crew = 10; state.gold = 400;
+  state.payroll.due = 900; state.payroll.nextDue = state.day;
+  const r3 = settlePayroll(() => 1);
+  ok(r3.paid === 400 && r3.missed === 500 && state.gold === 0,
+     '인자를 안 주면 예전대로 「낼 수 있는 만큼」이다 — 기본 동작은 안 건드렸다');
 }
 
 /* ── 삭은 배에도 값이 붙는다 (C-13 · supremacy ISSUES #9) ────────
@@ -1206,4 +1378,53 @@ resetGame();
     ok(baseTariff('napoli') > 0 && tariffRate('napoli') > 0,
        `나폴리 기본세 ${(baseTariff('napoli') * 100).toFixed(1)}% · 지금 무는 세 ${(tariffRate('napoli') * 100).toFixed(1)}%`);
   }
+}
+
+/* ── 시작배는 바다마다 다르다 (사용자 지시 2026-08-26) ──────────────
+   *"주인공은 각 지역의 가장 싸구려배로 시작해야지"* — 전에는 아홉 어디서 시작해도
+   `hulk` 하나였다. 지중해 배 한 척이 광저우에도 아르갱에도 떠 있었다는 뜻이다.
+
+   ★ **지키는 성질 둘** — ① 바다마다 얼굴이 다르다 ② **난이도는 나란하다.**
+     ②가 없으면 시작지 고르기가 난이도 고르기가 된다. 처음에 정품 tier 1 배를 줬다가
+     `leak`가 없고 속력이 1.7배라 **첫 배가 10~16항차 → 1항차**로 무너진 자리다. */
+{
+  const seen = new Set();
+  let allDistinct = true, allFits = true, allLeak = true, allTier0 = true;
+  const caps = [], hps = [], spds = [];
+  for (const p of START_PORTS) {
+    resetGame(p.at);
+    const s0 = SHIPS[state.shipKey];
+    seen.add(state.shipKey);
+    // 데려온 사람이 그 배에 다 타야 한다
+    if (state.crew > state.crewMax) allFits = false;
+    // 싸구려는 물이 샌다 — 초반 압박의 축이다
+    if (!(s0.leak > 0)) allLeak = false;
+    // 시중에 안 나온다(조선소 목록·중고·나포에서 빠진다)
+    if ((s0.tier ?? 0) !== 0) allTier0 = false;
+    caps.push(s0.cargo); hps.push(s0.hp); spds.push(s0.speed);
+  }
+  ok(seen.size === START_PORTS.length,
+     `아홉 바다가 저마다 다른 배로 선다 (${seen.size}종)`);
+  ok(allFits, '데려온 사람이 그 배에 다 탄다 — 정원을 넘겨 시작하지 않는다');
+  ok(allLeak, '시작배는 전부 물이 샌다 — 싸구려라는 말이 규칙이 된다');
+  ok(allTier0, '시작배는 tier 0 — 조선소·중고·나포에 안 나온다');
+
+  /* ★ **난이도가 나란한가.** 얼굴은 갈리되 힘은 같아야 한다. */
+  const span = (a) => Math.max(...a) / Math.min(...a);
+  ok(span(caps) <= 1.20 && span(hps) <= 1.25 && span(spds) <= 1.12,
+     `아홉이 나란하다 — 화물 ${Math.min(...caps)}~${Math.max(...caps)}칸(×${span(caps).toFixed(2)})`
+     + ` · 선체 ${Math.min(...hps)}~${Math.max(...hps)}(×${span(hps).toFixed(2)})`
+     + ` · 속력 ×${span(spds).toFixed(2)}`);
+
+  // 갈래 다섯도 그 바다 배를 탄다 — 군관은 사람이 열넷이라 정원이 그만큼이어야 한다
+  resetGame(undefined, 'navy');
+  ok(state.crew === 14 && state.crew <= state.crewMax,
+     `군관이 데려온 열넷이 다 탄다 — ${SHIPS[state.shipKey].name} 정원 ${state.crewMax}`);
+  resetGame(undefined, 'interpreter');
+  ok(SHIPS[state.shipKey]?.leak > 0 && (SHIPS[state.shipKey].tier ?? 0) === 0,
+     `역관도 삭은 배로 시작한다 (${SHIPS[state.shipKey].name})`);
+
+  // `hulk`는 사라지지 않았다: 지중해의 시작배이자, 청산하면 남는 배다
+  ok(SHIPS[BANKRUPT.keepShip]?.leak > 0,
+     `청산 뒤 남는 배는 여전히 물이 샌다 (${SHIPS[BANKRUPT.keepShip].name})`);
 }

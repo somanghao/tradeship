@@ -21,6 +21,14 @@
 //     아직 제 깃발이 없어 null 그대로다.
 
 export const SHIPS = {
+  /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
+  oldperahu: {
+    hull: 'caravel', name: '삭은 프라우', origin: '해협의 헌 배', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 320,
+    hp: 52, crew: 8, crewMax: 15, crewMin: 5, cargo: 46, guns: 1, speed: 0.86,
+    upkeep: 2, rig: 0.30, leak: 2, tint: 'rot',
+    desc: '야자 섬유로 꿰맨 자리가 삭았다. 물을 퍼내며 가는 배다.',
+  },
   perahu: {
     hull: 'caravel', name: '프라우', origin: '말레이·자바', originFlag: 'majapahit', tier: 1, era: 'classic', requires: null,
     yards: ['melaka', 'johor', 'banten', 'pasai'],

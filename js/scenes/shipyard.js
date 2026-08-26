@@ -785,10 +785,21 @@ function refitTab() {
         text: `${r.price.toLocaleString('ko-KR')}닢`,
         disabled: r.price > state.gold,
         onclick: () => {
+          const hpBefore = state.hp, maxBefore = state.maxHp;
           const r2 = buyRefit(k);
           if (!r2.ok) return toast(r2.reason, 'bad');
           toast(`${r.name} 완료 · ${r2.cost.toLocaleString('ko-KR')}닢`, 'good');
           pushLog(`${city.name} 조선소에서 ${ship().name}에 ${r.name}${josa(r.name, '을/를')} 했다.`, 'good');
+          /* ★ **최대치를 올리는 개장은 무슨 일이 났는지 말해야 한다**(conquest ISSUES #23).
+             덧댄 몫은 성하지만(`state.js: buyRefit`) **낡은 부분은 그대로 낡아 있다** —
+             그래서 산 직후에도 눈금이 안 찬다. 그 사실을 안 적으면 "돈을 냈는데 왜 안 찼나"가 된다. */
+          const up = state.maxHp - maxBefore;
+          if (up > 0) {
+            pushLog(`덧댄 ${up}pt는 새것이라 선체가 ${hpBefore} → ${state.hp}${josa(state.hp, '이/가')} 됐다`
+                  + (state.hp < state.maxHp
+                      ? ` — 나머지 ${state.maxHp - state.hp}pt는 낡은 채다. 채우려면 수리해야 한다.`
+                      : '.'), state.hp < state.maxHp ? 'warn' : 'good');
+          }
           if (r2.dropped) {
             pushLog(`상갑판을 깎으며 대포 ${r2.dropped}문을 뜯어냈다.`, 'warn');
             toast(`포문이 줄어 대포 ${r2.dropped}문을 잃었다`, 'bad');
@@ -805,10 +816,19 @@ function refitTab() {
           + '팔면 함께 넘어간다. 지금 손보는 배는 <b>' + ship().name + '</b>.',
     }),
     ...rows,
+    /* ★ **사기 전에** 최대치와 현재치가 다르다는 것을 말한다(conquest ISSUES #23).
+       떡갈나무 장갑은 여섯 중 두 번째로 비싼데, 전에는 사고 나면 "231 중 185"가 되어
+       **산 직후가 가장 약한 상태**였다. 지금은 덧댄 몫이 성하지만 낡은 몫은 그대로다. */
+    state.hp < state.maxHp ? el('p.yard-warn', {
+      style: { color: '#c9b98a' },
+      html: `선체를 올리는 개장은 <b>덧댄 만큼만 성하다</b> — 낡은 몫은 그대로 낡아 있다.`
+          + ` 지금 <b>${state.hp}/${state.maxHp}</b>이니, 개장 뒤에도 ${state.maxHp - state.hp}pt는`
+          + ` 수리로 채워야 한다.`,
+    }) : null,
     el('p.yard-warn', {
       text: '레이지 개조는 포문 상한을 깎는다. 넘치는 대포는 환불 없이 뜯겨 나간다.',
     }),
-  ]);
+  ].filter(Boolean));
 }
 
 /* 전투 거리(0~100) 위에 그 대포가 잘 맞는 구간을 띠로 표시한다 */

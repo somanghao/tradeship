@@ -22,6 +22,14 @@
 //   캐랙 9,800(240). 이 권역에는 **최상급이 없다.** 변방의 바다이므로 그게 맞다.
 
 export const SHIPS = {
+  /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
+  oldcanoa: {
+    hull: 'galley', name: '삭은 대형 카누', origin: '기니만 헌 배', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 290,
+    hp: 48, crew: 10, crewMax: 18, crewMin: 6, cargo: 40, guns: 0, speed: 0.90,
+    upkeep: 2, rig: 0, leak: 2, tint: 'rot',
+    desc: '통나무를 파낸 자리가 갈라졌다. 노 젓는 손이 많아야 겨우 간다.',
+  },
   canoa: {
     // 기니 해안의 대형 카누. 유럽 배가 파도를 못 넘어 정박한 채 짐을 부릴 때
     // 그 짐을 뭍으로 나른 것이 이 배다. 파도 위에서만큼은 어떤 유럽선보다 빨랐다.

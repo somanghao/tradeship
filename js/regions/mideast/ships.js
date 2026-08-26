@@ -31,6 +31,14 @@
 //   (수르·마스카트가 이 바다의 조선소였고 바레인은 진주 어장이었으므로 그쪽이 옳다).
 
 export const SHIPS = {
+  /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
+  oldjalba: {
+    hull: 'caravel', name: '삭은 잘바', origin: '홍해의 헌 배', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 300,
+    hp: 50, crew: 8, crewMax: 14, crewMin: 5, cargo: 45, guns: 1, speed: 0.85,
+    upkeep: 2, rig: 0.15, leak: 2, tint: 'rot',
+    desc: '산호초에 몇 번 얹혔던 잘바. 바닥을 덧대 놨지만 그 자리로 물이 든다.',
+  },
   jalba: {
     hull: 'caravel', name: '잘바', origin: '홍해', originFlag: 'ottoman', tier: 1, era: 'classic',
     yards: ['mokha', 'jeddah'],
