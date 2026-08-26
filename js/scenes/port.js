@@ -606,6 +606,13 @@ function salvageCard() {
   const lender = figuresAt(city.id).find((f) => f.service === 'loan');
   const canLoan = lender && !state.boons?.loan;
 
+  /* ★ **경보와 안내를 가른다.** 무역선은 짐을 싣는 순간이 늘 가장 가난하다 —
+     그때마다 붉은 「금고가 바닥이다」가 뜨면 진짜 바닥일 때 아무도 안 읽는다(경보 피로).
+     그래서 **팔 것이 한 항차를 덮으면 안내**(놋빛), **못 덮으면 경보**(붉은색)다.
+     C-17이 실제로 죽은 자리는 후자다 — 팔 것으로도 못 채우는 국면. */
+  const covered = total + state.gold >= (exit ?? 0) && total + state.gold >= debt;
+  const grave = !covered;
+
   const lines = [];
   lines.push(el('div.ctr-line', {
     html: `금고 <b>${state.gold.toLocaleString('ko-KR')}닢</b>`
@@ -613,10 +620,13 @@ function salvageCard() {
         + (debt ? ` · 빚 <span style="color:#d05a4a">${debt.toLocaleString('ko-KR')}닢</span>` : ''),
   }));
   lines.push(el('div.ctr-sub', {
-    html: stranded
-      ? '떠날 수는 있다 — 다만 <b>못 낸 몫이 빚으로 남아</b> 급여일에 이자와 함께 걷힌다.'
-        + ' 뜨기 전에 팔 수 있는 것이 아래에 있다.'
-      : '빚이 금고보다 크다. 급여일에 채권자가 <b>금고 → 정박선 → 창고 짐</b> 순으로 집행한다.',
+    html: !stranded
+      ? '빚이 금고보다 크다. 급여일에 채권자가 <b>금고 → 정박선 → 창고 짐</b> 순으로 집행한다.'
+      : covered
+        ? '이대로 뜨면 <b>못 낸 몫이 빚으로 남는다</b>(급여일에 이자와 함께 걷힌다).'
+          + ' 아래를 팔면 채워진다 — 뜨기 전에 정하면 된다.'
+        : '<b>팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 나가면 빚만 는다 —'
+          + ' 아래 문 가운데 하나를 골라야 한다.',
   }));
 
   if (rows.length) {
@@ -661,12 +671,16 @@ function salvageCard() {
     `${SHIPS[BANKRUPT.keepShip].name} 한 척과 ${BANKRUPT.seedGold}닢으로 다시 시작한다`,
     '청산', false, () => askLiquidate()));
 
-  return el('div.panel', { style: { borderColor: '#8f2f26' } }, [
-    el('h3', { style: { background: 'linear-gradient(#4a2018, #331610)', color: '#f0b8a6' } }, [
-      el('span', { text: '금고가 바닥이다' }),
+  return el('div.panel', { style: { borderColor: grave ? '#8f2f26' : '#6f5214' } }, [
+    el('h3', {
+      style: grave
+        ? { background: 'linear-gradient(#4a2018, #331610)', color: '#f0b8a6' }
+        : null,
+    }, [
+      el('span', { text: grave ? '금고가 바닥이다' : '금고가 비었다 — 팔면 채워진다' }),
       el('span', {
-        text: rows.length ? `팔 것 ${rows.length}가지` : '팔 것이 없다',
-        style: { fontSize: '11px', color: '#d09080', letterSpacing: 0 },
+        text: rows.length ? `팔 것 ${rows.length}가지 · ${total.toLocaleString('ko-KR')}닢` : '팔 것이 없다',
+        style: { fontSize: '11px', color: grave ? '#d09080' : '#8f8878', letterSpacing: 0 },
       }),
     ]),
     el('div.svc', {}, [...lines, ...acts]),
