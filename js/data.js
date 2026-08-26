@@ -6,14 +6,14 @@
 //   `CITIES`는 둘을 id로 맞물려 합성한 결과다 — 읽는 쪽 코드는 예전과 똑같이 쓰면 된다.
 
 import {
-  CITY_GEO, GEO_BY_ID, ROUTES, CURRENTS, ROUTE_RISK, riskKey,
+  CITY_GEO, GEO_BY_ID, ROUTES, CURRENTS, ROUTE_RISK, ROUTE_SEASON, riskKey,
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
 } from './map/geo.js';
 import { ALL_GOODS, ALL_SHIPS, ALL_CITY_TRADE, ALL_CITY_TARIFF, FOES_BY_REGION, ALL_PIRATES, ALL_MATES } from './regions/index.js';
 
 export {
-  ROUTES, CURRENTS, ROUTE_RISK, riskKey,
+  ROUTES, CURRENTS, ROUTE_RISK, ROUTE_SEASON, riskKey,
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, laneOf, sameRegion, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
   FOES_BY_REGION,
@@ -1288,6 +1288,36 @@ export const ODDS_BASE = 0.05, ODDS_PER_PCT = 0.026;
 export const BASE_RISK = 5.0;                 // 표에 없는 항로가 생겼을 때의 기본값
 export const THREAT_PER_SHIP = 0.04;          // 그 구간에 뜬 해적 1척당 +4%p
 export const ODDS_CAP = 0.42;
+
+/* ── 철(계절) — 「막지 않고 값을 물린다」 ─────────────────────────
+   ★ 사료는 **통행 불가**라고 적는다. 15세기 한자법은 카테드라 페트리(2/22)부터
+     성 마르티노일(11/11)까지만 발트 항해를 허가했고, 남서 계절풍 넉 달 동안
+     말라바르 해안은 통째로 닫혔다. 그런데 이 프로젝트는 「막지 말고 값을 물린다」를
+     이미 두 번 골랐다(`oceanReady` 주석 · C-13 삭은 배).
+
+   ⇒ **판정: 막지 않는다.** 근거 셋이다 —
+     ① 사료의 "통행 불가"는 대개 **법**이었지 물리가 아니다. 한자법은 뤼베크 상인들이
+        스스로 만든 금지이고, 어긴 배는 벌금을 물고 보험을 못 받았다 — 곧 **값**이었다.
+     ② **이 게임의 항구에는 시간이 없다.** `advanceDays()`는 `scenes/map.js` 한 곳에서만,
+        곧 **항해할 때만** 불린다. 발트를 겨울에 닫으면 그 안쪽 항구에 갇힌 사람은
+        철이 바뀌기를 **기다릴 방법 자체가 없다** — 날을 흘리는 입구가 없기 때문이다.
+        막는 것은 곧 진짜 데드락이다.
+     ③ 인도양 서안(여름 폐쇄)과 동안(겨울 폐쇄)이 서로 반대라, 둘 다 막으면
+        반년마다 인도 아대륙의 절반이 지도에서 사라진다.
+
+   그래서 철을 어기면 **크게 값을 문다** — 일수가 1.8배로 늘고, 요율이 오르며
+   (보험료와 해적 조우가 함께 오른다), 그 사실을 항로 카드가 미리 말한다.
+   사람은 스스로 안 간다. 값을 보고 고르는 것이 이 게임의 방식이다. */
+export const SEASON = {
+  /* 철을 어길 때의 속력 배율. 원양 항로 주석이 "여름 남서 계절풍이면 **스무 날이 열흘**로 준다"고
+     적어 두었으므로 두 철의 비는 약 2배여야 한다. 순풍 철에 상을 주면(>1) 무역 수익이
+     통째로 부풀어 오르므로 **벌만 준다** — 0.55면 일수가 약 1.8배가 된다. */
+  offSpeed: 0.55,
+  /* 철을 어길 때 요율에 곱한다. 안트베르펜 중개인 장부 1,471건이 **1월은 7월보다 28% 비싸다**고
+     적는데(atlantic 근거), 그것은 "다닐 수 있는 철 안에서의 겨울"이다. 아예 닫힌 철은
+     그보다 무거워야 하므로 1.6으로 둔다 — 요율 5%짜리 항로가 8%가 된다. */
+  offRisk: 1.6,
+};
 
 /* 값나가는 짐은 해적을 부른다 — 보험료가 오르는 것과 별개의 두 번째 대가. */
 export const LURE_PER = 9000;                 // 화물 가치 9,000닢마다 +1 단계

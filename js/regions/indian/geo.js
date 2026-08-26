@@ -229,9 +229,54 @@ export const ROUTE_RISK = {
   'chittagong|masulipatnam': 10.0,
 };
 
+/* ── 계절풍 — 이 바다의 법 ────────────────────────────────────────
+   ★ 권역 소개문이 *"계절풍이 반년마다 방향을 바꾼다"*고 적어 두고도 규칙에는 한 줄도 없었다.
+     `state.js: routeSeason/seasonFactor`가 생겨 그 말을 이제 화면에서 볼 수 있다.
+
+   **이 바다의 두 해안은 서로 반대 철에 연다** — 그것이 인도양의 성격이고, 이 표의 전부다.
+     · **서안(말라바르)** — 남서 계절풍(6~9월)이 정면으로 때리면 파도가 부두를 덮어
+       강어귀 항구가 통째로 닫혔다. 캘리컷·코친·크랑가노르는 배를 뭍으로 끌어올리고
+       사무티리의 관은 출항을 금했다. ⇒ 여는 철은 **북동 계절풍(winter)**.
+     · **동안(코로만델·벵골)** — 반대다. 코로만델에는 천연 항구가 없어 배를 바깥에 세우고
+       거룻배로 짐을 옮기는데, 북동 계절풍 철(10~12월)의 사이클론이 그 정박지를 쓸었다.
+       ⇒ 여는 철은 **남서 계절풍(summer)**.
+
+   ⚠️ **막지 않는다** — 게임의 1년은 120일이고 항구에는 시간이 없어(`advanceDays`는 항해에서만
+     불린다) 철이 바뀌기를 기다릴 방법이 없다. 대신 값을 크게 문다(`data.js: SEASON`).
+   ⚠️ 원양 항로 `aden~calicut`는 **summer**다(그 항로 주석: "여름 남서 계절풍이면 스무 날이
+     열흘로 준다"). 곧 **여름에 아라비아해를 건너 말라바르에 닿되, 그 해안을 따라 움직이기는
+     겨울이 낫다** — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다.
+
+   여기 없는 구간(구자라트·콘칸·실론·몰디브·어장해안)은 계절을 안 건다. 만 안쪽이거나
+   양안이 늘 보이는 물이라 계절풍의 폐쇄가 사료에 뚜렷하지 않다 — 근거가 없으면 안 적는다. */
+export const ROUTE_SEASON = {
+  // 말라바르 — 남서 계절풍 철에 해안이 닫힌다
+  'bhatkal|goa': 'winter',
+  'bhatkal|mangalore': 'winter',
+  'cannanore|mangalore': 'winter',
+  'bhatkal|cannanore': 'winter',
+  'calicut|goa': 'winter',
+  'calicut|cannanore': 'winter',
+  'calicut|cochin': 'winter',
+  'calicut|cranganore': 'winter',
+  'cochin|cranganore': 'winter',
+  'cochin|quilon': 'winter',
+  // 코로만델·벵골 — 북동 계절풍 철의 사이클론이 정박지를 쓴다
+  'nagapattinam|pulicat': 'summer',
+  'nagapattinam|santhome': 'summer',
+  'pulicat|santhome': 'summer',
+  'masulipatnam|pulicat': 'summer',
+  'masulipatnam|satgaon': 'summer',
+  'hooghly|masulipatnam': 'summer',
+  'chittagong|satgaon': 'summer',
+  'chittagong|hooghly': 'summer',
+  'chittagong|masulipatnam': 'summer',
+};
+
 /* 해류·계절풍 — **이 바다의 법은 계절풍이다.**
    반년은 남서풍(6~9월), 반년은 북동풍(10~12월)이고 그 사이에 아예 못 가는 철이 있다.
-   게임 엔진에는 아직 계절이 없어 `CURRENTS`는 방향이 고정된 밀어주기 하나뿐이다.
+   ★ **철은 이제 규칙이 되었다**(위 `ROUTE_SEASON`). `CURRENTS`는 그대로
+   방향이 고정된 밀어주기 하나뿐이고, 아래 설명은 그 한계에 대한 것이다.
    그래서 **배가 실제로 다니던 철의 방향**을 골라 적었다 — 계절풍이 안 부는 철에는
    애초에 배를 안 띄웠으니, 다니던 철의 물길이 곧 그 구간의 물길이다.
 

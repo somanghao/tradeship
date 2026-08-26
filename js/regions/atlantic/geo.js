@@ -227,6 +227,39 @@ export const ROUTE_RISK = {
   'novgorod|reval': null,
 };
 
+/* ── 발트의 겨울 — 「통행 불가」를 규칙으로 옮긴다 ──────────────────
+   ★ 이 파일의 `ROUTE_RISK` 머리글이 *"대신 겨울에는 아예 못 다녔다 … 그것은 위험이 아니라
+     **통행 불가**라 요율로 옮길 수 없다. **계절 봉쇄를 다루는 규칙이 생기면 그때 붙일 것**"*이라고
+     적어 두었고, 근거 JSON의 openQuestions가 *"항로에 계절 창이 생기면 발트 항로에 걸어야 한다"*고
+     넘겨 두었다. 그 규칙이 생겼다 — `state.js: routeSeason/seasonFactor`.
+
+   사료: 13세기에 이미 성 마르티노일(11/11) 뒤에는 배가 겨울 항구에 머물러야 했고,
+   15세기 한자법은 **카테드라 페트리(2/22)~성 마르티노일(11/11)** 사이에만 발트 항해를 허용했다.
+   (Hanserecesse · Juhan Kreem, "Seasonal isolation in the communication in Livonia", 2011)
+
+   ⚠️ **막지는 않는다.** 이 게임의 1년은 120일이고 계절은 둘뿐인데, **항구에는 시간이 없다** —
+     `advanceDays()`가 항해에서만 불리므로 발트를 닫으면 그 안쪽 항구에 갇힌 사람은
+     철이 바뀌기를 기다릴 방법 자체가 없다. 그래서 `SEASON`이 값을 물린다(판정 근거는 `data.js: SEASON`).
+
+   `summer` = 이 구간이 **열리는** 철. 외레순 밖(북해·잉글랜드·이베리아)에는 안 건다 —
+   한자법이 규율한 것은 발트이고, 북해는 겨울에도 다녔다(요율이 비쌌을 뿐이다). */
+export const ROUTE_SEASON = {
+  'kobenhavn|lubeck': 'summer',
+  'danzig|lubeck': 'summer',
+  'danzig|kobenhavn': 'summer',
+  'kobenhavn|visby': 'summer',
+  'danzig|stockholm': 'summer',
+  'reval|stockholm': 'summer',
+  'danzig|riga': 'summer',
+  'reval|riga': 'summer',
+  'stockholm|visby': 'summer',
+  'danzig|visby': 'summer',
+  'reval|visby': 'summer',
+  /* 노브고로드 길은 뱃길이 아니라 볼호프 강·페이푸스 호수의 물길인데, **그쪽이 더 일찍 언다.**
+     리보니아의 겨울 고립을 다룬 것이 위 Kreem의 논문 제목 그대로다. */
+  'novgorod|reval': 'summer',
+};
+
 /* 해류 — 이 바다의 물길은 한 문장으로 요약된다: **남하는 쉽고 북상은 어렵다.**
    카나리아 해류와 그 북쪽 연장인 포르투갈 해류가 이베리아 연안을 남쪽으로 흐르기 때문에,
    내려갈 때는 물과 바람을 타지만 돌아올 때는 연안을 거스를 수 없었다. 그 해답이

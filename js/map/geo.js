@@ -15,7 +15,7 @@
 //   (다른 권역이면 원양 항로의 `days`를 쓴다 — `state.js: distanceBetween`).
 
 import {
-  ALL_CITY_GEO, ALL_ROUTES, ALL_ROUTE_RISK, ALL_CURRENTS,
+  ALL_CITY_GEO, ALL_ROUTES, ALL_ROUTE_RISK, ALL_ROUTE_SEASON, ALL_CURRENTS,
   OCEAN_LANES, LANE_BY_KEY, isOceanLane, REGION_OF_CITY,
   REGIONS, REGION_BY_ID, REGION_IDS, HOME_REGION, citiesOfRegion,
 } from '../regions/index.js';
@@ -28,6 +28,10 @@ export const ROUTES = ALL_ROUTES;
 
 /** 항로 위험도 — 당대 해상보험 요율(%). null = 해적 개념이 없는 구간(내해·육로). */
 export const ROUTE_RISK = ALL_ROUTE_RISK;
+
+/** 항로의 **철** — 그 구간이 열리는 계절('summer'|'winter'). 없으면 사철 다닌다.
+    ★ 여기 없는 항로는 "계절이 안 걸린 항로"이지 "여름 항로"가 아니다. */
+export const ROUTE_SEASON = ALL_ROUTE_SEASON;
 
 /** 해류·계절풍 */
 export const CURRENTS = ALL_CURRENTS;

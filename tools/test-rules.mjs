@@ -10,7 +10,7 @@ if (!globalThis.localStorage) {
   };
 }
 
-import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, START_PORTS, DEFAULT_START, startShipAt } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, ROUTES, ORIGINS, START_PORTS, DEFAULT_START, startShipAt, YARD } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
@@ -40,9 +40,13 @@ import {
   canConsort, setConsort, consortCount, voyageDays as legDays,
   /* 비용 축(P4) — 선원 사무역 · 원양 보험 · 원양 전손 */
   privateTradeCut, insureRateFor, totalLossOdds, totalLoss,
+  /* #3 조선소 교역권 사다리 · #4 계절풍 */
+  yardReach, yardShortOf,
+  routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
+  routeFactor, windFactor, currentFactor, YEAR_DAYS,
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
-  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY } from '../js/data.js';
+  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY, SEASON } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
@@ -100,6 +104,11 @@ ok(shipPriceAt('carrack', 'genova') < shipPriceAt('carrack', 'alexandria'),
 ok(shipLockedBy('galleon') === '캐랙', `갈레온은 잠겨 있다 (필요: ${shipLockedBy('galleon')})`);
 ok(!sellsShip('galleon', 'barcelona'), '해금 전에는 공업력이 충분해도 못 산다');
 
+/* ⚠️ **이 줄이 없어서 이 아래 검사들이 여덟 줄 내내 거짓말을 하고 있었다.** 라벨은 "베네치아"인데
+   `state.at`은 `resetGame()`이 세운 시작 항구(부산포)였다 — 지중해 카라벨을 조선 부두에서 사면서
+   그것을 「베네치아 카라벨 구입」이라 적고 통과시켰다. 교역권 사다리(`yardReach`)가 그 자리를
+   막으면서 드러났다. 검사가 라벨대로 돌게 자리를 세운다. */
+state.at = 'venezia';
 state.gold = 60000;
 let r = purchaseShip('caravel');
 ok(r.ok, `베네치아 카라벨 구입 ${r.ok ? `OK (${r.cost}닢 — 정가 ${SHIPS.caravel.price})` : r.reason}`);
@@ -1181,4 +1190,148 @@ resetGame();
   // `hulk`는 사라지지 않았다: 지중해의 시작배이자, 청산하면 남는 배다
   ok(SHIPS[BANKRUPT.keepShip]?.leak > 0,
      `청산 뒤 남는 배는 여전히 물이 샌다 (${SHIPS[BANKRUPT.keepShip].name})`);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   #3 조선소 — 교역권(reach) 계단
+   ══════════════════════════════════════════════════════════════
+   사용자 지시: *"공업력이 올라가면서 점점 지어지는 배가 많아지고 교역이 잘 이뤄지는 곳의
+   배를 먼저 만들 수 있게 해"*. 검사가 봐야 하는 것은 셋이다 —
+     ① 계단인가(공업력이 오를수록 목록이 늘어나고, 꼭대기에서 다시 전부가 되는가)
+     ② 가까운 바다의 배가 먼 바다 배보다 먼저 열리는가
+     ③ **막다른 길이 없는가**(어느 시작 항구에서도 첫 배 사다리가 선다) */
+{
+  resetGame();
+  const keys = Object.keys(SHIPS);
+  /* ★ **`tier 0`은 시중에 안 나오는 배다** — 아홉 바다의 삭은 시작배가 전부 그것이다.
+     `tierNeeded`가 `Infinity`를 돌려주므로 조선소·중고·나포 어느 문으로도 안 나온다.
+     계단을 잴 때는 **팔 수 있는 배**만 센다 — 안 그러면 시작배를 늘릴 때마다 이 검사가 깨진다. */
+  const sellable = keys.filter((k) => (SHIPS[k].tier ?? 0) > 0);
+  const openAt = (cityId) => sellable.filter((k) => yardCapable(k, cityId)).length;
+
+  // ① 계단 — 같은 항구에서 공업력만 올려 본다(A-2 승급을 흉내 낸다)
+  const step = [];
+  for (let boost = 0; boost <= 3; boost++) {
+    state.yards = { rodos: { boost } };
+    step.push(openAt('rodos'));
+  }
+  state.yards = {};
+  ok(step[0] < step[1] && step[1] < step[2] && step[2] < step[3],
+     `공업력이 오를수록 목록이 는다 — 로도스 ${step.join(' → ')}종 (공업력 1→2→3→4)`);
+  ok(step[3] >= sellable.length - 1,
+     `꼭대기(공업력 ${YARD.cap})에서는 팔 수 있는 배가 사실상 전부 열린다 — ${step[3]}/${sellable.length}종`
+     + ` (시중에 안 나오는 tier 0 ${keys.length - sellable.length}종은 제외)`);
+
+  // ② 교역권 — 가까운 바다가 먼 바다보다 걸음이 짧다
+  ok(yardReach('caravel', 'venezia') <= 1 && yardReach('caravel', 'nagasaki') > 2,
+     `카라벨: 베네치아 ${yardReach('caravel', 'venezia')}걸음 · 나가사키 ${yardReach('caravel', 'nagasaki')}걸음`);
+  /* ★ 실제 문(`sellsShip`)으로도 본다 — `yardCapable`만 검사하면 규칙을 `sellsShip`에서
+     떼어내도 이 파일이 통과한다(일부러 떼어 보고 확인했다). 조선소 화면·구입·값·중고가
+     전부 `sellsShip`을 지나므로 그것이 진짜 문이다. */
+  ok(!sellsShip('caravelao', 'nagasaki'),
+     '나가사키에서 브라질 카라벨랑을 짓지 않는다 — 사용자가 짚은 바로 그 자리');
+  ok(sellsShip('caravelao', 'salvador'), '살바도르(제 고장)에서는 그대로 짓는다');
+  ok(!sellsShip('caravel', 'nagasaki') && sellsShip('caravel', 'napoli'),
+     '카라벨도 마찬가지 — 나가사키 ✗ · 나폴리(제 나라·전통 조선지) ✓');
+  ok(yardReach('pingtouchuan', 'busanpo') <= 1,
+     `제 바다의 배는 한 걸음 안 — 부산포의 평두선 ${yardReach('pingtouchuan', 'busanpo')}걸음`);
+  ok(yardShortOf('caravel', 'nagasaki')?.why === 'reach',
+     `못 짓는 까닭을 「교역권」이라고 답한다 — ${yardShortOf('caravel', 'nagasaki')?.word}`);
+  ok(yardShortOf('carrack', 'rodos')?.why === 'tier',
+     '기술이 모자란 것은 여전히 「공업력」이라고 답한다 — 로도스의 캐랙');
+
+  // 한 선종이 온 세계에서 지어지던 것이 끝났다 (전에는 10종이 240곳, 67종이 100곳 넘었다)
+  const wide = sellable.filter((k) => CITIES.filter((c) => yardCapable(k, c.id)).length > 100);
+  ok(wide.length === 0, `100곳 넘는 곳에서 지어지는 선종이 없다 (전에는 67종) — 지금 ${wide.length}종`);
+
+  // ③ 막다른 길 — 시작 항구마다 「이 항구 또는 이웃」에 낡은 바사보다 나은 배가 있다
+  const nb = {};
+  for (const [a, b] of ROUTES) { (nb[a] ??= []).push(b); (nb[b] ??= []).push(a); }
+  /* ★ 기준은 `hulk`가 아니라 **그 자리의 시작배**다 — 시작배가 바다마다 갈렸기 때문이고(`startShipAt`),
+     지중해의 낛은 바사로 재면 남아메리카에서 거짓 통과가 난다. */
+  const better = (cid, base) => sellable
+    .some((k) => SHIPS[k].cargo > base && !SHIPS[k].requires && yardCapable(k, cid));
+  const spots = [...new Set([...ORIGINS.map((o) => o.at), ...START_PORTS.map((p) => p.at)])];
+  const stuck = spots.filter((at) => {
+    const base = SHIPS[startShipAt(at)]?.cargo ?? SHIPS.hulk.cargo;
+    return !better(at, base) && !(nb[at] ?? []).some((o) => better(o, base));
+  });
+  ok(stuck.length === 0,
+     `시작 자리 ${spots.length}곳 어디서도 첫 배 사다리가 끊기지 않는다`
+     + `${stuck.length ? ` — 막힌 곳: ${stuck.join('·')}` : ''}`);
+
+  // 중고 매대로도 안 샌다 — 신조를 막아 놓고 중고로 흘러들면 규칙이 없는 것과 같다
+  let leak = 0;
+  for (let d = 0; d < 90; d++) {
+    for (const lot of usedListings('nagasaki', d)) {
+      if (yardReach(lot.key, 'nagasaki') > industryOf('nagasaki') + 1) leak++;
+    }
+  }
+  ok(leak === 0, `중고 매대도 교역권을 본다 — 나가사키 90일 표본에서 샌 매물 ${leak}건`);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   #4 계절풍 — 「막지 않고 값을 물린다」
+   ══════════════════════════════════════════════════════════════
+   사용자 지시: *"계절풍은 있어야지"*. 사료는 「통행 불가」라고 적지만 이 프로젝트는
+   막지 않는 쪽을 두 번 골랐고, 무엇보다 **항구에 시간이 없어**(advanceDays가 항해에서만
+   불린다) 막으면 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. → `data.js: SEASON` */
+{
+  resetGame();
+  const SUM = 0, WIN = Math.floor(YEAR_DAYS / 2);
+  ok(seasonOf(SUM) === 'summer' && seasonOf(WIN) === 'winter',
+     `철은 반년마다 바뀐다 — 0일 ${seasonOf(SUM)} · ${WIN}일 ${seasonOf(WIN)}`);
+
+  // 발트 — 한자법의 겨울 폐쇄
+  ok(routeSeason('danzig', 'lubeck') === 'summer',
+     '발트(단치히~뤼베크)는 여름에 연다 — 한자법 2/22~11/11');
+  ok(inRouteSeason('danzig', 'lubeck', SUM) === true
+     && inRouteSeason('danzig', 'lubeck', WIN) === false,
+     '겨울의 발트는 철이 아니다');
+  ok(routeSeason('lisboa', 'sevilla') === null,
+     '계절이 안 걸린 항로는 null — 대부분의 항로가 그렇다(이베리아 연안)');
+
+  // ★ 막지 않는다 — 갈 수는 있다. 대신 훨씬 오래 걸리고 요율이 오른다.
+  const dSum = voyageDays('danzig', 'lubeck', SUM);
+  const dWin = voyageDays('danzig', 'lubeck', WIN);
+  ok(dWin > dSum, `철을 어기면 오래 걸린다 — 단치히~뤼베크 여름 ${dSum}일 → 겨울 ${dWin}일`);
+  ok(seasonFactor('danzig', 'lubeck', WIN) === SEASON.offSpeed
+     && seasonFactor('danzig', 'lubeck', SUM) === 1,
+     `속력 배율 ${SEASON.offSpeed} (제철엔 1 — **상은 안 준다**)`);
+  ok(seasonRiskMul('danzig', 'lubeck', WIN) === SEASON.offRisk,
+     `요율 배율 ${SEASON.offRisk}`);
+  /* ★ **배선을 직접 본다.** "겨울이 여름보다 오래 걸린다"만으로는 모자란다 — 바람도
+     날짜로 바뀌므로 `routeFactor`에서 철을 떼어내도 그 부등식은 그대로 서 있었다(일부러 떼어 확인했다).
+     그래서 곱해진 것을 식으로 맞춰 본다 — 일수 계산은 `routeFactor` 한 곳으로 닫혀 있다. */
+  ok(Math.abs(routeFactor('danzig', 'lubeck', WIN)
+              - windFactor('danzig', 'lubeck', WIN) * currentFactor('danzig', 'lubeck') * SEASON.offSpeed) < 1e-9,
+     'routeFactor가 철을 실제로 곱한다 — 바람·해류와 나란히');
+  ok(Math.abs(routeFactor('lisboa', 'sevilla', WIN)
+              - windFactor('lisboa', 'sevilla', WIN) * currentFactor('lisboa', 'sevilla')) < 1e-9,
+     '계절이 안 걸린 항로는 종전과 한 치도 같다');
+  ok(encounterOdds({ from: 'danzig', to: 'lubeck', day: WIN })
+     > encounterOdds({ from: 'danzig', to: 'lubeck', day: SUM }),
+     '철을 어기면 해적을 더 만난다');
+  const iSum = insuranceFor({ from: 'danzig', to: 'lubeck', value: 10000, day: SUM });
+  const iWin = insuranceFor({ from: 'danzig', to: 'lubeck', value: 10000, day: WIN });
+  ok(iWin > iSum, `보험료도 오른다 — 여름 ${iSum}닢 → 겨울 ${iWin}닢 (화물 10,000닢)`);
+
+  /* ⚠️ **막히면 안 된다** — 이 프로젝트가 두 번 고른 답이고, 항구에 시간이 없어
+     막으면 진짜 데드락이 된다. 겨울에도 발트 안쪽에서 나가는 길이 서 있어야 한다. */
+  ok(Number.isFinite(dWin) && dWin > 0, '철을 어겨도 항해 일수가 나온다 — 막지 않는다');
+  ok(escortNeed('sevilla', 'havana') === 2,
+     '입장권(원양 동행 의무)은 철과 무관하다 — routeRisk를 안 건드렸기 때문');
+
+  // 인도양 — 두 해안이 **반대 철**에 연다. 이 바다의 성격이 규칙에 있는지 본다.
+  ok(routeSeason('calicut', 'cochin') === 'winter'
+     && routeSeason('masulipatnam', 'pulicat') === 'summer',
+     '인도양은 서안(말라바르)과 동안(코로만델)이 반대 철에 연다');
+
+  // 원양 — `monsoon: true`가 드디어 값을 물린다
+  ok(routeSeason('aden', 'calicut') === 'summer', '원양 아덴~캘리컷은 여름 계절풍 항로다');
+  const lab = routeSeasonLabel('aden', 'calicut', WIN);
+  ok(lab && !lab.open && lab.text.includes('철 아님'),
+     `항로 카드가 그것을 말한다 — "${lab?.text}"`);
+  ok(routeSeasonLabel('lisboa', 'sevilla', WIN) === null,
+     '계절이 안 걸린 항로에는 줄을 안 만든다');
 }

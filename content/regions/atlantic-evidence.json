@@ -1756,19 +1756,25 @@
       "risk": 3.5,
       "verdict": "probable",
       "basis": "발트 내해다. 한자가 제 앞바다를 지켰고 뭍이 늘 가깝다. 성격이 같은 코펜하겐~뤼베크 3.5와 같은 자리에 둔다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "danzig|visby": {
       "risk": 4.5,
       "verdict": "probable",
       "basis": "고틀란드에서 프로이센으로 내려가는 발트 구간이다. 15세기 초까지 승자병단(Victual Brothers)이 이 섬을 근거로 삼았던 기억이 남아 있어 단치히~리가 4.5와 같은 자리에 둔다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "reval|visby": {
       "risk": 4,
       "verdict": "probable",
       "basis": "고틀란드에서 에스토니아로 건너가는 구간이다. 한때 노브고로드 무역의 본선이었고 한자가 지킨 물이라 레발~리가 3.5보다 조금만 올렸다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "lisboa|sevilla": {
       "risk": 6.5,
@@ -1979,7 +1985,9 @@
           "title": "Wikipedia, Hanseatic League",
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "danzig|lubeck": {
       "risk": 4,
@@ -1990,7 +1998,9 @@
           "title": "Wikipedia, Hanseatic League",
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "danzig|kobenhavn": {
       "risk": 4,
@@ -2001,19 +2011,25 @@
           "title": "Wikipedia, Hanseatic League",
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "danzig|stockholm": {
       "risk": 4.5,
       "verdict": "probable",
       "basis": "발트를 비스듬히 가로질러 북상한다. 남안을 따라가는 항로(4.0)보다 뭍에서 멀어지는 시간이 길어 반 단계 얹었다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "reval|stockholm": {
       "risk": 5,
       "verdict": "probable",
       "basis": "핀란드만 어귀를 건넌다. 발트 안에서는 뭍이 가장 오래 안 보이는 구간이다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "danzig|riga": {
       "risk": 4.5,
@@ -2024,7 +2040,9 @@
           "title": "Wikipedia, Hanseatic League",
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "reval|riga": {
       "risk": 3.5,
@@ -2035,7 +2053,9 @@
           "title": "Wikipedia, Hanseatic League",
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     },
     "novgorod|reval": {
       "risk": null,
@@ -2046,13 +2066,17 @@
           "title": "Wikipedia, Hanseatic League",
           "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.) 노브고로드 길은 볼호프 강·페이푸스 호수의 물길이라 발트보다 먼저 언다 — 위 Kreem 논문의 제목(\"리보니아의 계절적 고립\")이 다루는 것이 정확히 이 단절이다."
     },
     "kobenhavn|visby": {
       "risk": 4,
       "verdict": "probable",
       "basis": "외레순을 지난 배는 발트해를 북동진해 고틀란드에 들렀다 — 비스뷔는 한자의 중계 창고였고, 스톡홀름으로 가는 배도 그 섬을 거쳐 갔다. 발트 내해라 요율이 낮다(코펜하겐~스톡홀름 직항을 이 구간으로 옮겨 적었다 — 지도 축척에서 직선이 스칸디나비아 남단을 관통했다).",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "15세기 한자법이 카테드라 페트리(2/22)부터 성 마르티노일(11/11)까지만 발트 항해를 허용했다. 13세기에 이미 성 마르티노일 뒤에는 배가 겨울 항구에 머물러야 했고, 15세기 법이 그 창을 더 촘촘히 못박았다. 사료는 「위험」이 아니라 「통행 불가」라고 적지만, 이 게임은 막지 않고 값을 물린다 — 항구에 시간이 없어(advanceDays가 항해에서만 불린다) 닫으면 그 안쪽에 갇힌 사람이 철이 바뀌기를 기다릴 방법이 없다. 출처: Hanserecesse(한자 해상법) · Juhan Kreem, \"Seasonal isolation in the communication in Livonia\"(2011) · Wikipedia, Navigation season. (이 권역 openQuestions가 \"항로에 계절 창이 생기면 발트 항로에 걸어야 한다\"고 넘겨 둔 항목이다.)"
     }
   },
   "goods": {

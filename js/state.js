@@ -4,7 +4,7 @@ import {
   GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, ROUTES, SHIPS, ENEMIES, SEA_EVENTS,
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
-  ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
+  ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
   HOLDINGS, HOLDING_KEYS, HOLDING, BANKRUPT, HULL, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
@@ -2974,12 +2974,99 @@ export function sellsShip(key, cityId = state.at) {
      그것이 이 투자의 진짜 값이다 — 돈보다 **그 항구를 몇 달 잃는 것**이 크다. */
   if (yardBusy(cityId)) return false;
   if (!yardAllowed(key, cityId)) return false;
-  return industryOf(cityId) >= tierNeeded(key, cityId);
+  /* ★ 사다리가 **둘**이다 — 기술(`tierNeeded`)과 교역(`yardReach`). 아래 절을 볼 것. */
+  const ind = industryOf(cityId);
+  return ind >= tierNeeded(key, cityId) && ind >= yardReach(key, cityId);
+}
+
+/* ── 교역권 — 「어느 바다의 배를 짓는가」 ────────────────────────
+   ★ **공업력만 보던 시절의 실측**: 공업력 1이면 94종 가운데 **47종**이 한꺼번에 걸렸고
+     (도시 265곳 중 142곳이 공업력 1이다) 카라벨·코카·갈리오트 따위 **10종은 240곳**에서,
+     **67종은 100곳 넘는 곳**에서 지어졌다. 나가사키에서 브라질 카라벨랑이 나왔다.
+     그래서 "어느 항구에 왔는가"가 조선소 화면에서 거의 뜻이 없었다.
+
+   ⇒ 사용자 지시: *"공업력이 올라가면서 점점 지어지는 배가 많아지고 **교역이 잘 이뤄지는 곳의
+     배를 먼저** 만들 수 있게 해"*. **목록을 좁히는 것이 아니라 계단으로 만드는 것**이라,
+     기술 사다리(`tierNeeded`) 옆에 **교역 사다리**를 나란히 놓는다. 둘 다 같은 공업력을 본다.
+
+     공업력 1 — 제 바다의 배          공업력 3 — 내 바다가 닿는 바다의 배
+     공업력 2 — 내가 직접 오가는 바다   공업력 4 — 온 세계의 배  (= `YARD.cap`, 지금과 같은 수)
+
+   ★ **새 데이터를 만들지 않는다.** 이미 있는 것으로만 잰다 —
+     `SHIPS[].yards`(전통 조선지) · `originFlag`(제 나라) · `SHIPS[].home`(그 배가 난 바다) ·
+     `ROUTES`(항로로 이어진 이웃) · `OCEAN_LANES`(원양으로 무엇과 잇는가) · 권역.
+
+   ★ 「꼭대기」는 3이 아니라 **4**다(`YARD.cap`). 그래서 *온 세계의 배*가 A-2 승급의
+     마지막 보상이 되고, 공업력 3짜리 큰 항구 스물넷이 지금처럼 전부를 열지 않는다.
+     걸음을 0~3으로 접는 안도 재 봤으나 그러면 베네치아에서 평두선이 나온다(꼭대기에서 규칙이 사라진다). */
+
+/** 이 항구가 **원양 항로로 직접** 잇는 바다들 (도시 id → 권역 id Set) */
+const LANE_REGIONS = (() => {
+  const out = {};
+  for (const l of OCEAN_LANES) {
+    const ra = REGION_OF_CITY[l.a], rb = REGION_OF_CITY[l.b];
+    if (!ra || !rb) continue;                       // 아직 안 이어진 항로
+    (out[l.a] ??= new Set()).add(rb);
+    (out[l.b] ??= new Set()).add(ra);
+  }
+  return out;
+})();
+
+/** 이 **바다**가 원양 항로로 잇는 바다들 (권역 id → 권역 id Set) */
+const REGION_LANES = (() => {
+  const out = {};
+  for (const l of OCEAN_LANES) {
+    const ra = REGION_OF_CITY[l.a], rb = REGION_OF_CITY[l.b];
+    if (!ra || !rb || ra === rb) continue;
+    (out[ra] ??= new Set()).add(rb);
+    (out[rb] ??= new Set()).add(ra);
+  }
+  return out;
+})();
+
+/** 항로로 이어진 이웃 (도시 id → 도시 id[]) — `neighborsOf`와 같은 값을 미리 접어 둔다.
+    조선소 화면이 선종 94개 × 도시마다 이것을 묻기 때문이다. */
+const ROUTE_NB = (() => {
+  const out = {};
+  for (const [a, b] of ROUTES) { (out[a] ??= []).push(b); (out[b] ??= []).push(a); }
+  return out;
+})();
+
+/** 그 배의 고향이 이 항구에서 몇 걸음인가 — 0(제 고장)에서 4(먼 바다)까지.
+    **이 값이 곧 필요한 공업력**이다(기술 사다리와 큰 쪽이 이긴다). */
+export function yardReach(key, cityId = state.at) {
+  const s = SHIPS[key];
+  const c = CITY_BY_ID[cityId];
+  if (!s || !c) return YARD.cap + 1;
+  const yards = s.yards ?? [];
+  // 0 — 제 고장(전통 조선지) · 제 나라(깃발) · **항로로 이어진 이웃이 그 조선지**
+  if (yards.includes(cityId)) return 0;
+  if (s.originFlag && c.flag === s.originFlag) return 0;
+  for (const nb of ROUTE_NB[cityId] ?? []) if (yards.includes(nb)) return 0;
+  const rid = REGION_OF_CITY[cityId];
+  if (s.home === rid) return 1;                          // 1 — 같은 바다
+  if (LANE_REGIONS[cityId]?.has(s.home)) return 2;       // 2 — 이 항구가 직접 오가는 바다
+  if (REGION_LANES[rid]?.has(s.home)) return 3;          // 3 — 이 바다가 닿는 바다
+  return 4;                                              // 4 — 먼 바다
+}
+
+/** 교역권을 말로 옮긴다 — 화면이 "왜 여기선 안 짓나"를 말해야 규칙이 존재한다 */
+export const YARD_REACH_WORD = [
+  '이 항구가 오래 지어온 배',
+  '이 바다의 배',
+  '이 항구가 직접 오가는 바다의 배',
+  '이 바다가 닿는 바다의 배',
+  '먼 바다의 배',
+];
+export function yardReachWord(key, cityId = state.at) {
+  return YARD_REACH_WORD[Math.min(YARD_REACH_WORD.length - 1, yardReach(key, cityId))];
 }
 
 /* ── `yards`의 두 가지 뜻 ──────────────────────────────────────
    `SHIPS[].yards`는 원래 **전통 조선지 = 값이 싸지는 곳**이다(`shipPriceAt` → `YARD_TRADITION_OFF`).
-   *"거기서만 살 수 있다"*가 아니고, 그래서 `sellsShip`은 공업력만 본다 — 그것이 설계다.
+   *"거기서만 살 수 있다"*가 아니다. 그래서 **한때는 `sellsShip`이 공업력만 봤다** —
+   ⚠️ 예전 주석이 *"그것이 설계다"*라고 못박아 두었는데, 사용자가 그 설계를 바꾸라고 했다.
+   지금은 `yards`가 **셋째 뜻**을 하나 더 갖는다: 위 `yardReach`의 0걸음(제 고장)을 정한다.
 
    딱 한 배만 다르다. **`yardsOnly: true`를 세운 배는 그 부두에서만 나온다.**
    플래그를 배 쪽에 둔 이유: 규칙을 바꾸면 아흔 척이 전부 영향을 받지만,
@@ -2999,9 +3086,22 @@ export function yardAllowed(key, cityId = state.at) {
   return (s.yards ?? []).includes(cityId);
 }
 
-/** 공업력만 놓고 보면 지을 수 있는가 (해금 여부는 따지지 않는다 — UI에서 이유를 갈라 보여주려고) */
+/** 공업력만 놓고 보면 지을 수 있는가 (해금 여부는 따지지 않는다 — UI에서 이유를 갈라 보여주려고).
+    ★ 사다리 **둘 다** 본다 — 기술이 되어도 교역권 밖이면 이 항구의 부두는 그 배를 모른다. */
 export function yardCapable(key, cityId = state.at) {
-  return industryOf(cityId) >= tierNeeded(key, cityId);
+  const ind = industryOf(cityId);
+  return ind >= tierNeeded(key, cityId) && ind >= yardReach(key, cityId);
+}
+
+/** 이 배가 이 항구에서 안 열리는 **까닭이 무엇인가** — 화면이 이유를 갈라 말하게 한다.
+    `null`이면 열려 있다. `'tier'`는 기술, `'reach'`는 교역권이 모자란 것이다. */
+export function yardShortOf(key, cityId = state.at) {
+  const ind = industryOf(cityId);
+  const t = tierNeeded(key, cityId), r = yardReach(key, cityId);
+  if (ind >= t && ind >= r) return null;
+  // 둘 다 모자라면 **더 먼 쪽**을 말한다 — 부두를 넓혀도 안 열리는 것을 먼저 알려야 한다.
+  return r > t ? { why: 'reach', need: r, word: yardReachWord(key, cityId) }
+               : { why: 'tier', need: t, word: null };
 }
 
 /** 그 배를 오래 지어온 전통 조선지 이름들 (값이 싸진다 — 살 수 있는 곳과는 다르다) */
@@ -3037,7 +3137,17 @@ export function purchaseShip(key) {
       const w = yardsOf(key).join('·');
       return { ok: false, reason: `${w}에서만 짓는 배다 (공업력 ${tierNeeded(key, (s.yards ?? [])[0])} 필요)` };
     }
+    /* ★ **부두를 넓혀도 안 열리는 것**을 먼저 말한다 — 교역권 밖의 배는 이유가 기술이 아니다.
+       이 말을 안 하면 플레이어가 엉뚱한 항구에 자재와 몇백 일을 태운다. */
+    const short = yardShortOf(key);
     const where = buildableAt(key);
+    if (short?.why === 'reach') {
+      return {
+        ok: false,
+        reason: `${short.word}다 — 이 부두는 공업력 ${short.need}은 되어야 그 물건을 안다 `
+              + `(지금 ${industryOf()})` + (where.length ? ` · ${where.slice(0, 3).join('·')}` : ''),
+      };
+    }
     return {
       ok: false,
       reason: where.length
@@ -3069,9 +3179,13 @@ export function usedListings(cityId = state.at, day = state.day) {
   // 중고는 흘러드는 것이라 신조보다 관대하다 — 공업력보다 한 등급 위까지 들어온다.
   /* ★ `yardsOnly`인 배는 **중고로도 안 흘러든다.** 매물 풀은 `tier <= ind + 1`이라
      공업력 3 항구에서 tier 4가 걸렸고, 그래서 정가 24,000닢짜리 히든 함선이
-     사카이 24일차에 **14,300닢**으로 나왔다(실측). 지어야만 갖는 배다. */
+     사카이 24일차에 **14,300닢**으로 나왔다(실측). 지어야만 갖는 배다.
+     ★ 교역권(`yardReach`)도 **한 걸음 관대하게** 본다 — 중고는 짓는 것이 아니라 *흘러드는* 것이라
+       기술과 같은 여유(`+1`)를 준다. 이 줄이 없으면 신조를 막아 놓고 중고로 새어 나간다
+       (나가사키의 브라질 카라벨랑이 조선소에서 사라지고 중고 매대에 그대로 남는다). */
   const pool = Object.entries(SHIPS)
-    .filter(([k, s]) => s.tier > 0 && s.tier <= ind + 1 && !s.yardsOnly && !shipLockedBy(k))
+    .filter(([k, s]) => s.tier > 0 && s.tier <= ind + 1 && !s.yardsOnly && !shipLockedBy(k)
+                     && yardReach(k, cityId) <= ind + 1)
     .map(([k]) => k);
   if (!pool.length) return [];
 
@@ -3565,6 +3679,60 @@ export function seasonOf(day = state.day) {
 /** 그 NPC가 지금 철에 바다에 나와 있는가. `season`이 없으면 사철 돈다. */
 export const inSeason = (def, day = state.day) => !def?.season || def.season === seasonOf(day);
 
+/* ── 계절풍 — 철이 항해를 좌우한다 ────────────────────────────────
+   ★ **오래도록 계절은 NPC의 등장에만 걸려 있었다.** `OCEAN_LANES`에 `monsoon: true`가 적혀 있었지만
+     그 값을 읽는 규칙이 하나도 없었고(항로 카드에 글자 한 줄이 전부였다), 권역 안 항로에는
+     계절 표시가 아예 없었다. 곧 *"계절풍이 반년마다 방향을 바꾼다"*는 인도양의 소개문이
+     화면에서 관측 불가능했다.
+
+   ⇒ 이제 항로마다 **열리는 철**(`ROUTE_SEASON` · `OCEAN_LANES[].season`)이 있고,
+     철을 어기면 **막히는 대신 크게 값을 문다** — 판정과 그 근거는 `data.js: SEASON` 주석에.
+       · 일수  `routeFactor`에 `SEASON.offSpeed`(0.55)가 곱해져 약 1.8배
+       · 요율  조우 확률(`encounterOdds`)과 적하보험(`insuranceFor`)이 `SEASON.offRisk`(1.6)배
+     ⚠️ **`routeRisk()` 자체는 안 건드린다.** 그 함수는 `escortNeed`(원양 동행 의무)도 먹이는데,
+       철에 따라 입장권이 흔들리면 *같은 문이 날짜에 따라 열렸다 닫혔다* 한다 —
+       그것은 「막지 않는다」는 판정을 뒷문으로 깨는 것이다. 그래서 **무는 자리에서만** 곱한다. */
+
+/** 그 항로가 열리는 철 — 'summer'|'winter'. 계절이 안 걸린 항로면 null */
+export function routeSeason(aId, bId) {
+  return ROUTE_SEASON[riskKey(aId, bId)] ?? laneOf(aId, bId)?.season ?? null;
+}
+
+/** 지금 이 구간이 철에 맞나 — `null`(계절 없음) · `true`(제철) · `false`(철을 어긴다) */
+export function inRouteSeason(aId, bId, day = state.day) {
+  const s = routeSeason(aId, bId);
+  return s == null ? null : s === seasonOf(day);
+}
+
+/** 철이 속력에 매기는 배율 (1 = 제철이거나 계절 없음) */
+export function seasonFactor(aId, bId, day = state.day) {
+  return inRouteSeason(aId, bId, day) === false ? SEASON.offSpeed : 1;
+}
+
+/** 철이 요율에 매기는 배율 (1 = 제철이거나 계절 없음) */
+export function seasonRiskMul(aId, bId, day = state.day) {
+  return inRouteSeason(aId, bId, day) === false ? SEASON.offRisk : 1;
+}
+
+/** 항로 카드에 띄울 한 줄 — **규칙만 있고 화면이 침묵하면 없는 것과 같다.**
+    계절이 안 걸린 항로는 null을 돌려주어 줄을 아예 안 만든다. */
+export function routeSeasonLabel(aId, bId, day = state.day) {
+  const s = routeSeason(aId, bId);
+  if (s == null) return null;
+  const open = s === seasonOf(day);
+  const word = s === 'summer' ? '여름' : '겨울';
+  return {
+    open, season: s,
+    text: open ? `제철(${word})` : `철 아님(${word} 항로)`,
+    kind: open ? 'good' : 'bad',
+    why: open
+      ? `${word}에 여는 계절풍 구간이다 — 지금이 그 철이다.`
+      : `${word}에만 여는 계절풍 구간인데 지금은 ${seasonOf(day) === 'summer' ? '여름' : '겨울'}이다.`
+        + ` 막지는 않는다 — 대신 일수가 약 ${(1 / SEASON.offSpeed).toFixed(1)}배로 늘고`
+        + ` 요율이 ${SEASON.offRisk}배가 된다(보험료와 해적 조우가 함께 오른다).`,
+  };
+}
+
 /** 그날 바람이 밀어주는 방향(단위벡터) — x 동쪽, y 남쪽 */
 export function windOf(day = state.day) {
   const season = ((day % YEAR) / YEAR) * Math.PI * 2;
@@ -3618,9 +3786,11 @@ export function currentFactor(aId, bId) {
   return 1 + (forward ? c.push : -c.push);
 }
 
-/** 그 항로가 지금 얼마나 잘 나가나 (1보다 크면 빠르다) */
+/** 그 항로가 지금 얼마나 잘 나가나 (1보다 크면 빠르다)
+    ★ 철(`seasonFactor`)이 여기 곱해지므로 **일수 계산은 `voyageDays` 한 곳으로 닫힌다** —
+      `scenes/map.js`도 시뮬도 손댈 곳이 없다. 계절이 안 걸린 항로에서는 1이라 종전과 한 치도 같다. */
 export function routeFactor(aId, bId, day = state.day) {
-  return windFactor(aId, bId, day) * currentFactor(aId, bId);
+  return windFactor(aId, bId, day) * currentFactor(aId, bId) * seasonFactor(aId, bId, day);
 }
 
 /** 순풍/역풍 라벨 */
@@ -3677,9 +3847,11 @@ export function cargoValue(at = state.at) {
   return sum;
 }
 
-export function encounterOdds({ from, to, threat = 0, lure = null } = {}) {
+export function encounterOdds({ from, to, threat = 0, lure = null, day = state.day } = {}) {
   if (from == null || to == null) return SEA_EVENTS.find((e) => e.id === 'pirate').weight / 100;
-  const risk = routeRisk(from, to);
+  /* ★ 철을 어기면 요율이 오른다 — 계절풍을 거스르는 배는 느리고, 느린 배가 표적이 된다.
+     `routeRisk()` 자체는 안 건드린다(`escortNeed`가 그것을 먹기 때문 — 위 계절풍 절 주석). */
+  const risk = routeRisk(from, to) === null ? null : routeRisk(from, to) * seasonRiskMul(from, to, day);
   if (risk === null) return 0;                       // 오스만 내해·육로
   const bait = lure == null ? cargoLure() : cargoLure(lure);
   /* 악명이 조우를 부른다 — 털린 쪽이 배를 띄워 찾아다닌다 */
@@ -3901,11 +4073,14 @@ export function insureRateFor(from, to) {
   return to != null && isOceanLane(from, to) ? INSURANCE_RATE_OCEAN : INSURANCE_RATE;
 }
 
-export function insuranceFor({ from = state.at, to = null, value = null } = {}) {
+export function insuranceFor({ from = state.at, to = null, value = null, day = state.day } = {}) {
   const risk = to == null ? null : routeRisk(from, to);
   if (!risk) return 0;
   const v = value == null ? cargoValue(from) : value;
-  return Math.round((v * risk / 100) * insureRateFor(from, to) * (1 - convoyInsureOff()));
+  /* ★ 철을 어기면 인수업자가 더 뗀다 — 당대에도 겨울 요율이 여름보다 비쌌고
+     (안트베르펜 장부: 1월이 7월보다 +28%), 아예 닫힌 철은 인수 자체를 꺼렸다. */
+  return Math.round((v * risk * seasonRiskMul(from, to, day) / 100)
+                    * insureRateFor(from, to) * (1 - convoyInsureOff()));
 }
 
 /** 함께 가는 배가 많을수록 인수업자가 덜 뗀다 (`data.js: FLEET.insureOffPer/Cap` · P2-c) */
