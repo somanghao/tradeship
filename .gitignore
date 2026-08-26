@@ -1,5 +1,13 @@
-# Claude Code 로컬 설정 (문서는 .claude/docs 아래를 그대로 올린다)
+# Claude Code 로컬 설정
 .claude/settings.local.json
+
+# ★ 라우터와 퀵맵은 **커밋하지 않는다**(사용자 지시 2026-08-26).
+#   세션마다 손이 닿아 커밋 노이즈가 크고, 로컬에 있으면 제 일을 다 한다.
+#   ⚠️ **파일은 지우지 않는다** — `git rm --cached`로 추적만 끊었고 로컬에는 그대로 있다.
+#   나머지 메모리 문서(changelog · wiki/ · UNIMPLEMENTED · SPEC-*)는 **계속 올린다.**
+.claude/docs/claude-memory.md
+.claude/docs/QUICKMAP.md
+.claude/docs/QUICKMAP-*.md
 
 # OS
 .DS_Store
