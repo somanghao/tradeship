@@ -17,51 +17,55 @@
         "basis": "포르투갈 왕도다. FLAGS에 포르투갈 깃발이 생겨(흰 바탕·그리스도 기사단의 붉은 십자) 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
-      "scarlet": {
-        "side": "demand",
-        "value": 1.28,
-        "verdict": "probable",
-        "basis": "궁정과 교회가 입는 최상급 붉은 옷은 포르투갈에서 만들지 못했다 — 이탈리아·플랑드르에서 사 왔다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Scarlet (cloth)",
-            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
-          }
-        ]
-      },
-      "chintz": {
-        "side": "demand",
-        "value": 1.34,
-        "verdict": "confirmed",
-        "basis": "인도 날염포가 유럽으로 들어오는 첫 문이 카사 다 인디아였다. 흰 면포의 서너 배에 팔린 물건이라 수요를 이 권역 최고로 둔다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Casa da Índia",
-            "url": "https://en.wikipedia.org/wiki/Casa_da_%C3%8Fndia"
-          }
-        ]
-      },
-        "sugar": {
-          "side": "supply",
-          "value": 0.6,
+        "scarlet": {
+          "side": "demand",
+          "value": 1.28,
           "verdict": "probable",
-          "basis": "마데이라 설탕은 안트베르펜으로 직송되는 몫이 컸으나 왕실 항구인 리스본도 집산지였다. 산지(푼샬 0.44)보다 비싸게 두어 중계임을 드러냈다.",
+          "basis": "궁정과 교회가 입는 최상급 붉은 옷은 포르투갈에서 만들지 못했다 — 이탈리아·플랑드르에서 사 왔다.",
           "sources": [
             {
-              "title": "Wikipedia, Madeira",
-              "url": "https://en.wikipedia.org/wiki/Madeira"
+              "title": "Wikipedia — Scarlet (cloth)",
+              "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+            }
+          ]
+        },
+        "chintz": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "인도 날염포가 유럽으로 들어오는 첫 문이 카사 다 인디아였다. 흰 면포의 서너 배에 팔린 물건이라 수요를 이 권역 최고로 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Casa da Índia",
+              "url": "https://en.wikipedia.org/wiki/Casa_da_%C3%8Fndia"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "corrected",
+          "basis": "리스본에는 사탕수수가 없다 — 마데이라·브라질 설탕이 여기 모여 북유럽으로 되팔렸다. 산지로 적혀 있던 것을 집산 수요로 바로잡았다. 이 한 줄이 볼타 두 마르 항로의 동쪽 끝을 만든다.",
+          "sources": [
+            {
+              "title": "Lisbon",
+              "url": "https://en.wikipedia.org/wiki/Lisbon"
+            },
+            {
+              "title": "Volta do mar",
+              "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
             }
           ]
         },
         "salt": {
           "side": "supply",
-          "value": 0.54,
-          "verdict": "confirmed",
-          "basis": "한자가 소금을 \"뤼네부르크에서 얻거나 프랑스·포르투갈에서 실어 왔다\"고 적는다. 세투발 염전이 그 포르투갈 소금이다.",
+          "value": 0.44,
+          "verdict": "probable",
+          "basis": "세투발 염전의 소금이 이 강어귀에서 실렸고 뉴펀들랜드 어장까지 갔다. 원양 관문 넷(제노바·살바도르·아르갱·푼샬)이 만나는 자리라 대양으로 나가는 배가 여기서 싣는 값을 준다.",
           "sources": [
             {
-              "title": "Wikipedia, Hanseatic League",
-              "url": "https://en.wikipedia.org/wiki/Hanseatic_League"
+              "title": "Lisbon",
+              "url": "https://en.wikipedia.org/wiki/Lisbon"
             }
           ]
         },
@@ -104,6 +108,86 @@
           "verdict": "gameplay",
           "basis": "향료제도(테르나테·반다)에서 원가에 산 정향·육두구가 유럽에 닿을 때 수백 배가 됐다는 것이 이 시대 향료 무역의 성립 조건이다. 유럽 쪽에 수요를 두지 않으면 그 항로가 게임에서 값으로 성립하지 않아 세계에서 가장 먼 바다를 갈 이유가 사라진다. 통합자가 권역 사이를 조율한 값이다.",
           "sources": []
+        },
+        "wine": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "probable",
+          "basis": "리스보아 배후지의 포도주가 브라질·아프리카행 배의 표준 화물이었다. 식민지 어느 곳에도 포도밭이 없어 이 한 줄이 대양 항로 셋의 되짐이 된다.",
+          "sources": [
+            {
+              "title": "Lisbon",
+              "url": "https://en.wikipedia.org/wiki/Lisbon"
+            }
+          ]
+        },
+        "oliveoil": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "probable",
+          "basis": "포르투갈 올리브유도 포도주와 같은 길로 나갔다. 열대 정착지가 기름을 자급하지 못했다.",
+          "sources": [
+            {
+              "title": "Lisbon",
+              "url": "https://en.wikipedia.org/wiki/Lisbon"
+            }
+          ]
+        },
+        "pepper": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "카사 다 인디아가 인도 후추의 유럽 하역과 재판매를 독점했다 — 리스본은 산지가 아니라 **유럽에서 후추가 가장 싼 곳**이었고 제노바·안트베르펜이 여기서 되사 갔다. 산지(캘리컷 0.38)보다는 높은 환적값이다.",
+          "sources": [
+            {
+              "title": "Casa da Índia",
+              "url": "https://en.wikipedia.org/wiki/Casa_da_%C3%8Dndia"
+            },
+            {
+              "title": "Black pepper",
+              "url": "https://en.wikipedia.org/wiki/Black_pepper"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "바이아 담배가 리스본에 하역되어 유럽으로 풀렸다. 포르투갈 본국에서는 담배가 나지 않는다.",
+          "sources": [
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
+            },
+            {
+              "title": "Bahia",
+              "url": "https://en.wikipedia.org/wiki/Bahia"
+            }
+          ]
+        },
+        "coral": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "지중해 산호가 리스본에 모여 인도행 배에 실렸고 고아에서 다이아몬드와 바뀌었다. 소비가 아니라 재수출 수요다.",
+          "sources": [
+            {
+              "title": "Precious coral",
+              "url": "https://en.wikipedia.org/wiki/Precious_coral"
+            }
+          ]
+        },
+        "melegueta": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "confirmed",
+          "basis": "기니 해안의 말라게타(‘낙원의 알갱이’)를 포르투갈이 후추 대용으로 유럽에 팔았다. 아프리카 항로가 리스본에 내려놓던 물건 중 하나다.",
+          "sources": [
+            {
+              "title": "Aframomum melegueta",
+              "url": "https://en.wikipedia.org/wiki/Aframomum_melegueta"
+            }
+          ]
         }
       }
     },
@@ -161,20 +245,33 @@
       "goods": {
         "oliveoil": {
           "side": "supply",
-          "value": 0.56,
-          "verdict": "probable",
-          "basis": "안달루시아 올리브는 고대부터의 지리적 특성이고 과달키비르 배후가 그 산지다. 직접 사료는 확보하지 못했다.",
-          "sources": []
+          "value": 0.38,
+          "verdict": "confirmed",
+          "basis": "안달루시아의 올리브 언덕이 서인도 함대의 기름을 댔다. 원양 관문(아바나 34일)이라 함대에 실을 것을 미리 쌓아 두는 값이고, 그래서 지중해 산지들보다 낮다.",
+          "sources": [
+            {
+              "title": "Seville",
+              "url": "https://en.wikipedia.org/wiki/Seville"
+            },
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
         },
         "wine": {
           "side": "supply",
-          "value": 0.62,
-          "verdict": "probable",
-          "basis": "헤레스·안달루시아 포도주는 잉글랜드행 수출품이었다. 브리스틀 배의 운임 장부가 안달루시아 와인 25실링/tun을 적는다.",
+          "value": 0.4,
+          "verdict": "confirmed",
+          "basis": "헤레스의 포도주도 같은 자리에서 함대에 실렸다. 아메리카에는 포도밭이 없어 이 한 줄이 대서양 서행 화물의 절반을 이룬다.",
           "sources": [
             {
-              "title": "Univ. of Bristol, The Overseas Trade of Bristol in the Mid-Sixteenth Century, ch.1 (PDF)",
-              "url": "https://www.bristol.ac.uk/Depts/History/Maritime/Sources/ch1.pdf"
+              "title": "Seville",
+              "url": "https://en.wikipedia.org/wiki/Seville"
+            },
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
             }
           ]
         },
@@ -210,6 +307,62 @@
           "verdict": "probable",
           "basis": "발트 호박은 묵주로 깎여 가톨릭 유럽 전역에 팔렸다. 직접 사료는 확보하지 못해 개연성으로만 둔다.",
           "sources": []
+        },
+        "mercury": {
+          "side": "supply",
+          "value": 0.62,
+          "verdict": "confirmed",
+          "basis": "알마덴 수은 광산이 왕실 독점이었고 그 수은이 세비야에서 아메리카행 함대(아소게 선단)에 실려 은 제련장으로 갔다. 광산이 아니라 적출항이므로 배율을 산지값까지 내리지 않는다.",
+          "sources": [
+            {
+              "title": "Almadén",
+              "url": "https://en.wikipedia.org/wiki/Almad%C3%A9n"
+            },
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
+        },
+        "tobacco": {
+          "side": "demand",
+          "value": 1.4,
+          "verdict": "confirmed",
+          "basis": "세비야에 왕립 담배 공장이 섰고 아메리카 담배의 유럽 하역지가 여기였다. 아바나에서 오는 배의 동행 화물이 이것이다.",
+          "sources": [
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
+            },
+            {
+              "title": "Seville",
+              "url": "https://en.wikipedia.org/wiki/Seville"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "함대와 아메리카 요새가 쓸 무기를 사들였다. 안달루시아에는 화기 산업이 없어 카탈루냐·밀라노에서 왔다.",
+          "sources": [
+            {
+              "title": "Seville",
+              "url": "https://en.wikipedia.org/wiki/Seville"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "카리브 설탕이 함대와 함께 여기 하역되어 유럽으로 풀렸다. 마데이라·카나리아 설탕과 같은 시장에서 값을 다퉜다.",
+          "sources": [
+            {
+              "title": "Spanish treasure fleet",
+              "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+            }
+          ]
         }
       }
     },
@@ -259,25 +412,25 @@
       "goods": {
         "sugar": {
           "side": "supply",
-          "value": 0.44,
-          "verdict": "confirmed",
-          "basis": "1455년에 이미 6,000아로바를 넘겼고 1490년대에 키프로스를 제쳐 유럽 최대 산지가 됐다. 이 권역 최저 배율은 \"여기가 원산지\"라는 뜻이다.",
+          "value": 0.48,
+          "verdict": "probable",
+          "basis": "사탕수수가 산비탈을 다 먹은 섬이라 유럽 설탕이 여기서 가장 많이 났다. 다만 브라질 제당이 커지면서 값이 눌렸으므로 살바도르(0.42)보다는 높게 둔다.",
           "sources": [
             {
-              "title": "Wikipedia, Madeira",
-              "url": "https://en.wikipedia.org/wiki/Madeira"
+              "title": "Funchal",
+              "url": "https://en.wikipedia.org/wiki/Funchal"
             }
           ]
         },
         "wine": {
           "side": "supply",
-          "value": 0.64,
-          "verdict": "probable",
-          "basis": "같은 비탈에서 말바지아 포도가 났다. 다만 마데이라 와인의 명성은 후대의 것이라 산지 배율을 깊게 내리지 않았다.",
+          "value": 0.52,
+          "verdict": "confirmed",
+          "basis": "말바지아 포도가 같은 화산 비탈에서 났고, 대양으로 나가는 배가 여기서 물과 함께 술을 실었다. 원양 관문(산토도밍고 30일)이라 배가 직접 싣는 값을 준다.",
           "sources": [
             {
-              "title": "Wikipedia, Madeira",
-              "url": "https://en.wikipedia.org/wiki/Madeira"
+              "title": "Funchal",
+              "url": "https://en.wikipedia.org/wiki/Funchal"
             }
           ]
         },
@@ -311,6 +464,42 @@
           "verdict": "probable",
           "basis": "제당소의 연장과 물레방아 쇠붙이가 전부 밖에서 왔다. 섬에 광산이 없다.",
           "sources": []
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "화산섬이라 염전이 없고 절임과 어업에 쓸 소금을 전부 실어 왔다. 세투발·카디스 소금이 그 자리를 채웠다.",
+          "sources": [
+            {
+              "title": "Funchal",
+              "url": "https://en.wikipedia.org/wiki/Funchal"
+            }
+          ]
+        },
+        "hide": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "probable",
+          "basis": "서인도에서 올라온 소가죽이 이 섬에서 짐을 풀고 유럽행 배에 넘어갔다. 소비지가 아니라 중계 수요다 — 아바나가 함대 짐을 모으는 것과 같은 자리다.",
+          "sources": [
+            {
+              "title": "Hispaniola",
+              "url": "https://en.wikipedia.org/wiki/Hispaniola"
+            }
+          ]
+        },
+        "ginger": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "이스파니올라 생강이 대서양 제도를 거쳐 유럽으로 갔다. 1580~1610년 무렵 그 섬의 생강 수출은 설탕보다 컸다.",
+          "sources": [
+            {
+              "title": "Ginger",
+              "url": "https://en.wikipedia.org/wiki/Ginger"
+            }
+          ]
         }
       }
     },
@@ -545,18 +734,18 @@
         "basis": "부르고뉴령 플랑드르 — 뒤에 합스부르크로 넘어간다. FLAGS에 부르고뉴 깃발(흰 바탕·붉은 옹이십자)이 생겨 빌려 쓰던 spain을 걷어 냈다."
       },
       "goods": {
-      "scarlet": {
-        "side": "supply",
-        "value": 0.54,
-        "verdict": "confirmed",
-        "basis": "플랑드르 염색 길드가 유럽 최고급 붉은 모직의 다른 한쪽 주인이었다. 베네치아(0.52)보다 반 칸 얕게 두는 것은 최상급 *scarlatto*의 이름값이 이탈리아 쪽에 있었기 때문이고, 즈윈이 메워 가는 도시라는 이 항구의 성격과도 어긋나지 않는다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Flemish cloth / Scarlet (cloth)",
-            "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
-          }
-        ]
-      },
+        "scarlet": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "플랑드르 염색 길드가 유럽 최고급 붉은 모직의 다른 한쪽 주인이었다. 베네치아(0.52)보다 반 칸 얕게 두는 것은 최상급 *scarlatto*의 이름값이 이탈리아 쪽에 있었기 때문이고, 즈윈이 메워 가는 도시라는 이 항구의 성격과도 어긋나지 않는다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Flemish cloth / Scarlet (cloth)",
+              "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+            }
+          ]
+        },
         "woolcloth": {
           "side": "supply",
           "value": 0.54,
@@ -622,18 +811,18 @@
         "sources": []
       },
       "goods": {
-      "chintz": {
-        "side": "demand",
-        "value": 1.32,
-        "verdict": "probable",
-        "basis": "리스본이 푼 인도 날염포가 여기서 북유럽 값을 받았다. 재분배 시장이라 리스본(1.34)보다 조금 낮다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Antwerp § Golden Age (redistribution market for Portuguese Asian goods)",
-            "url": "https://en.wikipedia.org/wiki/Antwerp"
-          }
-        ]
-      },
+        "chintz": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "리스본이 푼 인도 날염포가 여기서 북유럽 값을 받았다. 재분배 시장이라 리스본(1.34)보다 조금 낮다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Antwerp § Golden Age (redistribution market for Portuguese Asian goods)",
+              "url": "https://en.wikipedia.org/wiki/Antwerp"
+            }
+          ]
+        },
         "linen": {
           "side": "supply",
           "value": 0.56,
@@ -1088,18 +1277,18 @@
         ]
       },
       "goods": {
-      "scarlet": {
-        "side": "demand",
-        "value": 1.3,
-        "verdict": "probable",
-        "basis": "폴란드 귀족(슐라흐타)의 붉은 겉옷이 비스와를 거슬러 올라갔다. 곡물을 내보내고 사치품을 사들이는 이 항구의 성격 그대로다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Żupan / Kontusz (szlachta dress in dyed woollens)",
-            "url": "https://en.wikipedia.org/wiki/Kontusz"
-          }
-        ]
-      },
+        "scarlet": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "폴란드 귀족(슐라흐타)의 붉은 겉옷이 비스와를 거슬러 올라갔다. 곡물을 내보내고 사치품을 사들이는 이 항구의 성격 그대로다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Żupan / Kontusz (szlachta dress in dyed woollens)",
+              "url": "https://en.wikipedia.org/wiki/Kontusz"
+            }
+          ]
+        },
         "grain": {
           "side": "supply",
           "value": 0.44,
@@ -1462,7 +1651,7 @@
       "sources": []
     },
     "bilbao|porto": {
-      "risk": 8.0,
+      "risk": 8,
       "verdict": "probable",
       "basis": "핀스테레 곶을 돌아 비스케이만으로 드는 구간이다. 곶 동쪽은 전천후 피난항이 없고 만 전체가 바람에 밀리는 뭍(lee shore)이라, 같은 만의 빌바오~보르도 8.0과 같은 자리에 둔다.",
       "sources": []
@@ -1474,7 +1663,7 @@
       "sources": []
     },
     "cadiz|sevilla": {
-      "risk": 3.0,
+      "risk": 3,
       "verdict": "probable",
       "basis": "과달키비르 강어귀와 카디스만을 잇는 짧은 구간이다. 산루카르 앞의 모래톱(barra)이 큰 배를 걸리게 했으나 그것은 좌초 위험이고 해적 위험이 아니다. 발트 내해 수준으로 내렸다.",
       "sources": []
@@ -1504,13 +1693,13 @@
       "sources": []
     },
     "bristol|nantes": {
-      "risk": 8.0,
+      "risk": 8,
       "verdict": "probable",
       "basis": "해협 서쪽 입구를 비스듬히 건넌다. 브르타뉴 나포면허선이 바로 이 물에서 먹고살았고 피난할 데가 실리 제도뿐이라, 해협 횡단 앵커 5.86%에서 크게 올렸다.",
       "sources": []
     },
     "nantes|plymouth": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "브르타뉴와 데번 사이를 가로지른다. 거리는 짧으나 양안 수십 마일 안에 적대 항구가 늘어서 있는 전형적인 해협 구간이라 라로셸~런던 7.0과 같은 자리에 둔다.",
       "sources": []
@@ -1522,7 +1711,7 @@
       "sources": []
     },
     "london|plymouth": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "해협 북안을 따라 도는 연안 항해다. 1438년 런던~브뤼헤 브로드클로스 5.86%를 앵커로 삼아 그 바로 위, 브리스틀~런던 6.0과 같은 자리에 두었다.",
       "sources": []
@@ -1534,13 +1723,13 @@
       "sources": []
     },
     "hull|leith": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "험버에서 포스만까지 동안을 따라 오르는 구간이다. 잉글랜드와 스코틀랜드 사이라 전시에는 위험했으나 평시 연안 항해로 잡아 5.86% 아래에 두었다.",
       "sources": []
     },
     "hamburg|hull": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "북해를 가로지른다. 뭍이 며칠 안 보이고 덩케르커·프리슬란트 사략선이 이 물을 지켰으므로 안트베르펜 중개인 장부 중앙값 7.00%에 그대로 앉혔다.",
       "sources": []
@@ -1576,7 +1765,7 @@
       "sources": []
     },
     "reval|visby": {
-      "risk": 4.0,
+      "risk": 4,
       "verdict": "probable",
       "basis": "고틀란드에서 에스토니아로 건너가는 구간이다. 한때 노브고로드 무역의 본선이었고 한자가 지킨 물이라 레발~리가 3.5보다 조금만 올렸다.",
       "sources": []
@@ -1612,7 +1801,7 @@
       ]
     },
     "funchal|sevilla": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "며칠씩 뭍이 안 보이는 외해다. 카나리아 해류를 타고 내려가기는 쉬우나 연안을 거슬러 돌아올 수 없어 크게 우회해야 했다.",
       "sources": [
@@ -1623,7 +1812,7 @@
       ]
     },
     "bilbao|larochelle": {
-      "risk": 9.0,
+      "risk": 9,
       "verdict": "confirmed",
       "basis": "비스케이만 횡단 — 이 바다에서 가장 악명 높은 물이다. 대륙붕단에서 수심이 30마일 남짓 사이에 4,000m급에서 200m 아래로 급히 얕아져 장주기 너울이 서고 부서지며, 브레스트 이남에는 전천후 피난항이 없어 만 전체가 lee shore다.",
       "sources": [
@@ -1634,7 +1823,7 @@
       ]
     },
     "bilbao|bordeaux": {
-      "risk": 8.0,
+      "risk": 8,
       "verdict": "probable",
       "basis": "비스케이만 남동 모서리를 가로지른다. 횡단보다는 짧으나 같은 만이라 피난할 곳이 없다는 사정은 다르지 않다.",
       "sources": [
@@ -1666,7 +1855,7 @@
       ]
     },
     "larochelle|london": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "우에상을 돌아 해협으로 들어간다. 브르타뉴·노르망디 항구의 나포면허선이 이 어귀에서 먹고살았다.",
       "sources": [
@@ -1677,7 +1866,7 @@
       ]
     },
     "bristol|london": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "랜즈엔드를 도는 연안 항해다. 15세기 파우이 같은 항구가 면허를 받고 지나는 배를 털었다.",
       "sources": [
@@ -1699,7 +1888,7 @@
       ]
     },
     "antwerpen|london": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "브뤼헤행(5.86%)보다 스헬더 하구를 더 거슬러 올라가는 만큼만 얹었다. 같은 해협의 같은 성격이다.",
       "sources": [
@@ -1747,7 +1936,7 @@
       ]
     },
     "amsterdam|hamburg": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "프리슬란트 연안이다. 뭍은 늘 가깝지만 모래톱과 조수 차가 커서 좌초가 잦았다.",
       "sources": []
@@ -1759,13 +1948,13 @@
       "sources": []
     },
     "amsterdam|antwerpen": {
-      "risk": 3.0,
+      "risk": 3,
       "verdict": "probable",
       "basis": "젤란트의 섬과 모래톱 사이를 지나는 사실상의 내해 항해다. 뭍이 늘 양쪽에 있고 같은 합스부르크령이라 깃발도 적대하지 않는다.",
       "sources": []
     },
     "bergen|kobenhavn": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "스카게라크를 건너 유틀란트를 도는 구간이다. 북해와 발트가 만나는 자리라 물살이 세다.",
       "sources": []
@@ -1793,7 +1982,7 @@
       ]
     },
     "danzig|lubeck": {
-      "risk": 4.0,
+      "risk": 4,
       "verdict": "probable",
       "basis": "한자의 간선이다. 동맹이 제 앞바다를 지켰으나 14세기 말 비탈리엔브뤼더(식량형제단) 같은 해적이 실재했다.",
       "sources": [
@@ -1804,7 +1993,7 @@
       ]
     },
     "danzig|kobenhavn": {
-      "risk": 4.0,
+      "risk": 4,
       "verdict": "probable",
       "basis": "발트 남안을 따라가는 곡물 항로다. 뤼베크~단치히와 같은 성격으로 뒀다.",
       "sources": [
@@ -1821,7 +2010,7 @@
       "sources": []
     },
     "reval|stockholm": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "핀란드만 어귀를 건넌다. 발트 안에서는 뭍이 가장 오래 안 보이는 구간이다.",
       "sources": []
@@ -1860,7 +2049,7 @@
       ]
     },
     "kobenhavn|visby": {
-      "risk": 4.0,
+      "risk": 4,
       "verdict": "probable",
       "basis": "외레순을 지난 배는 발트해를 북동진해 고틀란드에 들렀다 — 비스뷔는 한자의 중계 창고였고, 스톡홀름으로 가는 배도 그 섬을 거쳐 갔다. 발트 내해라 요율이 낮다(코펜하겐~스톡홀름 직항을 이 구간으로 옮겨 적었다 — 지도 축척에서 직선이 스칸디나비아 남단을 관통했다).",
       "sources": []

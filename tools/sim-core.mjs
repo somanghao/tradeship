@@ -10,13 +10,14 @@ import { GOODS, SHIPS, CITY_BY_ID, CHAIN, CHAIN_BY_ID, WORK, HOLDINGS } from '..
 import {
   state, resetGame, advanceDays, neighborsOf, voyageDays, voyageCost,
   buy, sell, costFor, gainFor, tariffRate, purchaseShip, boardShip, sellsShip,
-  cargoFree, repair, hire, shorthanded, shipPriceAt,
+  cargoFree, repair, hire, shorthanded, shipPriceAt, oceanReady,
   tavernCrews, recruitBand, ship, paydayDue, settlePayroll, payrollOwed,
   /* 수직계열화 1단계(A-9) — `chain` 스위치를 켰을 때만 쓴다. 끄면 이 아래가 한 줄도 안 돈다. */
   priceOf, resaleOf, hasHolding, canBuyHolding, buyHolding, storeCap, storedUsed,
   storeGoods, takeGoods, settleWorks, collectMill, millOf, millRecipes, millPrice,
   canBuyMill, buyMill, millBatchCap, millFee, runMill, sellMill, chainOut, chainInUnits, workList,
 } from '../js/state.js';
+import { isOceanLane } from '../js/regions/index.js';
 import { initWorld, worldTick } from '../js/world.js';
 
 /* 무역선으로서의 등급 — **화물칸 오름차순**이다. 이 시뮬은 순수 무역만 재므로
@@ -89,6 +90,17 @@ export function bestRun(minMargin = 0, carry = false, only = null) {
   if (room <= 0) return null;
   for (const to of neighborsOf(state.at)) {
     if (only && !only.has(to)) continue;
+    /* ★★ **게임이 막는 항로는 시뮬도 못 탄다.** `neighborsOf`는 원양 항로를 그대로 돌려주는데
+       여기서 `oceanReady(to)`를 안 보면 시뮬은 **낡은 바사에 200닢을 싣고 대양을 건넌다** —
+       게임에서는 `map.js`가 막는 일이다(사람·선체·호위 셋 다).
+       ⚠️ 이 한 줄이 없을 때 무슨 일이 나는가: 원양 차익을 사료 쪽으로 되돌리자(P1)
+       시뮬이 초반부터 원양을 골랐고, `sim-firstship`에서 **호르무즈가 첫 배를 영영 못 사는**
+       판정이 나왔다(0/12판). 게임이 아니라 측정기가 거짓 신호를 낸 자리다
+       — QUICKMAP-trade §3의 "곡선이 나쁘면 sim-core의 플레이 전략부터 의심하라" 그대로다. */
+    /* ⚠️ **`isOceanLane`으로 먼저 거른다.** `oceanReady()`는 선체 25%·인원 60% 조건을 함께 보므로
+       근해에까지 걸면 물 새는 바사가 **어디로도 못 가는** 판이 된다(실측: 베네치아 12/12 → 2/12).
+       게임도 원양 구간에서만 이 문을 세운다(`map.js`). */
+    if (isOceanLane(state.at, to) && !oceanReady(to).ok) continue;
     const days = voyageDays(state.at, to);
     const cost = voyageCost(days).total;
     const p = planFor(to, room, state.gold, minMargin);

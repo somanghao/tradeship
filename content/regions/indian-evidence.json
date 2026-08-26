@@ -35,17 +35,17 @@
         },
         "indigo": {
           "side": "supply",
-          "value": 0.52,
+          "value": 0.4,
           "verdict": "confirmed",
-          "basis": "구자라트는 인디고의 산지이자 수출구였다. 캄바트의 수출품 목록에 인디고가 직물·마노와 나란히 올라 있고, 인도는 그리스·로마 시대부터 유럽에 인디고를 대던 1차 산지였다(그리스어 indikón이 그 흔적이다). 유럽이 자국 대청 산업을 지키려 16세기에 수입을 금지할 만큼 압도적이었으므로 낮은 산지가로 둔다.",
+          "basis": "사르케지 인디고가 구자라트의 대표 수출품이었고 이 항구에서 페르시아만·홍해·유럽으로 나갔다. 원양 관문(호르무즈 11일)이라 배가 직접 싣는 값을 준다.",
           "sources": [
             {
-              "title": "Wikipedia — Khambhat (exports: indigo and fine buckram)",
-              "url": "https://en.wikipedia.org/wiki/Khambhat"
+              "title": "Indigo dye",
+              "url": "https://en.wikipedia.org/wiki/Indigo_dye"
             },
             {
-              "title": "Wikipedia — Indigo dye ('India was a primary supplier of indigo to Europe'; France and Germany outlawed imported indigo in the 16th century)",
-              "url": "https://en.wikipedia.org/wiki/Indigo_dye"
+              "title": "Khambhat",
+              "url": "https://en.wikipedia.org/wiki/Khambhat"
             }
           ]
         },
@@ -574,20 +574,16 @@
       "goods": {
         "pepper": {
           "side": "supply",
-          "value": 0.46,
+          "value": 0.38,
           "verdict": "confirmed",
-          "basis": "이 권역 최저가 산지다. 후추의 가장 중요한 산지가 말라바르 해안이었고 캘리컷이 '홍해와 유럽으로 가는 인도 후추 수출의 중심'이었다. 니콜로 데 콘티(1445)는 캘리컷 수출품으로 락·생강·계피·미로발란·제두어리를 적었고, 도시의 별명 자체가 '향신료의 도시'다. 세계에서 후추를 가장 싸게 사는 곳이라는 자리를 배율의 바닥(0.46)으로 옮겼다.",
+          "basis": "후추가 세계에서 가장 싼 곳이고 「후추 30배」의 출발점이 이 부두다 — 사료가 말하는 30배는 말라바르에서 북유럽까지의 전 구간이고, 게임의 원양 한 구간이 그 전 구간을 대신한다. 그래서 권역 안 하한(0.44)보다 깊게 준다.",
           "sources": [
             {
-              "title": "Wikipedia — Black pepper ('its most important source was India, particularly the Malabar Coast')",
+              "title": "Black pepper",
               "url": "https://en.wikipedia.org/wiki/Black_pepper"
             },
             {
-              "title": "Wikipedia — Indian Ocean trade (Calicut as 'center of Indian pepper exports to the Red Sea and Europe at this time')",
-              "url": "https://en.wikipedia.org/wiki/Indian_Ocean_trade"
-            },
-            {
-              "title": "Wikipedia — Kozhikode (Niccolò de' Conti 1445: lac, ginger, cinnamon, myrobalans, zedoary)",
+              "title": "Kozhikode",
               "url": "https://en.wikipedia.org/wiki/Kozhikode"
             }
           ]
@@ -652,6 +648,18 @@
             {
               "title": "Malabar pepper trade",
               "url": "https://en.wikipedia.org/wiki/Malabar_Coast"
+            }
+          ]
+        },
+        "incense": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "아라비아 유향이 홍해에서 계절풍을 타고 내려와 인도의 사원과 시장에서 팔렸다. 후추를 실어 간 배의 되짐이 그것이다.",
+          "sources": [
+            {
+              "title": "Frankincense",
+              "url": "https://en.wikipedia.org/wiki/Frankincense"
             }
           ]
         }
@@ -1058,6 +1066,22 @@
             {
               "title": "Wikipedia — Economy of the Mughal Empire ('Around 80% of Mughal India's imports were bullion, mostly silver')",
               "url": "https://en.wikipedia.org/wiki/Economy_of_the_Mughal_Empire"
+            }
+          ]
+        },
+        "tin": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "말레이 반도의 주석이 벵골만을 건너와 인도의 놋·청동 공방으로 갔다. 인도 남부에서는 주석이 나지 않아 이 바다 건너에서만 온다.",
+          "sources": [
+            {
+              "title": "Nagapattinam",
+              "url": "https://en.wikipedia.org/wiki/Nagapattinam"
+            },
+            {
+              "title": "Malacca Sultanate",
+              "url": "https://en.wikipedia.org/wiki/Malacca_Sultanate"
             }
           ]
         }

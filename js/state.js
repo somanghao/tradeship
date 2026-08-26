@@ -16,6 +16,8 @@ import {
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
   MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
+  INSURANCE_RATE_OCEAN, PRIVATE_TRADE, TOTAL_LOSS,
+  INSURE_LOAD, INSURE_COVER_MIN, INSURE_COVER_MAX, STORM_WEIGHT, JETTISON_SHARE,
   ODDS_BASE, ODDS_PER_PCT, BASE_RISK, THREAT_PER_SHIP, ODDS_CAP,
   LURE_PER, LURE_PER_STEP, LURE_CAP,
   ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
@@ -34,6 +36,8 @@ export {
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
   MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
+  INSURANCE_RATE_OCEAN, PRIVATE_TRADE, TOTAL_LOSS,
+  INSURE_LOAD, INSURE_COVER_MIN, INSURE_COVER_MAX, STORM_WEIGHT, JETTISON_SHARE,
   ZONE_FAR_FALL, ZONE_NEAR_FALL, ZONE_FLOOR,
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
   USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW, FLEET,
@@ -1620,7 +1624,19 @@ export function sell(goodId, qty) {
       state.mates[m.id].earned += Math.round(mcut * share);
     }
   }
-  state.stats.profit += profit - cut - mcut;
+  /* ★ **선원 사무역(quintalada)** — P4-a. 부관·동료와 **같은 자리**에서, 남은 이익에서만 뗀다.
+     사료에서 선원은 삯만 받고 타지 않았다: 제 몫의 짐을 실을 권리가 계약의 절반이었고
+     실측에서 그것이 총수입의 20~46%였다(`data.js: PRIVATE_TRADE`).
+     ★ **인원에 비례한다** — 큰 배는 사람이 많고, 그래서 규모가 곧 비용이 된다.
+       갈레온 46명이면 −18.4%, 낡은 바사 5명이면 −2%. 「많이 벌어도 유지비가 같이 오른다」가
+       계수 하나가 아니라 **배를 키운 결과**로 오게 하는 자리다. */
+  let pcut = 0;
+  const prate = privateTradeCut();
+  if (profit - cut - mcut > 0 && prate > 0) {
+    pcut = Math.round((profit - cut - mcut) * prate);
+    state.gold -= pcut;
+  }
+  state.stats.profit += profit - cut - mcut - pcut;
   /* 매출·관세·성과급은 한 거래에서 세 갈래로 갈린다 — 장부에도 셋으로 적는다.
      순이익 한 줄로 뭉치면 "관세로 얼마가 나갔나"를 정산 화면이 못 보여준다.
 
@@ -1630,10 +1646,13 @@ export function sell(goodId, qty) {
   book('income', 'sales', raw);
   book('outgo', 'tariff', tariff);
   book('outgo', 'officer', cut + mcut);
+  // 선원 몫은 급여 갈래에 적는다 — 삯의 다른 절반이지 성과급이 아니다
+  book('outgo', 'wages', pcut);
   addPressure(state.at, goodId, max);
   return {
-    ok: true, qty: max, gain, tariff, cut, mateCut: mcut, unit: Math.round(gain / max),
-    base: state.prices[state.at][goodId], profit: profit - cut - mcut,
+    ok: true, qty: max, gain, tariff, cut, mateCut: mcut, crewCut: pcut,
+    unit: Math.round(gain / max),
+    base: state.prices[state.at][goodId], profit: profit - cut - mcut - pcut,
   };
 }
 
@@ -2201,6 +2220,15 @@ export function mateCut() {
   let v = 0;
   for (const m of crewMates()) v += m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole;
   return Math.min(0.9, v);
+}
+
+/** 선원이 제 짐으로 가져가는 이익 몫 (0~cap) — 인원에 비례한다.
+    ★ `state.crew`가 정본이다(`state.bands`는 기록일 뿐 — 전투·폭풍으로 어긋난다).
+    ★ **동행선의 선원은 세지 않는다.** 사무역 권리는 그 배의 화주와 맺은 것이고,
+      동행선은 제 몫을 제가 싣는다(그 값은 이미 `consortCost`의 삯으로 나간다).
+      선단 몫까지 세면 「동행을 늘리면 매각이 통째로 사라지는」 벌점이 된다. */
+export function privateTradeCut(crew = state.crew) {
+  return Math.min(PRIVATE_TRADE.cap, Math.max(0, crew) * PRIVATE_TRADE.perCrew);
 }
 
 /** 쌍무로 태울 때 그가 내놓는 밑천 */
@@ -3714,11 +3742,19 @@ export function pickEnemy(rand = Math.random, regionId = currentRegion()) {
      거의 0이고, 커져서 향신료·비단을 먼 구간으로 나르기 시작하면 급격히 무거워진다.
      "돈이 되는 곳에는 대가가 있다"를 비용 쪽에서 받는 장치. */
 /** 이 항차에 실은 짐에 붙는 보험료. 내해·육로(risk=null)는 0. */
+/** 이 구간에 인수업자가 곱하는 계수 — **원양이 근해보다 세다**(P4-b).
+    사료 요율 중앙값 5%에 닿으려면 원양은 0.50이어야 한다(근거는 `data.js: INSURANCE_RATE_OCEAN`).
+    ★ 항로에 새 필드를 더하지 않고 `isOceanLane`에서 뽑는다 — `OCEAN_LANES`는 권역 담당이
+      늘리는 자리라, 새 항로가 생길 때마다 손으로 적게 하면 조용히 빠진다. */
+export function insureRateFor(from, to) {
+  return to != null && isOceanLane(from, to) ? INSURANCE_RATE_OCEAN : INSURANCE_RATE;
+}
+
 export function insuranceFor({ from = state.at, to = null, value = null } = {}) {
   const risk = to == null ? null : routeRisk(from, to);
   if (!risk) return 0;
   const v = value == null ? cargoValue(from) : value;
-  return Math.round((v * risk / 100) * INSURANCE_RATE * (1 - convoyInsureOff()));
+  return Math.round((v * risk / 100) * insureRateFor(from, to) * (1 - convoyInsureOff()));
 }
 
 /** 함께 가는 배가 많을수록 인수업자가 덜 뗀다 (`data.js: FLEET.insureOffPer/Cap` · P2-c) */
@@ -3780,10 +3816,91 @@ export function jettisonOdds({ from = state.at, to = null } = {}) {
   return Math.min(0.55, JETTISON_BASE + risk * JETTISON_PER_PCT);
 }
 
+/* ── 원양 전손 (P4-c) ──────────────────────────────────────────
+   ★ 지금까지 **배가 사라지는 길은 전투 패배뿐**이었고, 폭풍은 화물 일부만 던지게 했다.
+   그래서 「먼 바다로 나가는 것이 큰 판돈이다」가 규칙으로 성립하지 않았다 —
+   원양(P1)이 벌이가 되는 순간 그 반대쪽이 있어야 한다.
+   근거·값은 `data.js: TOTAL_LOSS`(카레라 데 인디아스 1540~1650 · 11,000척 중 519척 = 4.7%).
+   ⚠ **원양 구간에서만 굴린다** — 그 4.7%가 대서양 원양 항로의 수치이기 때문이다. */
+
+/** 이 구간에서 배를 통째로 잃을 확률. 근해·내해는 0. */
+export function totalLossOdds({ from = state.at, to = null } = {}) {
+  if (to == null || !isOceanLane(from, to)) return 0;
+  const risk = routeRisk(from, to);
+  if (!risk) return 0;
+  const hull = Math.max(0, Math.min(1, state.hp / Math.max(1, state.maxHp)));
+  const wear = 1 + (1 - hull) * TOTAL_LOSS.hullPer;    // 삭은 배는 더 잘 가라앉는다
+  return Math.min(TOTAL_LOSS.cap, TOTAL_LOSS.rate * (risk / TOTAL_LOSS.refRisk) * wear);
+}
+
+/** 배를 잃는다. **판을 끝내지 않는다** — 「바닥의 규칙」으로 들어가는 두 번째 문이다.
+    ① 동행선이 있으면 **그 배로 갈아탄다**(선단을 사는 또 하나의 이유).
+    ② 없으면 `liquidate()` — 배와 짐이 가고 낡은 바사 한 척과 종잣돈이 남으며
+       **빚도 함께 사라진다**(해상대차: 담보가 사라지면 채무도 사라진다).
+    화물은 어느 쪽이든 전부 잃고, 적하보험이 낸 만큼만 문다(선체는 보상하지 않는다). */
+export function totalLoss(rand = Math.random, leg = null) {
+  let value = 0;
+  for (const [gid, n] of Object.entries(state.cargo)) {
+    value += (state.buyPrice[gid] || GOOD_BY_ID[gid]?.base || 0) * n;
+  }
+  const payout = Math.round(value * insureCover(leg?.from ?? state.at, leg?.to ?? null));
+  state.cargo = {}; state.buyPrice = {};
+
+  const lostShip = state.shipKey;
+  const spare = consortKeys()[0] ?? null;
+  let mode;
+  if (spare) {
+    /* 동행선으로 갈아탄다. `boardShip`이 화물칸·무장·인원 상한을 그 배에 맞춘다. */
+    delete state.fleet[lostShip];
+    mode = 'consort';
+    boardShip(spare);
+  } else {
+    mode = 'liquidate';
+    liquidate();
+  }
+  state.gold += payout;
+  if (payout > 0) book('income', 'insurance', payout);
+  pushLog(`${SHIPS[lostShip].name}${josa(SHIPS[lostShip].name, '이/가')} 바다에 가라앉았다.`
+    + (mode === 'consort' ? ` ${SHIPS[spare].name}으로 옮겨 탔다.` : '')
+    + (payout > 0 ? ` 적하보험이 ${payout.toLocaleString('ko-KR')}닢을 물어 준다.` : ''), 'bad');
+  return { ship: lostShip, mode, moved: spare, value: Math.round(value), payout };
+}
+
+/* ── 공정 보상률 — **보험이 세금이 아니게** (P8-1) ──────────────
+   ★ 예전에는 보상률이 요율 계수와 **같은 상수**(0.30)였고, 그 결과 낸 것의 26~70%만
+   돌아왔다 — 그리고 **위험할수록 더 나빠졌다.** 등식이 틀린 이유는 `data.js`의 주석에 있다.
+   여기서는 **그 항차에 실제로 낸 요율**을 **그 항차의 기대손실률**로 나눠 공정률을 구하고
+   인수업자의 몫(`INSURANCE_LOAD` 10%)만 뗀다. 보험료는 한 닢도 안 내린다.
+
+   ★ 실제로 낸 요율을 쓰므로 **선단 할인(P2-c)이 저절로 맞물린다** — 60%만 내면 60%만
+     받되 순손실도 60%로 준다. 할인이 무의미해지지도, 공짜 이익이 되지도 않는다. */
+
+/** 이 구간에서 짐값의 몇 %가 사고로 사라질 것인가(기대값). 투하 + 원양 전손. */
+export function expectedLossRate(from = state.at, to = null) {
+  const risk = to == null ? null : routeRisk(from, to);
+  if (!risk) return 0;                                   // 내해·육로는 보험이 안 붙는다
+  const jettison = STORM_WEIGHT * jettisonOdds({ from, to }) * JETTISON_SHARE;
+  /* 전손은 짐을 통째로 가져간다. **선체 상태는 빼고** 센다 —
+     보상률이 내 배의 hp에 따라 출렁이면 "삭은 배일수록 보험이 후해진다"가 된다. */
+  const wreck = isOceanLane(from, to)
+    ? Math.min(TOTAL_LOSS.cap, TOTAL_LOSS.rate * (risk / TOTAL_LOSS.refRisk)) : 0;
+  return jettison + wreck;
+}
+
+/** 잃은 값의 몇 %를 인수업자가 무나. 낸 만큼에 맞춘다(90%). */
+export function insureCover(from = state.at, to = null) {
+  const loss = expectedLossRate(from, to);
+  if (!(loss > 0)) return INSURE_COVER_MIN;
+  // 실제로 낸 요율(선단 할인 포함) — 짐값 1에 대한 보험료
+  const premium = insuranceFor({ from, to, value: 1e6 }) / 1e6;
+  const fair = (premium / loss) * INSURE_LOAD;
+  return Math.min(INSURE_COVER_MAX, Math.max(INSURE_COVER_MIN, fair));
+}
+
 /** 짐을 던진다. 실은 것의 일부를 값이 **싼 것부터** 버린다 —
     선장이라면 당연히 그렇게 한다(비단을 먼저 던지지 않는다).
     돌려주는 값으로 로그·모달을 쓰고, 보상금은 여기서 바로 금고에 넣는다. */
-export function jettisonCargo(share = 0.4, rand = Math.random) {
+export function jettisonCargo(share = 0.4, rand = Math.random, leg = null) {
   const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
   if (!held.length) return null;
 
@@ -3804,7 +3921,9 @@ export function jettisonCargo(share = 0.4, rand = Math.random) {
     value += (state.buyPrice[gid] || GOOD_BY_ID[gid].base) * n;
     toss -= n;
   }
-  const payout = Math.round(value * INSURANCE_COVER);
+  /* 낸 만큼 받는다 — 그 항차에 실제로 문 보험료로 역산한 공정 보상률(P8-1).
+     leg를 안 주면 하한(옛 값 0.30)으로 떨어진다 — 옛 호출부가 안 깨지게. */
+  const payout = Math.round(value * insureCover(leg?.from ?? state.at, leg?.to ?? null));
   state.gold += payout;
   book('income', 'insurance', payout);
   return { lost, value: Math.round(value), payout };

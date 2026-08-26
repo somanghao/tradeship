@@ -71,29 +71,33 @@
       "goods": {
         "sugar": {
           "side": "supply",
-          "value": 0.46,
+          "value": 0.42,
           "verdict": "confirmed",
-          "basis": "1549년 브라질의 첫 수도로 세워졌고 만 안쪽 헤콩카부의 제당 지대가 이 항구를 먹였다. 헤시피 다음가는 산지라 0.02만 위에 뒀다.",
+          "basis": "헤콩카부의 제당소들이 이 항구를 먹였고 그 설탕이 리스본을 거쳐 북유럽으로 풀렸다. 원양 관문 둘(리스본 30일·루안다 22일)이 여기서 갈리므로 헤시피(0.44)와 나란한 자리까지 내렸다.",
           "sources": [
             {
-              "title": "Salvador, Bahia",
-              "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+              "title": "Bahia",
+              "url": "https://en.wikipedia.org/wiki/Bahia"
             },
             {
-              "title": "Colonial Brazil",
-              "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+              "title": "Volta do mar",
+              "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
             }
           ]
         },
         "tobacco": {
           "side": "supply",
-          "value": 0.5,
-          "verdict": "probable",
-          "basis": "바이아 담배는 설탕에 이은 두 번째 기둥이었고 아프리카행 배가 그것을 싣고 나갔다. ★ tobacco는 카리브 권역이 세계에 처음 들여온 품목이라 여기서는 supply로만 적는다. 값의 직접 사료는 없다.",
+          "value": 0.42,
+          "verdict": "confirmed",
+          "basis": "바이아 담배는 설탕 다음가는 이 고장의 기둥이었고, 특히 꿀에 절인 3등급 담배가 앙골라 거래의 결제 수단으로 쓰였다. 그래서 설탕과 같은 깊이를 준다.",
           "sources": [
             {
-              "title": "Salvador, Bahia",
-              "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+              "title": "Bahia",
+              "url": "https://en.wikipedia.org/wiki/Bahia"
+            },
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
             }
           ]
         },
@@ -111,13 +115,13 @@
         },
         "wine": {
           "side": "demand",
-          "value": 1.36,
+          "value": 1.46,
           "verdict": "probable",
-          "basis": "스페인·포르투갈 배가 아메리카로 싣고 온 것 중 가장 꾸준한 품목이 포도주였다. 이 땅에서는 포도가 거의 안 됐고 성찬용까지 배로 왔으므로 어느 항구든 값을 쳐 준다. 리스본과 루안다에서 오는 배가 닿는 자리라 이 권역에서 가장 값이 붙는다.",
+          "basis": "리스본에서 오는 배가 닿는 자리라 유럽 물건을 무엇이든 사들였고 그 첫째가 포도주였다. 브라질에는 포도밭이 없다.",
           "sources": [
             {
-              "title": "Salvador, Bahia",
-              "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+              "title": "Volta do mar",
+              "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
             }
           ]
         },
@@ -130,10 +134,51 @@
         },
         "oliveoil": {
           "side": "demand",
-          "value": 1.22,
+          "value": 1.38,
           "verdict": "probable",
-          "basis": "올리브도 이 위도에서는 되지 않아 기름은 통째로 이베리아에서 왔다. 포도주와 함께 오는 짝이라 같은 급의 수요로 뒀다.",
-          "sources": []
+          "basis": "포도주와 같은 이유다 — 올리브는 열대에서 자라지 않아 기름을 통째로 실어 왔다.",
+          "sources": [
+            {
+              "title": "Volta do mar",
+              "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
+            }
+          ]
+        },
+        "linen": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "돛과 자루가 될 아마포는 유럽에서 왔다. 브라질의 섬유 작물은 목화였고 아마는 없었다.",
+          "sources": [
+            {
+              "title": "Volta do mar",
+              "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.32,
+          "verdict": "probable",
+          "basis": "제당소의 솥과 증류기가 구리였고 브라질에 구리 광산이 없었다. 남대서양 건너 앙골라에서 카탕가 구리가 왔다.",
+          "sources": [
+            {
+              "title": "Luanda",
+              "url": "https://en.wikipedia.org/wiki/Luanda"
+            }
+          ]
+        },
+        "salt": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "고기와 생선을 절이는 소금은 세투발·아베이루 염전에서 실려 왔다. 배후지의 염전은 아직 작았다.",
+          "sources": [
+            {
+              "title": "Volta do mar",
+              "url": "https://en.wikipedia.org/wiki/Volta_do_mar"
+            }
+          ]
         }
       }
     },
@@ -601,14 +646,26 @@
           ]
         },
         "quina": {
-          "side": "demand",
-          "value": 1.22,
+          "side": "supply",
+          "value": 0.58,
           "verdict": "probable",
-          "basis": "로하에서 벗긴 껍질이 유럽으로 가려면 리마를 거쳐 파나마로 올라가야 했다. 소비지가 아니라 환적 수요라 폭의 아래쪽에 뒀다.",
+          "basis": "로하·키토의 예수회 껍질이 안데스를 넘어 이 외항에서 배를 탔고, 유럽으로 가는 길은 파나마 지협뿐이었다. 과야킬(0.56)이 산지 쪽 창구이고 여기는 리마의 외항값이다.",
           "sources": [
             {
               "title": "Cinchona",
               "url": "https://en.wikipedia.org/wiki/Cinchona"
+            }
+          ]
+        },
+        "pearl": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "리마의 부유층이 파나마 진주 군도의 진주를 사들였다. 페루 해안에는 진주 어장이 없어 남해 함대가 그것을 내려보냈다.",
+          "sources": [
+            {
+              "title": "Pearl Islands",
+              "url": "https://en.wikipedia.org/wiki/Pearl_Islands"
             }
           ]
         }

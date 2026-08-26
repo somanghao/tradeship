@@ -22,8 +22,12 @@ import {
   knowPort, priceKnown, holdingTip, metFactions, escortNeed, oceanReady, convoyInsureOff, insuranceFor,
   matesAt, hireMate, dismissMate, mateCut, matePerk, mateStake, mateCap, mateCount, crewMates, freeMates,
   canConsort, setConsort, consortCount, voyageDays as legDays,
+  /* 비용 축(P4) — 선원 사무역 · 원양 보험 · 원양 전손 */
+  privateTradeCut, insureRateFor, totalLossOdds, totalLoss,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES } from '../js/data.js';
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
+  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS } from '../js/data.js';
+import { LIVE_LANES } from '../js/regions/index.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
@@ -834,4 +838,85 @@ resetGame();
      `소식값도 사다리다 — ${t1.name} ${bountyTipPrice(t1)}닢 < ${t5.name} ${bountyTipPrice(t5).toLocaleString('en-US')}닢`);
   ok(bountyTipPrice(t1) >= ROSTER.tipFloorAbs,
      `그래도 공짜는 아니다 (절대 바닥 ${ROSTER.tipFloorAbs}닢)`);
+}
+
+/* ── 비용 축 (P4) — 「많이 벌어도 유지비가 같이 오른다」 ────────────
+   ⓐ 선원 사무역(quintalada) · ⓑ 원양 보험 · ⓒ 원양 전손.
+   ★ 셋 다 **수입을 깎는 쪽**이라, 원양(P1)과 같은 회차에 들어가야 「적절히」가 된다. */
+{
+  // ⓐ 인원에 비례한다 — 규모가 곧 비용이다
+  ok(Math.abs(privateTradeCut(46) - 0.184) < 1e-9,
+     `갈레온 46명이면 매각 이익의 ${(privateTradeCut(46) * 100).toFixed(1)}%가 선원 몫이다 (perCrew ${PRIVATE_TRADE.perCrew})`);
+  ok(privateTradeCut(5) < privateTradeCut(46) && privateTradeCut(5) > 0,
+     `낡은 바사 5명이면 ${(privateTradeCut(5) * 100).toFixed(1)}% — **작은 배는 가볍다**`);
+  ok(privateTradeCut(200) === PRIVATE_TRADE.cap,
+     `아무리 많이 태워도 ${PRIVATE_TRADE.cap * 100}%에서 멈춘다 (사료 밴드 20~46%의 하단)`);
+
+  // 실제로 매각에서 빠지는가 — 부관·동료와 같은 자리다
+  resetGame('gunsan');
+  state.gold = 500000; state.crew = 0; state.officer = null;
+  buy('grain', 30);
+  const bare = sell('grain', 30);
+  resetGame('gunsan');
+  state.gold = 500000; state.crew = 46; state.officer = null;
+  buy('grain', 30);
+  const manned = sell('grain', 30);
+  ok(bare.profit <= 0 ? manned.crewCut === 0
+       : (manned.crewCut > 0 && manned.profit < bare.profit),
+     `매각 이익에서 선원 몫을 뗀다 (${manned.crewCut}닢) — 밑진 거래에서는 안 뗀다`);
+
+  // ⓑ 원양만 요율이 세다 — 근해는 그대로여야 초반 압박이 안 흔들린다
+  const lane = LIVE_LANES[0];
+  ok(insureRateFor(lane.a, lane.b) === INSURANCE_RATE_OCEAN,
+     `원양 구간의 보험 계수는 ${INSURANCE_RATE_OCEAN} (사료 요율의 절반)`);
+  ok(insureRateFor('gunsan', 'yeosu') === INSURANCE_RATE,
+     `근해는 ${INSURANCE_RATE} 그대로다 — 원양만 올린다`);
+  {
+    resetGame();
+    const V = 100000;
+    const eff = insuranceFor({ from: lane.a, to: lane.b, value: V }) / V * 100;
+    ok(eff >= 2.0 && eff <= 6.0,
+       `가장 붐비는 원양 구간의 실효 요율 ${eff.toFixed(2)}% — 사료 중앙값 5%(p10 0.75 · p90 22) 안쪽`);
+    for (let i = 0; i < 5; i++) state.consorts['esc' + i] = { crew: 10, captain: null };
+    const eff5 = insuranceFor({ from: lane.a, to: lane.b, value: V }) / V * 100;
+    ok(eff5 < eff && eff5 >= 1.0,
+       `동행 5척이면 ${eff5.toFixed(2)}%로 내려간다 — **호위를 데려가면 종전 요율**이 그 뜻이다`);
+    state.consorts = {};
+  }
+
+  // ⓒ 전손은 원양에서만 굴린다
+  {
+    resetGame();
+    ok(totalLossOdds({ from: 'gunsan', to: 'yeosu' }) === 0,
+       '근해에는 전손이 없다 — 4.7%는 대서양 원양 항로의 수치다');
+    const p = totalLossOdds({ from: lane.a, to: lane.b });
+    ok(p > 0 && p <= TOTAL_LOSS.cap,
+       `원양 한 구간의 전손 확률 ${(p * 100).toFixed(1)}% (기준 ${(TOTAL_LOSS.rate * 100).toFixed(1)}% · 요율로 환산)`);
+    state.hp = Math.round(state.maxHp * 0.4);
+    ok(totalLossOdds({ from: lane.a, to: lane.b }) > p,
+       '삭은 배는 더 잘 가라앉는다 — 수리를 미룬 값이 여기서 온다');
+  }
+
+  // 전손이 「바닥의 규칙」과 어떻게 만나는가 — 동행이 있으면 갈아타고, 없으면 청산이다
+  {
+    resetGame('gunsan');
+    state.gold = 500000; state.crew = 30;
+    const sh = SHIPS.cocca;
+    state.fleet.cocca = { at: 'gunsan', hp: sh.hp, arms: { light: sh.guns, medium: 0, long: 0 }, refits: {} };
+    hireMate(matesAt('gunsan')[0].id, { joint: false });
+    setConsort('cocca');
+    buy('grain', 10);
+    const w1 = totalLoss(() => 0.5, null);
+    ok(w1.mode === 'consort' && state.shipKey === 'cocca' && cargoUsed() === 0,
+       `동행선이 있으면 그 배로 갈아탄다 (${SHIPS[w1.ship].name} → ${SHIPS[state.shipKey].name}) — **선단을 사는 또 하나의 이유**`);
+
+    resetGame('gunsan');
+    state.gold = 500000; state.crew = 30;
+    buy('grain', 10);
+    state.boons = state.boons || {};
+    state.boons.loan = { owed: 4000, due: state.day + 30 };
+    const w2 = totalLoss(() => 0.5, null);
+    ok(w2.mode === 'liquidate' && state.shipKey === BANKRUPT.keepShip && debtOwed() === 0,
+       '혼자면 청산이다 — 배가 사라지면 **채무도 사라진다**(해상대차). 판은 1일차 조건으로 돌아간다');
+  }
 }

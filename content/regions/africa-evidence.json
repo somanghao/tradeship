@@ -35,17 +35,17 @@
         },
         "gold": {
           "side": "supply",
-          "value": 0.74,
-          "verdict": "confirmed",
-          "basis": "1445년 엔히크가 세운 첫 해외 상관이고, 사하라 횡단 대상로가 대서양과 만나는 자리였다. 배율을 0.74로 높게 둔 것은 여기가 광산이 아니라 대상로의 **끝**이기 때문이다 — 낙타 등짐 값이 이미 얹혀 있다(운반비가 소금 값의 80%에 이르렀다는 기록이 있다).",
+          "value": 0.7,
+          "verdict": "probable",
+          "basis": "대상로가 내려놓는 사금이라 광산 앞의 값이 아니다. 원양 관문(리스본 12일)이 되면서 배율을 0.74에서 조금 내렸지만, 사다리(튀니스 0.76 > 아르갱 0.70 > 아크라 0.54 > 엘미나 0.46)는 지킨다 — 광산에서 멀수록 비싸야 한다.",
           "sources": [
             {
               "title": "Arguin",
               "url": "https://en.wikipedia.org/wiki/Arguin"
             },
             {
-              "title": "Trans-Saharan trade",
-              "url": "https://en.wikipedia.org/wiki/Trans-Saharan_trade"
+              "title": "Portuguese cruzado",
+              "url": "https://en.wikipedia.org/wiki/Portuguese_cruzado"
             }
           ]
         },
@@ -86,6 +86,18 @@
           "verdict": "probable",
           "basis": "말라게타는 기니만에서 나 유럽으로도 가고 사하라를 넘어 북아프리카로도 올라갔다. 아르갱을 그 북행 통로의 바닷문으로 두었다 — 게임 안에서 이 품목이 죽지 않게 하려는 목적도 함께 있다.",
           "sources": []
+        },
+        "wine": {
+          "side": "demand",
+          "value": 1.36,
+          "verdict": "probable",
+          "basis": "뭍에서 나는 것이 없는 모래섬이라 마실 것까지 배로 왔다. 리스본에서 내려오는 배의 되짐이 포도주였다.",
+          "sources": [
+            {
+              "title": "Arguin",
+              "url": "https://en.wikipedia.org/wiki/Arguin"
+            }
+          ]
         }
       }
     },
@@ -481,17 +493,13 @@
       "goods": {
         "copper": {
           "side": "supply",
-          "value": 0.5,
+          "value": 0.4,
           "verdict": "confirmed",
-          "basis": "콩고 왕국 교역의 대부분이 '야자포·구리·상아'였다고 적힌다. 내륙 카탕가의 구리가 강길로 내려와 이 항구에서 배에 실렸으므로 이 권역에서 구리가 가장 싼 자리로 뒀다.",
+          "basis": "카탕가의 구리 십자 주괴가 강을 타고 내려왔고 포르투갈 기록이 \"교역의 대부분은 야자포·구리·상아였다\"고 적는다. 원양 관문 둘(살바도르 22일·모잠비크 26일)이라 대양 배가 직접 싣는 값을 준다.",
           "sources": [
             {
-              "title": "Kingdom of Kongo",
-              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Kongo"
-            },
-            {
-              "title": "Katanga Cross",
-              "url": "https://en.wikipedia.org/wiki/Katanga_Cross"
+              "title": "Luanda",
+              "url": "https://en.wikipedia.org/wiki/Luanda"
             }
           ]
         },
@@ -509,9 +517,9 @@
         },
         "wine": {
           "side": "demand",
-          "value": 1.28,
-          "verdict": "gameplay",
-          "basis": "포르투갈 정착지라 와인 수요를 뒀다. 1576년에 정착민 100가구와 군인 400명이 함께 들어왔다는 기록이 그 시장의 크기를 짐작하게 한다.",
+          "value": 1.4,
+          "verdict": "probable",
+          "basis": "포르투갈 정착지라 미사와 식탁에 쓸 포도주가 상시 들어왔고 배후지에 포도밭이 없다. 남대서양 항로의 되짐 중 하나다.",
           "sources": [
             {
               "title": "Luanda",
@@ -532,6 +540,34 @@
           "verdict": "gameplay",
           "basis": "★ 고증이 아니라 설계다. 용연향은 동안(잔지바르·라무)에서만 나는데 수요까지 전부 동안에 두면 희망봉 서쪽에서는 죽은 칸이 된다. 유럽행 배가 실리는 마지막 항구를 그 출구로 삼았다 — 서안에서 용연향이 팔렸다는 직접 근거는 없다.",
           "sources": []
+        },
+        "tobacco": {
+          "side": "demand",
+          "value": 1.44,
+          "verdict": "confirmed",
+          "basis": "바이아 담배는 앙골라 거래에서 화폐에 가까운 물건이었다 — 꿀에 절인 3등급 담배가 결제 수단으로 쓰였다. 이 권역 최고 수요를 주는 근거가 그것이다.",
+          "sources": [
+            {
+              "title": "Bahia",
+              "url": "https://en.wikipedia.org/wiki/Bahia"
+            },
+            {
+              "title": "Tobacco",
+              "url": "https://en.wikipedia.org/wiki/Tobacco"
+            }
+          ]
+        },
+        "ivory": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "내륙에서 내려온 상아가 이 항구에 모여 대서양 배에 실렸다. 배후지가 상아 산지이므로 배율은 폭의 맨 아래에 둔다 — 집하일 뿐 소비가 아니다.",
+          "sources": [
+            {
+              "title": "Ivory trade",
+              "url": "https://en.wikipedia.org/wiki/Ivory_trade"
+            }
+          ]
         }
       }
     },
@@ -740,13 +776,17 @@
       "goods": {
         "ivory": {
           "side": "supply",
-          "value": 0.6,
+          "value": 0.5,
           "verdict": "probable",
-          "basis": "잠베지 내륙에서 나온 상아가 이 섬에 모여 인도로 넘어갔다. 배율을 킬와(0.48)보다 높게 둔 것은 여기가 산지가 아니라 포르투갈 세관을 낀 환적항이기 때문이다.",
+          "basis": "내륙에서 나온 상아가 이 섬에 모여 인도로 넘어갔다. 원양 관문 둘(호르무즈 18일·루안다 26일)이라 킬와(0.48) 바로 위에 둔다 — 대양 배가 직접 싣되 산지는 아니다.",
           "sources": [
             {
-              "title": "Kilwa Sultanate",
-              "url": "https://en.wikipedia.org/wiki/Kilwa_Sultanate"
+              "title": "Island of Mozambique",
+              "url": "https://en.wikipedia.org/wiki/Island_of_Mozambique"
+            },
+            {
+              "title": "Ivory trade",
+              "url": "https://en.wikipedia.org/wiki/Ivory_trade"
             }
           ]
         },
@@ -782,6 +822,46 @@
           "verdict": "probable",
           "basis": "북쪽 스와힐리 항구에서 모인 거북등껍질이 유럽행 배에 실리기 전 여기서 값이 붙었을 것으로 본다. 게임 안에서 이 품목의 수요가 동안 북단(모가디슈)에만 몰리지 않게 하려는 목적도 함께 있다.",
           "sources": []
+        },
+        "gold": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "confirmed",
+          "basis": "소팔라의 모노모타파 금이 이 섬의 세관을 거쳐 나갔다. 앙고셰(0.56)가 그 세관을 피해 새어 나가는 값이고 여기가 정본 창구이므로 같은 자리에 둔다 — 소팔라(0.48)가 광산 쪽이다.",
+          "sources": [
+            {
+              "title": "Sofala",
+              "url": "https://en.wikipedia.org/wiki/Sofala"
+            },
+            {
+              "title": "Island of Mozambique",
+              "url": "https://en.wikipedia.org/wiki/Island_of_Mozambique"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "probable",
+          "basis": "중앙아프리카의 구리 십자가 포르투갈 배로 인도양 쪽에 팔렸고 인도가 놋·청동의 원료로 그것을 사들였다. 희망봉을 도는 구간이 그 길이다.",
+          "sources": [
+            {
+              "title": "Island of Mozambique",
+              "url": "https://en.wikipedia.org/wiki/Island_of_Mozambique"
+            }
+          ]
+        },
+        "carpet": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "스와힐리 해안 발굴에서 페르시아 도자·직물이 나온다. 이 해안의 지배층이 호르무즈에서 올라온 융단을 사들였다는 뜻이다.",
+          "sources": [
+            {
+              "title": "Persian carpet",
+              "url": "https://en.wikipedia.org/wiki/Persian_carpet"
+            }
+          ]
         }
       }
     },
@@ -938,13 +1018,17 @@
       "goods": {
         "ivory": {
           "side": "supply",
-          "value": 0.52,
-          "verdict": "confirmed",
-          "basis": "몸바사의 주요 수출품이 '상아·기장·참깨·코코넛'이었다고 명시된다. 이 해안 최대의 항구답게 상아 배율이 킬와 다음으로 낮다.",
+          "value": 0.48,
+          "verdict": "probable",
+          "basis": "이 해안 최대의 항구이고 수출은 상아·기장·참깨·코코넛이었다. 원양 관문(아덴 13일)이라 킬와(0.48)와 나란한 값을 준다.",
           "sources": [
             {
               "title": "Mombasa",
               "url": "https://en.wikipedia.org/wiki/Mombasa"
+            },
+            {
+              "title": "Ivory trade",
+              "url": "https://en.wikipedia.org/wiki/Ivory_trade"
             }
           ]
         },
@@ -997,6 +1081,34 @@
             {
               "title": "Swahili coast",
               "url": "https://en.wikipedia.org/wiki/Swahili_coast"
+            }
+          ]
+        },
+        "hide": {
+          "side": "supply",
+          "value": 0.46,
+          "verdict": "probable",
+          "basis": "스와힐리 해안은 상아·금과 함께 가죽을 홍해 쪽으로 내보냈다. 배후지의 목축이 그 밑천이다.",
+          "sources": [
+            {
+              "title": "Mombasa",
+              "url": "https://en.wikipedia.org/wiki/Mombasa"
+            }
+          ]
+        },
+        "spice": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "아덴에서 계절풍을 타고 내려온 아라비아·인도 향신료를 이 해안이 사들였다. 배후지에서 향신료가 나지 않는다.",
+          "sources": [
+            {
+              "title": "Mombasa",
+              "url": "https://en.wikipedia.org/wiki/Mombasa"
+            },
+            {
+              "title": "Aden",
+              "url": "https://en.wikipedia.org/wiki/Aden"
             }
           ]
         }
@@ -1392,12 +1504,6 @@
       "risk": 7.5,
       "verdict": "probable",
       "basis": "소말리 해안은 항구가 드물고 여름 소말리 해류가 맹렬히 북상한다. 되짚어 내려오는 것이 특히 어려웠으므로 외해 대역(6~8)의 상단을 적용했다. 직접 요율은 없다.",
-      "sources": []
-    },
-    "gwato|whydah": {
-      "risk": null,
-      "verdict": "probable",
-      "basis": "요율 6.0(바닷길)에서 **뭍길(null)로 고쳤다.** 볼타 어귀에서 동쪽으로 아네호·위다·포르토노보·바다그리·라고스를 지나 베냉 강에 닿을 때까지 모래톱 뒤의 라군과 크리크가 끊기지 않고 이어진다. 사주가 얕아 큰 배는 들어가지 못했고 짐과 사람은 카누로 갔다. 그웨이토(우그호톤)부터가 베냉 강 크리크를 거슬러 올라간 강항이다. 이 길의 위험은 코르세어가 아니라 **길목을 쥔 자들**이었다 — 위다의 우에다 왕, 바다그리·라고스의 수장, 베냉의 오바가 각자 관세(customs)를 받았고 그 값을 못 치르면 짐이 서 버렸다. 그래서 해적 판정을 걸지 않고(null) 통행세·노상강도가 나는 구간으로 둔다. ⚠️ 이 권역에 육로·내해 구간이 하나도 없어 사건 두 종이 영영 안 나던 것을 고친 자리이기도 하다.",
       "sources": []
     }
   },
