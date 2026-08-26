@@ -5,7 +5,7 @@
 // 게임 코드에서 그대로 불러 돌린다. 그래야 "대시보드에서는 맞는데 게임에서는 다른"
 // 상태가 안 생긴다. 계측만 한다.
 
-import { SEA_EVENTS, ENEMIES, SHIPS, CITIES, CITY_BY_ID, ROUTES } from '../js/data.js';
+import { SEA_EVENTS, ENEMIES, SHIPS, CITIES, CITY_BY_ID, ROUTES, REGION_OF_CITY } from '../js/data.js';
 import { state, resetGame, rollSeaEvent, pickEnemy, routeRisk, encounterOdds } from '../js/state.js';
 import { initWorld, worldTick, npcPos, pirateThreat, pirateEnemy } from '../js/world.js';
 import { NPC, PIRATE_SHIPS } from '../js/npc/config.js';
@@ -159,6 +159,9 @@ export function measureWorld({ days = 240, frameEvery = 2 } = {}) {
       const e = pirateEnemy(n);
       return {
         id: n.id, name: n.name, shipKey: n.shipKey,
+        /* 권역 — 공유 필터(`region-filter.js`)가 읽는 자리다. 명부는 바다마다 얼굴이 다른데
+           탭이 아홉을 뭉뚱그리면 "이 바다에 누가 있나"를 못 묻는다(C-6). */
+        region: REGION_OF_CITY[n.at] ?? null,
         shipName: SHIPS[n.shipKey].name,
         gold: Math.round(n.gold), kills: n.kills || 0,
         at: CITY_BY_ID[n.at]?.name ?? n.at,

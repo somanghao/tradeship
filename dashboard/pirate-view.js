@@ -5,6 +5,9 @@
 
 import { measureAll } from './pirates.mjs';
 import { $, fmt, pct, el, svg, node, mono, TIER_COLOR, tipShow, tipMove, tipHide, withTip } from './shared.js';
+/* 권역 필터는 **공유물**이다 — 탭마다 따로 만들면 탭을 옮길 때 선택이 풀린다(`region-filter.js` 머리주석). */
+import { mountRegionBar, injectRegionBarStyle, onRegionChange,
+  currentRegion, regionName, filterByRegion, ALL } from './region-filter.js';
 
 let P = null;              // 계측 결과
 let frameIdx = 0;
@@ -273,7 +276,10 @@ function drawRoster() {
   </tr></thead>`;
   const tb = el('tbody');
   const topTier = P.table[P.table.length - 1];
-  for (const r of P.world.roster) {
+  /* ★ 명부는 **그 바다에 걸린 것만** 보여준다. 아홉을 뭉뚱그리면 "이 바다에 누가 있나"를
+     못 묻는데, 그것이 이 탭에서 가장 자주 하는 질문이다(C-6). */
+  const shown = filterByRegion(P.world.roster);
+  for (const r of shown) {
     const tr = el('tr');
     const over = r.bountyHi > topTier.lootHi;
     tr.innerHTML = `
@@ -289,7 +295,18 @@ function drawRoster() {
     tb.append(tr);
   }
   t.append(tb);
-  $('p-roster').replaceChildren(t);
+  /* 그 바다에 지금 아무도 안 떠 있을 수 있다 — **빈 표는 고장으로 읽힌다.**
+     명부가 비는 것은 정상이다(철이 안 맞거나 이미 닫혔거나). 그 사실을 말해 준다. */
+  if (!shown.length) {
+    const empty = el('div', 'note');
+    empty.style.padding = '10px 4px';
+    empty.textContent = currentRegion() === ALL
+      ? '지금 떠 있는 명부 해적이 없다.'
+      : `${regionName(currentRegion())}에는 지금 떠 있는 명부 해적이 없다 — 철이 안 맞거나 이미 닫힌 이름이다.`;
+    $('p-roster').replaceChildren(empty);
+  } else {
+    $('p-roster').replaceChildren(t);
+  }
 
   const over = P.world.roster.filter((r) => r.bountyHi > topTier.lootHi);
   if (over.length) {
@@ -317,6 +334,9 @@ function drawLinkage() {
 
 /* ── 실행 ────────────────────────────────────────────────── */
 export function runPirates() {
+  injectRegionBarStyle();
+  mountRegionBar($('p3-regionbar'));
+  onRegionChange(() => { if (P) drawRoster(); });
   $('p-stamp').textContent = '돌리는 중…';
   requestAnimationFrame(() => {
     const t0 = performance.now();
