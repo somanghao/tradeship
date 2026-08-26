@@ -159,6 +159,7 @@
   <div class="grp" data-tab="overview">
     <button class="tab" data-tab="overview">오버뷰</button>
     <div class="subs">
+      <a href="#o-s-seas">아홉 바다 한눈에</a>
       <a href="#o-s-tree">아키텍처 트리</a>
       <a href="#o-s-runtime">동적 생성물</a>
       <a href="#o-s-state">상태 · 세이브 대상</a>
@@ -213,6 +214,15 @@
     </div>
   </div>
 
+  <!-- 사람 — 상단·해적·인물·동료를 한자리에서 본다(C-6). 해적 탭은 명부만 본다. -->
+  <div class="grp" data-tab="npc">
+    <button class="tab" data-tab="npc">사람</button>
+    <div class="subs">
+      <a href="#n-s-grid">바다별 사람 수</a>
+      <a href="#n-s-list">사람 명부</a>
+    </div>
+  </div>
+
   <div class="grp" data-tab="wage">
     <button class="tab" data-tab="wage">보수·물가</button>
     <div class="subs">
@@ -237,7 +247,16 @@
     <code>node tools/check-architecture.mjs</code>가 <b>실제 파일·실제 state와 대조</b>한다 —
     파일을 추가하고 트리에 안 적으면 검증이 실패한다. 구조 설명이 조용히 낡지 않게 하는 장치다.
   </p>
+  <div id="o-regionbar"></div>
   <div class="cards" id="o-cards"></div>
+
+  <h3 id="o-s-seas">아홉 바다 한눈에</h3>
+  <p class="legend para">
+    이 탭이 오래도록 <b>파일과 상태만</b> 말하고 세계는 뭉뚱그렸다(C-6) — 그런데 이 저장소의
+    최상위 원칙이 <b>콘텐츠를 늘리는 것</b>이라, 늘어난 것을 바다별로 세는 자리가 먼저 있어야 한다.
+    권역을 고르면 그 줄이 밝아지고 다른 탭도 함께 따라간다. <b>0인 칸이 곧 다음에 채울 자리다.</b>
+  </p>
+  <div class="panel" style="overflow:auto"><div id="o-seas"></div></div>
 
   <h3 id="o-s-tree">아키텍처 트리</h3>
   <p class="legend para">
@@ -435,6 +454,12 @@
   </div>
 
   <h2 id="w-s-prices">교역품 물가 <span class="note">기준가가 사료의 위계와 같은 순서인가 — 곡물의 몇 배인가로만 본다</span></h2>
+  <p class="legend para">
+    <b>바다를 고르면 그 바다에서 실제로 오가는 품목만</b> 남는다(그 바다 항구의 산지·수요에 걸린 것).
+    아홉을 뭉뚱그리면 60줄이 되어 <b>“이 바다에서 무엇이 비싼가”</b>를 물을 수 없다 —
+    이 표가 답해야 하는 것이 그 질문이다. 선택은 다른 탭과 함께 움직인다.
+  </p>
+  <div id="w-regionbar"></div>
   <div class="panel"><div id="w-prices"></div></div>
 
   <h2 id="w-s-evi">근거 <span class="note">이 수치가 왜 이 값인지 — 행에 올리면 출처가 뜬다</span></h2>
@@ -503,6 +528,33 @@
 
   <h2 id="q-s-evi">근거 현황 <span class="note">어느 항구가 재조사 대상인지</span></h2>
   <div class="panel" id="p2-evi"></div>
+</section>
+
+<!-- ══════════════ 사람 ══════════════ -->
+<section class="tabpage" id="tab-npc">
+  <h1>사람</h1>
+  <p class="sub">
+    아홉 바다에 앉힌 사람 전부 — <b>상단</b>(바다를 도는 배) · <b>해적</b>(명부에 이름이 오른 자) ·
+    <b>인물</b>(항구에 머물며 무언가를 해 주는 사람) · <b>동료</b>(갑판에 태우는 사람).
+    해적 탭은 명부만 보고 나머지는 어느 화면에도 안 모였다 —
+    <b>“이 바다에 사람을 몇 앉혔나, 어느 항구가 비었나”</b>를 물을 자리가 여기다.
+    정본은 <code>js/regions/&lt;권역&gt;/npc-*.js</code>이고 이 표는 그것을 읽기만 한다.
+  </p>
+
+  <div id="n-regionbar"></div>
+  <div id="n-kindbar"></div>
+  <div class="bar">
+    <label>찾기 <input id="n-q" type="text" placeholder="이름·항구·직업·한 줄" style="width:220px"></label>
+    <span style="color:var(--dim);font-size:11px" id="n-stamp"></span>
+  </div>
+
+  <div class="cards" id="n-cards"></div>
+
+  <h2 id="n-s-grid">바다별 사람 수 <span class="note">줄을 누르면 아래 명부가 그 바다만 보여준다 · 「사람이 선 항구」가 적으면 채울 자리다</span></h2>
+  <div class="panel" style="overflow:auto"><div id="n-grid"></div></div>
+
+  <h2 id="n-s-list">사람 명부 <span class="note">위 바다·갈래 고르기와 찾기가 함께 걸린다</span></h2>
+  <div class="panel" style="overflow:auto"><div id="n-list"></div></div>
 </section>
 
 </main>
