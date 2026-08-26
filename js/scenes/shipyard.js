@@ -20,6 +20,7 @@ import {
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
   pushLog, hasRefit, buyRefit, sellsShip, yardsOf, buyShot, shipSpeed, shorthanded,
   industryOf, tierNeeded, shipPriceAt, shipLockedBy, yardCapable, buildableAt,
+  yardReach, yardReachWord, yardShortOf,
   usedListings, buyUsed,
   fleetUpkeep,
   /* 동행 선단 — 규칙은 `state.js`, 여기서는 줄에 토글 하나를 얹을 뿐이다 */
@@ -288,6 +289,15 @@ function shipOrder(cityId) {
   return (a, b) => (rank(a) - rank(b)) || (idx.indexOf(a) - idx.indexOf(b));
 }
 
+/** 지금 이 부두의 공업력이 **어느 바다까지 아는가** — 규칙을 한 줄로 옮긴 것뿐이다.
+    `YARD_REACH_WORD`와 같은 사다리를 읽으므로 규칙이 바뀌면 이 줄도 따라간다. */
+function yardReachHere() {
+  const ind = industryOf(state.at);
+  return ['아무 배도 못 짓는다(내륙)', '이 바다의 배까지',
+          '이 항구가 직접 오가는 바다까지', '이 바다가 닿는 바다까지',
+          '온 세계의 배까지'][Math.min(4, ind)];
+}
+
 function shipTab() {
   const upgradeCard = yardUpgradeCard();
   const rows = [];
@@ -316,8 +326,12 @@ function shipTab() {
                             { text: isConsort(key) ? '동행 중'
                                   : here ? '이 항구 정박' : `${CITY_BY_ID[rec.at].name} 정박` })
                        : el(`span.badge${sellsShip(key) ? '.buy' : ''}`, {
+                           /* ★ **못 짓는 까닭을 배지에서 이미 가른다.** 「이 항구엔 못 짓는다」 하나로
+                              뭉개면 부두를 넓혀 열리는 배와 아무리 넓혀도 안 열리는 배가 같아 보인다. */
                            text: sellsShip(key) ? `${shipPriceAt(key).toLocaleString('ko-KR')}닢`
-                             : shipLockedBy(key) ? '아직 못 짓는다' : '이 항구엔 못 짓는다',
+                             : shipLockedBy(key) ? '아직 못 짓는다'
+                             : yardShortOf(key)?.why === 'reach' ? '이 바다의 배가 아니다'
+                             : '이 항구엔 못 짓는다',
                          }),
         ]),
         el('div.sp', { text: `선체 ${s.hp} · 화물 ${s.cargo} · 포문 ${s.guns}(최대 ${Math.floor(s.guns * 1.5)}) · 선원 ${s.crewMin ?? 0}~${s.crewMax} · 속력 ${s.speed} · 유지 ${s.upkeep}닢/일` }),
@@ -335,10 +349,19 @@ function shipTab() {
 
   return el('div', {}, [
     upgradeCard,
+    /* ★ **사다리가 둘이라는 것을 화면이 말한다.** 기술(무엇을 지을 솜씨가 되나)과
+       교역(어느 바다의 배를 아는가)이 나란히 걸리므로, 한쪽만 적으면 "공업력이 되는데
+       왜 안 나오나"가 설명되지 않는다. 지금 이 부두가 어디까지 아는지를 한 줄로 준다. */
     el('p.yard-note', {
       html: `<b>${city.name}</b> 조선소 — 공업력 <b>${industryOf()}</b>`
-          + `(0=내륙 · 1=소형 · 2=대형 상선 · 3=최상급). 제 나라 배는 한 등급 쉽게 짓고, `
+          + `(0=내륙 · 1=소형 · 2=대형 상선 · 3=최상급 · 4=승급한 부두). 제 나라 배는 한 등급 쉽게 짓고, `
           + '오래 지어온 항구는 값이 싸다.',
+    }),
+    el('p.yard-note', {
+      html: '부두는 <b>제가 오가는 바다의 배</b>부터 안다 — 공업력 1이면 이 바다, '
+          + '2면 이 항구가 직접 오가는 바다, 3이면 이 바다가 닿는 바다, '
+          + '<b>4라야 온 세계의 배</b>를 짓는다. '
+          + `지금 이 부두가 아는 데까지 — <b>${yardReachHere()}</b>.`,
     }),
     el('p.yard-note', {
       html: '줄을 누르면 그 배가 <b>화면에 뜬다</b>. 배는 마지막으로 내린 항구에 그대로 남고, '
@@ -363,6 +386,14 @@ function whyNot(key, s) {
     return `→ ${w}에서만 짓는다 (그 부두에 공업력 ${tierNeeded(key, (s.yards ?? [])[0])} 필요)`;
   }
   const where = buildableAt(key).slice(0, 4).join(' · ');
+  /* ★ **교역권이 막은 것과 기술이 막은 것을 가른다.** 둘을 "공업력 N 필요" 한 줄로 뭉개면
+     플레이어가 이 항구의 부두를 넓히다가 열리지 않는 것을 보고서야 안다 —
+     이 게임에서 한 회차에 다섯 번 나온 "규칙은 있는데 화면이 말하지 않는" 자리다. */
+  const short = yardShortOf(key);
+  if (short?.why === 'reach') {
+    return `→ ${short.word}다 — 이 부두는 공업력 ${short.need}까지 올라야 그 물건을 안다`
+         + ` (지금 ${industryOf()})` + (where ? ` · ${where}` : '');
+  }
   return `→ 이 항구는 공업력 ${industryOf()}, ${tierNeeded(key)} 필요`
        + (where ? ` — ${where}에서 짓는다` : '');
 }

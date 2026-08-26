@@ -34,6 +34,7 @@
 | 도시 수치의 근거·출처 | `content/regions/<권역>-evidence.json` (정본) — 고치면 `node tools/check-evidence.mjs`. 대시보드 매트릭스 **근거** 모드에서도 보인다 |
 | 항로 연결 | `map/geo.js: ROUTES` — 선 하나가 경제 전체의 물길을 바꾼다 |
 | 바람·해류 | `map/geo.js: CURRENTS` · 배의 `rig` · `state.js: windOf/windFactor/routeFactor` |
+| **철(계절풍) · 어느 철에 여는 항로인가** | 권역 안 `geo.js: ROUTE_SEASON` · 원양 `regions/index.js: OCEAN_LANES[].season` → 합성 `map/geo.js: ROUTE_SEASON` · 규칙 `state.js: routeSeason/inRouteSeason/seasonFactor/seasonRiskMul/routeSeasonLabel` · 값 `data.js: SEASON` · 검증 `node tools/check-routes.mjs` |
 | 해적 조우 빈도 | 기본 표는 `data.js: SEA_EVENTS`(합 100), **항로별 차등은 `map/geo.js: ROUTE_RISK` → `state.js: encounterOdds()`**. 라벨은 `routeDangerLabel()`. 판정은 **8일에 한 번씩 넉 장까지**이고 뒤로 갈수록 눅는다(`rollSeaEvent`의 `damp`) — 실주행에서 가장 안전한 항로와 **2.8배 차** |
 | 항로 위험도 값 | `map/geo.js: ROUTE_RISK`(요율 %, `null`=내해·육로) · 환산 상수는 `state.js: ODDS_BASE/ODDS_PER_PCT/THREAT_PER_SHIP` |
 | 화물이 해적을 부르는 정도 | `state.js: cargoLure` (`LURE_PER` 9,000닢당 `LURE_PER_STEP` 5%p·상한 14%p) → `encounterOdds`에 더해진다 |
@@ -58,7 +59,13 @@
 - **★ 권역을 여럿이 동시에 늘릴 수 있다 — 다만 `id`는 세계에서 하나뿐이다.** 권역끼리 import하지 않으므로 여덟 권역을 병렬로 채울 수 있는데(2026-08-17에 그렇게 175 → 264곳으로 늘렸다), **서로의 id는 못 본다.** 실제로 카리브(온두라스)와 남미(페루)가 둘 다 `trujillo`를 써서 `check-evidence`가 유령·불일치 12건으로 잡았다. 같은 지명이 두 대륙에 있는 경우(트루히요·산티아고·트리니다드·발렌시아…)를 미리 정하고 나눠라 — 이 저장소의 해법은 **뭍의 도시 ↔ 바다 쪽 문**을 갈라 외항 이름을 쓰는 것이다(리마↔카야오, 아레키파↔이슬라이, 트루히요↔우앙차코).
 - **★ 검증기가 콘텐츠를 막지 않게 실패와 경고를 갈라 둔다.** `check-routes`의 **근거없음**과 `check-evidence`의 **관세 무근거**가 exit 1이어서, 항구를 늘리려면 그 항구의 사료를 먼저 찾아야 하는 구조였다(2026-08-17에 고쳤다). **실패는 *코드와 근거가 어긋난 것*뿐이다** — 불일치·유령·요율없음·배선. 미조사(근거없음·빈칸·미조사)는 경고다. 새 검사를 넣을 때 이 선을 지켜라. 최상위 원칙이 "근거 없음으로 실패시키면 콘텐츠를 늘리려 조사부터 끝내야 하는 구조가 된다"고 못박아 둔 자리다.
 - **항구 성질을 적는 표에서는 `tariffRate()`를 쓰면 안 된다** — 부관 특전이 곱해져 **탭을 여는 순서에 따라 값이 달라진다**(6.0%가 3.9%로). `baseTariff()`를 쓴다. 대시보드가 실제로 이 버그를 겪었다.
+- **★ 철은 막지 않고 값을 물린다 — 그리고 `routeRisk()`는 안 건드린다.** 사료는 「통행 불가」라고 적지만(한자법 2/22~11/11 · 남서 계절풍 넷 달의 말라바르), 이 게임은 **항구에 시간이 없어**(`advanceDays`가 항해에서만 불린다) 막으면 갇힌 사람이 철이 바뀌기를 기다릴 방법 자체가 없다(진짜 데드락). 판정 근거는 `data.js: SEASON` 주석과 `UNIMPLEMENTED.md` B-2.
+  - ⚠️ 요율 배율은 **`encounterOdds`와 `insuranceFor` 안에서만** 곱한다. `routeRisk()` 자체를 올리면 `escortNeed`(원양 동행 의무)가 함께 움직여 **같은 문이 날짜에 따라 열렸다 닫혔다 한다** — 「막지 않는다」는 판정을 뒷문으로 깨는 짓이다.
+  - ⚠️ **제철에 상을 주지 않는다**(배율 1). 순풍 철을 >1로 두면 무역 수익이 통째로 부푸른다.
+  - ⚠️ **「겨울이 여름보다 오래 걸린다」로 배선을 검사하지 말 것.** 바람도 날짜로 바뀌므로 `routeFactor`에서 계절을 떼어내도 그 부등식은 그대로 선다(일부러 떼어 확인했다). `test-rules`와 `check-routes` §4는 **곱해진 것을 식으로** 맞춰 본다.
+  - ⚠️ `OCEAN_LANES[].monsoon`은 **성격 표시일 뿐**이다(도구 여럿이 세고 있다). 일수와 요율을 움직이는 것은 `season`이다 — 오래도록 `monsoon`만 있고 읽는 규칙이 없어 항로 카드가 거짓말을 하고 있었다.
 - **`ROUTE_RISK`는 두 곳에서 쓰인다.** 해적 조우 확률(`encounterOdds`)과 **적하보험료**(`insuranceFor`)다. 요율을 고치면 위험만 바뀌는 게 아니라 후반 비용 구조가 함께 움직인다 — 한쪽만 보고 조정하지 말 것.
+- **`ROUTE_SEASON`도 같다** — 근거 JSON의 `routes[key].season`·`seasonBasis`에 같은 커밋에서 적는다. `check-routes.mjs`가 요율과 **같은 규약**으로 대조한다(불일치는 실패 · 미조사는 경고).
 - **`ROUTE_RISK`를 고치면 `content/regions/<권역>-evidence.json`도 같은 커밋에서.** `node tools/check-routes.mjs`가 불일치·유령 항로뿐 아니라 **"확률이 실제로 갈렸는가"**까지 본다(배선이 끊기면 실패). 요율은 추정이 아니라 당대 인수업자가 매긴 값이라 감으로 바꾸지 말 것.
 - **`SEA_EVENTS`의 weight 합 100을 깨지 말 것.** 항로별 위험은 pirate weight를 갈아 끼우고 **그 차이를 calm에서 덜어와** 유지한다(`state.js: rollSeaEvent`). pirate만 올리면 폭풍·표류물·상선조우의 상대 빈도가 통째로 내려앉는다 — 테스트가 이걸 지킨다.
 - **시뮬 수치는 반드시 여러 시드를 평균한다 — 한 판은 판단 근거가 못 된다.** "내해를 안전하게 만들어 실효 조우율이 18%→**10.3%**로 내려갔다(90항차 중 33항차가 무위험)"고 메모리에 적어 두고 대체 이벤트까지 후보로 올렸는데, **시드 20판을 평균하니 18.6%·내해 통과 7%로 종전과 같았다**(2026-08-15 정정). 원인은 `sim-risk.mjs`가 시드 없는 1회 실행이었던 것 — 어느 항로를 탔느냐가 통째로 운이라 10%대와 20%대를 오간다. 지금은 `node tools/sim-risk.mjs [항차] [시드수]`가 평균을 낸다. **`sim-trade.mjs`로는 안 잡힌다**(해상 이벤트를 모델링하지 않는다).

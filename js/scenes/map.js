@@ -24,6 +24,9 @@ import {
   /* 입장권 체크리스트가 쓰는 것 — **판정을 여기서 새로 만들지 않는다.**
      `oceanReady`가 보는 그 상수와 그 함수를 그대로 읽어 세 줄로 편다. */
   escortNeed, OCEAN_CREW_MIN, OCEAN_HULL_MIN,
+  /* 계절풍 — **규칙만 있고 화면이 침묵하면 없는 것과 같다.** 한 회차에 다섯 번 나온 교훈이라
+     철을 넣은 커밋에서 항로 카드가 그것을 말하게 한다. 판정은 `state.js` 한 벌이다. */
+  routeSeasonLabel, seasonOf,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
@@ -1041,7 +1044,9 @@ function oceanGateRows(costCell) {
         here ? `기준 ${lane.days}일 (이 배로 ${d}일) · 항해비 ${cost.total}닢`
              : `문까지 ${course.legs}구간 ${course.days}일 · 건너는 데 ${lane.days}일`,
         here && dg ? `해적 조우 ${Math.round(dg.odds * 100)}%` : `원양 요율 ${lane.risk}%`,
-        lane.monsoon ? '★ 계절풍 구간 — 철을 잘못 잡으면 훨씬 오래 걸린다' : null,
+        /* ★ 전에는 이 줄이 *"철을 잘못 잡으면 훨씬 오래 걸린다"*고만 적었고 **그것이 거짓말이었다** —
+           `monsoon`을 읽는 규칙이 하나도 없어 일수가 한 치도 안 달라졌다. 이제는 값이 붙는다. */
+        (() => { const s = routeSeasonLabel(from, to); return s ? `★ ${s.text} — ${s.why}` : null; })(),
         lane.overland ? '★ 육로 환적 — 배가 아니라 짐이 넘어간다' : null,
         '',
         '입장권',
@@ -1066,7 +1071,15 @@ function oceanGateRows(costCell) {
           text: here ? ' 여기서' : ` ← ${gate.name}`,
           style: { color: here ? '#f4dd86' : '#8f8878', fontSize: '10.5px' },
         }),
-      ]),
+        /* 원양은 스무 날이 넘는 판돈이라 **철을 줄 위에서** 알려야 한다 —
+           눌러 본 뒤에 알면 이미 떠난 뒤다. */
+        (() => {
+          const s = routeSeasonLabel(from, to);
+          return s && !s.open
+            ? el('span', { text: ' 철 아님', style: { color: '#d98a6a', fontSize: '10.5px' } })
+            : null;
+        })(),
+      ].filter(Boolean)),
       el('span.rw', { text: rg?.name ?? '', style: { color: '#8fb4d8' } }),
       el(`span.rw.${short.length ? 'bad' : 'good'}`, { text: status }),
       here ? costCell(d, cost)
@@ -1166,6 +1179,9 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
     const c = CITY_BY_ID[id];
     const d = voyageDays(state.at, id);
     const w = routeWindLabel(state.at, id);
+    /* ★ **철.** 계절이 안 걸린 항로면 `null`이라 줄이 아예 안 생긴다 —
+       그래야 표가 계절 항로에서만 말을 한다. */
+    const sn = routeSeasonLabel(state.at, id);
     const cost = voyageCost(d, state.crew, { from: state.at, to: id });
     const threat = pirateThreat(state.at, id);
     const dg = routeDangerLabel({ from: state.at, to: id, threat });
@@ -1185,6 +1201,7 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
            + `\n해적 조우 ${Math.round(dg.odds * 100)}%`
            + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
            + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')'
+           + (sn ? `\n★ ${sn.text} — ${sn.why}` : '')
            + goodsHint(c)
            + (huntHere(id) ? `\n★ ${huntHere(id)}의 사냥터다 — 여기서 그자를 만난다.`
                              + '\n   짐이 값나갈수록 그자가 붙는다 — 빈 배로 돌 이유가 없다.' : '')
@@ -1199,6 +1216,11 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
         }),
         huntHere(id) ? el('span', {
           text: ' 사냥터', style: { color: '#d0a04a', fontSize: '10.5px' },
+        }) : null,
+        /* 철을 어긴 구간은 **이름 옆에서** 짚는다 — 바람 칸은 이미 순풍/역풍이 쓰고 있고,
+           둘은 다른 것이다(바람은 그날의 운, 철은 반년짜리 구조다). */
+        sn && !sn.open ? el('span', {
+          text: ' 철 아님', style: { color: '#d98a6a', fontSize: '10.5px' },
         }) : null,
       ].filter(Boolean)),
       el(`span.rw.${w.kind || 'calm'}`, { text: w.text }),
@@ -1280,9 +1302,15 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
     el('div.panel', {}, [
       el('h3', {}, [
         el('span', { text: '항로' }),
+        /* ★ **철을 여기 적는다.** 항로 줄이 "철 아님"이라고 말해도 지금이 무슨 철인지
+           화면 어디에도 없으면 플레이어가 언제 다시 오면 되는지를 모른다.
+           바람(그날의 운)과 철(반년짜리 구조)은 다른 것이라 나란히 둔다. */
         el('span', {
-          text: `${windName()} · ${ship().rig >= 0.7 ? '가로돛' : ship().rig <= 0.2 ? '라틴세일' : '혼합범장'}`,
+          text: `${seasonOf() === 'summer' ? '여름' : '겨울'} · ${windName()}`
+              + ` · ${ship().rig >= 0.7 ? '가로돛' : ship().rig <= 0.2 ? '라틴세일' : '혼합범장'}`,
           style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
+          title: '철은 반년마다 바뀐다(1년 120일). 계절풍 구간은 제철에만 제 일수로 간다 —'
+               + ' 철을 어겨도 막지는 않지만 훨씬 오래 걸리고 요율이 오른다.',
         }),
       ]),
       el('div.route-list', {}, rows),

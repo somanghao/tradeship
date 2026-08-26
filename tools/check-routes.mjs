@@ -10,9 +10,10 @@
 //
 //   node tools/check-routes.mjs
 
-import { ROUTES, ROUTE_RISK, riskKey, REGIONS, REGION_OF_CITY, isOceanLane } from '../js/map/geo.js';
-import { CITY_BY_ID } from '../js/data.js';
-import { encounterOdds, routeRisk } from '../js/state.js';
+import { ROUTES, ROUTE_RISK, ROUTE_SEASON, riskKey, REGIONS, REGION_OF_CITY, isOceanLane } from '../js/map/geo.js';
+import { CITY_BY_ID, SEASON } from '../js/data.js';
+import { encounterOdds, routeRisk, seasonRiskMul, routeFactor, windFactor, currentFactor }
+  from '../js/state.js';
 import { ROUTE_EV, ROUTE_VERDICTS, ERA, META, LANE_EV } from './evidence-load.mjs';
 import { OCEAN_LANES } from '../js/regions/index.js';
 
@@ -25,7 +26,7 @@ const warn = (kind, where, msg) => problems.push({ kind, where, msg });
 
 const nameOf = (id) => CITY_BY_ID[id]?.name ?? id;
 const byVerdict = {};
-let sourced = 0, inland = 0;
+let sourced = 0, inland = 0, seasoned = 0;
 
 /* ── 1. 모든 항로에 요율과 근거가 있는가 ─────────────────── */
 for (const [a, b] of ROUTES) {
@@ -51,6 +52,21 @@ for (const [a, b] of ROUTES) {
   byVerdict[ev.verdict] = (byVerdict[ev.verdict] || 0) + 1;
   if (ev.sources?.length) sourced++;
   if (ev.risk === null) inland++;
+
+  /* ── 철(계절) — 요율과 **같은 규약**으로 대조한다 ──────────────────
+     실패: 코드와 근거가 어긋남 · 모르는 철 이름. 경고: 근거가 아직 안 적힌 것.
+     계절이 안 걸린 항로는 아무것도 묻지 않는다(대부분의 항로가 그렇다). */
+  const codeSeason = ROUTE_SEASON[key] ?? null;
+  const evSeason = ev.season ?? null;
+  if (codeSeason && !['summer', 'winter'].includes(codeSeason)) {
+    warn('불일치', where, `모르는 철 '${codeSeason}' — 'summer'|'winter'만 쓴다`);
+  }
+  if (codeSeason !== evSeason) {
+    warn('불일치', where, `철: 코드 ${codeSeason ?? '없음'} ≠ 근거 ${evSeason ?? '없음'}`);
+  } else if (codeSeason) {
+    seasoned++;
+    if (!ev.seasonBasis) warn('빈칸', where, '철은 적혔는데 seasonBasis(그 철의 근거)가 없다');
+  }
 }
 
 /* ── 2. 근거에만 있고 항로에 없는 것 (항로를 지웠는데 근거가 남은 경우) ── */
@@ -68,6 +84,9 @@ for (const key of Object.keys(EV.routes)) {
 for (const key of Object.keys(ROUTE_RISK)) {
   if (!live.has(key)) warn('유령', key, 'ROUTE_RISK에 있으나 ROUTES에 없다');
 }
+for (const key of Object.keys(ROUTE_SEASON)) {
+  if (!live.has(key)) warn('유령', key, 'ROUTE_SEASON에 있으나 ROUTES에 없다 — 철만 남았다');
+}
 
 /* ── 3. 확률이 실제로 갈렸는가 ───────────────────────────
    근거를 다 채워 놓고 배선이 빠져 모든 항로가 같은 확률이면 이 작업 전체가 헛것이다. */
@@ -84,9 +103,42 @@ if (hi - lo < 0.05) {
   warn('배선', '전체', `가장 안전한 항로와 위험한 항로의 차이가 ${((hi - lo) * 100).toFixed(1)}%p뿐이다 — 배선이 끊겼을 수 있다`);
 }
 
+/* ── 4. 철이 실제로 값을 물리는가 ────────────────────────────
+   요율과 같은 이유다. 표만 채우고 배선이 빠지면 **계절이 화면의 글자로만 남는다** —
+   `OCEAN_LANES`의 `monsoon: true`가 실제로 그 상태였다(어떤 규칙도 안 읽었다).
+   `seasonOf`는 `day % 120 < 60`이 여름이므로 0일은 여름·60일은 겨울이다. */
+const SUMMER_DAY = 0, WINTER_DAY = 60;
+/** 기대되는 계절 배율 — `state.js`를 안 믿고 `data.js: SEASON`에서 직접 잰다.
+    (검사기가 검사 대상의 함수로 자기를 검사하면 둘이 함께 틀렸을 때 통과한다) */
+const seasonFactorOf = (a, b, day) => {
+  const s = ROUTE_SEASON[riskKey(a, b)];
+  if (!s) return 1;
+  return s === ((day % 120) < 60 ? 'summer' : 'winter') ? 1 : SEASON.offSpeed;
+};
+const seasonRoutes = ROUTES.filter(([a, b]) => ROUTE_SEASON[riskKey(a, b)]);
+if (!seasonRoutes.length) {
+  warn('배선', '전체', '철이 걸린 항로가 하나도 없다 — ROUTE_SEASON이 안 모이고 있다');
+} else {
+  const [a, b] = seasonRoutes.find(([x, y]) => ROUTE_SEASON[riskKey(x, y)] === 'summer') ?? seasonRoutes[0];
+  const open = ROUTE_SEASON[riskKey(a, b)] === 'summer' ? SUMMER_DAY : WINTER_DAY;
+  const shut = open === SUMMER_DAY ? WINTER_DAY : SUMMER_DAY;
+  /* ⚠️ "철을 어긴 날이 더 느리다"만 보면 안 된다 — **바람도 날짜로 바뀌므로** `routeFactor`에서
+     철을 떼어내도 그 부등식은 그대로 선다(일부러 떼어 확인했다). 곱해진 것을 식으로 맞춰 본다. */
+  const bare = windFactor(a, b, shut) * currentFactor(a, b);
+  if (!(Math.abs(routeFactor(a, b, shut) - bare * seasonFactorOf(a, b, shut)) < 1e-9)
+      || routeFactor(a, b, shut) >= bare) {
+    warn('배선', `${nameOf(a)}~${nameOf(b)}`,
+         '철을 어긴 날의 routeFactor에 계절 배율이 안 곱해져 있다 — 일수가 한 치도 안 달라진다');
+  }
+  if (!(seasonRiskMul(a, b, shut) > seasonRiskMul(a, b, open))) {
+    warn('배선', `${nameOf(a)}~${nameOf(b)}`, '철을 어겨도 요율 배율이 안 달라진다 — encounterOdds/insuranceFor 배선이 끊겼다');
+  }
+}
+
 /* ── 보고 ────────────────────────────────────────────────── */
 console.log(`\n=== 항로 근거 점검 (${EV.era.label}) ===`);
-console.log(`항로 ${ROUTES.length} · 출처가 달린 항로 ${sourced} · 해적 미적용(내해·육로) ${inland}`);
+console.log(`항로 ${ROUTES.length} · 출처가 달린 항로 ${sourced} · 해적 미적용(내해·육로) ${inland}`
+  + ` · **철이 걸린 항로 ${seasoned}**`);
 if (pendingLanes) {
   console.log(`원양 항로 ${pendingLanes}개는 아직 안 이어졌다 — 한쪽 권역의 항구가 없다(권역을 채우면 저절로 이어진다).`);
 }

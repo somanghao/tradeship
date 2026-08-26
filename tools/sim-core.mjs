@@ -11,7 +11,7 @@ import {
   state, resetGame, advanceDays, neighborsOf, voyageDays, voyageCost,
   buy, sell, costFor, gainFor, tariffRate, purchaseShip, boardShip, sellsShip,
   cargoFree, repair, hire, shorthanded, shipPriceAt, oceanReady,
-  tavernCrews, recruitBand, ship, paydayDue, settlePayroll, payrollOwed,
+  tavernCrews, recruitBand, ship, paydayDue, settlePayroll, payrollOwed, HIRE_UNIT,
   /* 수직계열화 1단계(A-9) — `chain` 스위치를 켰을 때만 쓴다. 끄면 이 아래가 한 줄도 안 돈다. */
   priceOf, resaleOf, hasHolding, canBuyHolding, buyHolding, storeCap, storedUsed,
   storeGoods, takeGoods, settleWorks, collectMill, millOf, millRecipes, millPrice,
@@ -21,9 +21,20 @@ import { isOceanLane } from '../js/regions/index.js';
 import { initWorld, worldTick } from '../js/world.js';
 
 /* 무역선으로서의 등급 — **화물칸 오름차순**이다. 이 시뮬은 순수 무역만 재므로
-   전투력이 아니라 얼마나 싣느냐가 곧 등급이다(갤리는 비싸도 짐을 적게 실어 아래에 온다). */
-export const ORDER = ['galley', 'cocca', 'caravel', 'frigate', 'brig',
-  'superfrigate', 'fluyt', 'galleon', 'carrack', 'indiaman'];
+   전투력이 아니라 얼마나 싣느냐가 곧 등급이다(갤리는 비싸도 짐을 적게 실어 아래에 온다).
+
+   ★ **손으로 적은 열 척이었고, 그 열 척이 전부 지중해·대서양 배였다.** 그동안은 그래도
+     굴러갔다 — 조선소가 공업력만 봐서 부산포에서도 코카를 지었기 때문이다. 조선소에
+     교역권 사다리(`state.js: yardReach`)가 붙자 그 열 척이 **유럽 밖에서 통째로 사라졌고**,
+     `sim-firstship`이 아시아 시작 항구 전부에 「다음 배 없다」를 냈다. 게임이 아니라
+     **측정기가 유럽만 알고 있었던 것**이다(이 저장소가 두 번 겪은 유형 — 수리 전략·시드 없음).
+   ⇒ 목록을 손으로 늘리지 않고 **세계에서 뽑는다.** 권역이 배를 더해도 저절로 따라온다.
+     `tier 0`(낡은 바사)은 시중에 안 나오므로 빠지고, 그래서 `ORDER.indexOf('hulk') === -1`이라
+     시작배는 늘 최하위로 잡힌다 — 손으로 적던 시절과 같다. */
+export const ORDER = Object.entries(SHIPS)
+  .filter(([, s]) => (s.tier ?? 0) > 0)
+  .sort((a, b) => (a[1].cargo - b[1].cargo) || (a[1].price - b[1].price))
+  .map(([k]) => k);
 
 /** 목적지 하나에 대해 화물칸을 채우는 최적 조합(그리디).
     실제 플레이어처럼 여러 품목을 섞는다 — 압력이 품목별로 걸리므로 분산이 이득이다.
@@ -346,7 +357,14 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0, chain = fal
 
     // 지금 항구에서 살 수 있는 배가 있으면 산다(가장 큰 것부터 — 곧 갈아탈 배).
     // **지금 타는 배보다 나은 것만** — 안 그러면 싼 배를 사서 화물칸이 줄어드는 짓을 한다.
-    const curRank = ORDER.indexOf(state.shipKey);
+    /* ⚠️ **`curRank`가 루프 안에서 안 갱신되고 있었다.** 목록을 내림차순으로 훑으므로
+       가장 큰 배를 사고 나서도 *그보다 작은* 배들이 여전히 "지금 배보다 낫다"로 통과했고,
+       `boardShip`이 매번 불려 **결국 가장 작은 배에 올라탄 채** 항차를 시작했다.
+       열 척짜리 손목록에서는 값이 비싸 대개 한두 척에서 멈췄는데, 목록이 세계 전체(93척)가
+       되자 한 항차에 여러 척을 사서 자산이 무너졌다(부산포 40항차 23,694 → 1,067닢).
+       ⇒ 산 즉시 등급을 올린다. 곧 **살 수 있는 것 중 가장 큰 배 하나**만 산다 —
+         원래 주석이 적어 둔 "가장 큰 것부터 — 곧 갈아탈 배"가 이제야 그대로 돈다. */
+    let curRank = ORDER.indexOf(state.shipKey);
     for (const key of [...ORDER].reverse()) {
       if (ORDER.indexOf(key) <= curRank) continue;
       if (state.fleet[key] || !sellsShip(key)) continue;
@@ -354,11 +372,19 @@ export function runSim({ maxVoyages = 90, hooks = {}, minMargin = 0, chain = fal
       //   화물 한 칸을 채우는 데 드는 자본이 커져서, 배를 사고 나면 실을 것을 못 사
       //   절반이 파산했다(실측). 배는 화물을 나르는 수단이지 목적이 아니므로
       //   실제 플레이어처럼 매입 자금을 남겨 둔다.
-      if (shipPriceAt(key) > state.gold * 0.70) continue;
+      /* ★ **배값만 보고 있었다.** 손목록 열 척은 화물칸이 늘면 선원도 나란히 늘어 이 근사가
+         통했는데, 목록이 세계 전체가 되자 *짐은 많고 사람은 훨씬 더 많이 드는* 배가 섞였다 —
+         통신사선은 198칸에 최소 34명(계약금만 1,870닢)이고 유지비가 하루 21닢이다.
+         시뮬이 그것을 사고 사람을 못 채워 부산포 12판 중 8판이 파산했다(자산 0).
+         ⇒ **태울 사람 값까지 셈에 넣는다.** 실제 플레이어가 하는 셈이고, 그러면 큰 배는
+           "살 수 있을 때"가 아니라 "몰 수 있을 때" 사진다. */
+      const crewNeed = Math.max(0, (SHIPS[key].crewMin ?? 0) - state.crew);
+      if (shipPriceAt(key) + crewNeed * HIRE_UNIT > state.gold * 0.70) continue;
       const before = state.gold;
       if (purchaseShip(key).ok) {
         shipSpend += before - state.gold;
         boardShip(key);
+        curRank = ORDER.indexOf(key);   // ★ 이 줄이 없어 아래로 갈아타고 있었다(위 주석)
         got[key] = { v, day: state.day, gold: state.gold };
         hireSpend += manCrew();     // 새 배를 몰려면 사람이 더 필요하다
       }

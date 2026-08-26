@@ -75,20 +75,20 @@
 
 ## 현재 상태
 
-- 게임 루프 3파트(무역·항해·전투) + 조선소·술집 · **후반 4종**(거점·공업력 승급·정박·**가공장** `state.works`). **끝이 둘** — 조선의 「여덟 항구와 한 척」(`ENDING`)과 아홉 바다 **패권**(`HEGEMONY`). 완주 현황은 `UNIMPLEMENTED.md`.
+- 게임 루프 3파트(무역·항해·전투) + 조선소·술집 · **후반 4종**(거점·공업력 승급·정박·**가공장** `state.works`). **끝이 둘** — 조선의 「여덟 항구와 한 척」(`ENDING`)과 아홉 바다 **패권**(`HEGEMONY`).
 - 에셋은 코드 생성이고 PNG로 갈아 끼운다(`bake` 키 → `assets/manifest.json`) → `QUICKMAP-art.md` §3
-- **지도 아홉 장은 PNG다**(`assets/map/`) — **좌표를 옮기면 `gen-map-png.mjs`를 다시 돌린다.** ⚠️ **아홉 장만 미커밋**(F-8 반복 무늬) → `QUICKMAP-art.md` §3
+- **지도 아홉 장은 PNG다**(`assets/map/`) — **좌표를 옮기면 `gen-map-png.mjs`를 다시 돌린다.** → `QUICKMAP-art.md` §3
 - **통합 대시보드** `/dashboard/` — 게임 모듈을 그대로 돌려 계측한다. **파일이나 state 필드를 늘리면 `dashboard/architecture.mjs`에 적어야** `check-architecture`가 통과한다.
 - **값은 `data.js`, 규칙은 `state.js`.** 콘텐츠 수치·도시 경제·**튜닝 상수 전부**가 `js/data.js`, 도시 좌표·항로·해류는 권역 `geo.js`. `state.js`가 re-export하므로 **기존 import 경로는 그대로 쓴다.** → `QUICKMAP-trade.md`
 - **입항세는 두 겹** — `TARIFF`(기본율) + `CITY_TARIFF`(오버라이드). **비어 있는 도시는 빠진 게 아니다.** 성질은 `baseTariff()`로 읽는다
 - **데이터는 세 겹 — UI ▸ 수치 ▸ 근거**(권역 `geo.js` ▸ `trade.js` ▸ `content/regions/*.json`). **수치를 고치면 근거도 같은 커밋에서.** ★ 특산품·깃발은 이미 사료에 맞다 — **밸런스나 연표만 보고 되돌리면 같은 오류가 재발한다** → `QUICKMAP-world.md` §3
 - **한반도 갈래 다섯 중 하나로 시작한다**(`ORIGINS`). ★ **신분 특전은 조선 항구에서만 돈다**(`joseonOnly`) — 제1해에서 가장 센 갈래가 제3해에서 가장 약해진다.
 - **선원은 술집에서 무리 단위로** — 값이 두 갈래라(계약금은 지금, 일당은 내내) 싸게 태운 대가가 나중에 온다 → `wiki/crew-tavern.md`
-- **배는 도시 공업력이 정한다**(`industry ≥ SHIPS[].tier`). 상급선은 선행 선종을 몰아 봐야 열리고 즉시 얻는 길은 **중고선**뿐. 조선소 목록은 **그 바다 배가 앞줄**이다(`shipOrder`). → `QUICKMAP-combat.md`
+- **배는 공업력이 정하되 사다리가 둘이다** — 기술(`tierNeeded`)과 **교역**(`yardReach` — **4라야 온 세계의 배**). 상급선은 선행 선종을 몰아 봐야 열리고 즉시 얻는 길은 **중고선**뿐 → `QUICKMAP-combat.md`
 - **배는 아홉까지 함께 몬다**(기함 + 동행 8) — 선단은 **가장 느린 배**에 맞고 배마다 선원·항해비가 따로 든다 → `QUICKMAP-combat.md`
 - **부관은 에이미 하나** — 첫날부터 탄 동행이라 계약금도 해고도 없다 → `wiki/officer.md`
 - **세계가 혼자 돈다** — NPC 거래가 시세에 압력으로 남고, **항구마다 임자가 있어** 덮치면 관계가 상한다 → `QUICKMAP-world.md`
-- **항로마다 위험이 다르고 길수록 잦다** — 근거는 **당대 해상보험 요율**(`ROUTE_RISK`) → `QUICKMAP-world.md`
+- **항로마다 위험도 철도 다르다** — 위험은 **당대 해상보험 요율**(`ROUTE_RISK`), 철은 **여는 계절**(`ROUTE_SEASON`). 철을 어겨도 **막지 않고 값을 문다**(일수 ×1.8·요율 ×1.6) → `QUICKMAP-world.md`
 - **바다마다 적의 얼굴이 다르다** — 권역 `npc-pirates.js`(**명부 40**). **수치는 `ENEMIES` 등급 그대로**이고 이름·국적·선체만 갈아 끼운다 → `QUICKMAP-world.md`
 - **값 차이는 구조이고 흔들림은 시황이다** — `priceOf`가 시황과 도시 사정을 갈라 곱한다. 도시마다 따로 흔들면 산지→수요 사다리가 뒤집힌다(광산에서 멀수록 은이 싸졌다).
 - **경제는 "여러 항차"와 "대형 주문 한 건"이 나란하다 — 그 한 건의 크기는 *선복*이 정한다**(→ `QUICKMAP-world.md`). 곡선은 `node tools/sim-stat.mjs 20`(분포). **1회 실행으로 판단하지 않는다.** → `wiki/economy-trade.md`

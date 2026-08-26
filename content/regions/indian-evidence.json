@@ -1468,13 +1468,17 @@
           "title": "Wikipedia — Bhatkal (1502년 8월 28일 바스쿠 다 가마의 함대가 항구를 불태웠다)",
           "url": "https://en.wikipedia.org/wiki/Bhatkal"
         }
-      ]
+      ],
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 배를 뭍으로 끌어올리고 넉 달을 났다. 그래서 이 해안이 여는 철은 북동 계절풍 쪽(winter)이다. ⚠️ 같은 철에 원양 aden~calicut는 열린다(그 항로 주석: \"여름 남서 계절풍이면 스무 날이 열흘로 준다\") — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다."
     },
     "bhatkal|cannanore": {
       "risk": 5,
       "verdict": "probable",
       "basis": "카나라에서 말라바르로 넘어가는 연안 구간. 남쪽으로 갈수록 마라카르의 사냥터에 가까워지므로 평범한 연안값의 중간에 뒀다.",
-      "sources": []
+      "sources": [],
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 배를 뭍으로 끌어올리고 넉 달을 났다. 그래서 이 해안이 여는 철은 북동 계절풍 쪽(winter)이다. ⚠️ 같은 철에 원양 aden~calicut는 열린다(그 항로 주석: \"여름 남서 계절풍이면 스무 날이 열흘로 준다\") — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다."
     },
     "calicut|cannanore": {
       "risk": 7,
@@ -1485,7 +1489,9 @@
           "title": "Wikipedia — Kunjali Marakkar ('There were four Marakkars whose war tactics defended against the Portuguese invasion from 1520 to 1600'; 네 요새 포구와 갤리 건조)",
           "url": "https://en.wikipedia.org/wiki/Kunjali_Marakkar"
         }
-      ]
+      ],
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 배를 뭍으로 끌어올리고 넉 달을 났다. 그래서 이 해안이 여는 철은 북동 계절풍 쪽(winter)이다. ⚠️ 같은 철에 원양 aden~calicut는 열린다(그 항로 주석: \"여름 남서 계절풍이면 스무 날이 열흘로 준다\") — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다."
     },
     "calicut|cochin": {
       "risk": 9,
@@ -1496,19 +1502,25 @@
           "title": "Wikipedia — Kunjali Marakkar (1525년 캘리컷 요새 포격과 코친 습격·포르투갈 선박 소각)",
           "url": "https://en.wikipedia.org/wiki/Kunjali_Marakkar"
         }
-      ]
+      ],
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 배를 뭍으로 끌어올리고 넉 달을 났다. 그래서 이 해안이 여는 철은 북동 계절풍 쪽(winter)이다. ⚠️ 같은 철에 원양 aden~calicut는 열린다(그 항로 주석: \"여름 남서 계절풍이면 스무 날이 열흘로 준다\") — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다."
     },
     "calicut|goa": {
       "risk": 8.5,
       "verdict": "probable",
       "basis": "포르투갈 함대가 카나라를 건너뛰어 말라바르로 곧장 내려가던 길이다. 뭍에서 떨어져 달리므로 마라카르가 노리기 좋았고, 양단의 깃발이 적대다. 연안 구간(7.0)보다 위, 최전선(9.0)보다 아래에 뒀다.",
-      "sources": []
+      "sources": [],
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 배를 뭍으로 끌어올리고 넉 달을 났다. 그래서 이 해안이 여는 철은 북동 계절풍 쪽(winter)이다. ⚠️ 같은 철에 원양 aden~calicut는 열린다(그 항로 주석: \"여름 남서 계절풍이면 스무 날이 열흘로 준다\") — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다."
     },
     "cochin|quilon": {
       "risk": 6,
       "verdict": "probable",
       "basis": "말라바르 남쪽 구간. 마라카르의 사냥터에서 벗어나기 시작하는 자리라 캘리컷 주변(7~9)보다 낮게 뒀다.",
-      "sources": []
+      "sources": [],
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 배를 뭍으로 끌어올리고 넉 달을 났다. 그래서 이 해안이 여는 철은 북동 계절풍 쪽(winter)이다. ⚠️ 같은 철에 원양 aden~calicut는 열린다(그 항로 주석: \"여름 남서 계절풍이면 스무 날이 열흘로 준다\") — 모순이 아니라 실제로 그랬다. 배는 계절풍을 타고 와서 철이 바뀌기를 기다렸다."
     },
     "cochin|maldives": {
       "risk": 9,
@@ -1577,19 +1589,25 @@
           "title": "Wikipedia — Coromandel Coast (낮은 해안이라는 지형 서술)",
           "url": "https://en.wikipedia.org/wiki/Coromandel_Coast"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "코로만델에는 천연 항구가 없어 배를 바깥에 세우고 거룻배로 짐을 옮겼는데, 북동 계절풍 철(10~12월)의 벵골만 사이클론이 그 정박지를 쓸었다. 서안과 정반대 철에 연다(summer). 이 바다의 두 해안이 반대 철에 연다는 것이 인도양의 성격이고, 권역 소개문(\"계절풍이 반년마다 방향을 바꾼다\")이 말하던 것이다."
     },
     "masulipatnam|pulicat": {
       "risk": 6.5,
       "verdict": "probable",
       "basis": "같은 코로만델 모래 해안의 북쪽 구간. 나가파티남~풀리카트와 같은 성격이라 같은 값으로 뒀다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "코로만델에는 천연 항구가 없어 배를 바깥에 세우고 거룻배로 짐을 옮겼는데, 북동 계절풍 철(10~12월)의 벵골만 사이클론이 그 정박지를 쓸었다. 서안과 정반대 철에 연다(summer). 이 바다의 두 해안이 반대 철에 연다는 것이 인도양의 성격이고, 권역 소개문(\"계절풍이 반년마다 방향을 바꾼다\")이 말하던 것이다."
     },
     "masulipatnam|satgaon": {
       "risk": 7.5,
       "verdict": "probable",
       "basis": "코로만델 북단에서 벵골 삼각주로 붙는 구간이다. 삼각주 앞바다는 모래톱과 흙탕물이라 수로를 아는 뱃사공이 있어야 하고, 사이클론 철에는 피할 곳이 없다. 외해값의 위쪽에 뒀다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "코로만델에는 천연 항구가 없어 배를 바깥에 세우고 거룻배로 짐을 옮겼는데, 북동 계절풍 철(10~12월)의 벵골만 사이클론이 그 정박지를 쓸었다. 서안과 정반대 철에 연다(summer). 이 바다의 두 해안이 반대 철에 연다는 것이 인도양의 성격이고, 권역 소개문(\"계절풍이 반년마다 방향을 바꾼다\")이 말하던 것이다."
     },
     "chittagong|satgaon": {
       "risk": 9,
@@ -1600,18 +1618,86 @@
           "title": "Wikipedia — Chittagong ('Portuguese and Arakanese forces frequently raided Mughal territories'; 노예무역과 해적질)",
           "url": "https://en.wikipedia.org/wiki/Chittagong"
         }
-      ]
+      ],
+      "season": "summer",
+      "seasonBasis": "코로만델에는 천연 항구가 없어 배를 바깥에 세우고 거룻배로 짐을 옮겼는데, 북동 계절풍 철(10~12월)의 벵골만 사이클론이 그 정박지를 쓸었다. 서안과 정반대 철에 연다(summer). 이 바다의 두 해안이 반대 철에 연다는 것이 인도양의 성격이고, 권역 소개문(\"계절풍이 반년마다 방향을 바꾼다\")이 말하던 것이다."
     },
     "chittagong|masulipatnam": {
       "risk": 10,
       "verdict": "probable",
       "basis": "이 권역에서 가장 위험한 구간이다. 벵골만 어귀를 가로질러 며칠씩 뭍이 안 보이는데, 그 바다가 사이클론의 통로이고 도착지 쪽에는 아라칸·포르투갈 사략이 있다. 세 가지(외해·날씨·사략)가 겹치는 유일한 구간이라 지중해의 희망봉(11.0) 바로 아래에 뒀다.",
-      "sources": []
+      "sources": [],
+      "season": "summer",
+      "seasonBasis": "코로만델에는 천연 항구가 없어 배를 바깥에 세우고 거룻배로 짐을 옮겼는데, 북동 계절풍 철(10~12월)의 벵골만 사이클론이 그 정박지를 쓸었다. 서안과 정반대 철에 연다(summer). 이 바다의 두 해안이 반대 철에 연다는 것이 인도양의 성격이고, 권역 소개문(\"계절풍이 반년마다 방향을 바꾼다\")이 말하던 것이다."
     },
     "nagapattinam|tuticorin": {
       "risk": null,
       "verdict": "probable",
       "basis": "새로 그은 **뭍길**(요율 null). 라마의 다리(아담스 브리지)와 만나르의 사주가 인도와 실론 사이를 막아, 어장해안(마나르 만)에서 코로만델(포크 해협)로 배가 곧장 넘어가지 못했다 — 이 사실은 이미 콜롬보~투티코린 주석이 적고 있다. 그래서 짐은 실론을 크게 돌거나 라마나드의 뭍을 가로질렀다. 그 길목을 쥔 것이 라마나드의 세투파티(Setupati, 「다리의 주인」)와 마라바르였고, 라메스와람으로 건너는 나그네와 상인에게서 통행세를 받은 것도, 길에서 터는 것으로 이름이 났던 것도 그들이다. 요율을 매기지 않는 이유는 바닷길이 아니기 때문이고, 대신 뭍의 사고(노상강도·통행세)가 난다. 일수는 실론 우회(투티코린~자프나~나가파티남)와 같아 지름길이 아니다.",
+      "sources": []
+    },
+    "bhatkal|mangalore": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "카나라 — 비자야나가르의 쌀 해안이다. 이 권역에서 가장 조용한 구간으로 두었다(geo.js 주석 그대로).",
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 여는 철은 북동 계절풍 쪽이다.",
+      "sources": []
+    },
+    "cannanore|mangalore": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "망갈로르에서 남으로 한 발 내려서면 마라카르의 물이 시작된다 — 카나라(4.5)와 말라바르(7.0) 사이에 둔 값이다(geo.js 주석 그대로).",
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 여는 철은 북동 계절풍 쪽이다.",
+      "sources": []
+    },
+    "calicut|cranganore": {
+      "risk": 8,
+      "verdict": "probable",
+      "basis": "크랑가노르는 사무티리와 포르투갈 코친이 서로 노리던 사이에 끼어 있다. 캘리컷 쪽이 코친 쪽(7.5)보다 위험한 것은 사무티리의 배가 북에서 내려왔기 때문이다(geo.js 주석 그대로).",
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 여는 철은 북동 계절풍 쪽이다.",
+      "sources": []
+    },
+    "cochin|cranganore": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "같은 크랑가노르 구간의 남쪽 절반. 포르투갈 코친 쪽이라 북쪽(8.0)보다 한 눈금 순하다(geo.js 주석 그대로).",
+      "season": "winter",
+      "seasonBasis": "남서 계절풍(6~9월)이 말라바르 해안을 정면으로 때리면 파도가 강어귀 부두를 덮어 항구가 통째로 닫혔다. 여는 철은 북동 계절풍 쪽이다.",
+      "sources": []
+    },
+    "nagapattinam|santhome": {
+      "risk": 6,
+      "verdict": "probable",
+      "basis": "코로만델에는 천연 항구가 없어 배를 바깥에 세우고 거룻배로 짐을 옮겼다 — 정박지 자체가 위험이다(geo.js 주석 그대로).",
+      "season": "summer",
+      "seasonBasis": "코로만델·벵골은 반대다 — 북동 계절풍 철(10~12월)의 사이클론이 천연 항구 없는 정박지를 쓸었다. 여는 철은 남서 계절풍 쪽이다.",
+      "sources": []
+    },
+    "pulicat|santhome": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "같은 코로만델 정박지 사슬의 한 구간. 거리가 짧아 한 눈금 낮췄다(geo.js 주석 그대로).",
+      "season": "summer",
+      "seasonBasis": "코로만델·벵골은 반대다 — 북동 계절풍 철(10~12월)의 사이클론이 천연 항구 없는 정박지를 쓸었다. 여는 철은 남서 계절풍 쪽이다.",
+      "sources": []
+    },
+    "hooghly|masulipatnam": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "벵골 — 삼각주의 마그·페링기 사략, 그리고 만 어귀의 사이클론(geo.js 주석 그대로).",
+      "season": "summer",
+      "seasonBasis": "코로만델·벵골은 반대다 — 북동 계절풍 철(10~12월)의 사이클론이 천연 항구 없는 정박지를 쓸었다. 여는 철은 남서 계절풍 쪽이다.",
+      "sources": []
+    },
+    "chittagong|hooghly": {
+      "risk": 9.5,
+      "verdict": "probable",
+      "basis": "치타공은 그 사략선의 소굴이었다. 삼각주 어귀를 가로지르는 구간이라 이 권역에서 가장 무겁다(geo.js 주석 그대로).",
+      "season": "summer",
+      "seasonBasis": "코로만델·벵골은 반대다 — 북동 계절풍 철(10~12월)의 사이클론이 천연 항구 없는 정박지를 쓸었다. 여는 철은 남서 계절풍 쪽이다.",
       "sources": []
     }
   },

@@ -179,6 +179,10 @@ export const HOME_REGION = (REGIONS.find((r) => r.home) ?? REGIONS[0]).id;
      ② 위험이 크다 — 며칠씩 뭍이 안 보이는 구간이라 요율이 권역 안보다 높다.
      ③ 되돌아올 수 없는 구간이 있다 — 계절풍이 반년마다 방향을 바꾸는 인도양이 그렇다.
         `monsoon: true`인 항로는 계절에 따라 일수가 크게 갈린다.
+        ★ **`monsoon`은 오래도록 화면의 글자일 뿐이었다** — 어떤 규칙도 그 값을 안 읽었다.
+          지금은 그 옆에 **`season: 'summer'|'winter'`**(그 구간이 *열리는* 철)를 적고
+          `state.js: routeSeason/seasonFactor`가 그것을 읽는다. `monsoon`은 "계절풍 구간이다"라는
+          성격 표시로 남고(도구 여럿이 세고 있다), **일수와 요율을 움직이는 것은 `season`**이다.
 
    ★ 이 표가 세계의 뼈대다. 선 하나를 긋는 것이 권역 하나를 여는 것과 같다.
      값은 `content/ocean-lanes-evidence.json`에 근거를 적는다. */
@@ -206,7 +210,7 @@ export const OCEAN_LANES = [
   { a: 'panama', b: 'callao', days: 18, risk: 5.5,
     note: '파나마에서 카야오로 내려가는 남해 함대의 본선. 훔볼트 해류를 거슬러 남하하므로 내려가기가 올라오기보다 오래 걸린다.' },
   // 마닐라 갤리온 — 이 게임에서 가장 긴 항로
-  { a: 'acapulco', b: 'manila', days: 48, risk: 10.0, monsoon: true,
+  { a: 'acapulco', b: 'manila', days: 48, risk: 10.0, monsoon: true, season: 'summer',
     note: '태평양을 곧장 건넌다. 서행은 무역풍을 타 넉 달, 동행은 북위 40도까지 올라가 편서풍을 잡아야 해 훨씬 길고 괴혈병이 배를 비운다.' },
 
   // 지브롤터 — 지중해가 대양으로 나가는 유일한 문
@@ -226,9 +230,9 @@ export const OCEAN_LANES = [
     note: '희망봉을 도는 구간. 서풍대의 파도가 높고 뭍이 보이지 않는 날이 길다.' },
 
   // 스와힐리 해안 ↔ 홍해·페르시아만
-  { a: 'mombasa', b: 'aden', days: 13, risk: 7.0,
+  { a: 'mombasa', b: 'aden', days: 13, risk: 7.0, monsoon: true, season: 'summer',
     note: '계절풍을 타고 아프리카 뿔을 돈다.' },
-  { a: 'mocambique', b: 'hormuz', days: 18, risk: 8.0,
+  { a: 'mocambique', b: 'hormuz', days: 18, risk: 8.0, monsoon: true, season: 'summer',
     note: '아라비아해를 가로지른다.' },
 
   // 홍해 — 지중해로 올라가는 옛 향신료 길 (육로 환적)
@@ -238,17 +242,17 @@ export const OCEAN_LANES = [
     note: '바스라에서 바그다드를 거쳐 알레포로 올라가는 대상로.' },
 
   // 인도양 — 계절풍 구간
-  { a: 'aden', b: 'calicut', days: 17, risk: 7.5, monsoon: true,
+  { a: 'aden', b: 'calicut', days: 17, risk: 7.5, monsoon: true, season: 'summer',
     note: '여름 남서 계절풍이면 스무 날이 열흘로 준다. 반대 철에는 아예 못 간다.' },
-  { a: 'hormuz', b: 'cambay', days: 11, risk: 6.5, monsoon: true,
+  { a: 'hormuz', b: 'cambay', days: 11, risk: 6.5, monsoon: true, season: 'summer',
     note: '페르시아만에서 구자라트로. 이 구간의 말과 은이 인도의 후추와 바뀐다.' },
 
   // 벵골만 — 인도 ↔ 동남아
-  { a: 'nagapattinam', b: 'melaka', days: 15, risk: 7.0, monsoon: true,
+  { a: 'nagapattinam', b: 'melaka', days: 15, risk: 7.0, monsoon: true, season: 'summer',
     note: '코로만델에서 말라카 해협으로. 인도 면포가 향료와 바뀌는 축이다.' },
 
   // 남중국해 — 동남아 ↔ 동아시아
-  { a: 'melaka', b: 'guangzhou', days: 16, risk: 8.5, monsoon: true,
+  { a: 'melaka', b: 'guangzhou', days: 16, risk: 8.5, monsoon: true, season: 'summer',
     note: '남중국해를 북상한다. 겨울 북동풍이면 거슬러야 한다.' },
   { a: 'manila', b: 'quanzhou', days: 7, risk: 8.0,
     note: '루손에서 복건으로. 은이 이 짧은 구간으로 흘러 들어간다.' },
@@ -268,11 +272,11 @@ export const OCEAN_LANES = [
      교지(交趾=호이안)행이 가장 많고, 시암(아유타야)이 그 다음이며, 류큐의 진공선은
      《역대보안(歷代寶案)》이 나하에서 시암·믈라카·파타니로 보낸 배를 적어 두었다.
      근거는 `content/ocean-lanes-evidence.json`. */
-  { a: 'nagasaki', b: 'hoian', days: 14, risk: 6.0, monsoon: true,
+  { a: 'nagasaki', b: 'hoian', days: 14, risk: 6.0, monsoon: true, season: 'winter',
     note: '주인선의 주력 항로. 슈인장은 막부의 인가장이라 명·안남·시암의 관이 그 배를 알아보고 보호했다 — 같은 남중국해라도 피해가 적었던 것이 이 요율의 이유다.' },
-  { a: 'hirado', b: 'ayutthaya', days: 22, risk: 7.0, monsoon: true,
+  { a: 'hirado', b: 'ayutthaya', days: 22, risk: 7.0, monsoon: true, season: 'winter',
     note: '주인선의 시암 항로. 야마다 나가마사가 이 길로 갔고 아유타야에 일본인 마을이 섰다. 메남 강을 거슬러 올라가야 부두에 닿는다.' },
-  { a: 'naha', b: 'patani', days: 20, risk: 5.5, monsoon: true,
+  { a: 'naha', b: 'patani', days: 20, risk: 5.5, monsoon: true, season: 'winter',
     note: '류큐 진공선의 남해로. 명의 책봉을 받은 배라 양쪽 관이 다 보호했고, 파타니에 류큐관이 있었다. 이 바다에서 가장 안전한 원양 구간이다.' },
 ];
 
@@ -307,6 +311,16 @@ export const ALL_ROUTE_RISK = Object.assign(
 );
 
 export const ALL_CURRENTS = Object.assign({}, ...each('geo').map(({ m }) => m.CURRENTS ?? {}));
+
+/** 항로의 **철** — 그 구간이 *열리는* 계절('summer'|'winter'). 없으면 사철 다닌다.
+    권역 안 항로는 각 `geo.js: ROUTE_SEASON`, 원양 항로는 `OCEAN_LANES[].season`이 정본이고
+    여기서 한 표로 모은다. 규칙은 `state.js: routeSeason/seasonFactor`가 읽는다. */
+export const ALL_ROUTE_SEASON = Object.assign(
+  {},
+  ...each('geo').map(({ m }) => m.ROUTE_SEASON ?? {}),
+  Object.fromEntries(LIVE_LANES.filter((l) => l.season)
+    .map((l) => [[l.a, l.b].sort().join('|'), l.season])),
+);
 
 /** 원양 항로 조회 — 좌표로 거리를 못 재는 구간이라 일수를 직접 준다 */
 export const LANE_BY_KEY = Object.fromEntries(
