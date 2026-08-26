@@ -33,6 +33,7 @@
 
 | 하고 싶은 것 | 어디 |
 |---|---|
+| **한 항차가 얼마를 버나 (분포)** | 근거 `content/voyage-evidence.json` · 검증 `tools/check-voyage.mjs` · 조사 서술본 `wiki/research-voyage-returns.md` — ⚠️ **밴드를 벗어나면 실패가 아니라 경고**다(콘텐츠를 막지 않는다) |
 | 교역품 기준가 | `data.js: GOODS[].base` — 곡물 20닢이 기준이고 나머지는 **사료 비율**(향신료 ×16.5·비단 ×21·금괴 ×35). 고치면 `content/goods-evidence.json`도 같은 커밋에서 |
 | 교역품 추가 | `data.js: GOODS` + `sprites/icons.js`에 아이콘 |
 | 차익 폭(돈 버는 속도) | `data.js: SPREAD` — 이 한 계수가 무역 곡선 전체를 좌우한다 |

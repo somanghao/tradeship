@@ -6,11 +6,19 @@
 ## ★ 세션시작 필독 (BLOCKING)
 
 1. **이 파일** + **`wiki/gotchas.md`**(도메인 무관 함정) 를 반드시 먼저 읽는다.
-2. **작업 대상이 정해지면 `QUICKMAP.md`를 Read**해 도메인을 고르고, 해당 `QUICKMAP-<도메인>.md`로 간다.
-   도메인 파일은 `§1~2 키워드→문서` + `§3 그 도메인 전용 함정`이라 자족적이다.
+2. **작업 대상이 정해지면 도메인 파일 하나를 Read**한다(아래 표). 그 파일은
+   `§1~2 키워드→문서·코드 정본` + `§3 그 도메인 전용 함정`이라 **자족적이다** —
+   고르기 애매하면 `QUICKMAP.md`(도메인 인덱스)를 먼저 본다.
 3. **"마지막 작업이 뭐였나"는 `git log` + `changelog.md` 맨 위**를 본다 — 이 파일은 *최종상태*만 담는다.
 
-도메인: **art** · **trade** · **world** · **combat** · **engine** · **story**(소설 — 코드 아님)
+| 도메인 파일 | 언제 이리로 |
+|---|---|
+| `QUICKMAP-art.md` | 픽셀 에셋 · 지도 지형 · 항구 배경 |
+| `QUICKMAP-trade.md` | 시세·매매·항해비·급여·거점/부동산·관세 · 금액 고증 |
+| `QUICKMAP-world.md` | NPC·해적 명부·세력·계약 · 도시/항로 고증 · 바람·철 · 대시보드 |
+| `QUICKMAP-combat.md` | 전투 · 선박 · 조선소 · 무장 |
+| `QUICKMAP-engine.md` | 캔버스/DOM · 씬 · UI 레이아웃 · 실행/디버깅 |
+| `story/README.md` ※코드 아님 | 장편소설 《구해기》 — **게임 데이터를 바꾸지 않는 것이 규약** |
 
 4. **어느 바다를 건드리든 `js/regions/<권역>/`부터** — `map/geo.js`·`data.js`엔 값이 없다(§핵심 모델).
 
@@ -53,19 +61,14 @@
 
 | 알고 싶은 것 | 정본 |
 |---|---|
-| 도메인 라우팅 | `QUICKMAP.md` → `QUICKMAP-{art,trade,world,combat,engine}.md` — §1이 **읽을 문서 + 코드 정본**을 한 줄에 준다 |
+| 도메인 라우팅 · 전용 함정 | **위 표의 도메인 파일** — §1 읽을 문서 + 코드 정본 · §2 수치 자리 · §3 그 도메인 함정 |
 | 도메인 무관 함정 | `wiki/gotchas.md` (세션필독) |
-| 도메인 전용 함정 | 각 `QUICKMAP-<도메인>.md` §3 |
 | 서브시스템 상세 | `wiki/<topic>.md` |
 | 파일↔기능·데이터 조정 지점 | `wiki/file-map.md` |
 | 실행·디버깅 | `wiki/dev-workflow.md` |
 | 변경 이력·경위 | `changelog.md` |
 | 게임 수치 | `js/data.js` (코드가 정본, 문서는 해설) |
-| 도시 특산품이 왜 이 값인가 | `content/regions/<권역>-evidence.json` · 검증 `check-evidence.mjs` → 서술본 `wiki/city-goods-history.md` |
-| 항로가 왜 이만큼 위험한가 | 근거 JSON의 `routes` · 수치 권역 `geo.js: ROUTE_RISK` · 검증 `check-routes.mjs` |
-| 부관 급여가 사료에 맞나 | `content/wage-evidence.json` · 검증 `check-wages.mjs` · 서술본 `wiki/officer.md` |
-| 물가·자산·유지비가 사료에 맞나 | **카테고리마다 파일이 다르다**(`content/{goods,asset,upkeep}-evidence.json`) · 검증 `check-prices.mjs` → `QUICKMAP-trade.md` |
-| 한 항차가 얼마를 버나 (분포) | `content/voyage-evidence.json` · 검증 `check-voyage.mjs` · 조사 `wiki/research-voyage-returns.md` |
+| **"이 값이 왜 이 값인가"** (특산품·항로 위험·철·급여·물가·항차) | `content/**-evidence.json` + 짝지은 `tools/check-*.mjs` — **어느 파일인지는 도메인 §2가 준다**(⚠️ 물가·자산·유지비는 **카테고리마다 파일이 다르다**) |
 | 그림 발주 사양 | `assets/BRIEF-MAP.md`·`BRIEF-NPC.md` → `QUICKMAP-art.md` (바다별 의뢰서는 **생성물**) |
 | 부관(에이미) | `js/data.js: OFFICER` (정본) → `wiki/officer.md` |
 | 급여 정산·체불·이탈·장부 | `state.js`(payroll·settlePayroll) · 화면 `js/payday.js` → `wiki/payroll.md` |
@@ -81,7 +84,7 @@
 - **통합 대시보드** `/dashboard/` — 게임 모듈을 그대로 돌려 계측한다. **파일이나 state 필드를 늘리면 `dashboard/architecture.mjs`에 적어야** `check-architecture`가 통과한다.
 - **값은 `data.js`, 규칙은 `state.js`.** 콘텐츠 수치·도시 경제·**튜닝 상수 전부**가 `js/data.js`, 도시 좌표·항로·해류는 권역 `geo.js`. `state.js`가 re-export하므로 **기존 import 경로는 그대로 쓴다.** → `QUICKMAP-trade.md`
 - **입항세는 세 겹** — `TARIFF`(기본율) + `CITY_TARIFF`(오버라이드) + **총자산 누진**(`TARIFF_SCALE` · 후반 브레이크 ×1.0→2.4). **비어 있는 도시는 빠진 게 아니다.** 성질은 `baseTariff()`
-- **데이터는 세 겹 — UI ▸ 수치 ▸ 근거**(권역 `geo.js` ▸ `trade.js` ▸ `content/regions/*.json`). **수치를 고치면 근거도 같은 커밋에서.** ★ 특산품·깃발은 이미 사료에 맞다 — **밸런스나 연표만 보고 되돌리면 같은 오류가 재발한다** → `QUICKMAP-world.md` §3
+- **데이터는 세 겹 — UI ▸ 수치 ▸ 근거**(권역 `geo.js` ▸ `trade.js` ▸ `content/regions/*.json`). **수치를 고치면 근거도 같은 커밋에서.** ★ 특산품·깃발은 이미 사료에 맞다 — **되돌리면 같은 오류가 재발한다** → `QUICKMAP-world.md` §3
 - **한반도 갈래 다섯 중 하나로 시작한다**(`ORIGINS`). ★ **신분 특전은 조선 항구에서만 돈다**(`joseonOnly`) — 제1해에서 가장 센 갈래가 제3해에서 가장 약해진다.
 - **선원은 술집에서 무리 단위로** — 값이 두 갈래라(계약금은 지금, 일당은 내내) 싸게 태운 대가가 나중에 온다 → `wiki/crew-tavern.md`
 - **배는 공업력이 정하되 사다리가 둘이다** — 기술(`tierNeeded`)과 **교역**(`yardReach` — **4라야 온 세계의 배**). 상급선은 선행 선종을 몰아 봐야 열리고 즉시 얻는 길은 **중고선**뿐 → `QUICKMAP-combat.md`
@@ -94,8 +97,8 @@
 - **경제는 "여러 항차"와 "대형 주문 한 건"이 나란하다 — 그 한 건의 크기는 *선복*이 정한다**(→ `QUICKMAP-world.md`). 곡선은 `node tools/sim-stat.mjs 20`(분포). **1회 실행으로 판단하지 않는다.** → `wiki/economy-trade.md`
 - **물가·임금은 사료 비율에 맞춘다**(대조 축은 **곡물의 몇 배**·**선원 연봉으로 몇 개**). **‘닢’은 실화폐가 아니라** 절대액 환산을 안 한다.
 - **급여는 발생주의** — 날마다 쌓여 30일마다 항구에서 치른다(`state.payroll`). 못 주면 **반란이 아니라 이탈**이고 **값나가는 짐을 들고 간다**. → `wiki/payroll.md`
-- **바닥에는 바닥의 규칙이 있다** — 못 낸 돈은 빚이 되고, 급여일에 못 갚으면 채권자가 집행하며, **배를 넘기면 셈이 끝난다**(해상대차). 청산해도 판은 안 끝나고 **1일차 조건**이 된다. → `wiki/payroll.md` §7
-- **거점은 부동산이다** — 무역을 돕는 다섯(창고·상관·조선대·부두…)과 **그 자체로 버는 둘**(가게·여관 · 등급마다 수익↑·**공실↑**). 자산이면서 고정비(연 6%)고 못 내면 **한 번 닫고 두 번째에 압류**. ⚠️ 소유·일함·들른 곳·소문이 다 다르다 → `QUICKMAP-trade.md` §3
+- **바닥에는 바닥의 규칙이 있다** — 못 낸 돈은 빚이 되고 **배를 넘기면 셈이 끝난다**(해상대차). 청산해도 판은 안 끝나고 **1일차 조건**이 된다. → `wiki/payroll.md` §7
+- **거점은 부동산이다** — 무역을 돕는 것과 **그 자체로 버는 것**(가게·여관 · 등급마다 수익↑·**공실↑**)이 있다. 자산이면서 고정비고 못 내면 **닫혔다가 압류**. ⚠️ 소유·일함·들른 곳이 다 다르다 → `QUICKMAP-trade.md` §3
 - **삭은 배는 막히는 게 아니라 값을 문다** — 선체가 바닥이면 **느려지고 실은 짐이 젖는다**(`HULL`). 막으면 삭은 배로 3일 항로뿐인 항구에 갇힌다 → `QUICKMAP-engine.md` §3
 - **명부 해적은 찾아가야 만난다** — 소식이 **그 사냥터의 시세까지** 판다. **현상금은 상한 밖이고 항구에서 받는다.** **초무는 지우는 것이 아니라 내 편으로**(과소기·토벌 협조) → `QUICKMAP-world.md`
 - **선단은 배수가 아니라 입장권이다** — 적재 배수를 안 준다. 대신 **원양 호위 의무**·**계약 선복**·**보험 할인** → `QUICKMAP-trade.md` §3
