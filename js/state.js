@@ -3144,7 +3144,7 @@ export function purchaseShip(key) {
     if (short?.why === 'reach') {
       return {
         ok: false,
-        reason: `${short.word}다 — 이 부두는 공업력 ${short.need}은 되어야 그 물건을 안다 `
+        reason: `${short.word}다 — 이 부두는 공업력 ${short.need}까지 올라야 그 물건을 안다 `
               + `(지금 ${industryOf()})` + (where.length ? ` · ${where.slice(0, 3).join('·')}` : ''),
       };
     }

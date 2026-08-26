@@ -391,7 +391,7 @@ function whyNot(key, s) {
      이 게임에서 한 회차에 다섯 번 나온 "규칙은 있는데 화면이 말하지 않는" 자리다. */
   const short = yardShortOf(key);
   if (short?.why === 'reach') {
-    return `→ ${short.word}다 — 이 부두는 공업력 ${short.need}은 되어야 그 물건을 안다`
+    return `→ ${short.word}다 — 이 부두는 공업력 ${short.need}까지 올라야 그 물건을 안다`
          + ` (지금 ${industryOf()})` + (where ? ` · ${where}` : '');
   }
   return `→ 이 항구는 공업력 ${industryOf()}, ${tierNeeded(key)} 필요`
