@@ -19,7 +19,17 @@
 import { state } from './state.js';
 
 const KEY = 'tradeship:save:v1';
+/* ★ **덮어쓰기 직전의 판 한 장.** 타이틀에서 「어느 바다에서 시작할까」나 갈래를 고르면
+   그 자리에서 `resetGame` → `go('port')`가 돌고, 입항 자동저장이 **옛 판을 그 순간 덮는다**
+   (`scenes/port.js`). 실측하면 「새로 시작한다」 단추를 누르기 전에 이미 사라져 있었다 —
+   완주 플레이 ISSUES #36이 "지워질 자리에 한 걸음 다가간다"고 적은 것보다 한 걸음 더 갔다.
+   ⇒ 새 판이 옛 판을 덮기 전에 여기로 한 장 민다. **규칙은 아무것도 안 바뀐다** —
+     러너도 사람도 하던 대로 누르면 되고, 실수했을 때만 되돌릴 자리가 생긴다. */
+const KEY_PREV = 'tradeship:save:v1:prev';
 const VERSION = 1;
+
+/** 슬롯 이름 → localStorage 키 */
+const keyOf = (slot) => (slot === 'prev' ? KEY_PREV : KEY);
 
 /** JSON이 모르는 것 — `Set`은 배열로 눕혀 싣는다 */
 const SET_KEYS = ['known', 'everOwned'];
@@ -59,9 +69,9 @@ export function saveGame(slot = 'auto') {
 }
 
 /** 저장된 판의 머리말 — 없으면 null */
-export function savedHead() {
+export function savedHead(slot = 'auto') {
   try {
-    const blob = localStorage.getItem(KEY);
+    const blob = localStorage.getItem(keyOf(slot));
     if (!blob) return null;
     const d = JSON.parse(blob);
     if (d.version !== VERSION) return null;
@@ -70,9 +80,9 @@ export function savedHead() {
 }
 
 /** 저장된 판을 `state`에 되돌린다. 성공하면 true. */
-export function loadGame() {
+export function loadGame(slot = 'auto') {
   try {
-    const blob = localStorage.getItem(KEY);
+    const blob = localStorage.getItem(keyOf(slot));
     if (!blob) return false;
     const d = JSON.parse(blob);
     if (d.version !== VERSION || !d.state) return false;
@@ -93,6 +103,28 @@ export function loadGame() {
 
 export function clearSave() {
   try { localStorage.removeItem(KEY); return true; } catch { return false; }
+}
+
+/** 지금 저장된 판을 **직전 판** 자리로 민다 — 새 판이 그것을 덮기 직전에 부른다.
+    저장된 판이 없으면 아무것도 하지 않는다(빈 것을 밀어 옛 직전 판을 지우면 안 된다). */
+export function stashSave() {
+  try {
+    const blob = localStorage.getItem(KEY);
+    if (!blob) return false;
+    localStorage.setItem(KEY_PREV, blob);
+    return true;
+  } catch { return false; }
+}
+
+/** 직전 판을 되살린다 — 되살린 뒤 그 자리를 비운다(두 번 되돌릴 자리는 두지 않는다). */
+export function restoreStashed() {
+  try {
+    const blob = localStorage.getItem(KEY_PREV);
+    if (!blob) return false;
+    localStorage.setItem(KEY, blob);
+    localStorage.removeItem(KEY_PREV);
+    return loadGame('auto');
+  } catch { return false; }
 }
 
 /** 언제 저장하나 — 항구에 들어올 때마다. 바다 위에서는 저장하지 않는다.

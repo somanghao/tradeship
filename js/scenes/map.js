@@ -9,12 +9,12 @@ import { shipTopSprite } from '../sprites/ship.js';
 import { blit } from '../pixel.js';
 import {
   CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER, FLAG_NAME,
-  REGION_OF_CITY, REGION_BY_ID, laneOf,
+  REGION_OF_CITY, REGION_BY_ID, laneOf, riskKey,
 } from '../data.js';
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey, insuranceShare,
+  knowPort, priceKnown, priceOf, payBounties, activeBounty, insuranceShare,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,

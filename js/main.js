@@ -5,7 +5,7 @@ import { loadAssetPack } from './assets.js';
 import { loadEvidence } from './evidence.js';
 import { state, resetGame, START_GOLD, neighborsOf, grantShip, grantCrew, knowPort } from './state.js';
 import { CITY_BY_ID, SHIPS, CITIES, START_PORTS, REGION_BY_ID, ORIGINS, ORIGIN_BY_ID } from './data.js';
-import { savedHead, loadGame, clearSave } from './save.js';
+import { savedHead, loadGame, clearSave, stashSave, restoreStashed } from './save.js';
 
 /* ★ **타이틀이 닫히기 전에는 저장하지 않는다.** `boot()`이 타이틀보다 먼저 `go('port')`를
    부르므로(뒤에 항구가 보여야 타이틀이 그림 위에 얹힌다), 그대로 두면 **부팅할 때마다
@@ -368,6 +368,10 @@ function titleScreen() {
   /* ★ **이어하기가 맨 앞에 온다.** 이 게임의 캠페인은 항차 330~380짜리라 한 세션에 안 끝난다
      (`story/level/economy.md`). 저장된 판이 있으면 그것부터 묻는 것이 맞다. */
   const head = savedHead();
+  /* 밀어 둔 직전 판 — 바다·갈래를 잘못 골라 새 판이 옛 판을 덮었을 때의 되돌릴 자리다.
+     지금 판과 같은 일차·항구면 보여 주지 않는다(되돌릴 것이 없다). */
+  const prev = savedHead('prev');
+  const prevWorth = prev && !(head && prev.day === head.day && prev.at === head.at);
   const scr = el('div#title-screen', {}, [
     el('h1', { text: '아홉 바다 교역기' }),
     /* ★ 연도를 박지 않는다(최상위 지침) · 시작 조건은 state.js: resetGame이 정본이다.
@@ -389,6 +393,9 @@ function titleScreen() {
     /* 갈래 고르기가 먼저다 — 조선에서 시작하는 것이 이 게임의 기본값이기 때문이다.
        `?start=`로 열었을 때는(개발·검증) 둘 다 감춘다. */
     (() => { const q = new URLSearchParams(location.search); return q.has('start') || q.has('origin'); })() ? null : originPicker((id) => {
+      /* ★ **여기가 옛 판이 사라지는 자리다.** 아래 `go('port')`가 입항 자동저장을 부르므로
+         「새로 시작한다」를 누르기 전에 이미 덮인다 — 그래서 덮기 **전에** 한 장 밀어 둔다. */
+      stashSave();
       markStarted();
       resetGame(undefined, id);
       initWorld();
@@ -398,6 +405,7 @@ function titleScreen() {
       scr.remove();
     }),
     startPicker((at) => {
+      stashSave();          // 갈래 고르기와 같은 자리다 — 덮기 전에 한 장 민다
       markStarted();
       // 판을 그 부두에서 다시 만든다 — 시작 조건은 resetGame 하나가 정본이다
       resetGame(at);
@@ -434,9 +442,34 @@ function titleScreen() {
         text: '아래에서 새로 시작하면 이 판은 지워진다. 저장은 항구에 들어올 때마다 자동으로 된다.',
       }),
     ]) : null,
+    /* ★ **되돌릴 자리.** 밀어 두기만 하고 꺼낼 길이 없으면 없는 것과 같다.
+       바다나 갈래를 잘못 눌러 판이 갈렸을 때 여기 한 줄이 그것을 되살린다. */
+    prevWorth ? el('div.sea-pickers', {}, [
+      el('div.sea-label', { text: '잘못 눌렀나' }),
+      el('div.sea-grid', {}, [
+        el('button.btn.dark.sea-pick', {
+          title: '새 판을 시작하기 직전의 판이다. 되돌리면 지금 판은 사라진다',
+          onclick: () => {
+            if (!restoreStashed()) return;
+            markStarted();
+            initWorld();
+            go('port', { first: true });
+            refreshHUD();
+            refreshLog();
+            scr.remove();
+          },
+        }, [
+          el('b', { text: `직전 판으로 되돌린다 — ${prev.day}일차 · ${CITY_BY_ID[prev.at]?.name ?? prev.at}` }),
+          el('span.sea-port', {
+            text: `${SHIPS[prev.ship]?.name ?? prev.ship} · ${prev.gold.toLocaleString('ko-KR')}닢`
+                + (prev.origin && ORIGIN_BY_ID[prev.origin] ? ` · ${ORIGIN_BY_ID[prev.origin].name}` : ''),
+          }),
+        ]),
+      ]),
+    ]) : null,
     el('button.btn', {
       text: head ? '새로 시작한다' : '출항하기',
-      onclick: () => { if (head) clearSave(); markStarted(); scr.remove(); },
+      onclick: () => { if (head) { stashSave(); clearSave(); } markStarted(); scr.remove(); },
       style: { fontSize: '15px', padding: '10px 26px' },
     }),
   ].filter(Boolean));

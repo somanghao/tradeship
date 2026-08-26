@@ -1,3 +1,15 @@
+/* ★ **세이브 검사에 필요한 최소 폴리필.** node에는 `localStorage`가 없다 —
+   `js/save.js`는 그것이 없으면 조용히 실패하도록(사파리 프라이빗 모드) 만들어졌으므로,
+   폴리필 없이 부르면 **전부 통과해 버린다.** 검사가 검사를 안 하는 자리가 된다. */
+if (!globalThis.localStorage) {
+  const mem = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => mem.set(k, String(v)),
+    removeItem: (k) => mem.delete(k),
+  };
+}
+
 import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
@@ -28,6 +40,7 @@ import {
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
+import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
 
 /* ★ **이 함수가 exit code를 안 건드리고 있었다.** 그래서 검사가 전부 FAIL이어도
@@ -919,4 +932,32 @@ resetGame();
     ok(w2.mode === 'liquidate' && state.shipKey === BANKRUPT.keepShip && debtOwed() === 0,
        '혼자면 청산이다 — 배가 사라지면 **채무도 사라진다**(해상대차). 판은 1일차 조건으로 돌아간다');
   }
+}
+
+/* ── 세이브 — 새 판이 옛 판을 덮기 전에 한 장 민다 (ISSUES #36) ──────
+   ★ 완주 플레이가 *"저장된 판이 지워질 자리에 한 걸음 다가간다"*고 적었는데,
+     실측하면 **한 걸음 더 갔다** — 바다·갈래를 고르면 `resetGame` → `go('port')`가 돌고
+     입항 자동저장이 그 자리에서 옛 판을 덮는다. 「새로 시작한다」를 누르기 전에 이미 없다.
+   ⇒ 규칙은 안 바꾸고 **되돌릴 자리**를 만들었다. 그 규칙을 여기서 지킨다. */
+{
+  clearSave();
+  resetGame('busanpo');
+  state.day = 120; state.gold = 9999;
+  saveGame();
+  const before = savedHead();
+  ok(before?.day === 120 && before?.at === 'busanpo', '저장된 판을 머리말로 읽는다 (120일차 · 부산포)');
+
+  ok(stashSave() === true, '새 판이 덮기 전에 옛 판을 한 장 민다');
+  resetGame('venezia');
+  saveGame();                                   // 입항 자동저장이 덮는 그 자리
+  ok(savedHead()?.at === 'venezia' && savedHead('prev')?.at === 'busanpo',
+     '덮여도 **직전 판은 남아 있다** — 이 한 줄이 없으면 그대로 사라진다');
+
+  ok(restoreStashed() === true && state.day === 120 && state.at === 'busanpo' && state.gold === 9999,
+     '되돌리면 그 판이 그대로 살아난다 (120일차 · 부산포 · 9,999닢)');
+  ok(savedHead('prev') === null, '되돌린 자리는 비운다 — 두 번 되돌릴 자리는 두지 않는다');
+
+  clearSave();
+  ok(stashSave() === false,
+     '저장이 없으면 밀지 않는다 — **빈 것을 밀면 옛 직전 판이 지워진다**');
 }
