@@ -24,6 +24,14 @@
 //     그때까지는 `yards`(전통 조선지 값 인하)가 원산지를 표현한다.
 
 export const SHIPS = {
+  /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
+  oldyathra: {
+    hull: 'dhow', name: '삭은 야트라 도니', origin: '말라바르 헌 배', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 310,
+    hp: 54, crew: 9, crewMax: 16, crewMin: 5, cargo: 44, guns: 1, speed: 0.84,
+    upkeep: 2, rig: 0.15, leak: 2, tint: 'rot',
+    desc: '순례선으로 늙은 도니. 야자 밧줄이 삭아 이음매마다 물이 든다.',
+  },
   yathra: {
     hull: 'caravel', name: '야트라 도니', origin: '실론', originFlag: 'kotte', tier: 1, era: 'classic',
     yards: ['galle', 'colombo', 'jaffna'],

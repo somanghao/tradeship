@@ -348,12 +348,16 @@ function startPicker(onPick) {
     const city = CITY_BY_ID[p.at];
     const region = REGION_BY_ID[p.region];
     if (!city || !region) return null;
+    /* ★ **어떤 배로 서는지 여기서 말한다.** 시작배가 바다마다 갈리면서(사용자 지시)
+       화물칸이 16~88로 벌어졌다 — 그것을 모르고 고르면 고른 게 아니다. */
+    const sh = SHIPS[p.ship];
     return el(`button.btn.dark.sea-pick${state.at === p.at ? '.on' : ''}`, {
       onclick: () => onPick(p.at),
-      title: p.hook,
+      title: sh ? `${p.hook}
+${sh.name} — 화물 ${sh.cargo}칸 · 선원 ${sh.crewMin}~${sh.crewMax}명 · 선체 ${sh.hp}` : p.hook,
     }, [
       el('b', { text: region.name }),
-      el('span.sea-port', { text: city.name }),
+      el('span.sea-port', { text: sh ? `${city.name} · ${sh.name} ${sh.cargo}칸` : city.name }),
     ]);
   }).filter(Boolean);
   const here = START_PORTS.find((p) => p.at === state.at);

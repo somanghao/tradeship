@@ -37,6 +37,17 @@
 //   맹선 정원(대 80 · 중 60 · 소 30)은 경국대전에서 왔다. 아래 crewMax는 대부분 이 둘이다.
 
 export const SHIPS = {
+  /* ★ **이 바다의 시작배**(tier 0 — 시중에 안 나온다). 지중해의 `hulk`(낡은 바사)와 같은 자리다.
+     사용자 지시 *"주인공은 각 지역의 가장 싸구려배로 시작해야지"*(2026-08-26)로 바다마다 하나씩 두었다.
+     ⚠️ **제원은 `hulk`에 맞춘다** — 바다마다 다른 것은 **얼굴이지 난이도가 아니다.**
+       정품 tier 1 배를 시작배로 주었더니 `leak`가 없고 속력이 1.7배라 첫 배가 10항차 → 1항차가 됐다. */
+  oldsahuseon: {
+    hull: 'panokseon', name: '삭은 사후선', origin: '좌수영 퇴역선', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 300,
+    hp: 50, crew: 8, crewMax: 14, crewMin: 5, cargo: 42, guns: 2, speed: 0.88,
+    upkeep: 2, rig: 0.20, leak: 2, tint: 'rot',
+    desc: '수영에서 물러난 사후선. 이음매가 벌어져 물이 든다. 빠르던 배였다는 것만 남았다.',
+  },
   // ── 싸움배 ──────────────────────────────────────────────────
   sahuseon: {
     hull: 'galley', name: '사후선', origin: '조선', originFlag: 'joseon', tier: 1, era: 'classic',

@@ -1017,26 +1017,43 @@ export const START_GOLD = 200;
      (→ `wiki/playtest-log.md` §4-1에서 아홉 바다를 다 눌러 보고 고른 자리들이다).
    ★ `home: true`가 기본값이다 — 지금은 **부산포**다. 조선은 사무역을 금해 열린 부두가 하나뿐인데,
      그 폐쇄성이 곧 이 시작지의 성격이 된다(항로가 마포·하카타 둘뿐이다). */
+/* ★ **시작배는 그 바다에서 가장 싼 배다**(사용자 지시 2026-08-26:
+     *"주인공은 각 지역의 가장 싸구려배로 시작해야지"*).
+   전에는 아홉 어디서 시작해도 `hulk`(낡은 바사) 하나였다 — 지중해 배 한 척이
+   광저우에도 아르갱에도 떠 있었다는 뜻이고, 바다마다 얼굴이 다르다는 이 게임의 축과 어긋났다.
+
+   **고른 기준**: 그 바다 배의 **낡은 판**(tier 0 · `leak` 있음 · 시중에 안 나온다).
+   지중해의 `hulk`(낡은 바사)가 원래 그 자리였고, 나머지 여덟에 같은 자리를 만들었다.
+
+   ⚠️ **제원은 `hulk`에 맞춘다 — 바다마다 다른 것은 얼굴이지 난이도가 아니다.**
+     처음엔 그 바다에서 **가장 싼 정품 tier 1 배**를 줬는데, 그것들은 `leak`가 없고
+     속력이 1.7배라 실측에서 **첫 배가 10~16항차 → 1항차**로 무너졌다
+     (10항차 금고 899 → 2,144닢 · 40항차 자산 최대 +177%). *"돈은 어렵게 벌려야 재미가 있다"*가
+     이 게임의 최상위 원칙이므로 되돌리고, 대신 **낡은 판 여덟 종을 새로 만들었다**(선종 94 → 102).
+     콘텐츠는 늘고 곡선은 그대로다. */
 export const START_PORTS = [
-  { region: 'eastasia',      at: 'busanpo',  home: true,
+  { region: 'eastasia',      at: 'busanpo',  home: true, ship: 'oldsahuseon',
     hook: '조선이 바깥과 닿는 유일한 부두. 열린 항로가 둘뿐이라 좁게 시작한다.' },
-  { region: 'seasia',        at: 'melaka',
+  { region: 'seasia',        at: 'melaka',   ship: 'oldperahu',
     hook: '두 대양을 잇는 목. 정향과 육두구가 여기서 값을 얻는다.' },
-  { region: 'indian',        at: 'cambay',
+  { region: 'indian',        at: 'cambay',   ship: 'oldyathra',
     hook: '면포와 인디고의 항구. 계절풍이 왕복을 정한다.' },
-  { region: 'mideast',       at: 'hormuz',
+  { region: 'mideast',       at: 'hormuz',   ship: 'oldjalba',
     hook: '진주와 말이 오가는 좁은 물목. 내해 항로가 육로처럼 굽는다.' },
-  { region: 'africa',        at: 'arguin',
+  { region: 'africa',        at: 'arguin',   ship: 'oldcanoa',
     hook: '사금과 소금이 사막을 건너오는 첫 무역관.' },
-  { region: 'atlantic',      at: 'bilbao',
+  { region: 'atlantic',      at: 'bilbao',   ship: 'oldcrayer',
     hook: '철과 모직물의 북쪽 바다. 폭풍이 잦고 값은 무겁다.' },
-  { region: 'mediterranean', at: 'venezia',
+  { region: 'mediterranean', at: 'venezia',  ship: 'hulk',
     hook: '유리와 비단의 도시. 항로가 촘촘해 첫 항해가 가장 쉽다.' },
-  { region: 'caribbean',     at: 'jamaica',
+  { region: 'caribbean',     at: 'jamaica',  ship: 'oldpiragua',
     hook: '설탕과 로그우드, 그리고 사략선. 위험이 기본값이다.' },
-  { region: 'southamerica',  at: 'salvador',
+  { region: 'southamerica',  at: 'salvador', ship: 'oldbalsa',
     hook: '설탕과 담배의 해안. 대양을 건너야 값이 붙는다.' },
 ];
+
+/** 그 부두에서 시작할 때 타는 배. 못 찾으면 `hulk`(청산 뒤 남는 배와 같다) */
+export const startShipAt = (at) => START_PORTS.find((p) => p.at === at)?.ship ?? 'hulk';
 
 /* ── 한반도 출신 갈래 (ORIGINS) ────────────────────────────────
    ★ 사용자 요청: *"한반도의 대항해시대 다양한 주인공을 시작할 수 있게"*.
@@ -1064,7 +1081,7 @@ export const START_PORTS = [
 export const ORIGINS = [
   {
     id: 'interpreter', name: '역관의 서자', at: 'busanpo',
-    gold: 200, crew: 0, ship: 'hulk',
+    gold: 200, crew: 0, ship: 'oldsahuseon',
     line: '왜관의 담 안에서 말을 옮기며 자랐다. 두 나라 말을 아는데 어느 쪽 사람도 아니다.',
     boon: '왜관의 셈을 안다 — 조선 항구의 세가 가볍다',
     cost: '이름이 없다. 문서에 제 이름을 못 올린다',
@@ -1074,7 +1091,7 @@ export const ORIGINS = [
   },
   {
     id: 'bastard', name: '재상가의 서자', at: 'mapo',
-    gold: 1400, crew: 0, ship: 'hulk',
+    gold: 1400, crew: 0, ship: 'oldsahuseon',
     line: '아버지는 정승이고 어머니는 종이다. 집에 돈은 있는데 그 돈으로 살 수 있는 것이 벼슬만 빼고 전부다.',
     boon: '집의 이름이 계약서에 먹힌다 — 대형 주문의 보수가 오른다',
     cost: '서얼금고법. 관이 얽히는 자리마다 한 걸음씩 밀린다 — 세가 무겁다',
@@ -1082,7 +1099,7 @@ export const ORIGINS = [
   },
   {
     id: 'royal', name: '후궁 소생의 종친', at: 'mapo',
-    gold: 900, crew: 4, ship: 'hulk',
+    gold: 900, crew: 4, ship: 'oldsahuseon',
     line: '왕의 피가 절반 섞였다. 그 절반이 평생 감시가 된다.',
     boon: '종친의 첩지 — 조선 항구에서는 세를 거의 안 문다',
     cost: '늘 지켜보는 눈이 있다. 사람을 몰래 부리지 못해 선원이 더디 모인다',
@@ -1097,7 +1114,7 @@ export const ORIGINS = [
   },
   {
     id: 'merchant', name: '경강상인의 아들', at: 'mapo',
-    gold: 800, crew: 6, ship: 'hulk',
+    gold: 800, crew: 6, ship: 'oldsahuseon',
     line: '한강 나루에서 세곡을 세며 자랐다. 셈은 누구보다 빠른데 신분이 셈을 이긴다.',
     boon: '경강의 셈 — 한꺼번에 사고팔아도 값이 덜 무너진다',
     cost: '상인은 관 앞에서 약하다. 문서가 필요한 자리마다 값을 더 치른다',
@@ -1105,7 +1122,9 @@ export const ORIGINS = [
   },
   {
     id: 'navy', name: '좌수영의 군관', at: 'yeosu',
-    gold: 120, crew: 14, ship: 'hulk',
+    /* 사람을 열넷 데리고 온다 — 삭은 사후선 정원이 **딱 14**라 그들이 다 탄다.
+       (정품 사후선은 정원이 여덟이라 넘쳤다. 낡은 판을 만들며 이 갈래에 맞춰 두었다.) */
+    gold: 120, crew: 14, ship: 'oldsahuseon',
     line: '판옥선의 노를 세던 손이다. 배와 사람은 아는데 돈을 만져 본 적이 없다.',
     boon: '수군의 갑판 — 사람을 데리고 시작하고, 싸움에서 밀리지 않는다',
     cost: '금고가 비어 있다. 그리고 군항의 문은 사무역에 좁다',

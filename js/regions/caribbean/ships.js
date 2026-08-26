@@ -14,6 +14,14 @@
 //   피라구아만이 그 바깥에 있다. 아메리카가 이미 쓰고 있던 배이기 때문이다.
 
 export const SHIPS = {
+  /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
+  oldpiragua: {
+    hull: 'piragua', name: '삭은 피라구아', origin: '섬의 헌 배', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 300,
+    hp: 50, crew: 8, crewMax: 15, crewMin: 5, cargo: 45, guns: 1, speed: 0.87,
+    upkeep: 2, rig: 0.35, leak: 2, tint: 'rot',
+    desc: '사략선이 버리고 간 피라구아. 총구멍을 나무못으로 막아 두었다.',
+  },
   piragua: {
     hull: 'caravel', name: '피라구아', origin: '카리브 원주민', originFlag: null, tier: 1, era: 'classic',
     yards: ['campeche', 'jamaica', 'trujillo', 'maracaibo'],

@@ -10,7 +10,7 @@ if (!globalThis.localStorage) {
   };
 }
 
-import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, START_PORTS, DEFAULT_START, startShipAt } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
@@ -56,17 +56,26 @@ process.on('exit', () => console.log(`
 규칙 — ${PASS}/${PASS + FAIL} 통과${FAIL ? ` · **실패 ${FAIL}건**` : ''}`));
 
 resetGame();
-ok(state.shipKey === 'hulk' && state.gold === START_GOLD,
+/* ★ 시작배는 **그 바다에서 가장 싼 배**다(`data.js: START_PORTS[].ship`).
+   전에는 아홉 어디서 시작해도 `hulk` 하나였다 — 그 시절 이 검사가 `'hulk'`를 박아 두었다. */
+ok(state.shipKey === startShipAt(DEFAULT_START) && state.gold === START_GOLD,
    `시작: ${state.shipKey} / ${state.gold}닢 / 선체 ${state.hp} / 화물칸 ${state.cargoCap}`);
 // 갑판이 빈 채로 시작하므로(술집에서 모은다) 이 아래 검사들은 선원을 세워 두고 돈다.
 // 술집 규칙 자체는 tools/test-tavern.mjs가 본다.
 state.crew = 10;
 ok(armsTotal() === state.guns, `포문 동기화 ${state.guns}문`);
 
-// 누수: 항해하면 선체가 삭는다
+/* 누수: 항해하면 선체가 삭는다.
+   ⚠️ **`leak`는 `hulk` 고유 속성이다** — 시작배가 바다마다 갈리면서 기본 시작배(사후선)에는
+   없어졌다. 그래도 이 규칙은 살아 있어야 한다: 청산하면 받는 배가 `hulk`이고
+   (`BANKRUPT.keepShip`), 중고로도 잡힌다. 그래서 **그 배를 직접 태워** 검사한다. */
+const leakWas = state.shipKey;
+state.fleet.hulk = { at: state.at, hp: SHIPS.hulk.hp, arms: { light: SHIPS.hulk.guns, medium: 0, long: 0 }, refits: {} };
+boardShip('hulk');
 const hp0 = state.hp;
 const c1 = advanceDays(4);
 ok(c1.leak === 8 && state.hp === hp0 - 8, `누수 4일 → ${c1.leak}pt (선체 ${hp0}→${state.hp}), 급여 ${c1.wages}닢`);
+boardShip(leakWas); delete state.fleet.hulk; state.hp = state.maxHp;
 
 // 조선소 — 도시 공업력이 무엇을 지을 수 있는지 정한다
 ok(industryOf('venezia') === 3 && industryOf('iznik') === 0,
@@ -219,7 +228,11 @@ ok(state.officer.hiredDay === 0 && state.officer.paid === 0 && state.officer.ear
 ok(state.gold === START_GOLD, `계약금이 없다 — 시작 금화가 그대로 ${START_GOLD}닢`);
 
 // 물 새는 배를 몰아도 떠나지 않는다 (예전엔 이 조건에서 승선을 거절했다)
+const offWas = state.shipKey;
+state.fleet.hulk = { at: state.at, hp: SHIPS.hulk.hp, arms: { light: SHIPS.hulk.guns, medium: 0, long: 0 }, refits: {} };
+boardShip('hulk');
 ok(ship().leak && hasOfficer(), '물 새는 낡은 바사를 몰아도 함께 있다');
+boardShip(offWas); delete state.fleet.hulk;
 
 // 어느 항구에 있든 붙어 있다 — 리알토에 앉아 있던 사람이 아니다
 state.at = 'rodos';
@@ -478,7 +491,8 @@ resetGame();
   resetGame('venezia');
   state.crew = 10; state.gold = 500000;
   purchaseShip('carrack'); boardShip('carrack');
-  delete state.fleet.hulk;
+  // 시작배는 바다마다 다르다 — 베네치아면 타르타네다. 키를 박지 말고 지금 것을 지운다.
+  for (const k of Object.keys(state.fleet)) if (k !== 'carrack') delete state.fleet[k];
   state.gold = 0;
   payFine(400, '작은 위약금');
   state.day += MONTH_DAYS;
@@ -960,4 +974,53 @@ resetGame();
   clearSave();
   ok(stashSave() === false,
      '저장이 없으면 밀지 않는다 — **빈 것을 밀면 옛 직전 판이 지워진다**');
+}
+
+/* ── 시작배는 바다마다 다르다 (사용자 지시 2026-08-26) ──────────────
+   *"주인공은 각 지역의 가장 싸구려배로 시작해야지"* — 전에는 아홉 어디서 시작해도
+   `hulk` 하나였다. 지중해 배 한 척이 광저우에도 아르갱에도 떠 있었다는 뜻이다.
+
+   ★ **지키는 성질 둘** — ① 바다마다 얼굴이 다르다 ② **난이도는 나란하다.**
+     ②가 없으면 시작지 고르기가 난이도 고르기가 된다. 처음에 정품 tier 1 배를 줬다가
+     `leak`가 없고 속력이 1.7배라 **첫 배가 10~16항차 → 1항차**로 무너진 자리다. */
+{
+  const seen = new Set();
+  let allDistinct = true, allFits = true, allLeak = true, allTier0 = true;
+  const caps = [], hps = [], spds = [];
+  for (const p of START_PORTS) {
+    resetGame(p.at);
+    const s0 = SHIPS[state.shipKey];
+    seen.add(state.shipKey);
+    // 데려온 사람이 그 배에 다 타야 한다
+    if (state.crew > state.crewMax) allFits = false;
+    // 싸구려는 물이 샌다 — 초반 압박의 축이다
+    if (!(s0.leak > 0)) allLeak = false;
+    // 시중에 안 나온다(조선소 목록·중고·나포에서 빠진다)
+    if ((s0.tier ?? 0) !== 0) allTier0 = false;
+    caps.push(s0.cargo); hps.push(s0.hp); spds.push(s0.speed);
+  }
+  ok(seen.size === START_PORTS.length,
+     `아홉 바다가 저마다 다른 배로 선다 (${seen.size}종)`);
+  ok(allFits, '데려온 사람이 그 배에 다 탄다 — 정원을 넘겨 시작하지 않는다');
+  ok(allLeak, '시작배는 전부 물이 샌다 — 싸구려라는 말이 규칙이 된다');
+  ok(allTier0, '시작배는 tier 0 — 조선소·중고·나포에 안 나온다');
+
+  /* ★ **난이도가 나란한가.** 얼굴은 갈리되 힘은 같아야 한다. */
+  const span = (a) => Math.max(...a) / Math.min(...a);
+  ok(span(caps) <= 1.20 && span(hps) <= 1.25 && span(spds) <= 1.12,
+     `아홉이 나란하다 — 화물 ${Math.min(...caps)}~${Math.max(...caps)}칸(×${span(caps).toFixed(2)})`
+     + ` · 선체 ${Math.min(...hps)}~${Math.max(...hps)}(×${span(hps).toFixed(2)})`
+     + ` · 속력 ×${span(spds).toFixed(2)}`);
+
+  // 갈래 다섯도 그 바다 배를 탄다 — 군관은 사람이 열넷이라 정원이 그만큼이어야 한다
+  resetGame(undefined, 'navy');
+  ok(state.crew === 14 && state.crew <= state.crewMax,
+     `군관이 데려온 열넷이 다 탄다 — ${SHIPS[state.shipKey].name} 정원 ${state.crewMax}`);
+  resetGame(undefined, 'interpreter');
+  ok(SHIPS[state.shipKey]?.leak > 0 && (SHIPS[state.shipKey].tier ?? 0) === 0,
+     `역관도 삭은 배로 시작한다 (${SHIPS[state.shipKey].name})`);
+
+  // `hulk`는 사라지지 않았다: 지중해의 시작배이자, 청산하면 남는 배다
+  ok(SHIPS[BANKRUPT.keepShip]?.leak > 0,
+     `청산 뒤 남는 배는 여전히 물이 샌다 (${SHIPS[BANKRUPT.keepShip].name})`);
 }

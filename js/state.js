@@ -12,7 +12,7 @@ import {
   FOES_BY_REGION, ALL_PIRATES, ALL_MATES, COMMENDA,
   TAVERN, CREW_TRAITS, CREW_TRAIT_KEYS, CREW_NAMES, CREW_NAME_POOL, PIRATE_NAME_POOL,
   // ── 튜닝 상수 — 값은 data.js가 정본이고 여기서는 **쓰기만** 한다 ──
-  START_GOLD, START_PORTS, DEFAULT_START, REPAIR_UNIT, HIRE_UNIT,
+  START_GOLD, START_PORTS, DEFAULT_START, startShipAt, REPAIR_UNIT, HIRE_UNIT,
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
   MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
@@ -32,7 +32,7 @@ import { josa } from './josa.js';   // leaf 유틸 — 화면 헬퍼(ui.js)가 �
    import를 한꺼번에 고치면 그 커밋의 diff에서 정작 중요한 변화가 묻힌다.
    새로 쓰는 코드는 `data.js`에서 직접 가져오는 쪽이 뜻이 분명하다. */
 export {
-  START_GOLD, START_PORTS, DEFAULT_START, REPAIR_UNIT, HIRE_UNIT,
+  START_GOLD, START_PORTS, DEFAULT_START, startShipAt, REPAIR_UNIT, HIRE_UNIT,
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP,
   MONTH_DAYS, UNREST_PER_MISS, UNREST_HEAL, DESERT_AT,
   INSURANCE_RATE, INSURANCE_COVER, JETTISON_BASE, JETTISON_PER_PCT, INLAND_LOSS,
@@ -4365,12 +4365,15 @@ export function resetGame(at = DEFAULT_START, originId = null) {
      `at`을 따로 주면 그쪽이 이긴다(디버그·다른 바다에서 시작할 때). */
   const origin = ORIGIN_BY_ID[originId] ?? null;
   if (origin && at === DEFAULT_START) at = origin.at;
-  const s = SHIPS.hulk;
+  /* ★ **시작배는 그 바다에서 가장 싼 배다**(사용자 지시 · `data.js: START_PORTS[].ship`).
+     갈래가 배를 따로 정하면 그쪽이 이긴다 — 군관은 사람을 열넷 데려오므로 정원이 큰 병선을 탄다. */
+  const shipKey = origin?.ship ?? startShipAt(at);
+  const s = SHIPS[shipKey] ?? SHIPS.hulk;
   const arms = { light: s.guns, medium: 0, long: 0 };
   Object.assign(state, {
-    day: 1, gold: origin?.gold ?? START_GOLD, shipKey: origin?.ship ?? 'hulk',
+    day: 1, gold: origin?.gold ?? START_GOLD, shipKey,
     origin: origin?.id ?? null,
-    hp: s.hp, maxHp: s.hp, crew: origin?.crew ?? 0, crewMax: s.crewMax,
+    hp: s.hp, maxHp: s.hp, crew: Math.min(origin?.crew ?? 0, s.crewMax), crewMax: s.crewMax,
     guns: s.guns, arms: { ...arms },
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
@@ -4385,14 +4388,14 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
     payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1, deferredDay: 0 },
     ledger: newLedger(1),
-    fleet: { hulk: { at, hp: s.hp, arms: { ...arms }, refits: {} } },
+    fleet: { [shipKey]: { at, hp: s.hp, arms: { ...arms }, refits: {} } },
     consorts: {},                // 새 판에는 따라 나선 배가 없다 — 안 비우면 옛 선단이 남는다
     towing: null,
     loadout: ['captain', null, null, null, null, null],
     /* ★ **시작 항구가 곧 아는 항구다.** 'venezia'가 하드코딩돼 있어, 부산포에서 시작해도
        가 본 적 없는 베네치아가 `known`에 박혔다(supremacy ISSUES #10). `known`은
        「가 본 항구」를 재는 값이라 정보 화면·지도 표시가 안 가 본 곳을 아는 것으로 셌다. */
-    known: new Set([at]), everOwned: new Set(['hulk']), log: [],
+    known: new Set([at]), everOwned: new Set([shipKey]), log: [],
     stats: { battles: 0, wins: 0, profit: 0, distance: 0 },
   });
   trimLoadout();

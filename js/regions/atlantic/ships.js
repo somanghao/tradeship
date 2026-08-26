@@ -23,6 +23,14 @@
 //   플류트가 그것을 밀어낸 이유가 바로 그 차이다).
 
 export const SHIPS = {
+  /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
+  oldcrayer: {
+    hull: 'cog', name: '삭은 크라이어', origin: '북해의 헌 배', originFlag: null, tier: 0,
+    era: 'classic', yards: [], price: 330,
+    hp: 56, crew: 7, crewMax: 14, crewMin: 5, cargo: 44, guns: 2, speed: 0.82,
+    upkeep: 2, rig: 0.55, leak: 2, tint: 'rot',
+    desc: '북해에서 늙은 연안선. 뱃밥이 빠져 파도가 높으면 물이 넘어온다.',
+  },
   crayer: {
     hull: 'hulk', name: '크라이어', origin: '잉글랜드', originFlag: 'england', tier: 1, era: 'classic',
     yards: ['bristol', 'london', 'amsterdam'],
