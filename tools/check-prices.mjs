@@ -18,7 +18,10 @@
 //   node tools/check-prices.mjs
 
 import { readFileSync } from 'node:fs';
-import { GOODS, GOOD_BY_ID, SHIPS, OFFICER, MARKET } from '../js/data.js';
+import {
+  GOODS, GOOD_BY_ID, SHIPS, OFFICER, MARKET,
+  HOLDINGS, HOLDING, ESTATE_KEYS, TARIFF_SCALE, SEIZURE, SHOCK,
+} from '../js/data.js';
 import { GOODS_EV as REGION_GOODS_EV } from './evidence-load.mjs';
 import {
   CREW_WAGE, SUPPLY_UNIT, ARM_UPKEEP, HULL_UPKEEP, INSURANCE_RATE,
@@ -132,6 +135,76 @@ if (!(HULL_UPKEEP > 0) || !(INSURANCE_RATE > 0)) {
   warn('배선끊김', '선체 유지나 적하보험이 0이다 — 성장 브레이크가 통째로 빠진 상태다');
 }
 
+/* ── 5. 수익형 부동산 (#5) ─────────────────────────────────────
+   ★ 여기서 지키는 것은 절대액이 아니라 **순 연수익률**이다. 사료 앵커는 당대 안전자산의
+     이율(카스티야 censo al quitar 5~7% · 베네치아 Monte / 제노바 luoghi 4~7%)이고,
+     게임 쪽 계산은 `yield × (1 − vacancy) − HOLDING.upkeepRate`다.
+   ★ 그리고 **등급 사다리의 단조성**을 실패로 잡는다 — 값·수익률·공실률이 함께 오르지 않으면
+     고급이 그냥 상위호환이 되어 "고급은 도박"이라는 설계가 통째로 사라진다. 이것은
+     근거 없음이 아니라 **규칙이 자기모순**인 경우라 경고가 아니라 실패다(이 저장소의 선). */
+const EST_T = T.estateNetYield || {};
+const estRows = [];
+for (const k of ESTATE_KEYS) {
+  const h = HOLDINGS[k];
+  let prev = null;
+  h.grades.forEach((g, i) => {
+    // size 2 = 규모 보정이 0인 자리 — 등급끼리 비교하려면 같은 항구에서 재야 한다
+    const price = g.priceBase + 2 * (g.priceBySize ?? 0);
+    const net = g.yield * (1 - g.vacancy) - HOLDING.upkeepRate;
+    estRows.push({ k, i: i + 1, name: g.name, price, net, vac: g.vacancy });
+    if (EST_T.min != null && (net < EST_T.min || net > EST_T.max)) {
+      warn('수익률어긋남', `${h.name} ${i + 1}급(${g.name}) 순 연수익률 ${(net * 100).toFixed(1)}% — ` +
+        `목표 구간 ${(EST_T.min * 100).toFixed(0)}~${(EST_T.max * 100).toFixed(0)}% 밖이다. ${EST_T.basis ?? ''}`);
+    }
+    if (prev) {
+      if (price <= prev.price) warn('사다리깨짐', `${h.name} ${i + 1}급이 아랫급보다 싸다`);
+      if (g.yield <= prev.yield) warn('사다리깨짐', `${h.name} ${i + 1}급이 아랫급보다 덜 번다`);
+      if (g.vacancy <= prev.vacancy) {
+        warn('사다리깨짐', `${h.name} ${i + 1}급의 공실 위험이 아랫급보다 크지 않다 — ` +
+          '고급이 상위호환이 되면 "고급은 도박"이 사라진다(asset-evidence: estateLadder)');
+      }
+    }
+    prev = { price, yield: g.yield, vacancy: g.vacancy };
+  });
+}
+/* 가게는 완만하고 여관은 널을 뛴다 — 같은 등급에서 여관이 수익률도 공실률도 높아야 한다 */
+for (let i = 0; i < Math.min(HOLDINGS.shop.grades.length, HOLDINGS.inn.grades.length); i++) {
+  const s = HOLDINGS.shop.grades[i], n = HOLDINGS.inn.grades[i];
+  if (!(n.yield > s.yield && n.vacancy > s.vacancy)) {
+    warn('갈래겹침', `${i + 1}급에서 여관이 가게보다 더 벌면서 더 위험하지 않다 — ` +
+      '두 종류를 나눈 뜻이 없어진다(asset-evidence: estateVsInn)');
+  }
+}
+
+/* ── 6. 후반 브레이크 (#6) — 코드와 근거가 어긋나지 않았나 ──── */
+const TS = UPKEEP_EV.tariffScale || {};
+for (const key of ['from', 'per', 'step', 'cap', 'ceil']) {
+  if (TARIFF_SCALE[key] !== TS[key]) {
+    warn('불일치', `TARIFF_SCALE.${key} ${TARIFF_SCALE[key]} ≠ 근거 ${TS[key]}`);
+  }
+}
+const SZ = UPKEEP_EV.seizure || {};
+for (const key of ['perScale', 'cap', 'share', 'permitOff']) {
+  if (SEIZURE[key] !== SZ[key]) warn('불일치', `SEIZURE.${key} ${SEIZURE[key]} ≠ 근거 ${SZ[key]}`);
+}
+const LEVY = SHOCK.events.find((e) => e.id === 'levy');
+const LV = UPKEEP_EV.tariffLevy || {};
+if (!LEVY) {
+  warn('배선끊김', '관세 폭탄(SHOCK.events의 levy)이 없다 — 근거만 있고 규칙이 사라졌다');
+} else {
+  for (const key of ['mult', 'days', 'perDay']) {
+    if (LEVY[key] !== LV[key]) warn('불일치', `SHOCK levy.${key} ${LEVY[key]} ≠ 근거 ${LV[key]}`);
+  }
+}
+if (!(TARIFF_SCALE.cap > 1) || !(TARIFF_SCALE.ceil > 0)) {
+  warn('배선끊김', '입항세 누진이 꺼져 있다 — 후반 브레이크가 통째로 빠진 상태다');
+}
+/* ★ **막다른 골목 금지.** ceil이 없거나 너무 높으면 누진·악명·폭탄이 겹쳐 팔수록 손해가 된다. */
+if (TARIFF_SCALE.ceil > 0.25) {
+  warn('막다른골목', `실효 입항세 상한이 ${(TARIFF_SCALE.ceil * 100).toFixed(0)}% — ` +
+    '이쯤이면 팔수록 손해라 값을 물리는 게 아니라 길을 막는 것이다');
+}
+
 /* ── 결과 ────────────────────────────────────────────────── */
 const worst = [...rows].sort((a, b) => b.off - a.off).slice(0, 3);
 console.log(`교역품 ${rows.length}종 · 곡물 기준가 ${grain}닢 · 가장 비싼 품목은 곡물의 ` +
@@ -140,6 +213,12 @@ console.log(`부관/선원 ${officerRatio.toFixed(2)}배 · 보급/일당 ${(SUP
   `캐랙/선원연봉 ${carrackRatio.toFixed(1)}배`);
 console.log(`유지비: 선체 ×${HULL_UPKEEP} · 무장 ${ARM_UPKEEP.light}/${ARM_UPKEEP.medium}/${ARM_UPKEEP.long} · ` +
   `보험 요율×${INSURANCE_RATE} · 시장깊이 cap ${MARKET.cap}`);
+console.log(`부동산 ${estRows.length}등급 · 순 연수익률 ` +
+  estRows.map((r) => `${r.name} ${(r.net * 100).toFixed(1)}%(빈방 ${Math.round(r.vac * 100)}%)`).join(' · '));
+console.log(`후반 브레이크: 자산 ${TARIFF_SCALE.from.toLocaleString('en-US')}닢부터 ` +
+  `${TARIFF_SCALE.per.toLocaleString('en-US')}닢당 +${Math.round(TARIFF_SCALE.step * 100)}% · ` +
+  `최대 ×${TARIFF_SCALE.cap} · 실효 상한 ${(TARIFF_SCALE.ceil * 100).toFixed(0)}% · ` +
+  `몰수 최대 ${(SEIZURE.cap * 100).toFixed(1)}%/판정`);
 console.log(`목표에서 가장 먼 품목: ` +
   worst.map((r) => `${r.name} ${(r.off * 100).toFixed(0)}%`).join(' · '));
 console.log(`전역 목표 대조 ${rows.length}종 · 권역 근거만 있는 것 ${regionSourced}종 · ` +
