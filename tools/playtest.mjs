@@ -72,14 +72,35 @@ export async function open(opts = {}) {
 
   let browser = null;
   const args = pos ? [`--window-position=${pos.x},${pos.y}`, `--window-size=${pos.w},${pos.h}`] : [];
-  for (const t of [{ channel: 'chrome' }, { channel: 'msedge' }, {}]) {
-    try { browser = await pw.chromium.launch({ headless: !headed, args, ...t }); break; } catch { /* 다음 */ }
-  }
-  if (!browser) throw new Error('브라우저를 못 띄웠다 — Chrome을 설치하거나 npx playwright install chromium');
+  const viewport = pos ? null : { width: 1400, height: 900 };
 
-  // pos를 주면 창 크기를 그대로 뷰포트로 쓴다 — 안 그러면 1400×900이 창 밖으로 넘친다
-  const ctx = await browser.newContext(pos ? { viewport: null } : { viewport: { width: 1400, height: 900 } });
-  const page = await ctx.newPage();
+  /* ★ **`userDataDir`를 주면 프로필이 남는다 — 세이브가 회차를 건너 산다.**
+     `browser.newContext()`는 매번 **빈 프로필**이라 `js/save.js`가 쓰는 `localStorage`가
+     드라이버를 다시 띄우는 순간 통째로 사라진다. 완주 회차가 448일차 판을 그렇게 잃었다
+     (`.playtest/supremacy/ISSUES.md` #8). 이 캠페인은 설계상 한 세션에 안 끝나므로
+     (총 항해일 900~1,100) **이어받기가 없으면 후반은 아무도 못 본다.**
+     ⚠️ 프로필 하나를 두 러너가 같이 쓰면 크롬이 잠금으로 죽는다 — 러너마다 다른 디렉터리를 준다. */
+  let ctx = null;
+  if (opts.userDataDir) {
+    if (!existsSync(opts.userDataDir)) mkdirSync(opts.userDataDir, { recursive: true });
+    for (const t of [{ channel: 'chrome' }, { channel: 'msedge' }, {}]) {
+      try {
+        ctx = await pw.chromium.launchPersistentContext(opts.userDataDir,
+          { headless: !headed, args, viewport, ...t });
+        break;
+      } catch { /* 다음 */ }
+    }
+    if (!ctx) throw new Error('브라우저를 못 띄웠다(persistent) — 다른 러너가 같은 userDataDir를 쓰고 있지 않은지 본다');
+    browser = ctx.browser() ?? { close: () => ctx.close() };
+  } else {
+    for (const t of [{ channel: 'chrome' }, { channel: 'msedge' }, {}]) {
+      try { browser = await pw.chromium.launch({ headless: !headed, args, ...t }); break; } catch { /* 다음 */ }
+    }
+    if (!browser) throw new Error('브라우저를 못 띄웠다 — Chrome을 설치하거나 npx playwright install chromium');
+    // pos를 주면 창 크기를 그대로 뷰포트로 쓴다 — 안 그러면 1400×900이 창 밖으로 넘친다
+    ctx = await browser.newContext(viewport ? { viewport } : { viewport: null });
+  }
+  const page = ctx.pages()[0] ?? await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -100,6 +121,18 @@ export async function open(opts = {}) {
   }
   if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
 
+  /* ★ **뜨자마자 한 번 짚는다.** 타이틀이 떠 있는 것은 정상이지만(부팅 순서상 늘 그렇다),
+     그것을 모르고 클릭부터 하는 러너가 *"단추가 없다"*를 적는다. 여기서 미리 알린다. */
+  const titleUp = await page.evaluate(() => {
+    const cx = Math.round(window.innerWidth / 2), cy = Math.round(window.innerHeight / 2);
+    const hit = document.elementFromPoint(cx, cy);
+    return !!(hit && hit.closest && hit.closest('#title-screen'));
+  }).catch(() => false);
+  if (titleUp) {
+    console.warn('[playtest] 타이틀 화면이 판을 덮고 있다(정상) — 클릭은 g.start()로 닫은 뒤에 한다.'
+               + ' 덮인 채로는 scene이 port로 보여도 마우스가 안 닿는다.');
+  }
+
   const read = () => page.evaluate(() => ({
     scene: window.__game.scene,
     gold: window.__game.state.gold,
@@ -114,7 +147,7 @@ export async function open(opts = {}) {
   }));
 
   const g = {
-    page, browser, errors,
+    page, browser, errors, titleUp,
     /** 제목 화면을 닫는다.
         ★ `click('출항하기')`는 제목 화면과 **항구 사이드패널의 출항 단추 둘 다** 매치해
           뒤에 가려진 쪽을 눌러 실패했다(중동 테스터가 잡았다). 제목 화면만 집는다. */
@@ -131,6 +164,26 @@ export async function open(opts = {}) {
     get gold() { return read().then((s) => s.gold); },
 
     /** 화면에 보이는 단추·요소를 **글로 찾아** 누른다. 없으면 false. */
+    /** 지금 **무엇이 클릭을 먹고 있나** — 화면 한가운데를 실제로 받는 요소를 본다.
+        ★ `#title-screen`은 `position:absolute; inset:0; z-index:50`이라 **판 전체를 덮는다.**
+          그런데 `boot()`이 타이틀보다 **먼저** `go('port')`를 부르므로 그 아래에는 이미 항구가
+          그려져 있다 — `scene==='port'`도, `state.at`도, `#port-side`·`.btn-sail`도 전부 참이다.
+          곧 **러너가 "게임이 시작됐다"고 읽을 근거가 전부 참인데 클릭만 안 먹는다.**
+          그 상태에서 나온 실패를 러너들은 *"출항 단추가 없다"*·*"원양이 막혔다"*로 적었다.
+        사람은 안 속는다(검은 덮개와 큰 제목이 보인다). **속는 것은 DOM만 읽는 쪽**이라
+        여기서 한 번 짚어 준다. 닫는 법은 `g.start()`(타이틀의 단추). */
+    async overlay() {
+      return page.evaluate(() => {
+        const cx = Math.round(window.innerWidth / 2), cy = Math.round(window.innerHeight / 2);
+        const hit = document.elementFromPoint(cx, cy);
+        const cover = hit && hit.closest ? hit.closest('#title-screen') : null;
+        if (!cover) return { up: false };
+        const btns = [...cover.querySelectorAll('button')].map((b) => b.textContent.trim());
+        return { up: true, id: 'title-screen', z: getComputedStyle(cover).zIndex,
+                 head: cover.innerText.split(String.fromCharCode(10))[0], buttons: btns.slice(0, 12) };
+      });
+    },
+
     async click(text, { exact = false, timeout = 4000 } = {}) {
       const loc = page.getByText(text, { exact }).first();
       try {
@@ -138,7 +191,19 @@ export async function open(opts = {}) {
         await loc.click({ timeout: 2000 });
         await sleep(120 + slow);
         return true;
-      } catch { return false; }
+      } catch {
+        /* ★ 실패했으면 **덮개부터 의심한다.** 조용히 false를 돌려주면 러너가
+           "그 단추가 없다"고 적고, 그 오독이 회차 하나를 통째로 잡아먹는다. */
+        const ov = await g.overlay().catch(() => ({ up: false }));
+        if (ov.up) {
+          const line = `타이틀 덮개가 클릭을 먹는다 — #title-screen(z:${ov.z})이 판을 덮고 있다.`
+                     + ` 그 아래 게임은 이미 돌고 있다(scene은 port로 보인다).`
+                     + ` 단추: ${(ov.buttons || []).join(' / ')} · 닫으려면 g.start()`;
+          if (!errors.includes(line)) errors.push(line);
+          console.warn('[playtest] ' + line);
+        }
+        return false;
+      }
     },
 
     /** 지금 화면에 그 글이 보이나 */
@@ -251,7 +316,13 @@ export async function open(opts = {}) {
         const sailBtn = page.locator('#port-side .btn-sail, .btn-sail').last();
         let opened = false;
         try { await sailBtn.click({ timeout: 2500 }); opened = true; } catch { /* 아래 폴백 */ }
-        if (!opened && !(await g.click('출항하기'))) return { ok: false, why: '출항 단추가 없다' };
+        if (!opened && !(await g.click('출항하기'))) {
+          /* ★ **"단추가 없다"고 적지 마라 — 덮개일 수 있다.** 실제로 완주 러너가 이 문장을
+             *"원양이 막혔다"*로 오독했다(supremacy ISSUES #35). 이유를 갈라서 돌려준다. */
+          const ov = await g.overlay().catch(() => ({ up: false }));
+          if (ov.up) return { ok: false, why: `타이틀 덮개가 클릭을 먹는다 — #title-screen(z:${ov.z})이 판을 덮고 있다. g.start()로 닫아라`, overlay: ov };
+          return { ok: false, why: '출항 단추가 없다' };
+        }
         await sleep(300 + slow);
         s = await read();
         if (s.scene !== 'map') return { ok: false, why: '지도로 못 갔다' };
@@ -396,7 +467,7 @@ export async function open(opts = {}) {
       return p;
     },
 
-    async close() { await browser.close(); },
+    async close() { await ctx.close().catch(() => {}); await browser.close().catch(() => {}); },
   };
   return g;
 }

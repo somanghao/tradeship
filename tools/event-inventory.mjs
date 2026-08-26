@@ -182,6 +182,14 @@ for (const rid of regions) {
   if (s.pirates.n === 0) holes.push(`${rid}: 해적 NPC 0 — 지목된 해적 조우가 안 난다`);
   if (s.figures.n === 0) holes.push(`${rid}: 항구 인물 0`);
   if (s.routes.sea === 0) holes.push(`${rid}: 해상 구간 0 — 해상 이벤트가 안 난다`);
+  /* ★ **육로가 0이면 `bandit`·`toll`이 영영 안 난다.** `state.js: rollSeaEvent`가
+     `isInland(from,to)`(항로 위험도 null)일 때만 그 둘을 내기 때문이다.
+     이 줄이 없어서 아프리카·인도양(둘 다 육로 0)을 두고 **"구멍 없음"이라는 거짓 신호**를 냈고,
+     완주 정의 ③(「권역마다 사건 19종」)이 그 두 바다에서 달성 불가라는 것을 아무도 못 봤다.
+     → `.playtest/supremacy-run/BLOCKERS.md` B-1 · 재현 `event-holes.mjs` */
+  if (s.routes.inland === 0) {
+    holes.push(`${rid}: 육로·내해 구간 0 — bandit·toll이 영영 안 난다 (사건 19종 중 17종이 천장)`);
+  }
 }
 console.log('\n■ 구멍 (자리 자체가 없는 것)');
 console.log(holes.length ? holes.map((h) => '  ✗ ' + h).join('\n') : '  없음 — 아홉 권역 모두 모든 사건이 걸릴 자리를 가졌다');

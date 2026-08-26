@@ -16,7 +16,7 @@ import {
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
   tamedIn, passOff, tipOff, regionHasHolding, huntLegs,
-  knowPort, holdingTip,
+  knowPort, holdingTip, insuranceAdd,
   /* 동료 — 코멘다(P3). 규칙은 `state.js`, 값은 `data.js: COMMENDA` */
   matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
@@ -241,8 +241,18 @@ function marketTable() {
         : el('span', { text: '—', style: { color: '#5d5768' } })),
       el('td.num', {}, el('div.trade-btns', {}, [
         el('button.btn.sm.dark', {
+          /* ★ **값나가는 짐은 두 번 대가를 치른다** — 그 둘째(적하보험)를 **담기 전에** 보여 준다.
+             완주 러너가 62거점에서 하루 −600닢으로 150일을 샜는데, 같은 조건의 시뮬은 +274닢이었다.
+             차이는 하나 — 시뮬은 짐을 싣고 다녔다. 규칙은 안 바꾸고 **보이게만 한다**(`insuranceAdd`). */
           text: '사기', disabled: costFor(g.id, 1) > state.gold || cargoFree() <= 0,
-          title: '10개 · Shift 전량 · Ctrl 1개 (금화·빈 칸이 모자라면 살 수 있는 만큼만)',
+          title: (() => {
+            const ins = insuranceAdd(g.id, 10, city.id);
+            return '10개 · Shift 전량 · Ctrl 1개 (금화·빈 칸이 모자라면 살 수 있는 만큼만)'
+              + (ins.add > 0
+                  ? `\n★ 10개를 실으면 적하보험료가 +${ins.add.toLocaleString('ko-KR')}닢`
+                    + ` (가장 험한 이웃 ${CITY_BY_ID[ins.to].name} 기준 · 요율 ${ins.risk}%)`
+                  : '\n이 항구에서 나가는 길은 전부 내해라 적하보험이 안 붙는다');
+          })(),
           onclick: (e) => doBuy(g.id, e.shiftKey ? 999 : e.ctrlKey ? 1 : 10),
         }),
         el('button.btn.sm', {

@@ -3762,6 +3762,46 @@ export function convoyInsureOff() {
   return Math.min(FLEET.insureOffCap ?? 0, consortCount() * (FLEET.insureOffPer ?? 0));
 }
 
+/* ── 「이걸 실으면 얼마가 더 나가나」 ─────────────────────────
+   ★ **이번 회차에 같은 유형이 네 번째다** — 사냥터를 빈 배로 순찰(P6-1) · 짐이 곧 미끼인 줄 모름 ·
+   원양 문이 안 보임 · 순회를 빈 배로. **게임이 이미 아는 것을 화면이 말하지 않아 생기는 손실**이고
+   값이 매번 수백 일이다. 완주 러너가 62거점에서 하루 −600닢으로 150일을 새다 청산됐는데
+   같은 조건의 시뮬은 하루 +274닢이었다 — 차이는 하나, **시뮬은 짐을 싣고 다녔다.**
+   ⇒ 규칙은 한 줄도 안 바꾼다. `voyageCost()`는 이미 일곱 갈래로 돌려주고
+     `insuranceFor({value})`는 이미 값을 인자로 받는다. **보이게만 한다.**
+   ⚠️ 작은 배일수록 심하다 — 조운선은 비용의 83%가 보험이고 갈레온은 56%다.
+     적은 칸에서 최대 이익을 내려고 **칸당 비싼 물건**을 싣기 때문이다(칸당 256닢 ↔ 111닢).
+     **초반 플레이어가 가장 크게 당한다.** */
+
+/** 지금 이 항구에서 나갈 수 있는 길 중 **가장 험한** 이웃 — 보험 미리보기의 기준이다.
+    최악을 보여 주는 이유: 미리보기는 *"이만큼까지 나갈 수 있다"*여야 판단 재료가 된다. */
+export function worstNeighbor(cityId = state.at) {
+  let worst = null;
+  for (const to of neighborsOf(cityId)) {
+    const r = routeRisk(cityId, to) ?? 0;
+    if (!worst || r > worst.risk) worst = { to, risk: r };
+  }
+  return worst;
+}
+
+/** 이 품목 `qty`칸을 더 실으면 **적하보험료가 얼마나 오르나**(가장 험한 이웃 항로 기준).
+    ★ 미리 보여 주는 것뿐이다 — 실제로 무는 값은 출항할 때 `insuranceFor`가 다시 잰다. */
+export function insuranceAdd(goodId, qty = 10, cityId = state.at) {
+  const w = worstNeighbor(cityId);
+  if (!w || !w.risk) return { add: 0, to: null, risk: 0 };
+  const unit = state.prices[cityId]?.[goodId] ?? GOOD_BY_ID[goodId]?.base ?? 0;
+  const now = cargoValue(cityId);
+  const add = insuranceFor({ from: cityId, to: w.to, value: now + unit * qty })
+            - insuranceFor({ from: cityId, to: w.to, value: now });
+  return { add: Math.max(0, add), to: w.to, risk: w.risk };
+}
+
+/** 이 항차 비용에서 **보험이 차지하는 몫**(0~1) — 작은 배일수록 크다 */
+export function insuranceShare(cost) {
+  const t = cost?.total ?? 0;
+  return t > 0 ? (cost.insurance ?? 0) / t : 0;
+}
+
 /* ── 공동해손 — 보험이 실제로 보상하는 사건 ────────────────────
    보험료를 걷으면서 보상하는 사건이 없으면 그것은 보험이 아니라 세금이다.
    사료에서 보험이 문 것은 전손과 **투하**(jettison)였다 — 폭풍에 배를 살리려

@@ -14,17 +14,20 @@ import {
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey, activeBounty,
+  knowPort, priceKnown, priceOf, payBounties, activeBounty, riskKey, insuranceShare,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
   totalLossOdds, totalLoss,
+  /* 입장권 체크리스트가 쓰는 것 — **판정을 여기서 새로 만들지 않는다.**
+     `oceanReady`가 보는 그 상수와 그 함수를 그대로 읽어 세 줄로 편다. */
+  escortNeed, OCEAN_CREW_MIN, OCEAN_HULL_MIN,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
   pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
-import { ALL_TRADERS, ALL_PIRATES } from '../regions/index.js';
+import { ALL_TRADERS, ALL_PIRATES, LIVE_LANES } from '../regions/index.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
 import { go, toLogical, canvas, setInsetRight, setViewSpan } from '../main.js';
 /* 항해 애니메이션은 **연출**이라 배속을 탄다. 일수(`voyageDays`)·판정 횟수(`rollsLeft`)·
@@ -890,6 +893,154 @@ function sailingCard() {
   ]);
 }
 
+/* ── 이 바다에서 나가는 문 ─────────────────────────────────────
+   ★ 「다른 바다로」 카드의 알맹이. 여기서 하는 일은 셋이다 —
+     ① 지금 정박한 항구뿐 아니라 **이 권역의 원양 항로 전부**를 센다
+     ② 그 문까지 **몇 구간 며칠**인지를 같은 바다 안에서 길을 찾아 잰다
+     ③ 입장권(선원·선체·동행) 세 줄을 **미리** 편다
+   규칙은 하나도 안 만든다 — `state.js`가 이미 아는 것을 화면이 말하게 할 뿐이다. */
+
+/** 같은 바다 안에서 목표 항구까지 가는 길 — 구간 수·일수·다음 기항지.
+    ★ 다익스트라다(BFS가 아니다). 이 지도의 구간은 하루짜리와 열여드레짜리가 섞여 있어
+      "구간 수가 적은 길"과 "빨리 닿는 길"이 다르다. 사람이 궁금한 것은 뒤쪽이다. */
+function courseTo(target) {
+  if (target === state.at) return { legs: 0, days: 0, next: null };
+  const rid = curRegion();
+  const adj = {};
+  for (const [a, b] of ROUTES) {
+    // 다른 바다로 넘어가는 선은 **길 찾기에서 뺀다** — 남의 바다를 거쳐 오는 답이 나온다
+    if (REGION_OF_CITY[a] !== rid || REGION_OF_CITY[b] !== rid) continue;
+    (adj[a] ||= []).push(b);
+    (adj[b] ||= []).push(a);
+  }
+  const dist = { [state.at]: 0 }, legs = { [state.at]: 0 }, prev = {};
+  const seen = new Set();
+  for (;;) {
+    let cur = null, best = Infinity;
+    for (const [id, d] of Object.entries(dist)) if (!seen.has(id) && d < best) { best = d; cur = id; }
+    if (cur == null) break;
+    if (cur === target) break;
+    seen.add(cur);
+    for (const nx of adj[cur] ?? []) {
+      const d = best + voyageDays(cur, nx);
+      if (d < (dist[nx] ?? Infinity)) { dist[nx] = d; legs[nx] = legs[cur] + 1; prev[nx] = cur; }
+    }
+  }
+  if (dist[target] == null) return null;          // 이 바다 안에서 못 닿는다(섬 그래프)
+  let step = target;
+  while (prev[step] !== state.at) step = prev[step];
+  return { legs: legs[target], days: dist[target], next: step };
+}
+
+/** 입장권 — `oceanReady`가 보는 것과 **같은 셋**을 미리 편다.
+    ⚠️ `oceanReady(to)`는 **첫 실패 하나만** 말하고, `to`를 안 주면 호위를 아예 안 본다
+      (인자 없이 부르면 늘 `{ok:true}`가 나온다 — 실제로 그것에 속아 시간을 태운 사람이 있다).
+      체크리스트는 세 줄을 다 세워야 하므로 같은 상수를 직접 읽는다. 판정식은 한 벌이다. */
+function gateTicket(a, b) {
+  const crewNeed = Math.max(3, Math.ceil((ship().crewMin || 0) * OCEAN_CREW_MIN));
+  const hull = state.maxHp > 0 ? state.hp / state.maxHp : 1;
+  const esc = escortNeed(a, b);
+  return {
+    escort: esc,
+    crew: { ok: state.crew >= crewNeed, text: `선원 ${state.crew}/${crewNeed}명` },
+    hull: { ok: hull >= OCEAN_HULL_MIN,
+            text: `선체 ${Math.round(hull * 100)}% (하한 ${Math.round(OCEAN_HULL_MIN * 100)}%)` },
+    consort: { ok: consortCount() >= esc,
+               text: esc ? `동행 ${consortCount()}/${esc}척` : '동행 없이 간다' },
+  };
+}
+
+function oceanGateRows(costCell) {
+  const rid = curRegion();
+  /* 이 바다에서 **밖으로** 나가는 선이 문이다. 권역 안에서 닫히는 원양 항로
+     (마닐라~취안저우처럼 양끝이 같은 바다인 것)는 건너도 같은 바다이므로 문이 아니다 —
+     그것은 예전처럼 **그 항구에 서 있을 때만** 한 줄로 뜬다. */
+  const found = [];
+  for (const l of LIVE_LANES) {
+    const aIn = REGION_OF_CITY[l.a] === rid, bIn = REGION_OF_CITY[l.b] === rid;
+    if (!aIn && !bIn) continue;
+    if (aIn && bIn) {
+      if (l.a === state.at) found.push({ lane: l, from: l.a, to: l.b, gate: false });
+      else if (l.b === state.at) found.push({ lane: l, from: l.b, to: l.a, gate: false });
+      continue;
+    }
+    const from = aIn ? l.a : l.b;
+    found.push({ lane: l, from, to: from === l.a ? l.b : l.a, gate: true });
+  }
+  const gates = found
+    .map((g) => ({ ...g, course: courseTo(g.from) }))
+    .filter((g) => g.course)
+    .sort((a, b) => a.course.days - b.course.days || a.lane.risk - b.lane.risk);
+
+  if (!gates.length) return { rows: [], total: 0, ticket: null };
+
+  /* 항로와 무관한 두 줄은 목록 위에 한 번만. 어느 문을 보든 값이 같다. */
+  const t0 = gateTicket(state.at, null);
+  const line = (c) => `<span style="color:${c.ok ? '#79a44f' : '#d98a6a'}">${c.ok ? '✔' : '✗'} ${c.text}</span>`;
+  const ticket = el('div', {
+    style: { fontSize: '11px', lineHeight: 1.75, padding: '2px 2px 6px' },
+    html: `<span style="color:#8f8878">입장권</span> ${line(t0.crew)} · ${line(t0.hull)}`,
+    title: '이 둘은 어느 문에서든 같다. 동행 척수만 항로의 요율에 따라 갈린다(data.js: FLEET.escortAt).',
+  });
+
+  const rows = gates.slice(0, 7).map((g) => {
+    const { lane, from, to, course } = g;
+    const dest = CITY_BY_ID[to], gate = CITY_BY_ID[from];
+    const rg = REGION_BY_ID[REGION_OF_CITY[to]];
+    const tk = gateTicket(from, to);
+    const items = [tk.crew, tk.hull, tk.consort];
+    const short = items.filter((i) => !i.ok);
+    const here = from === state.at;
+
+    /* 여기서 바로 뜰 수 있는 문만 값과 위험을 잰다 — 남의 항구에서 잰 항해비는 거짓말이다 */
+    const d = here ? voyageDays(state.at, to) : null;
+    const cost = here ? voyageCost(d, state.crew, { from: state.at, to }) : null;
+    const dg = here ? routeDangerLabel({ from: state.at, to, threat: pirateThreat(state.at, to) }) : null;
+
+    const status = short.length ? short[0].text : here ? '갖췄다' : '입장권은 갖췄다';
+    return el('div.route-row', {
+      title: [
+        `${gate.name} → ${dest.name} (${rg?.name ?? ''})`,
+        lane.note,
+        here ? `기준 ${lane.days}일 (이 배로 ${d}일) · 항해비 ${cost.total}닢`
+             : `문까지 ${course.legs}구간 ${course.days}일 · 건너는 데 ${lane.days}일`,
+        here && dg ? `해적 조우 ${Math.round(dg.odds * 100)}%` : `원양 요율 ${lane.risk}%`,
+        lane.monsoon ? '★ 계절풍 구간 — 철을 잘못 잡으면 훨씬 오래 걸린다' : null,
+        lane.overland ? '★ 육로 환적 — 배가 아니라 짐이 넘어간다' : null,
+        '',
+        '입장권',
+        ...items.map((i) => `  ${i.ok ? '✔' : '✗'} ${i.text}`),
+        tk.escort ? `  ※ 요율 ${lane.risk}%짜리 항로라 동행 ${tk.escort}척이 붙어야 한다` : null,
+        here ? null : `\n누르면 ${CITY_BY_ID[course.next].name}까지 한 구간 간다`,
+      ].filter((x) => x != null).join('\n'),
+      style: short.length ? { opacity: 0.62 } : null,
+      onclick: () => {
+        if (!here) {                       // 문이 남의 항구에 있다 — 한 구간씩 다가간다
+          toast(`${gate.name}까지 ${course.legs}구간 ${course.days}일`, 'good');
+          return startVoyage(course.next);
+        }
+        const ready = oceanReady(to);      // ★ 목적지를 반드시 넘긴다(안 넘기면 호위를 안 본다)
+        if (!ready.ok) return toast(ready.why, 'bad');
+        startVoyage(to);
+      },
+    }, [
+      el('span.rn', {}, [
+        el('span', { text: dest.name }),
+        el('span', {
+          text: here ? ' 여기서' : ` ← ${gate.name}`,
+          style: { color: here ? '#f4dd86' : '#8f8878', fontSize: '10.5px' },
+        }),
+      ]),
+      el('span.rw', { text: rg?.name ?? '', style: { color: '#8fb4d8' } }),
+      el(`span.rw.${short.length ? 'bad' : 'good'}`, { text: status }),
+      here ? costCell(d, cost)
+           : el('span.rd', { text: `${course.legs}구간 ${course.days}일 · 원양 ${lane.days}일` }),
+    ]);
+  });
+
+  return { rows, total: gates.filter((g) => g.gate).length, ticket };
+}
+
 function routeCards() {
   const here = CITY_BY_ID[state.at];
   const nb = neighborsOf(state.at);
@@ -897,7 +1048,7 @@ function routeCards() {
      한 목록에 섞으면 "며칠짜리 항해인지" 감각이 뭉개진다. 스무 날짜리 대양 항해와
      이틀짜리 연안 항해는 애초에 다른 결정이다. */
   const inSea = nb.filter((id) => !laneOf(state.at, id));
-  const oceanIds = nb.filter((id) => laneOf(state.at, id));
+  // 원양 항로는 `oceanGateRows`가 따로 센다 — 이 항구에서 뜨는 것뿐 아니라 **이 바다의 문 전부**를.
 
   /* 날짜·비용 칸. ★ **출항 즉시 나갈 몫**(보급·유지·보험 — 급여는 쌓였다 나중에 나간다)을
      금고가 못 대면 붉게 짚는다. 전에는 아무 표시가 없었고, 모자란 만큼은 조용히 사라졌다
@@ -905,12 +1056,24 @@ function routeCards() {
   const costCell = (d, cost) => {
     const now = cost.supplies + cost.fleet + cost.hull + cost.arms + cost.insurance;
     const short = now > state.gold;
+    /* ★ **비용의 몇 할이 「내가 실은 짐」 때문인지**를 셀에 드러낸다(P8-2).
+       조운선은 항해비의 **83%가 보험**이고 갈레온은 56%다 — 작은 배가 적은 칸에서 최대 이익을
+       내려고 칸당 비싼 물건을 싣기 때문이고, 그래서 **초반 플레이어가 가장 크게 당한다.**
+       합계 한 줄만 보여 주면 그 83%가 안 보이고, 안 보이면 「짐을 두고 갈까」라는 판단이 안 생긴다.
+       ⚠️ 규칙은 한 줄도 안 바뀐다 — `voyageCost()`가 이미 갈래로 돌려주던 것을 꺼내 놓을 뿐이다. */
+    const share = insuranceShare(cost);
+    const heavy = share >= 0.40 && cost.insurance > 0;
     return el(`span.rd${short ? '.short' : ''}`, {
-      text: `${d}일 · ${cost.total}닢`,
-      style: short ? { color: '#d98a6a' } : null,
-      title: short
-        ? `금고 ${state.gold.toLocaleString('ko-KR')}닢으로는 출항하며 나갈 ${now.toLocaleString('ko-KR')}닢을 못 댄다`
-        : null,
+      text: `${d}일 · ${cost.total}닢${heavy ? ` (보험 ${Math.round(share * 100)}%)` : ''}`,
+      style: short ? { color: '#d98a6a' } : heavy ? { color: '#c9a06a' } : null,
+      title: (short
+        ? `금고 ${state.gold.toLocaleString('ko-KR')}닢으로는 출항하며 나갈 ${now.toLocaleString('ko-KR')}닢을 못 댄다\n`
+        : '')
+        + (heavy
+          ? `이 항차 비용 ${cost.total.toLocaleString('ko-KR')}닢 가운데 적하보험이 `
+            + `${cost.insurance.toLocaleString('ko-KR')}닢(${Math.round(share * 100)}%)이다.\n`
+            + '실은 짐이 값나갈수록 오른다 — 값나가는 것을 두고 가면 그만큼 준다.'
+          : ''),
     });
   };
   /* ★ **가기 전에 그곳이 무엇을 내고 무엇을 원하는지 알려 준다.**
@@ -1002,45 +1165,18 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
     ]);
   });
 
-  /* 다른 바다로 — 원양 항로.
+  /* 다른 바다로 — **이 바다에서 나가는 문 전부**.
      선으로 긋지 않는 이유는 그을 좌표가 없기 때문이다(권역마다 좌표계가 따로다).
-     대신 어디로 이어지고 며칠이 걸리는지를 글로 준다. */
-  const oceanRows = oceanIds.map((id) => {
-    const c = CITY_BY_ID[id];
-    const lane = laneOf(state.at, id);
-    const rg = REGION_BY_ID[REGION_OF_CITY[id]];
-    const d = voyageDays(state.at, id);
-    const cost = voyageCost(d, state.crew, { from: state.at, to: id });
-    const threat = pirateThreat(state.at, id);
-    const dg = routeDangerLabel({ from: state.at, to: id, threat });
-    /* ★ 대양은 **사람과 배가 성해야** 건넌다(`state.js: oceanReady`).
-       근해는 막지 않는다 — 막으면 항구에 갇혀 빠져나갈 길이 없어진다. 선원 1명·선체 44/231로도
-       원양이 열려 있어서 "백병전에 사람을 갈아 넣는 것이 늘 옳았다"(완주 플레이 ISSUES #24). */
-    const ready = oceanReady(id);   // ★ 호위 의무까지 본다 (P2-a)
-    return el('div.route-row', {
-      title: [
-        lane.note,
-        `기준 ${lane.days}일 (이 배로 ${d}일) · 항해비 ${cost.total}닢`,
-        `해적 조우 ${Math.round(dg.odds * 100)}%`,
-        lane.monsoon ? '★ 계절풍 구간 — 철을 잘못 잡으면 훨씬 오래 걸린다' : null,
-        lane.overland ? '★ 육로 환적 — 배가 아니라 짐이 넘어간다' : null,
-        ready.escort ? `★ 함대 구간 — 동행 ${ready.escort}척이 있어야 건넌다 (지금 ${consortCount()}척)` : null,
-        ready.ok ? null : `⚑ ${ready.why}`,
-      ].filter(Boolean).join('\n'),
-      style: ready.ok ? null : { opacity: 0.55 },
-      onclick: () => {
-        if (!ready.ok) return toast(ready.why, 'bad');
-        startVoyage(id);
-      },
-    }, [
-      el('span.rn', { text: c.name }),
-      el('span.rw', { text: rg?.name ?? '', style: { color: '#8fb4d8' } }),
-      el(`span.rw.${dg.kind || 'calm'}`, {
-        text: lane.monsoon ? '계절풍' : lane.overland ? '육로' : dg.text,
-      }),
-      costCell(d, cost),
-    ]);
-  });
+     대신 어디로 이어지고 며칠이 걸리는지를 글로 준다.
+
+     ★ **여기가 663일의 자리였다**(DESIGN-growth P7-0). 전에는 *지금 정박한 항구에서
+       출발하는* 원양 항로만 이 목록에 떴다. 부산포에서 시작한 사람은 **광저우에 문이
+       있다는 것을 알 방법이 없었고**, 입장권(선원·선체·동행)의 세 조건도 스물여드레를
+       항해해 그 카드를 눌러야 처음 보였다 — 게임은 이유를 정확히 말하되 28일 늦게 말했다.
+       실클릭 여섯 회차가 아홉 바다 중 한 곳도 못 벗어난 원인이 이것이다.
+     ⇒ **규칙은 한 줄도 안 바꾼다.** `oceanReady`도 `FLEET.escortAt`도 그대로다.
+       바꾸는 것은 **언제 알려 주는가** 하나뿐이다. */
+  const gateRows = oceanGateRows(costCell);
 
   /* 지금 값이 흔들리는 곳 — 소식을 들어야 달려갈 수 있다.
      사건형 대박을 넣어 놓고 화면에 안 띄우면 플레이어에겐 없는 것과 같다.
@@ -1105,16 +1241,19 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
     ]),
   ];
 
-  if (oceanRows.length) {
+  if (gateRows.rows.length) {
     cards.push(el('div.panel', {}, [
       el('h3', {}, [
         el('span', { text: '다른 바다로' }),
         el('span', {
-          text: '원양 항로',
+          text: `이 바다의 문 ${gateRows.total}곳`,
           style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 },
         }),
       ]),
-      el('div.route-list', {}, oceanRows),
+      /* 입장권 가운데 **항로와 무관한 두 줄**은 목록 위에 한 번만 편다.
+         (동행 척수만 항로마다 다르므로 그것은 줄마다 적는다.) */
+      gateRows.ticket,
+      el('div.route-list', {}, gateRows.rows),
     ]));
   }
 
