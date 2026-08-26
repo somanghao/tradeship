@@ -24,7 +24,7 @@
 export const SHIPS = {
   /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
   oldcanoa: {
-    hull: 'canoa', name: '삭은 대형 카누', origin: '기니만 헌 배', originFlag: null, tier: 0,
+    hull: 'galley', name: '삭은 대형 카누', origin: '기니만 헌 배', originFlag: null, tier: 0,
     era: 'classic', yards: [], price: 290,
     hp: 48, crew: 10, crewMax: 18, crewMin: 6, cargo: 40, guns: 0, speed: 0.90,
     upkeep: 2, rig: 0, leak: 2, tint: 'rot',

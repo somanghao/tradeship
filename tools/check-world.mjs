@@ -20,6 +20,8 @@ const YARD_CAP = YARD.cap;
 const YARD_MAX_BOOST = YARD_CAP;   // 승급은 cap까지 오른다(부두 거점 +1도 그 안이다)
 import { REGIONS, REGION_BY_ID, REGION_OF_CITY, isOceanLane, laneOf } from '../js/map/geo.js';
 import { state, resetGame, neighborsOf, voyageDays } from '../js/state.js';
+/* 그림 틀 목록 — 배가 실제로 그려지는지 보려면 이쪽을 읽어야 한다(규칙 파일엔 없다) */
+import { HULLS } from '../js/sprites/ship.js';
 
 const problems = [];
 const softs = [];
@@ -119,6 +121,22 @@ for (const g of GOODS) {
     soft('산지 없음', `${g.name} — 사는 곳만 있고 나는 곳이 없다(중립가로만 산다)`);
   } else if (!hasDemand.has(g.id)) {
     soft('수요 없음', `${g.name} — 나는 곳만 있고 사는 곳이 없다(중립가로만 팔린다)`);
+  }
+}
+
+/* ── ⑥ 배가 그릴 수 있는 선체를 쓰는가 (2026-08-26) ──────────
+   ★ `SHIPS[].hull`은 **선종 이름이 아니라 그림 틀 키**다(`sprites/ship.js: HULLS` — 열 개뿐).
+     그런데 이름이 비슷해서 선종 id를 그대로 적기 쉽다. 실제로 시작배 여덟 종을 만들며
+     `panokseon`·`dhow`·`cog` 같은 **없는 선체**를 적었고, 그 배를 그리는 순간
+     `Error: unknown hull` 로 죽는다 — **기본 시작지(부산포)의 배가 그랬다.**
+   ⚠️ 그런데 `check-*` **열넷과 규칙 192개가 전부 통과했다.** 그것들은 규칙만 재고
+     `sprites/*`를 한 번도 안 거친다(`check-imports`도 import 이름만 본다).
+     이번 회차에 같은 모양의 구멍이 **세 번째**다. 그래서 여기서 본다. */
+for (const [key, s] of Object.entries(SHIPS)) {
+  if (!s.hull) continue;
+  if (!HULLS[s.hull]) {
+    bad('없는 선체', `${s.name}(${key})의 hull '${s.hull}'이 sprites/ship.js: HULLS에 없다 — `
+      + `그리는 순간 죽는다. 쓸 수 있는 것: ${Object.keys(HULLS).join(' · ')}`);
   }
 }
 

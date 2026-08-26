@@ -33,7 +33,7 @@
 export const SHIPS = {
   /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
   oldjalba: {
-    hull: 'dhow', name: '삭은 잘바', origin: '홍해의 헌 배', originFlag: null, tier: 0,
+    hull: 'caravel', name: '삭은 잘바', origin: '홍해의 헌 배', originFlag: null, tier: 0,
     era: 'classic', yards: [], price: 300,
     hp: 50, crew: 8, crewMax: 14, crewMin: 5, cargo: 45, guns: 1, speed: 0.85,
     upkeep: 2, rig: 0.15, leak: 2, tint: 'rot',

@@ -42,7 +42,7 @@ export const SHIPS = {
      ⚠️ **제원은 `hulk`에 맞춘다** — 바다마다 다른 것은 **얼굴이지 난이도가 아니다.**
        정품 tier 1 배를 시작배로 주었더니 `leak`가 없고 속력이 1.7배라 첫 배가 10항차 → 1항차가 됐다. */
   oldsahuseon: {
-    hull: 'panokseon', name: '삭은 사후선', origin: '좌수영 퇴역선', originFlag: null, tier: 0,
+    hull: 'galley', name: '삭은 사후선', origin: '좌수영 퇴역선', originFlag: null, tier: 0,
     era: 'classic', yards: [], price: 300,
     hp: 50, crew: 8, crewMax: 14, crewMin: 5, cargo: 42, guns: 2, speed: 0.88,
     upkeep: 2, rig: 0.20, leak: 2, tint: 'rot',

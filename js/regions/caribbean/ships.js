@@ -16,7 +16,7 @@
 export const SHIPS = {
   /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
   oldpiragua: {
-    hull: 'piragua', name: '삭은 피라구아', origin: '섬의 헌 배', originFlag: null, tier: 0,
+    hull: 'caravel', name: '삭은 피라구아', origin: '섬의 헌 배', originFlag: null, tier: 0,
     era: 'classic', yards: [], price: 300,
     hp: 50, crew: 8, crewMax: 15, crewMin: 5, cargo: 45, guns: 1, speed: 0.87,
     upkeep: 2, rig: 0.35, leak: 2, tint: 'rot',

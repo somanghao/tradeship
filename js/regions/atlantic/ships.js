@@ -25,7 +25,7 @@
 export const SHIPS = {
   /* ★ 이 바다의 시작배(tier 0) — 지중해 `hulk`와 같은 자리. 제원은 그것에 맞춘다. */
   oldcrayer: {
-    hull: 'cog', name: '삭은 크라이어', origin: '북해의 헌 배', originFlag: null, tier: 0,
+    hull: 'hulk', name: '삭은 크라이어', origin: '북해의 헌 배', originFlag: null, tier: 0,
     era: 'classic', yards: [], price: 330,
     hp: 56, crew: 7, crewMax: 14, crewMin: 5, cargo: 44, guns: 2, speed: 0.82,
     upkeep: 2, rig: 0.55, leak: 2, tint: 'rot',
