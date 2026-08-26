@@ -2,7 +2,7 @@
 // 게임 논리 해상도 400x225 기준으로 그린 뒤 정수배 확대해서 쓴다.
 
 import { PAL as P, G, bake, outline, rng } from '../pixel.js';
-import { autoLandMap, scatterIsles, carveHarbors, laneCutter, valueNoise } from './maps/auto.js';
+import { autoLandMap, scatterIsles, carveHarbors, laneCutter, valueNoise, coastOctaves } from './maps/auto.js';
 import { mapDefOf, climateOf, ramp, rockOf, seaRampOf } from './maps/index.js';
 
 export const VW = 400, VH = 225;
@@ -85,23 +85,22 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
     let land, isles, ranges;
     if (def.hand) {
       land = landFromSpans(def.hand.spans, def.hand.gw, def.hand.gh, def.hand.gs ?? GS_DEFAULT);
+      /* ★ 격자는 **큰 모양만** 정한다. 4배로 키운 격자를 그대로 해안선으로 쓰면
+         눈금이 드러나 4px 계단과 손가락 곶이 남고, 아홉 장 중 이 한 장만 다른 손으로
+         그린 것처럼 보인다. 그래서 자동 권역이 받는 것과 **같은 해안 처리**를 태운다 —
+         부호거리장 + 3옥타브(58/21/7px). 파장과 씨앗이 같아야 같은 손으로 읽힌다. */
+      land = coastOctaves(land, { seed });
       /* ★ 섬을 **먼저 육지 맵에 넣고** 물길을 판다. 순서가 거꾸로면 애써 판 물길을
          그 뒤에 그리는 섬이 도로 덮는다 — 사르데냐가 알게로~제노바를, 시칠리아가
          팔레르모~튀니스를 막고 있었다(검수기가 75%·61%로 잡았는데 원인을 한참 못 찾았다).
-         지형은 그대로 두고 물길만 판다 — 실루엣을 잃지 않으면서 항구를 물가로 되돌린다. */
-      for (const [cx, cy, rx, ry] of def.hand.isles ?? []) {
-        for (let y = Math.max(0, cy - ry); y <= Math.min(VH - 1, cy + ry); y++) {
-          for (let x = Math.max(0, cx - rx); x <= Math.min(VW - 1, cx + rx); x++) {
-            const nx = (x - cx) / (rx || 1), ny = (y - cy) / (ry || 1);
-            if (nx * nx + ny * ny <= 1) land[y * VW + x] = 1;
-          }
-        }
-      }
+         지형은 그대로 두고 물길만 판다 — 실루엣을 잃지 않으면서 항구를 물가로 되돌린다.
+         ★ 섬은 해안 옥타브 **뒤에** 넣는다. 먼저 넣으면 ±8px 옥타브가 몰타(지름 4px)를 지운다.
+           대신 모양은 아래 다각형 규칙을 자동 권역과 똑같이 받는다. */
+      isles = [...(def.hand.isles ?? []),
+        ...scatterIsles(land, cities, routes, { seed: seed ^ 0x15E5, count: def.hand.scatter ?? 7 })];
       /* ★ 회랑 반폭을 6 → 2.5로 좁혔다. 6px(폭 12px)은 지중해의 반도(폭 20px대)를
          **통째로 갈아 없앤다** — 사용자가 "이탈리아 반도도 그리스 반도도 없다"고 한 것이
          격자의 문제가 아니라 이 한 줄이었다. 검수기는 선분 위 표본만 보므로 좁혀도 통과한다. */
-      carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 2.5, bay: 3.5 });
-      isles = [];                       // 이미 land에 들어갔다 — 두 번 그리지 않는다
       ranges = def.hand.ranges ?? [];
     } else {
       land = autoLandMap(cities, routes, def.auto);
@@ -144,6 +143,15 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
           land[y * VW + x] = 1;
         }
       }
+    }
+    /* 손으로 찍은 격자는 섬까지 들어간 **뒤에** 물길을 판다(위 ★ 주석).
+       그리고 물길을 판 **다음에 해안 옥타브를 한 번 더** 태운다 — 안 그러면 회랑만
+       자로 그은 자국으로 남는다(자동 권역은 회랑이 생성 단계에 있어 같이 흔들린다).
+       마지막 한 번은 그때 막힌 항로만 다시 뚫는다(`lane: 0`이라 1차 패스는 아무것도 안 판다). */
+    if (def.hand) {
+      carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 2.5, bay: 3.5 });
+      land = coastOctaves(land, { seed: seed ^ 0x3E11, big: 4.2, mid: 2.2, small: 1, growOnly: 240 });
+      carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 0, bay: 0, w2: 1.6 });
     }
     const isLand = (x, y) => x >= 0 && y >= 0 && x < VW && y < VH && land[(y | 0) * VW + (x | 0)] === 1;
 

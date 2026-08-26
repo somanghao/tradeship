@@ -309,6 +309,111 @@ export function scatterIsles(land, cities, routes, opts = {}) {
   return out;
 }
 
+/** 3-4 체임퍼 거리장 — `mask[i] === want`인 칸이 0이고 거기서 번져 나간다(8방향).
+    `lab`을 주면 "가장 가까운 원천이 어느 덩어리인가"도 함께 전파한다. */
+function chamfer(mask, want, lab, outLab) {
+  const INF = 1e7;
+  const d = new Float32Array(VW * VH);
+  for (let i = 0; i < d.length; i++) {
+    const on = mask[i] === want;
+    d[i] = on ? 0 : INF;
+    if (outLab) outLab[i] = on && lab ? lab[i] : -1;
+  }
+  const relax = (i, j, w) => {
+    if (d[j] + w < d[i]) { d[i] = d[j] + w; if (outLab) outLab[i] = outLab[j]; }
+  };
+  for (let y = 0; y < VH; y++) for (let x = 0; x < VW; x++) {
+    const i = y * VW + x;
+    if (x > 0) relax(i, i - 1, 3);
+    if (y > 0) relax(i, i - VW, 3);
+    if (x > 0 && y > 0) relax(i, i - VW - 1, 4);
+    if (x < VW - 1 && y > 0) relax(i, i - VW + 1, 4);
+  }
+  for (let y = VH - 1; y >= 0; y--) for (let x = VW - 1; x >= 0; x--) {
+    const i = y * VW + x;
+    if (x < VW - 1) relax(i, i + 1, 3);
+    if (y < VH - 1) relax(i, i + VW, 3);
+    if (x < VW - 1 && y < VH - 1) relax(i, i + VW + 1, 4);
+    if (x > 0 && y < VH - 1) relax(i, i + VW - 1, 4);
+  }
+  for (let i = 0; i < d.length; i++) d[i] /= 3;
+  return d;
+}
+
+/**
+ * **손으로 찍은 격자에도 자동 권역과 같은 해안을 입힌다.**
+ *
+ * ★ 지중해만 `SEA_SPANS`(100×56 격자)를 쓰는데, 그 격자를 4배로 키우면 **눈금이 그대로
+ *   해안선에 드러난다** — 4px 계단과 손가락 모양 곶이 남아 아홉 장 중 이 한 장만
+ *   다른 손으로 그린 것처럼 보였다. 블러를 여섯 번 돌려도 안 지워진다(격자가 원인이라).
+ *
+ *   그래서 격자는 **큰 모양만** 정하게 두고, 그 위에 자동 권역이 받는 것과
+ *   **같은 처리**를 태운다 — 래스터를 부호거리장으로 바꾸고 3옥타브로 해안을 민다.
+ *   파장·씨앗은 `autoLandMap` ④와 같은 것을 쓴다(그래야 같은 손으로 그린 것으로 보인다).
+ *   진폭만 낮췄다 — 지중해는 내해라 ±13px을 주면 보스포루스·메시나 해협이 막힌다.
+ */
+export function coastOctaves(land, opts = {}) {
+  const { seed = 0xC0FFEE, big = 9, mid = 3.8, small = 1.3, growOnly = 4000 } = opts;
+  const nCoast = valueNoise(seed ^ 0x5A17, 58);
+  const nBay = valueNoise(seed ^ 0x2B0F, 21);
+  const nSmall = valueNoise(seed ^ 0x9E37, 7);
+
+  /* ★ 진폭을 **덩어리 크기에 맞춘다.** 대륙과 반도에 같은 ±9px을 주면 대륙은 해안이
+     굽이치는데 폭 20px짜리 이탈리아는 **실오라기로 찢긴다**(실제로 그렇게 나왔다).
+     `shoreW`와 같은 발상이다 — 큰 덩어리는 크게, 작은 덩어리는 그 크기만큼만 흔든다. */
+  const { lab, area } = blobs(land);
+  const amp = area.map((a) => Math.max(0.16, Math.min(1, Math.sqrt(a / 7000))));
+  const nearLab = new Int32Array(VW * VH);
+  const toLand = chamfer(land, 1, lab, nearLab);
+  const toSea = chamfer(land, 0);
+
+  const out = new Uint8Array(VW * VH);
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      const i = y * VW + x;
+      const sdf = land[i] ? -toSea[i] : toLand[i];     // 뭍 안이 음수
+      const id = land[i] ? lab[i] : nearLab[i];
+      const k = amp[id] ?? 1;
+      let push = ((nCoast(x, y) - 0.5) * 2 * big
+                + (nBay(x, y) - 0.5) * 2 * mid
+                + (nSmall(x, y) - 0.5) * 2 * small) * k;
+      /* ★ 작은 덩어리는 **깎지 않고 붙이기만 한다**(`push ≥ 0`). 진폭을 크기에 맞춰 줄여도
+         폭 20px짜리 반도는 양쪽에서 동시에 파이면 실오라기가 된다 — 이탈리아가 그랬다.
+         붙이기만 하면 볼록한 데가 메워져 윤곽은 부드러워지고 반도는 끊기지 않는다. */
+      /* 붙이기도 **2.5px까지만** 허용한다. 무제한으로 붙이면 반도가 부풀어 항로 위로 올라앉고,
+         그러면 회랑이 그 뭍을 가로질러 **자로 그은 수로**로 남는다(이탈리아가 그랬다). */
+      if ((area[id] ?? 1e9) < growOnly) push = Math.max(0, push);
+      out[i] = sdf < push ? 1 : 0;
+    }
+  }
+  return out;
+}
+
+/** 4-이웃 연결성분 — 번호와 넓이. 덩어리 크기에 처리를 맞추는 데 쓴다. */
+function blobs(land) {
+  const lab = new Int32Array(VW * VH).fill(-1);
+  const area = [];
+  const st = [];
+  for (let i = 0; i < land.length; i++) {
+    if (!land[i] || lab[i] >= 0) continue;
+    const id = area.length;
+    area.push(0);
+    lab[i] = id; st.push(i);
+    while (st.length) {
+      const j = st.pop();
+      area[id]++;
+      const x = j % VW, y = (j / VW) | 0;
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        if (nx < 0 || ny < 0 || nx >= VW || ny >= VH) continue;
+        const n = ny * VW + nx;
+        if (!land[n] || lab[n] >= 0) continue;
+        lab[n] = id; st.push(n);
+      }
+    }
+  }
+  return { lab, area };
+}
+
 /**
  * 섬을 찍을 때 **항로가 지나는 자리는 물로 남긴다.**
  *
