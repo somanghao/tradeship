@@ -117,6 +117,30 @@ for (const g of GOODS) {
   }
 }
 
+/* ── ⑤ 표시 이름이 겹치는가 (C-4) ───────────────────────────
+   ★ **권역을 나눠 만들면 이름이 겹치는 것을 아무도 못 본다.** 각 담당은 제 바다만 보고,
+     id는 갈려 있으므로(`baghla` / `baghlah`) 다른 검사기는 전부 통과한다. 그런데 화면에는
+     **값이 다른 두 줄이 같은 이름으로** 뜬다 — 실제로 조선소 목록에 '바갈라'가 둘이었고
+     시장에 '유향'이 둘이었다. 이 검사가 없어 감수자가 눈으로 찾아야 했다.
+   ⚠️ **합치라는 뜻이 아니다.** 같은 계열의 다른 바다 변종이면 제원이 다른 것이 옳다 —
+     고칠 것은 **표시 이름**이다(지명을 붙인다). 콘텐츠를 줄이는 쪽으로 읽으면 안 된다. */
+for (const [label, entries] of [['교역품', GOODS.map((g) => [g.id, g.name])],
+                                ['선종', Object.entries(SHIPS).map(([k, s]) => [k, s.name])],
+                                ['도시', CITIES.map((c) => [c.id, c.name])]]) {
+  const by = new Map();
+  for (const [id, name] of entries) {
+    if (!name) continue;
+    if (!by.has(name)) by.set(name, []);
+    by.get(name).push(id);
+  }
+  for (const [name, ids] of by) {
+    if (ids.length > 1) {
+      bad('이름 충돌', `${label} '${name}'이 ${ids.length}개다 — ${ids.join(' · ')}. `
+        + '같은 화면에 값이 다른 두 줄로 뜬다. **합치지 말고 표시 이름에 지명을 붙여 가른다**');
+    }
+  }
+}
+
 /* 선종도 같은 눈으로 — 지을 수 있는 항구가 하나도 없으면 그 배는 없는 것과 같다 */
 for (const [key, s] of Object.entries(SHIPS)) {
   if ((s.tier ?? 0) === 0) continue;         // 시작배·적 전용은 시중에 안 나온다
