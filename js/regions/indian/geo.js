@@ -130,6 +130,13 @@ export const ROUTES = [
   ['cochin', 'maldives'], ['quilon', 'maldives'], ['maldives', 'colombo'],
   ['quilon', 'colombo'],
   ['quilon', 'tuticorin'], ['tuticorin', 'jaffna'], ['tuticorin', 'colombo'],
+  /* ★ **이 바다의 유일한 뭍길**(요율 null). 라마의 다리(아담스 브리지)가 인도와 실론
+     사이를 막아 배는 어장해안에서 코로만델로 곧장 못 넘어간다 — 실론을 돌거나
+     **라마나드의 뭍을 가로질러 짐을 지고 가야** 했다. 그 길목을 쥔 것이 세투파티
+     ("다리의 주인")와 마라바르였고, 통행세를 받은 것도 나그네를 턴 것도 그들이다.
+     ⇒ 실론 우회(투티코린~자프나~나가파티남 6일)와 **같은 일수**라 지름길이 아니다.
+       고르는 이유는 빠르기가 아니라 "해적이 안 나오는 대신 뭍의 사고가 난다"는 성격이다. */
+  ['tuticorin', 'nagapattinam'],
   ['colombo', 'galle'], ['colombo', 'jaffna'],
   ['galle', 'nagapattinam'], ['jaffna', 'nagapattinam'],
   ['nagapattinam', 'pulicat'],
@@ -196,6 +203,8 @@ export const ROUTE_RISK = {
   // 대신 코모린 곶을 도는 구간은 곶에서 바람이 뒤집혀 배가 서안에 밀려 붙었다.
   'quilon|tuticorin': 7.5,
   'jaffna|tuticorin': 4.5,
+  // 라마나드의 뭍길 — 배가 못 넘는 사주를 뭍으로 돈다. 요율이 없다(해적 판정을 안 건다).
+  'nagapattinam|tuticorin': null,
   // 콜롬보행은 만나르의 사주(라마의 다리)를 우회해야 한다
   'colombo|tuticorin': 6.5,
   // 실론

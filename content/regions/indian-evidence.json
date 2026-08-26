@@ -102,18 +102,18 @@
         "sources": []
       },
       "goods": {
-      "chintz": {
-        "side": "supply",
-        "value": 0.54,
-        "verdict": "confirmed",
-        "basis": "구자라트 날염포는 목판으로 찍었다 — 물량은 코로만델보다 컸으나 최상급의 이름값은 코로만델에 있었다. 그래서 마술리파트남(0.50)보다 반 칸 얕게 둔다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Chintz (Gujarat block-printed cottons)",
-            "url": "https://en.wikipedia.org/wiki/Chintz"
-          }
-        ]
-      },
+        "chintz": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "confirmed",
+          "basis": "구자라트 날염포는 목판으로 찍었다 — 물량은 코로만델보다 컸으나 최상급의 이름값은 코로만델에 있었다. 그래서 마술리파트남(0.50)보다 반 칸 얕게 둔다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Chintz (Gujarat block-printed cottons)",
+              "url": "https://en.wikipedia.org/wiki/Chintz"
+            }
+          ]
+        },
         "calico": {
           "side": "supply",
           "value": 0.54,
@@ -1137,22 +1137,22 @@
         ]
       },
       "goods": {
-      "chintz": {
-        "side": "supply",
-        "value": 0.5,
-        "verdict": "confirmed",
-        "basis": "고다바리 삼각주의 칼람카리 — 붓으로 그리고 매염·방염을 되풀이해 인디고에 담근 날염 무명이다. 마술리파트남이 그 최대 적출항이었고 「골콘다 친츠」가 국제 상품명으로 통했다. 이 권역에서 가장 깊은 산지 배율을 주는 근거다. ★ 산지 배율을 얕게 두면 사슬이 시세를 이겨 \"가공은 시세보다 비싸다\"(SPEC-vertical.md §0-2)가 무너진다 — 그것이 이 값이 0.50인 두 번째 이유다.",
-        "sources": [
-          {
-            "title": "Wikipedia — Kalamkari (Machilipatnam style)",
-            "url": "https://en.wikipedia.org/wiki/Kalamkari"
-          },
-          {
-            "title": "Wikipedia — Machilipatnam",
-            "url": "https://en.wikipedia.org/wiki/Machilipatnam"
-          }
-        ]
-      },
+        "chintz": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "고다바리 삼각주의 칼람카리 — 붓으로 그리고 매염·방염을 되풀이해 인디고에 담근 날염 무명이다. 마술리파트남이 그 최대 적출항이었고 「골콘다 친츠」가 국제 상품명으로 통했다. 이 권역에서 가장 깊은 산지 배율을 주는 근거다. ★ 산지 배율을 얕게 두면 사슬이 시세를 이겨 \"가공은 시세보다 비싸다\"(SPEC-vertical.md §0-2)가 무너진다 — 그것이 이 값이 0.50인 두 번째 이유다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Kalamkari (Machilipatnam style)",
+              "url": "https://en.wikipedia.org/wiki/Kalamkari"
+            },
+            {
+              "title": "Wikipedia — Machilipatnam",
+              "url": "https://en.wikipedia.org/wiki/Machilipatnam"
+            }
+          ]
+        },
         "diamond": {
           "side": "supply",
           "value": 0.7,
@@ -1390,7 +1390,7 @@
   },
   "routes": {
     "cambay|diu": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "캄바트 만은 조수가 10m 넘게 오르내려 물길이 얕고 좁으며, 그 때문에 만이 메워져 항구가 수라트로 옮겨 갈 만큼 험했다. 카티아와르 연안은 사략이 서식하던 곳이라 지중해 앵커의 '평범한 연안'(4~5.5) 위, '외해·적대'(6~8)의 아래턱에 뒀다.",
       "sources": [
@@ -1413,13 +1413,13 @@
       "sources": []
     },
     "chaul|surat": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "구자라트와 콘칸 사이의 연안 항해다. 양단의 깃발이 모두 이슬람 술탄국이라 적대가 없고 뭍이 계속 보인다 — 평범한 연안값.",
       "sources": []
     },
     "chaul|dabhol": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "콘칸 연안의 짧은 구간. 다만 이 해안 전체가 포르투갈의 순찰 대상이라 지중해의 최저값(2~3.5)까지는 내리지 않았다.",
       "sources": []
@@ -1447,13 +1447,13 @@
       ]
     },
     "bhatkal|cannanore": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "카나라에서 말라바르로 넘어가는 연안 구간. 남쪽으로 갈수록 마라카르의 사냥터에 가까워지므로 평범한 연안값의 중간에 뒀다.",
       "sources": []
     },
     "calicut|cannanore": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "confirmed",
       "basis": "말라바르 해적의 바다다. 사무티리의 제독 쿤할리 마라카르 4대가 1520~1600년 내내 포르투갈 배를 노렸고, 무퉁갈·바다카라·참발·카니야람코투 네 요새 포구에서 갤리를 지어 출동했다. 지중해 앵커의 '외해·적대'(6~8) 구간에 넣었다.",
       "sources": [
@@ -1464,7 +1464,7 @@
       ]
     },
     "calicut|cochin": {
-      "risk": 9.0,
+      "risk": 9,
       "verdict": "confirmed",
       "basis": "이 권역에서 둘째로 위험한 구간이다. 사무티리와 포르투갈 동맹 코친이 서로 배를 태우던 전선이었다 — 1525년 마라카르가 코친을 습격해 포르투갈 배들을 불태웠고 같은 해 캘리컷의 포르투갈 요새를 포격했다. 양단의 깃발이 정면으로 적대하는 짧은 구간이라 지중해의 사략 소굴 앞(9~11)에 해당한다.",
       "sources": [
@@ -1481,13 +1481,13 @@
       "sources": []
     },
     "cochin|quilon": {
-      "risk": 6.0,
+      "risk": 6,
       "verdict": "probable",
       "basis": "말라바르 남쪽 구간. 마라카르의 사냥터에서 벗어나기 시작하는 자리라 캘리컷 주변(7~9)보다 낮게 뒀다.",
       "sources": []
     },
     "cochin|maldives": {
-      "risk": 9.0,
+      "risk": 9,
       "verdict": "probable",
       "basis": "뭍이 사라지는 외해 구간이다. 몰디브는 수면에서 겨우 몇 자 솟은 환초라 밤이나 흐린 날에는 코앞에서도 보이지 않는다 — 사략보다 좌초가 무서운 항로다. 지중해의 희망봉(11.0)보다는 짧고, 사략 소굴 앞(9~11)의 아래턱에 뒀다.",
       "sources": []
@@ -1510,13 +1510,13 @@
       ]
     },
     "colombo|quilon": {
-      "risk": 7.0,
+      "risk": 7,
       "verdict": "probable",
       "basis": "말라바르 남단에서 실론으로 건너가는 구간. 하루 이틀 뭍이 안 보이지만 양단이 적대는 아니다 — 외해값의 아래쪽.",
       "sources": []
     },
     "colombo|galle": {
-      "risk": 4.0,
+      "risk": 4,
       "verdict": "probable",
       "basis": "실론 서남 연안을 따라가는 짧은 구간이다. 같은 왕국의 안쪽 해안이라 이 권역에서 가장 낮은 값으로 뒀다.",
       "sources": []
@@ -1539,7 +1539,7 @@
       "sources": []
     },
     "jaffna|nagapattinam": {
-      "risk": 5.0,
+      "risk": 5,
       "verdict": "probable",
       "basis": "팔크 해협을 가로지르는 짧은 구간이다. 물이 얕아 큰 배는 애를 먹지만 양안이 늘 보이고 하루면 닿는다 — 평범한 연안값.",
       "sources": []
@@ -1568,7 +1568,7 @@
       "sources": []
     },
     "chittagong|satgaon": {
-      "risk": 9.0,
+      "risk": 9,
       "verdict": "confirmed",
       "basis": "벵골 삼각주는 아라칸(마그)과 포르투갈(페링기) 사략의 사냥터였다 — 아라칸이 치타공을 쥔 16세기 말부터 1666년까지 이들이 무굴령을 상시로 털었고 노예사냥까지 했다. 사략 소굴을 끼고 도는 물길이라 지중해의 알제·튀니스 앞(9.0)과 같은 값으로 뒀다.",
       "sources": [
@@ -1579,9 +1579,15 @@
       ]
     },
     "chittagong|masulipatnam": {
-      "risk": 10.0,
+      "risk": 10,
       "verdict": "probable",
       "basis": "이 권역에서 가장 위험한 구간이다. 벵골만 어귀를 가로질러 며칠씩 뭍이 안 보이는데, 그 바다가 사이클론의 통로이고 도착지 쪽에는 아라칸·포르투갈 사략이 있다. 세 가지(외해·날씨·사략)가 겹치는 유일한 구간이라 지중해의 희망봉(11.0) 바로 아래에 뒀다.",
+      "sources": []
+    },
+    "nagapattinam|tuticorin": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "새로 그은 **뭍길**(요율 null). 라마의 다리(아담스 브리지)와 만나르의 사주가 인도와 실론 사이를 막아, 어장해안(마나르 만)에서 코로만델(포크 해협)로 배가 곧장 넘어가지 못했다 — 이 사실은 이미 콜롬보~투티코린 주석이 적고 있다. 그래서 짐은 실론을 크게 돌거나 라마나드의 뭍을 가로질렀다. 그 길목을 쥔 것이 라마나드의 세투파티(Setupati, 「다리의 주인」)와 마라바르였고, 라메스와람으로 건너는 나그네와 상인에게서 통행세를 받은 것도, 길에서 터는 것으로 이름이 났던 것도 그들이다. 요율을 매기지 않는 이유는 바닷길이 아니기 때문이고, 대신 뭍의 사고(노상강도·통행세)가 난다. 일수는 실론 우회(투티코린~자프나~나가파티남)와 같아 지름길이 아니다.",
       "sources": []
     }
   },
