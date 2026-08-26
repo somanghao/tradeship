@@ -6,7 +6,12 @@
 //   ② 그 값을 치르고 데리고 다닐 만한가 (같은 시드로 짝지어 잰다)
 
 import { measureAll, goodsTable } from './wages.mjs';
+import { CITIES } from '../js/data.js';
 import { $, fmt, pct, el, svg, node, withTip } from './shared.js';
+/* 권역 선택은 **공유물**이다(`region-filter.js` 머리주석) — 이 탭은 물가 표가 그것을 읽는다.
+   아홉 바다 60줄을 뭉뚱그리면 "이 바다에서 무엇이 비싼가"를 물을 수 없다(C-6). */
+import { mountRegionBar, injectRegionBarStyle, onRegionChange,
+  currentRegion, regionName, filterByRegion, ALL } from './region-filter.js';
 
 let Wg = null;   // 계측 결과
 let EV = null;   // 근거 정본
@@ -337,12 +342,33 @@ function drawEvidence() {
     `행에 올리면 출처가 뜬다.`));
 }
 
+/** 지금 고른 바다에서 오가는 품목만 — 전 권역이면 전부 */
+function viewGoods() {
+  const all = goodsTable();
+  if (currentRegion() === ALL) return all;
+  const live = new Set();
+  for (const c of filterByRegion(CITIES)) {
+    for (const gid of Object.keys(c.supply ?? {})) live.add(gid);
+    for (const gid of Object.keys(c.demand ?? {})) live.add(gid);
+  }
+  return all.filter((g) => live.has(g.id));
+}
+
 /* ── 7. 물가 대조 ────────────────────────────────────────────
    게임 기준가가 사료의 위계와 같은 순서인가. 절대액이 아니라 **곡물의 몇 배인가**로만 본다. */
 function drawPrices() {
   if (!PV) return;
   const T = PV.gameTargets.goodsRatioToGrain;
-  const rows = goodsTable();
+  /* ★ **그 바다에서 실제로 오가는 것만** 남긴다 — 산지(`supply`)와 수요(`demand`) 양쪽을 본다.
+     `goods.js`(그 바다가 세계에 처음 내놓는 품목)로 거르면 "지중해에서 후추가 안 보인다"가
+     된다 — 후추는 인도양이 원적지지만 지중해가 가장 비싸게 사는 물건이다. */
+  const rows = viewGoods();
+  if (!rows.length) {
+    $('w-prices').replaceChildren(para(
+      `<b>${regionName(currentRegion())}</b>에는 아직 걸린 교역품이 없다 — `
+      + `<code>js/regions/&lt;권역&gt;/trade.js</code>를 채우면 여기 나타난다.`));
+    return;
+  }
   const W = 560, rowH = 22, H = rows.length * rowH + 28;
   const s = svg(W, H);
   const barX = 74, barW = W - barX - 96;
@@ -377,6 +403,11 @@ function drawPrices() {
   });
   $('w-prices').replaceChildren(s);
   $('w-prices').append(para(
+    currentRegion() === ALL
+      ? `아홉 바다의 교역품 <b>${rows.length}가지</b> 전부.`
+      : `<b>${regionName(currentRegion())}</b>에서 오가는 <b>${rows.length}가지</b>만 골랐다`
+        + ` (전체 ${goodsTable().length}가지).`));
+  $('w-prices').append(para(
     `<span style="color:#e0a45c">주황 선</span>은 사료의 원 비율이다 — 소금(밀의 4.3배)과 향신료(30배)는 ` +
     `그대로 넣으면 항로 하나가 경제를 삼켜서 <b>절반쯤만 반영</b>했다(방향은 사료, 폭은 게임). ` +
     `와인은 반대로 사료가 훨씬 싸다(산지 벌크 기준 0.3배) — 원거리로 나른 상품 와인이라 보고 최저선까지 내리지 않았다. ` +
@@ -385,6 +416,9 @@ function drawPrices() {
 
 /* ── 실행 ────────────────────────────────────────────────── */
 export function runWages() {
+  injectRegionBarStyle();
+  mountRegionBar($('w-regionbar'));
+  onRegionChange(() => { if (Wg && PV) drawPrices(); });
   $('w-stamp').textContent = '돌리는 중…';
   requestAnimationFrame(() => {
     const t0 = performance.now();

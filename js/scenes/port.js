@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         WORK, FACTIONS, REGARD, ROSTER, COMMENDA } from '../data.js';
+         WORK, FACTIONS, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -37,6 +37,10 @@ import {
   /* 세력 관계(SPEC-factions 1단계) — 규칙은 `state.js`, 값은 `data.js: FACTIONS·REGARD`.
      여기서는 **이 항구의 임자 한 줄**만 보여주고 나머지는 관계도 모달이 편다. */
   factionOfCity, factionsOfCity, regardOf, regardBand, infamyWeight,
+  /* 바닥에서 나가는 문(C-17) — 값은 전부 `state.js`가 센다. 여기서는 줄로 옮기고 단추만 건다. */
+  salvage, cheapestExit, debtOwed, sellShip, liquidate,
+  /* 패권이 화면에서 말을 안 하던 자리 둘(A-8c) — 표는 state가 정본, 여기서는 읽기만 한다 */
+  foeWealth, foeOdds, foeWealthGate,
 } from '../state.js';
 import { openPayday } from '../payday.js';
 import { openFactions } from '../factions.js';
@@ -578,6 +582,173 @@ function payrollCard() {
   ]);
 }
 
+/* ── 바닥에서 나가는 문 (C-17) ─────────────────────────────────
+   ★ **규칙이 아니라 안내다.** 회복 경로는 진작 다 있었다 — 짐을 팔고(`sell`), 창고를 비우고
+     (`takeGoods`), 정박선을 넘기고(`sellShip`), 거점·가공장을 던지고(`sellHolding`·`sellMill`),
+     빌리고(`buyService('loan')`), 마지막에 청산한다(`liquidate`).
+     그런데 화면은 `금화가 모자란다` 한 줄뿐이었고, 완주 러너는 960일차에 금고가 0이 되자
+     마지막 2,241닢까지 근해를 왕복하다 멈췄다. **팔 것이 있다는 말을 아무도 안 했기 때문이다.**
+   ★ 파산 벌칙은 한 칸도 안 건드린다. 값은 전부 `state.js: salvage()`가 세고
+     (입항세·재판매율·되사기율이 규칙과 갈리지 않게), 여기서는 **줄로 옮기고 단추만 건다.**
+   ★ 자리는 사이드패널 **맨 위**다 — 이 카드가 뜨는 국면에서 시장·정비·거점보다 먼저 읽혀야 한다. */
+function salvageCard() {
+  const exit = cheapestExit();
+  const debt = debtOwed();
+  /* 뜨는 조건 둘 — ① 여기서 가장 싼 항차조차 못 낸다 ② 빚이 금고보다 크다.
+     ★ 출항 자체는 막히지 않는다(못 낸 몫은 빚이 된다). 그래도 **떠나는 순간 빚이 느는**
+       상태이므로, 그 사실과 팔 것을 함께 말해야 "왜 계속 가난해지나"를 읽을 수 있다. */
+  const stranded = exit != null && state.gold < exit;
+  const drowning = debt > 0 && state.gold < debt;
+  if (!stranded && !drowning) return null;
+
+  const rows = salvage(city.id);
+  const total = rows.reduce((a, r) => a + r.gold, 0);
+  const lender = figuresAt(city.id).find((f) => f.service === 'loan');
+  const canLoan = lender && !state.boons?.loan;
+
+  /* ★ **경보와 안내를 가른다.** 무역선은 짐을 싣는 순간이 늘 가장 가난하다 —
+     그때마다 붉은 「금고가 바닥이다」가 뜨면 진짜 바닥일 때 아무도 안 읽는다(경보 피로).
+     그래서 **팔 것이 한 항차를 덮으면 안내**(놋빛), **못 덮으면 경보**(붉은색)다.
+     C-17이 실제로 죽은 자리는 후자다 — 팔 것으로도 못 채우는 국면. */
+  const covered = total + state.gold >= (exit ?? 0) && total + state.gold >= debt;
+  const grave = !covered;
+
+  const lines = [];
+  lines.push(el('div.ctr-line', {
+    html: `금고 <b>${state.gold.toLocaleString('ko-KR')}닢</b>`
+        + (exit != null ? ` · 여기서 가장 싼 항차 <b>${exit.toLocaleString('ko-KR')}닢</b>` : '')
+        + (debt ? ` · 빚 <span style="color:#d05a4a">${debt.toLocaleString('ko-KR')}닢</span>` : ''),
+  }));
+  lines.push(el('div.ctr-sub', {
+    html: !stranded
+      ? '빚이 금고보다 크다. 급여일에 채권자가 <b>금고 → 정박선 → 창고 짐</b> 순으로 집행한다.'
+      : covered
+        ? '이대로 뜨면 <b>못 낸 몫이 빚으로 남는다</b>(급여일에 이자와 함께 걷힌다).'
+          + ' 아래를 팔면 채워진다 — 뜨기 전에 정하면 된다.'
+        : '<b>팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 나가면 빚만 는다 —'
+          + ' 아래 문 가운데 하나를 골라야 한다.',
+  }));
+
+  if (rows.length) {
+    lines.push(el('div.ctr-sub', {
+      html: `<b style="color:#e6c96a">지금 팔 수 있는 것 — 다 팔면 ${total.toLocaleString('ko-KR')}닢</b>`,
+      style: { marginTop: '4px' },
+    }));
+    for (const r of rows) {
+      lines.push(svcRow(`${r.label} — ${r.gold.toLocaleString('ko-KR')}닢`, r.note,
+        r.kind === 'stored' ? '싣는다' : '판다',
+        r.kind === 'mill' && r.gold <= 0, () => doSalvage(r)));
+    }
+  } else {
+    /* ★ 빈 상태에도 말을 시킨다. "목록이 없다"가 아니라 **"이 항구에는 없다"**여야
+       다른 항구에 둔 배·거점을 떠올릴 수 있다. */
+    const away = Object.keys(state.fleet).filter((k) => k !== state.shipKey).length;
+    const holds = Object.keys(state.holdings ?? {}).length;
+    lines.push(el('div.ctr-sub', {
+      html: away || holds
+        ? `이 항구에서 팔 것은 없다 — 그러나 <b>다른 항구에 배 ${away}척 · 거점 ${holds}곳</b>이 있다.`
+          + ' 그 항구로 가면 팔 수 있다.'
+        : '팔 것이 하나도 없다. 남은 문은 아래 둘뿐이다.',
+      style: { color: '#d0a04a' },
+    }));
+  }
+
+  const acts = [];
+  if (canLoan) {
+    acts.push(svcRow(`${lender.name}에게 빌린다`,
+      `${Math.round((BOON.loanRate - 1) * 100)}% 얹어 ${BOON.loanDays}일 뒤에 갚는다`,
+      '빌린다', false, () => {
+        const r = buyService(lender);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(r.line, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+  /* ★ 청산은 **마지막 문이고, 그래서 늘 보인다.** 팔 것이 남아 있어도 감추지 않는다 —
+     감추면 "팔 것이 다 떨어진 뒤에야 알게 되는 문"이 되어 C-17이 그대로 재발한다.
+     대신 단추가 `.danger`이고 모달이 잃는 것을 전부 적는다. */
+  acts.push(svcRow('청산한다 — 배를 넘기고 셈을 끝낸다',
+    `${SHIPS[BANKRUPT.keepShip].name} 한 척과 ${BANKRUPT.seedGold}닢으로 다시 시작한다`,
+    '청산', false, () => askLiquidate()));
+
+  return el('div.panel', { style: { borderColor: grave ? '#8f2f26' : '#6f5214' } }, [
+    el('h3', {
+      style: grave
+        ? { background: 'linear-gradient(#4a2018, #331610)', color: '#f0b8a6' }
+        : null,
+    }, [
+      el('span', { text: grave ? '금고가 바닥이다' : '금고가 비었다 — 팔면 채워진다' }),
+      el('span', {
+        text: rows.length ? `팔 것 ${rows.length}가지 · ${total.toLocaleString('ko-KR')}닢` : '팔 것이 없다',
+        style: { fontSize: '11px', color: grave ? '#d09080' : '#8f8878', letterSpacing: 0 },
+      }),
+    ]),
+    el('div.svc', {}, [...lines, ...acts]),
+  ]);
+}
+
+function doSalvage(r) {
+  if (r.kind === 'cargo') return doSell(r.key, state.cargo[r.key] || 0);
+  if (r.kind === 'stored') {
+    /* 창고 짐은 **싣고 나서** 판다 — 화물칸이 모자라면 실을 수 있는 만큼만 온다.
+       그 사실을 토스트가 말해야 "눌렀는데 다 안 온다"가 버그로 안 읽힌다. */
+    const stored = { ...(state.stored?.[city.id] ?? {}) };
+    let moved = 0;
+    for (const [gid, n] of Object.entries(stored)) {
+      const t = takeGoods(gid, n, city.id);
+      if (t.ok) moved += t.n;
+    }
+    if (!moved) return toast('화물칸이 가득 차 창고 짐을 실을 수 없다', 'bad');
+    const left = storedUsed(city.id);
+    toast(`창고에서 ${moved}칸을 실었다` + (left ? ` (${left}칸은 자리가 없어 남았다)` : ''), 'good');
+    return after();
+  }
+  if (r.kind === 'ship') {
+    const s = sellShip(r.key);
+    if (!s.ok) return toast(s.reason, 'bad');
+    pushLog(`${city.name}에서 ${SHIPS[r.key].name}${josa(SHIPS[r.key].name, '을/를')} 넘겼다`
+          + ` (+${s.gain.toLocaleString('ko-KR')}닢).`, 'warn');
+    toast(`${SHIPS[r.key].name} 매각 · +${s.gain.toLocaleString('ko-KR')}닢`, 'good');
+    refreshHUD(); refreshLog(); return after();
+  }
+  if (r.kind === 'holding') {
+    const h = sellHolding(city.id);
+    if (!h.ok) return toast(h.reason, 'bad');
+    toast(`거점 매각 · +${h.back.toLocaleString('ko-KR')}닢`, 'warn');
+    refreshHUD(); refreshLog(); return after();
+  }
+  if (r.kind === 'mill') {
+    const m = sellMill(r.key, city.id);
+    if (!m.ok) return toast(m.reason, 'bad');
+    toast(`가공장 매각 · +${m.back.toLocaleString('ko-KR')}닢`, 'warn');
+    refreshHUD(); refreshLog(); return after();
+  }
+}
+
+/** 청산 확인 — **브라우저 confirm은 쓰지 않는다**(자동화가 통째로 막힌다). */
+function askLiquidate() {
+  const ships = Object.keys(state.fleet).filter((k) => k !== BANKRUPT.keepShip);
+  modal({
+    title: '청산한다',
+    body: '<b>배를 넘기면 셈이 끝난다 — 빚은 사라진다.</b><br><br>'
+        + `<span style="color:#d05a4a">가는 것</span> — 배 ${Object.keys(state.fleet).length}척`
+        + `(${SHIPS[BANKRUPT.keepShip].name}만 남는다) · 실은 짐 · 창고 짐 · 대부분의 선원 · 맡은 주문`
+        + (mateCount() ? ` · 함께 건 동료 ${mateCount()}명과 그들의 밑천` : '')
+        + '<br>'
+        + '<span style="color:#8ac07a">남는 것</span> — 거점 · 세력 관계 · 악명 · 아는 항구 · 해적 명부 · 공업력 승급'
+        + `<br><br>다시 시작하는 밑천은 <b>${BANKRUPT.seedGold}닢</b>이다. 판은 끝나지 않는다.`
+        + (ships.length ? '' : '<br><br><span style="opacity:.7">넘길 배가 낡은 바사 한 척뿐이라 돌아올 것이 거의 없다.</span>'),
+    actions: [
+      { label: '그만둔다' },
+      { label: '청산한다', onClick: () => {
+          const r = liquidate();
+          toast(`청산했다 — ${SHIPS[r.kept].name} 한 척과 ${r.gold}닢`, 'bad');
+          refreshHUD(); refreshLog(); after();
+        } },
+    ],
+  });
+}
+
 /* 이 항구에 지금 들어와 있는 배들 — 세계가 혼자 돌아간다는 것이 보이는 창 */
 /* ── 끝 ────────────────────────────────────────────────────────
    ★ **무엇을 해야 끝나는지 보이지 않으면 그것은 목표가 아니라 우연이다.**
@@ -611,6 +782,31 @@ function endingCard() {
       text: `${st.now >= st.need ? '✓' : '·'} ${st.label} (${st.now}/${st.need}) — ${st.detail}`,
     }))),
   ]);
+}
+
+/** 패권 조건 ③의 **자산 하한**을 한 줄로 (A-8c).
+    ★ 규칙은 한 줄도 안 바꾼다 — `state.js: foeOdds`가 정본이고 여기서는 그 표를 읽어 적는다.
+      *"세력 함대는 전부 등급 4~5인데 부자가 될수록 더 못 이긴다"*(`story/FACTIONS.md`)가
+      뒤집혀 읽히던 자리다. 실제로는 **부자가 되어야 그 함대가 나타난다.** */
+function bossGateLine() {
+  const w = foeWealth();
+  const odds = foeOdds();
+  const p = odds[HEGEMONY.bossTier - 1] ?? 0;
+  const gate = foeWealthGate(HEGEMONY.bossTier);
+  const leaky = !!ship().leak;
+  return el('div.ctr-sub', {
+    style: { color: p > 0 ? '#8f8878' : '#d0a04a', marginLeft: '10px' },
+    html: leaky
+      ? `이 배로는 등급 ${HEGEMONY.bossTier}가 <b>아예 안 붙는다</b> — `
+        + '삭은 배는 거물이 상대해 주지 않는다. 배부터 갈아야 한다.'
+      : p > 0
+        ? `자산 <b>${w.toLocaleString('ko-KR')}닢</b>(금고 + 실은 짐) — `
+          + `지금 조우에서 등급 ${HEGEMONY.bossTier}가 붙을 확률 <b>${Math.round(p * 100)}%</b>.`
+        : `자산 <b>${w.toLocaleString('ko-KR')}닢</b>(금고 + 실은 짐) — `
+          + `<b>등급 ${HEGEMONY.bossTier}는 지금 확률이 0이다.</b> 해적은 털 값이 나오는 배를 고르므로`
+          + ` <b>${(gate ?? 0).toLocaleString('ko-KR')}닢</b>을 넘겨야 두목이 붙는다.`
+          + ' 세지는 것이 아니라 <b>부자가 되어야</b> 열리는 조건이다.',
+  });
 }
 
 /* ── 권역 패권 (지역 패자) ─────────────────────────────────────
@@ -655,13 +851,35 @@ function hegemonyCard() {
     line(h.boss.done,
       `${h.boss.name}${josa(h.boss.name, '을/를')} 꺾는다`
       + (h.boss.done ? ` — ${h.boss.day}일차` : ' — 아직')),
+    /* ★ **조건 ③은 "강해지면"이 아니라 "부자가 되어야" 열린다**(A-8c).
+       `pickEnemy`가 `금고 + 실은 짐 × 60`으로 등급표를 고르므로, 자산이 문턱 아래면
+       **등급 5 확률이 0**이다 — 120닢으로 시작하는 갈래는 아무리 세도 두목을 못 만난다.
+       그런데 카드는 *"이 바다의 주인을 꺾어라"*라고만 적고 있었다. 그 문턱을 여기서 말한다.
+       ★ 규칙은 안 건드린다. 표는 `state.js: foeOdds`가 정본이고 여기서는 읽기만 한다. */
+    h.boss.done ? null : bossGateLine(),
     line(h.topShip.done,
       `이 바다가 짓는 가장 큰 배 (tier ${h.topShip.tier})`
       + ` — ${h.topShip.done ? `${h.topShip.name} 보유`
             : h.topShip.choices.length > 1
               ? `${h.topShip.choices.slice(0, 3).join(' · ')} 중 하나`
               : `${h.topShip.name}${josa(h.topShip.name, '이/가')} 아직 없다`}`),
-  ];
+  ].filter(Boolean);
+
+  /* ★ **채운 것이 되돌아갈 수 있다는 말**(A-8c). 41/41을 채운 판이 금고 0이 되자
+     압류가 돌아 39/41 · 3/4 → 2/4로 내려갔는데, 그때까지 화면 어디에도 그 가능성이 없었다.
+     사건이 난 뒤에는 `state.js: hegemonyLoss`가 항해일지에 적는다 — 여기는 **나기 전**이다. */
+  if (h.ports.have > 0) {
+    const risk = Object.keys(state.holdings ?? {})
+      .filter((cid) => regionOf(cid) === rid && holdingIdle(cid)).length;
+    rows.push(el('div.ctr-sub', {
+      style: { marginTop: '4px', color: risk ? '#d05a4a' : '#8f8878' },
+      html: risk
+        ? `⚠ 유지비를 못 채워 <b>문을 닫은 거점이 ${risk}곳</b>이다 — 한 번 더 밀리면 넘어가고,`
+          + ` 여기 채운 <b>${h.ports.have}/${h.ports.need}</b>${josa(h.ports.need, '이/가')} 그만큼 되돌아간다.`
+        : `거점은 서른 날마다 유지비를 문다. 두 번 못 내면 압류라, 금고가 마르면`
+          + ` 여기 채운 <b>${h.ports.have}/${h.ports.need}</b>${josa(h.ports.need, '이/가')} 되돌아간다.`,
+    }));
+  }
 
   /* ── 아홉 바다 요약 — 접어 둔다 ─────────────────────────── */
   rows.push(el('details', { style: { marginTop: '6px' } }, [
@@ -1252,6 +1470,10 @@ function figureCard() {
 /* ── 우측: 정비/조선소/출항 ─────────────────────────── */
 function sidePanel() {
   return el('div#port-side', {}, [
+    /* ★ 바닥에서 나가는 문은 **맨 위**다(C-17). 이 카드가 뜨는 국면에서
+       시장·정비·거점보다 먼저 읽히지 않으면 "출구가 없다"가 그대로 재발한다. */
+    salvageCard(),
+
     el('div.panel', {}, [
       el('h3', {}, el('span', { text: city.name })),
       el('div.city-card', {}, [

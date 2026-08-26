@@ -102,6 +102,9 @@ export async function open(opts = {}) {
   }
   const page = ctx.pages()[0] ?? await ctx.newPage();
   const errors = [];
+  /* 실패는 아니지만 **사람이 겪는 불편**을 적어 두는 자리 — 러너가 통과했다고 해서
+     그 화면이 사람에게 눌리는 것은 아니다(F-7의 DOM 클릭 폴백이 여기 남는다). */
+  const notes = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 
@@ -147,7 +150,7 @@ export async function open(opts = {}) {
   }));
 
   const g = {
-    page, browser, errors, titleUp,
+    page, browser, errors, notes, titleUp,
     /** 제목 화면을 닫는다.
         ★ `click('출항하기')`는 제목 화면과 **항구 사이드패널의 출항 단추 둘 다** 매치해
           뒤에 가려진 쪽을 눌러 실패했다(중동 테스터가 잡았다). 제목 화면만 집는다. */
@@ -192,7 +195,43 @@ export async function open(opts = {}) {
         await sleep(120 + slow);
         return true;
       } catch {
-        /* ★ 실패했으면 **덮개부터 의심한다.** 조용히 false를 돌려주면 러너가
+        /* ★ **뷰포트 밖이면 여기서 스스로 끌어온다**(UNIMPLEMENTED F-7).
+           조선소 선박 목록은 세로 9,000px이 넘고 항구 인물 패널도 y≈985에 있어,
+           지금까지는 러너가 `eval "…scrollIntoView()"`를 손으로 먼저 넣어야 했다.
+           playwright의 자동 스크롤은 **가려진 것**(sticky 출항 단추 등)에는 안 듣는다 —
+           그때는 화면 한가운데로 끌어온 뒤 다시 누른다.
+           ★ 실패했을 때만 도는 길이라 기존 러너의 동작은 한 줄도 안 바뀐다. */
+        const pulled = await loc.evaluate((e) => {
+          e.scrollIntoView({ block: 'center', inline: 'center' });
+          return e.getBoundingClientRect().top;
+        }).catch(() => null);
+        if (pulled != null) {
+          await sleep(120);
+          try {
+            await loc.click({ timeout: 2000 });
+            await sleep(120 + slow);
+            return true;
+          } catch { /* 그래도 안 되면 아래로 */ }
+          /* 마지막 수단 — **DOM 클릭**. 좌표를 안 쓰므로 무엇이 위에 덮여 있든 닿는다.
+             사람이 못 누르는 자리를 눌러 버릴 수 있으므로 **여기까지 온 것을 기록에 남긴다** —
+             남기지 않으면 "사람은 못 누르는데 러너만 통과하는" 화면이 조용히 생긴다. */
+          const hit = await loc.evaluate((e) => {
+            if (e.disabled) return 'disabled';
+            e.click();
+            return 'ok';
+          }).catch(() => null);
+          if (hit === 'ok') {
+            const line = `[F-7] "${text}"가 뷰포트 밖이거나 가려져 DOM 클릭으로 눌렀다`
+                       + ' — 사람은 스크롤해야 닿는 자리다.';
+            /* ⚠️ `errors`가 아니라 `notes`다 — `--smoke`가 `errors`로 exit code를 정하므로,
+               **넘어간 것**을 거기 넣으면 편의 장치가 실패로 둔갑한다. */
+            if (!notes.includes(line)) notes.push(line);
+            console.warn('[playtest] ' + line);
+            await sleep(120 + slow);
+            return true;
+          }
+        }
+        /* ★ 그래도 실패했으면 **덮개부터 의심한다.** 조용히 false를 돌려주면 러너가
            "그 단추가 없다"고 적고, 그 오독이 회차 하나를 통째로 잡아먹는다. */
         const ov = await g.overlay().catch(() => ({ up: false }));
         if (ov.up) {

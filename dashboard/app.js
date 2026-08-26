@@ -8,6 +8,7 @@ import { runWages, bindWageControls, wageLoaded } from './wage-view.js';
 import { runPorts, portLoaded } from './port-view.js';
 import { runShips, shipLoaded } from './ship-view.js';
 import { runOverview, overviewLoaded } from './overview-view.js';
+import { runNpcs, npcLoaded } from './npc-view.js';
 
 const tabs = [...document.querySelectorAll('#nav .tab')];
 const grps = [...document.querySelectorAll('#nav .grp')];
@@ -24,6 +25,7 @@ function show(name) {
   if (name === 'wage' && !wageLoaded()) runWages();
   if (name === 'port' && !portLoaded()) runPorts();
   if (name === 'ship' && !shipLoaded()) runShips();
+  if (name === 'npc' && !npcLoaded()) runNpcs();
   // 오버뷰는 계측이 가볍지만 **캐시 실측**이 있어 열 때마다 다시 그린다
   if (name === 'overview') runOverview();
   location.hash = `#${name}`;
