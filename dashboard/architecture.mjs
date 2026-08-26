@@ -136,6 +136,7 @@ export const LAYERS = [
       ['tools/clean-map-art.py', '납품 지도에서 게임이 그리는 것(글자·항로선·나침도·배)을 지우고 400×225로 줄인다'],
       ['tools/gen-map-tracing.mjs', '그림쟁이가 덧그릴 기준판 — 게임 지도 4배 확대판 + 해안선만 남긴 판'],
       ['tools/check-memory-routing.mjs', '**메모리 3-tier 라우터가 실제로 라우팅을 하는가** — 트립와이어(바이트−줄 수)·dead pointer·고아 문서·세션시작에서 몇 hop. 라우터는 **백틱 경로로도 잇는다**(`QUICKMAP.md`)'],
+      ['tools/check-imports.mjs', '**없는 이름을 가져오는 import**가 있는가 — 브라우저는 그 모듈 그래프를 통째로 거부하므로 **게임이 아예 안 뜬다**. ★ 실제로 `scenes/map.js`가 `riskKey`를 `state.js`에서 가져와 게임이 죽어 있었는데 **`check-*` 열셋과 규칙 184개가 전부 통과했다** — 그것들은 `data.js`·`state.js`를 직접 부르는 도구라 `scenes/*`를 한 번도 안 거친다. 지도 아홉 장이 낡은 채 굳어 있던 것도 그 장애의 증상이었다(`gen-map-png.mjs`는 게임을 띄워서 굽는다)'],
       ['tools/check-dup-decl.mjs', '**한 import 문에 같은 이름이 두 번** 들어갔는가 — 그 한 줄이면 모듈이 통째로 안 돌아 화면이 검게 남고, 검증 스크립트는 전부 통과한다(파싱을 안 하므로)'],
       ['tools/test-rules.mjs', '규칙 테스트'],
       ['tools/test-world.mjs', 'NPC·계약·바람 테스트'],
