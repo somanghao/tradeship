@@ -97,7 +97,10 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
           }
         }
       }
-      carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 6, bay: 6.5 });
+      /* ★ 회랑 반폭을 6 → 2.5로 좁혔다. 6px(폭 12px)은 지중해의 반도(폭 20px대)를
+         **통째로 갈아 없앤다** — 사용자가 "이탈리아 반도도 그리스 반도도 없다"고 한 것이
+         격자의 문제가 아니라 이 한 줄이었다. 검수기는 선분 위 표본만 보므로 좁혀도 통과한다. */
+      carveHarbors(land, cities, routes, { seed: seed ^ 0xC0A5, lane: 2.5, bay: 3.5 });
       isles = [];                       // 이미 land에 들어갔다 — 두 번 그리지 않는다
       ranges = def.hand.ranges ?? [];
     } else {
@@ -150,7 +153,7 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
        바다는 세로 그라데이션이라 고유색을 120~250개나 먹었다(육지는 6~12개였다).
        거리장 한 번이면 띠 폭을 **덩어리 크기에 맞게** 줄이고 늘릴 수 있고,
        바다도 수심 다섯 단으로 끊어 색 예산을 육지로 넘길 수 있다. */
-    const { lab, area } = components(land);
+    const { lab, area, bbox } = components(land);
     const shoreW = area.map((a) => Math.max(1, Math.min(7, Math.round(Math.sqrt(a / Math.PI) * 0.16))));
     // 원천이 뭍이면 거리는 "가장 가까운 뭍까지"가 된다 — 바다 쪽에서 읽는 값이다(그 반대가 `inl`)
     const sea = distField(land, 1, lab);        // 바다 픽셀 → 가장 가까운 뭍까지 거리 + 그 덩어리
@@ -190,7 +193,11 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
         const w = shoreW[sea.lb[i]] ?? 3;
         const d = sea.d[i];
         let c;
-        if (dstep(d, w * 0.35, 0.8, x, y) < 0) c = sand;              // 백사
+        /* 백사는 **1px대로 묶는다**(`min(…, 1.15)`). 폭을 덩어리 크기에 비례시켰더니
+           대륙 둘레가 2~3px 모래띠가 됐는데, 모래색은 `check-map.py`의 `is_sea`에서 **뭍**으로
+           세어진다(b > r+18이 아니다). 그래서 해변이 굵어진 만큼 항로 회랑이 좁아졌고
+           파마구스타~베이루트가 50%로 반려됐다 — 그림이 아니라 판정 폭의 문제다. */
+        if (dstep(d, Math.min(w * 0.35, 1.15), 0.8, x, y) < 0) c = sand;   // 백사
         else if (dstep(d, w, 1.1, x, y) < 0) c = depth[0];            // 여울
         else if (dstep(d, w * 2.4, 1.8, x, y) < 0) c = depth[1];      // 얕은 바다
         /* 여기부터는 거리가 아니라 **해저값**으로 끊는다(위 주석). 등심선이 섬을 복제하지 않는다.
@@ -224,18 +231,38 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
        그것이 곧 "F-8 벽지"다. 파장 15px 잡음(±3.5px)에 Bayer를 얹어 3px 전이대를 만든다 —
        색을 하나도 더 안 쓰고 경계가 손으로 칠한 것처럼 섞인다. */
     const nZone = valueNoise(seed ^ 0x20E5, 15);
+    /* ★★ 지대는 **화면 y가 아니라 육지 로컬 좌표**로 가른다(진단서 S5).
+       화면 y로 자르면 한 화면에 덩어리가 여럿일 때 **작은 섬이 대륙의 위도 띠에 그대로 썰린다** —
+       카리브의 자메이카 한 섬이 위는 삼림 아래는 관목으로 갈리는 식이다.
+       그래서 그 덩어리의 bbox 높이로 기울기를 정한다: 대륙(높이 90px↑)은 자기 위도 기울기를
+       그대로 쓰고, 작은 섬은 **자기 중심 위도 하나**로 통일된다. 사이는 매끄럽게 섞인다. */
+    const localY = (x, y) => {
+      const id = lab[y * VW + x];
+      if (id < 0) return y;
+      const bb = bbox[id];
+      const h = bb[3] - bb[2] + 1;
+      const k = Math.max(0.12, Math.min(1, h / 90));
+      const cy = (bb[2] + bb[3]) / 2;
+      return cy + (y - cy) * k;
+    };
     const zoneOf = (x, y) => {
       if (!Z) return 'forest';
       const d = inl.d[y * VW + x];
-      const yj = Math.round(y + (nZone(x, y) - 0.5) * 7
-        + ((BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5) * 3);
+      const yj = localY(x, y) + (nZone(x, y) - 0.5) * 7
+        + ((BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5) * 3;
       const extra = Z.extra?.(x, yj, d);
       if (extra) return extra;
-      if (Z.desertY && yj > Z.desertY(x)) return 'desert';
-      if (Z.tundraY && yj < Z.tundraY(x)) return 'tundra';
-      if (Z.forestY && yj > Z.forestY(x)) return 'forest';
-      if (Z.scrubY && yj > Z.scrubY(x)) return 'scrub';
-      return 'forest';
+      /* ★ 띠는 **배열**이다(북→남). 예전에는 `desertY / tundraY / forestY / scrubY`를
+         if 사슬로 물었는데, 그 순서가 계약이라 **닿지 않는 가지**가 조용히 생겼다 —
+         아프리카의 `forest`가 죽은 코드였고 중동의 사막색이 한 픽셀도 안 나왔다.
+         배열이면 앞 경계부터 차례로 재므로 그런 파손이 구조적으로 생길 수 없다. */
+      const B = Z.bands;
+      if (!B) return 'forest';
+      for (let i = 0; i < B.length - 1; i++) {
+        const [b, nm] = B[i];
+        if (yj < (typeof b === 'function' ? b(x) : b)) return nm;
+      }
+      return B[B.length - 1][1];
     };
     const rampOf = (x, y) => ramp(clim.zone?.[zoneOf(x, y)] ?? clim.land);
     const nPatch = valueNoise(seed ^ 0x9A70, 11);
@@ -316,17 +343,21 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
 /** 4-이웃 연결성분 — 덩어리마다 번호와 넓이. 해안 띠 폭을 덩어리 크기에 맞추는 데 쓴다. */
 function components(land) {
   const lab = new Int32Array(VW * VH).fill(-1);
-  const area = [];
+  const area = [], bbox = [];
   const stack = [];
   for (let i = 0; i < land.length; i++) {
     if (!land[i] || lab[i] >= 0) continue;
     const id = area.length;
     area.push(0);
+    bbox.push([VW, 0, VH, 0]);          // x0 x1 y0 y1
     lab[i] = id; stack.push(i);
     while (stack.length) {
       const j = stack.pop();
       area[id]++;
       const x = j % VW, y = (j / VW) | 0;
+      const bb = bbox[id];
+      if (x < bb[0]) bb[0] = x; if (x > bb[1]) bb[1] = x;
+      if (y < bb[2]) bb[2] = y; if (y > bb[3]) bb[3] = y;
       for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
         if (nx < 0 || ny < 0 || nx >= VW || ny >= VH) continue;
         const n = ny * VW + nx;
@@ -335,7 +366,7 @@ function components(land) {
       }
     }
   }
-  return { lab, area };
+  return { lab, area, bbox };
 }
 
 /** 3-4 체임퍼 거리장. `mask[i] === want`인 곳이 0이고 거기서 번져 나간다.

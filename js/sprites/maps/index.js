@@ -127,7 +127,11 @@ export const CLIMATE = {
     zone: { forest: null, scrub: '#5f7048', desert: null, tundra: '#8a9483' },
     sea: ['#123c52', '#1a4f68', '#08192a'],
     shore: ['#d8cfb0', '#5fb0bc', '#357f9c', '#245f7e'],
-    zones: { scrubY: (x) => 150 + Math.sin(x * 0.02) * 14, tundraY: (x) => 46 + Math.sin(x * 0.017 + 1) * 10 },
+    zones: { bands: [
+      [(x) => 46 + Math.sin(x * 0.017 + 1) * 10, 'tundra'],
+      [(x) => 150 + Math.sin(x * 0.02) * 14, 'forest'],
+      [Infinity, 'scrub'],
+    ] },
   },
   // 아프리카 — 사바나에서 사막으로, 적도에 밀림
   warm: {
@@ -142,14 +146,14 @@ export const CLIMATE = {
        동아시아가 이미 같은 함정을 `extra`로 피해 뒀다(아래 `temperate` 주석). 여기도 직접 가른다.
        띠는 위에서 아래로: 사하라 → 사헬 → 적도 우림 → 잠베지 사바나, 그리고 서남쪽만 나미브. */
     zones: {
-      extra: (x, y) => {
-        if (y < 48 + Math.sin(x * 0.026) * 10) return 'desert';          // 사하라
-        if (y < 74 + Math.sin(x * 0.021 + 2) * 8) return 'scrub';        // 사헬 — 기본 사바나색
-        if (y < 126 + Math.sin(x * 0.019 + 1) * 12) return 'forest';     // 기니만~콩고 우림
-        // 나미브·칼라하리는 **서남쪽에만** 있다. 동안(모잠비크)까지 사막으로 칠하면 또 반대가 된다
-        if (x < 140 && y > 162 + Math.sin(x * 0.03) * 6) return 'desert';
-        return 'scrub';                                                   // 잠베지~남부 사바나
-      },
+      // 나미브·칼라하리는 **서남쪽에만** 있다. 동안(모잠비크)까지 사막으로 칠하면 또 반대가 된다
+      extra: (x, y) => (x < 140 && y > 162 + Math.sin(x * 0.03) * 6 ? 'desert' : null),
+      bands: [
+        [(x) => 48 + Math.sin(x * 0.026) * 10, 'desert'],        // 사하라
+        [(x) => 74 + Math.sin(x * 0.021 + 2) * 8, 'scrub'],      // 사헬 — 기본 사바나색
+        [(x) => 126 + Math.sin(x * 0.019 + 1) * 12, 'forest'],   // 기니만~콩고 우림
+        [Infinity, 'scrub'],                                      // 잠베지~남부 사바나
+      ],
     },
   },
   // 중동·홍해 — 거의 다 사막이고 물가에만 초록이 있다
@@ -171,8 +175,9 @@ export const CLIMATE = {
         if (distToPath(x, y, [[108, 30], [118, 44], [126, 58]]) < 6) return 'scrub';            // 레반트
         if (distToPath(x, y, [[100, 172], [112, 184], [130, 190]]) < 7) return 'scrub';         // 예멘 고지
         if (distToPath(x, y, [[286, 156], [298, 172], [304, 184]]) < 6) return 'scrub';         // 오만 하자르
-        return 'desert';
+        return null;
       },
+      bands: [[Infinity, 'desert']],
     },
   },
   // 인도양 — 계절풍이 적시는 초록, 데칸은 건조하다
@@ -181,7 +186,10 @@ export const CLIMATE = {
     zone: { forest: '#3f6b2e', scrub: '#8a9450', desert: null },
     sea: ['#136578', '#1b768c', '#0a2e3c'],
     shore: ['#eedcae', '#7ed6d6', '#45a4b2', '#2f7c90'],
-    zones: { scrubY: (x) => 96 + Math.sin(x * 0.023 + 1) * 16 },
+    zones: { bands: [
+      [(x) => 96 + Math.sin(x * 0.023 + 1) * 16, 'forest'],
+      [Infinity, 'scrub'],
+    ] },
   },
   // 동남아 — 진한 열대림과 산호초
   tropic: {
@@ -192,7 +200,7 @@ export const CLIMATE = {
     sea: ['#0f6b7c', '#178294', '#08313f'],
     shore: ['#f4e6bc', '#8ae0dc', '#4bb0ba', '#2f8496'],
     zone: { shore: '#6a9c4e', forest: '#2b5f30' },
-    zones: { extra: (x, y, d) => (d > 19 ? 'forest' : d < 6 ? 'shore' : 'mid') },
+    zones: { extra: (x, y, d) => (d > 19 ? 'forest' : d < 6 ? 'shore' : null), bands: [[Infinity, 'mid']] },
   },
   // 카리브 — 산호초와 밝은 옥빛 바다, 섬마다 짙은 열대림
   antilles: {
@@ -201,7 +209,7 @@ export const CLIMATE = {
     shore: ['#f6ecc4', '#96e8de', '#52bcc2', '#33909e'],
     // 섬은 작아 임계도 작다 — tropic과 같은 잣대를 쓰면 앤틸리스 전체가 해안 지대가 된다
     zone: { shore: '#74a355', forest: '#2b6034' },
-    zones: { extra: (x, y, d) => (d > 13 ? 'forest' : d < 4 ? 'shore' : 'mid') },
+    zones: { extra: (x, y, d) => (d > 13 ? 'forest' : d < 4 ? 'shore' : null), bands: [[Infinity, 'mid']] },
   },
   // 남아메리카 — 밀림과 안데스, 남쪽으로 갈수록 마른 팜파스
   newworld: {
@@ -209,7 +217,10 @@ export const CLIMATE = {
     zone: { forest: null, scrub: '#8a9a52', desert: '#c4a874' },
     sea: ['#13566e', '#1c6a84', '#082836'],
     shore: ['#ecdcb0', '#72cbd0', '#419eae', '#2b7890'],
-    zones: { scrubY: (x) => 150 + Math.sin(x * 0.022) * 14 },
+    zones: { bands: [
+      [(x) => 150 + Math.sin(x * 0.022) * 14, 'forest'],
+      [Infinity, 'scrub'],
+    ] },
   },
   // 동아시아 — 온대림, 북쪽으로 갈수록 마른다
   temperate: {
@@ -221,15 +232,12 @@ export const CLIMATE = {
        사막이 된다. 동아시아는 **북쪽이** 마르는 바다다(만주·화북). 그래서 26을 주었더니
        육지가 통째로 모래색이 되어 "광저우가 사막에 있다"는 말을 들었다.
        `extra`로 직접 가른다 — 북에서 남으로 사막 → 관목 → 온대(기본색) → 짙은 상록수. */
-    zones: {
-      extra: (x, y) => {
-        const dry = 28 + Math.sin(x * 0.03 + 1) * 8;
-        if (y < dry) return 'desert';
-        if (y < dry + 26) return 'scrub';
-        if (y > 124 + Math.sin(x * 0.02) * 14) return 'forest';
-        return 'mid';        // `zone`에 없는 이름 → 색을 안 덮는다 = 기본 온대 초록
-      },
-    },
+    zones: { bands: [
+      [(x) => 28 + Math.sin(x * 0.03 + 1) * 8, 'desert'],
+      [(x) => 54 + Math.sin(x * 0.03 + 1) * 8, 'scrub'],
+      [(x) => 124 + Math.sin(x * 0.02) * 14, 'mid'],   // `zone`에 없는 이름 → 기본 온대 초록
+      [Infinity, 'forest'],
+    ] },
   },
 };
 
@@ -333,9 +341,10 @@ export const MAPS = {
   seasia: {
     climate: 'tropic',
     auto: {
-      /* lane을 9.5에서 낮췄다 — 군도라 바다가 원래 79%인데 회랑 폭을 저주파로 변조하자
-         80%를 넘어 검수기가 "뭍이 거의 없다"로 반려했다(상한이 80%다). */
-      seed: 0x5EA5, lane: 8.6, bay: 11, isles: 12,
+      /* lane을 9.5에서 낮췄다 — 군도라 바다가 79%로 상한(80%)에 붙어 있어서,
+         회랑 폭을 저주파로 변조하거나 해변 띠를 얇게 잡을 때마다 그 선을 넘어
+         "뭍이 거의 없다"로 반려된다. 이 권역만 회랑을 좁혀 여유를 만든다. */
+      seed: 0x5EA5, lane: 8.1, bay: 11, isles: 12,
       // 군도다 — 섬을 하나하나 놓는다. 뭍을 기본으로 두면 섬 사이가 다 메워진다
       // 솔로르는 소순다 열도의 작은 섬 하나가 통째로 항구다. `landmass` 사각형을 새로 깔면
       // 자바~술라웨시 사이의 열린 바다가 메워지므로, 섬을 그 자리에 박는다(쌍서와 같은 처리)
