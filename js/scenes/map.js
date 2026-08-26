@@ -17,6 +17,8 @@ import {
   knowPort, priceKnown, priceOf, payBounties, activeBounty, insuranceShare,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
+  /* 입항세를 **운영비용으로 보여 주는** 자리(#6) · 관선 임검 */
+  tariffRate, seizeCargo,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
   totalLossOdds, totalLoss,
   /* 입장권 체크리스트가 쓰는 것 — **판정을 여기서 새로 만들지 않는다.**
@@ -716,6 +718,40 @@ function resolveEvent(ev0, voyage) {
       });
       break;
     }
+    /* ── 무역품 몰수 (#6) ────────────────────────────────────
+       ★ 해적이 아니라 **관**이다. 그래서 싸울 수도, 달아날 수도 없다 — 값을 물고 지나간다.
+         이 게임이 두 번 고른 답(*"막지 않고 값을 물린다"*)의 세 번째 자리다.
+       ★ 확률은 자산 누진에 물려 있어(`state.js: seizureOdds`) 가난할 때는 아예 안 뜬다.
+         문서(감합·카르타스)를 쥐고 있으면 훨씬 덜 걸린다 — 문구가 그것을 말해 준다. */
+    case 'seizure': {
+      const hit = seizeCargo();
+      const lostRows = Object.entries(hit.lost);
+      const line = lostRows.map(([g, n]) => `${GOOD_BY_ID[g].name} <b>${n}</b>`).join(' · ');
+      // 조사는 **마지막에 읽히는 글자**를 따른다 — 목록 끝은 수량이다
+      const tail = String(lostRows.at(-1)?.[1] ?? '');
+      const rid = REGION_OF_CITY[voyage.to.id];
+      const permit = rid && (state.boons?.permit?.[rid] ?? 0) > state.day;
+      pushLog(hit.value
+        ? `관선이 배를 세우고 ${hit.value.toLocaleString('ko-KR')}닢어치를 압수했다.`
+        : '관선이 배를 세웠으나 실은 것이 없었다.', 'bad');
+      refreshHUD(); refreshLog();
+      modal({
+        title: caravan ? '검문소 — 짐을 뺏기다' : '무역품 몰수',
+        body: (caravan
+                ? `길목의 관아가 대열을 세웠다. 장부를 펴 들고 짐을 하나씩 헤아린다.<br>`
+                : `깃발을 올린 관선이 뱃머리를 가로막았다. 대포를 쏠 상대가 아니다.<br>`)
+            + (hit.value
+                ? `${line}${josa(tail, '을/를')} 압수당했다 — <b>${hit.value.toLocaleString('ko-KR')}닢</b>어치.<br>`
+                  + `<span style="opacity:.7">해상보험은 바다의 위험만 인수한다. 관의 처분은 보상되지 않는다.</span><br>`
+                : `실은 것이 없어 가져갈 것도 없었다.<br>`)
+            + (permit
+                ? `<span style="opacity:.7">쥐고 있던 문서가 아니었으면 배까지 붙잡혔을 것이다.</span>`
+                : `<span style="opacity:.7">이 바다의 <b>문서</b>를 갖췄다면 이렇게까지 뒤지지는 않았을 것이다 — 항구의 관리에게 살 수 있다.</span>`),
+        actions: [{ label: '장부에 도장을 받는다', onClick: finish }],
+        closable: false,
+      });
+      break;
+    }
     case 'drift': {
       const kinds = ['salt', 'wine', 'grain', 'fur', 'ceramic'];
       const id = kinds[Math.floor(Math.random() * kinds.length)];
@@ -1140,6 +1176,12 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
            + (cost.fleet ? ` · 선단 ${cost.fleet}` : '')
            + (cost.insurance ? ` · 적하보험 ${cost.insurance}` : '')
            + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢`
+           /* ★ 입항세도 운영비용이다(#6 · 사용자 원문). 여기 안 적으면 후반에 세가
+              무거워져도 플레이어가 그것을 "비용"으로 읽을 데가 없다. */
+           + (cost.tariff
+               ? `\n입항세 ${cost.tariff.toLocaleString('ko-KR')}닢 (저기서 팔면 · 세율 ${(tariffRate(id) * 100).toFixed(1)}%)`
+                 + ` → 합 ${cost.withTariff.toLocaleString('ko-KR')}닢`
+               : `\n입항세율 ${(tariffRate(id) * 100).toFixed(1)}% (파는 값에서 뗀다)`)
            + `\n해적 조우 ${Math.round(dg.odds * 100)}%`
            + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
            + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')'
@@ -1200,8 +1242,14 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
   const far = sorted.filter((sh) => reach(sh) === 3);
   const shocks = [...near.slice(0, 5), ...far.slice(0, Math.max(1, 6 - Math.min(near.length, 5)) - 1 + 1)]
     .slice(0, 6);
+  /* ★ 소식에 **관세 폭탄**이 섞인다(#6) — 품목이 없는 충격이라 "시세"가 아니라 "입항세"다.
+     같은 줄 틀에 태우되 문장만 갈라 준다. 규칙이 멀쩡해도 화면이 말하지 않으면 없는 것이다. */
   const shockRows = shocks.map((sh) => el('div.route-row', {
-    title: `${sh.cityName}의 ${sh.goodName} 시세가 평시의 ×${sh.mult.toFixed(2)}
+    title: sh.tariff
+      ? `${sh.cityName}의 입항세가 평시의 ×${sh.mult.toFixed(2)}
+여기서 파는 값에서 그만큼 더 떼인다 — 지나가거나, 다른 항구에 판다.
+남은 기간 약 ${sh.daysLeft}일`
+      : `${sh.cityName}의 ${sh.goodName} 시세가 평시의 ×${sh.mult.toFixed(2)}
 남은 기간 약 ${sh.daysLeft}일`,
     onclick: () => { const near = nb.includes(sh.city); if (near) startVoyage(sh.city); },
   }, [

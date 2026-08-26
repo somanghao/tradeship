@@ -28,6 +28,7 @@ const INCOME_LABEL = {
   loot: '전리품·매각',
   salvage: '표류물',
   insurance: '보험금',
+  estate: '부동산 세',      // 가게·여관이 벌어 온 것 (공실이면 그 달은 0이다)
 };
 const OUTGO_LABEL = {
   goods: '교역품 매입',

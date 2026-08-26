@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         WORK, FACTIONS, REGARD, ROSTER, COMMENDA } from '../data.js';
+         ESTATE_KEYS, WORK, FACTIONS, REGARD, ROSTER, COMMENDA } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -21,6 +21,8 @@ import {
   matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
+  /* 수익형 부동산(#5) — 등급·세·공실. 값은 `data.js: HOLDINGS[].grades·ESTATE` */
+  estateGrade, estateDef, estateRent, estateUpgradeCost, vacancyOdds, canUpgradeEstate, upgradeEstate,
   portDayCost, waitDays, dischargeCrew, recallCrew, settleYard,
   endingProgress, markEnded,
   /* 권역 패권 — 규칙은 `state.js`, 값은 `data.js: HEGEMONY`. 여기서는 보여주기만 한다 */
@@ -958,11 +960,52 @@ function holdingCard() {
     }
   }
 
+  /* ── 수익형 부동산 (#5) ──────────────────────────────────────
+     ★ **규칙이 멀쩡해도 화면이 말하지 않으면 없는 것이다.** 공실은 이 설계의 심장인데
+       확률이 안 보이면 "고급이 좋은 것"으로만 읽혀 도박이 성립하지 않는다.
+       그래서 한 줄에 **등급 · 만실 세 · 빈방 확률**을 다 적는다. */
+  for (const k of ESTATE_KEYS) {
+    const grade = estateGrade(k, city.id);
+    if (!grade) continue;
+    const h = HOLDINGS[k];
+    const gd = estateDef(k, grade);
+    const rent = estateRent(k, city.id, grade);
+    const vac = Math.round(vacancyOdds(k, city.id) * 100);
+    rows.push(el('div.ctr-sub', {
+      html: `<b>${gd.name}</b>(${h.name} ${grade}급) — 만실이면 30일에 <b>${rent.toLocaleString('ko-KR')}닢</b>`
+          + ` · 빈방 <b style="color:${vac >= 35 ? '#d05a4a' : vac >= 20 ? '#c98a6a' : '#8fbf8a'}">${vac}%</b>`
+          + (idle ? ' <span style="color:#d05a4a">(문을 닫아 한 닢도 안 들어온다)</span>' : ''),
+    }));
+    const up = canUpgradeEstate(k, city.id);
+    const top = grade >= h.grades.length;
+    if (!top) {
+      const nx = h.grades[grade];
+      const nxRent = estateRent(k, city.id, grade + 1);
+      // 공실 공식은 `state.js: vacancyOdds` 하나뿐이다 — 화면이 제 계산을 따로 하면 반드시 어긋난다
+      const nxVac = Math.round(vacancyOdds(k, city.id, grade + 1) * 100);
+      rows.push(svcRow(`${nx.name}(으)로 올린다 — ${estateUpgradeCost(k, city.id).toLocaleString('ko-KR')}닢`,
+        `만실 ${nxRent.toLocaleString('ko-KR')}닢 · 빈방 ${nxVac}% · 공업력 ${nx.industry} 필요`,
+        up.ok ? '올린다' : (up.reason.length > 10 ? '못 올린다' : up.reason),
+        !up.ok, () => {
+          const r = upgradeEstate(k, city.id);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${h.name}${josa(h.name, '을/를')} 올렸다`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+  }
+
   for (const k of next) {
     const h = HOLDINGS[k];
     const can = canBuyHolding(k, city.id);
     const price = holdingPrice(k, city.id);
-    rows.push(svcRow(`${h.name} — ${price.toLocaleString('ko-KR')}닢`, h.desc,
+    /* 부동산은 **살 때부터** 벌이와 위험을 함께 보여 준다 — 값만 적으면 "그래서 얼마 버나"를
+       사고 나서야 알게 되고, 그러면 고급이 도박이라는 것도 살 때는 안 보인다. */
+    const est = h.grades
+      ? `${h.desc} 30일에 ${estateRent(k, city.id, 1).toLocaleString('ko-KR')}닢 · `
+        + `빈방 ${Math.round(vacancyOdds(k, city.id, 1) * 100)}% · 유지비는 그래도 나간다`
+      : h.desc;
+    rows.push(svcRow(`${h.name}${h.grades ? `(${h.grades[0].name})` : ''} — ${price.toLocaleString('ko-KR')}닢`, est,
       can.ok ? '세운다' : (can.reason.length > 10 ? '못 세운다' : can.reason),
       !can.ok, () => {
         const r = buyHolding(k, city.id);

@@ -36,9 +36,15 @@ import {
   canConsort, setConsort, consortCount, voyageDays as legDays,
   /* 비용 축(P4) — 선원 사무역 · 원양 보험 · 원양 전손 */
   privateTradeCut, insureRateFor, totalLossOdds, totalLoss,
+  /* 수익형 부동산(#5)과 후반 브레이크(#6) */
+  estateGrade, estateDef, estatePrice, estateUpgradeCost, canUpgradeEstate, upgradeEstate,
+  vacancyOdds, estateRent, estateOccupied, holdingIncomeDue,
+  netWorth, tariffScale, tariffShockFactor, baseTariff, seizureOdds, seizeCargo,
+  addShock, rollShockEvents, voyageCost, shockFactor, priceOf,
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
-  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS } from '../js/data.js';
+  PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS,
+  HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
@@ -232,9 +238,13 @@ purchaseShip('cocca');
 boardShip('cocca');
 {
   state.impact.venezia = { silk: 200 };
-  const bare = 0.06;                                   // data.js CITY_TRADE 기준 입항세 원값
+  /* ★ 원값과 대는 기준을 `baseTariff × 누진`으로 바꿨다(#6). 전에는 상수 0.06과 댔는데,
+     입항세에 **자산 누진**이 붙은 뒤로는 금고 60,000닢을 쥔 이 시점에 원값 자체가 6%가
+     아니다 — 그래서 "부관 감면이 걸려 있다"는 검사가 부관과 무관한 이유로 실패했다.
+     재는 것은 여전히 같다: **같은 자산에서 부관이 있으면 더 싸다.** */
+  const bare = baseTariff('venezia') * tariffScale();
   ok(tariffRate('venezia') < bare,
-     `입항세가 이미 감면돼 있다 — ${(tariffRate('venezia') * 100).toFixed(2)}%`);
+     `입항세가 이미 감면돼 있다 — 같은 자산의 원값 ${(bare * 100).toFixed(2)}% → ${(tariffRate('venezia') * 100).toFixed(2)}%`);
   ok(impactFactor('venezia', 'silk', 10) < 1,
      `대량거래 벌점도 이미 완화돼 있다 (${(impactFactor('venezia', 'silk', 10) * 100).toFixed(1)}%)`);
   state.impact = {};
@@ -960,4 +970,240 @@ resetGame();
   clearSave();
   ok(stashSave() === false,
      '저장이 없으면 밀지 않는다 — **빈 것을 밀면 옛 직전 판이 지워진다**');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   거점을 부동산으로 (#5) — 등급 · 공실 · 세
+   ══════════════════════════════════════════════════════════════ */
+{
+  resetGame('venezia');
+  state.gold = 400000;
+
+  // ① 등급이 있다 — 사고 나면 1급이고, 숫자로 적힌다
+  ok(HOLDINGS.shop.grades.length === 3 && HOLDINGS.inn.grades.length === 3,
+     `수익형 부동산 둘 — 가게 ${HOLDINGS.shop.grades.length}급 · 여관 ${HOLDINGS.inn.grades.length}급`);
+  buyHolding('inn', 'venezia');
+  ok(state.holdings.venezia.inn === 1 && estateGrade('inn', 'venezia') === 1,
+     '여관을 세우면 등급이 숫자 1로 적힌다 (기존 다섯은 true 그대로)');
+  ok(hasHolding('inn', 'venezia'),
+     '숫자로 적혀도 `hasHolding`이 참으로 읽는다 — 세이브·다른 규칙이 안 깨진다');
+
+  // ② 승급은 **차액만** 문다 (자리와 자재를 그대로 쓴다)
+  const p1 = estatePrice('inn', 1, 'venezia'), p2 = estatePrice('inn', 2, 'venezia');
+  ok(estateUpgradeCost('inn', 'venezia') === p2 - p1,
+     `승급 값은 차액이다 (${p1.toLocaleString('en-US')} → ${p2.toLocaleString('en-US')} = ${(p2 - p1).toLocaleString('en-US')}닢)`);
+  const spentBefore = state.holdings.venezia.spent;
+  upgradeEstate('inn', 'venezia');
+  ok(estateGrade('inn', 'venezia') === 2 && state.holdings.venezia.spent === spentBefore + (p2 - p1),
+     '승급하면 등급이 2가 되고 들인 돈(유지비의 밑동)도 그만큼 는다');
+
+  // ③ 승급의 문은 **공업력**이다 — 사용자 원문 "승급은 공업력으로 올려도 되고"
+  ok(industryOf('venezia') === 3 && canUpgradeEstate('inn', 'venezia').ok,
+     `베네치아(공업력 ${industryOf('venezia')})는 3급까지 열린다`);
+  {
+    const low = CITIES.find((c) => industryOf(c.id) === 0);
+    state.gold = 400000;
+    buyHolding('inn', low.id);
+    const r = canUpgradeEstate('inn', low.id);
+    ok(!r.ok && /공업력/.test(r.reason),
+       `${low.name}(공업력 0)에서는 여관을 못 올린다 — "${r.reason}"`);
+  }
+
+  // ④ 공실이 이 설계의 심장이다 — 고급일수록 더 빈다
+  const vac = (k, g) => vacancyOdds(k, 'venezia', g);
+  ok(vac('inn', 3) > vac('inn', 2) && vac('inn', 2) > vac('inn', 1),
+     `여관은 올릴수록 더 빈다 (${(vac('inn', 1) * 100).toFixed(0)}% → ${(vac('inn', 2) * 100).toFixed(0)}% → ${(vac('inn', 3) * 100).toFixed(0)}%)`);
+  ok(vac('inn', 3) > vac('shop', 3),
+     `여관이 가게보다 더 빈다 — 도박 쪽은 여관이다 (${(vac('inn', 3) * 100).toFixed(0)}% vs ${(vac('shop', 3) * 100).toFixed(0)}%)`);
+  ok(estateRent('inn', 'venezia', 3) > estateRent('inn', 'venezia', 2),
+     `대신 만실이면 더 번다 (${estateRent('inn', 'venezia', 2)} → ${estateRent('inn', 'venezia', 3)}닢/30일)`);
+
+  // ⑤ 축은 **size와 악명 둘뿐**이다 (data.js: ESTATE의 주석이 그렇게 못박아 두었다)
+  {
+    const big = CITIES.find((c) => c.size === 3), small = CITIES.find((c) => c.size === 1);
+    ok(vacancyOdds('inn', big.id, 2) < vacancyOdds('inn', small.id, 2),
+       `큰 항구가 덜 빈다 — ${big.name}(size3) ${(vacancyOdds('inn', big.id, 2) * 100).toFixed(0)}%`
+       + ` < ${small.name}(size1) ${(vacancyOdds('inn', small.id, 2) * 100).toFixed(0)}%`);
+    const flag = CITY_BY_ID.venezia.flag;
+    const base = vacancyOdds('inn', 'venezia', 2);
+    state.infamy[flag] = 5;
+    ok(vacancyOdds('inn', 'venezia', 2) > base,
+       `악명이 쌓이면 손님이 끊긴다 (${(base * 100).toFixed(0)}% → ${(vacancyOdds('inn', 'venezia', 2) * 100).toFixed(0)}%)`);
+    state.infamy[flag] = 0;
+    ok(ESTATE.ceil < 1, `아무리 나빠도 공실은 ${Math.round(ESTATE.ceil * 100)}%에서 멈춘다 — 막다른 골목 금지`);
+  }
+
+  // ⑥ 판정은 **결정론적**이다 — 드나들며 다시 굴릴 수 없다(시세 `wobble`과 같은 이유)
+  {
+    const a = [...Array(20)].map((_, i) => estateOccupied('inn', 'venezia', i));
+    const b = [...Array(20)].map((_, i) => estateOccupied('inn', 'venezia', i));
+    ok(a.every((v, i) => v === b[i]), '같은 기간을 다시 물어도 같은 답이다 — 공실은 재입장으로 못 피한다');
+    ok(a.some((v) => v) && a.some((v) => !v),
+       `스무 달 중 만실 ${a.filter(Boolean).length}달 · 빈 달 ${20 - a.filter(Boolean).length}달`);
+  }
+
+  // ⑦ 세는 30일마다 들어오고, **빈 달은 0인데 유지비는 그대로 나간다**
+  {
+    resetGame('venezia');
+    state.gold = 400000;
+    buyHolding('inn', 'venezia');
+    upgradeEstate('inn', 'venezia');
+    state.day += HOLDING.upkeepEvery * 12;
+    const inc = holdingIncomeDue('venezia');
+    const due = holdingUpkeepDue('venezia');
+    const row = inc.rows.find((r) => r.kind === 'inn');
+    ok(row && row.full + row.empty === 12, `열두 달치를 한 번에 센다 (만실 ${row?.full}달 · 빈 달 ${row?.empty}달)`);
+    ok(row.empty > 0, '★ 빈 달이 있다 — 고급 여관이 늘 만실이면 그냥 돈 찍는 기계다');
+    ok(inc.gold === row.rent * row.full, `세는 만실인 달만 들어온다 (${inc.gold.toLocaleString('en-US')}닢)`);
+    ok(due > 0, `유지비는 빈 달에도 그대로 나간다 (${due.toLocaleString('en-US')}닢/12달)`);
+    const g0 = state.gold;
+    settleHolding('venezia');
+    ok(state.gold === g0 + inc.gold - due,
+       `정산하면 금고가 세(+${inc.gold.toLocaleString('en-US')}) − 유지비(−${due.toLocaleString('en-US')})만큼 움직인다`);
+    ok(state.ledger.income.estate === inc.gold, '장부의 「부동산 세」 갈래에 그대로 적힌다');
+  }
+
+  // ⑧ 문을 닫으면 한 닢도 안 들어온다 — 유예가 공짜면 미납이 답이 된다
+  {
+    resetGame('venezia');
+    state.gold = 400000;
+    buyHolding('inn', 'venezia');
+    state.holdings.venezia.idle = true;
+    state.day += HOLDING.upkeepEvery * 3;
+    ok(holdingIncomeDue('venezia').gold === 0,
+       '문을 닫은 거점은 세를 못 번다 — 미납이 이득이 되지 않는다');
+  }
+
+  // ⑨ 부동산 수익은 **무역보다 훨씬 느리다**(연 몇 % · 항차 ROI는 열흘에 10%)
+  {
+    let bad = 0;
+    for (const k of ESTATE_KEYS) {
+      for (const gd of HOLDINGS[k].grades) {
+        const net = gd.yield * (1 - gd.vacancy) - HOLDING.upkeepRate;
+        if (!(net > 0.02 && net < 0.10)) bad++;
+      }
+    }
+    ok(bad === 0,
+       '여섯 등급 전부 순 연수익률이 2~10%다 — 부동산은 번 돈을 두는 곳이지 버는 길이 아니다'
+       + (bad ? ` (밴드 밖 ${bad}건)` : ''));
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   관세를 후반 브레이크로 (#6) — 누진 · 관세 폭탄 · 무역품 몰수
+   ══════════════════════════════════════════════════════════════ */
+{
+  resetGame('venezia');
+  state.crew = 10;
+
+  // ① 가난하면 누진이 없다 — 브레이크는 후반의 것이다
+  ok(Math.abs(tariffScale() - 1) < 1e-9,
+     `시작 자산(${netWorth().toLocaleString('en-US')}닢)에서는 누진이 없다 — ×${tariffScale().toFixed(2)}`);
+  const poorRate = tariffRate('venezia');
+
+  // ② 자산이 커지면 무거워지고, **상한이 있다**
+  state.gold = TARIFF_SCALE.from + TARIFF_SCALE.per;
+  ok(Math.abs(tariffScale() - (1 + TARIFF_SCALE.step)) < 0.03,
+     `자산 ${netWorth().toLocaleString('en-US')}닢 → 누진 ×${tariffScale().toFixed(2)} (한 칸 = +${Math.round(TARIFF_SCALE.step * 100)}%)`);
+  ok(tariffRate('venezia') > poorRate,
+     `같은 항구인데 세가 무거워졌다 (${(poorRate * 100).toFixed(2)}% → ${(tariffRate('venezia') * 100).toFixed(2)}%)`);
+  state.gold = 100000000;
+  ok(Math.abs(tariffScale() - TARIFF_SCALE.cap) < 1e-9,
+     `아무리 부자라도 누진은 ×${TARIFF_SCALE.cap}에서 멈춘다`);
+
+  // ③ ★ 막다른 골목 금지 — 무엇이 겹쳐도 실효세에 천장이 있다
+  {
+    state.infamy[CITY_BY_ID.venezia.flag] = 10;              // 악명 최대
+    addShock('venezia', null, SHOCK.events.find((e) => e.id === 'levy').mult, 30, 'levy');
+    ok(tariffRate('venezia') <= TARIFF_SCALE.ceil + 1e-9,
+       `누진 ×${TARIFF_SCALE.cap} + 악명 최대 + 관세 폭탄이 다 겹쳐도 `
+       + `${(tariffRate('venezia') * 100).toFixed(1)}% ≤ 상한 ${(TARIFF_SCALE.ceil * 100).toFixed(0)}% — 팔수록 손해가 되지 않는다`);
+    state.infamy[CITY_BY_ID.venezia.flag] = 0;
+  }
+
+  // ④ 관세 폭탄은 **시세를 안 건드린다**(품목 없는 충격)
+  {
+    ok(tariffShockFactor('venezia') > 1.5, `관세 폭탄이 걸려 있다 — 입항세 ×${tariffShockFactor('venezia').toFixed(2)}`);
+    ok(shockFactor('venezia', 'grain') === 1 && priceOf('venezia', 'grain') > 0,
+       '같은 사건이 곡물 시세에는 한 푼도 안 붙는다 — `shockFactor`는 품목이 맞아야 곱한다');
+    ok(tariffShockFactor('napoli') === 1, '이웃 항구는 멀쩡하다 — 폭탄은 그 항구에만 걸린다');
+    state.shocks.length = 0;
+  }
+
+  // ⑤ 관세 폭탄은 **부자에게 더 자주 온다** — 사용자 원문 "돈이 많아지는 시점에 특히 더"
+  {
+    const seeded = (seed) => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
+    const countLevy = () => {
+      state.shocks.length = 0;
+      return rollShockEvents(600, seeded(7)).filter((h) => h.kind === 'levy').length;
+    };
+    state.gold = 0; state.fleet = {};
+    const poor = countLevy();
+    state.gold = 100000000;
+    const rich = countLevy();
+    ok(rich > poor, `같은 600일·같은 시드에서 관세 폭탄이 가난할 때 ${poor}건 → 부자일 때 ${rich}건`);
+    state.shocks.length = 0;
+  }
+
+  // ⑥ 무역품 몰수 — 가난하면 아예 안 뜨고, 문서를 쥐면 덜 걸린다
+  {
+    resetGame('venezia');
+    state.crew = 10;
+    ok(SEA_EVENTS.find((e) => e.id === 'seizure')?.weight === 0,
+       '몰수는 weight 0이다 — 확률표(합 100)를 건드리지 않는다');
+    ok(seizureOdds({ to: 'napoli' }) === 0, '시작 자산에서는 관선이 배를 안 세운다');
+    state.gold = 100000000;
+    ok(Math.abs(seizureOdds({ to: 'napoli' }) - SEIZURE.cap) < 1e-9,
+       `부자가 되면 판정당 ${(SEIZURE.cap * 100).toFixed(1)}%까지 오른다`);
+    state.boons.permit = { mediterranean: state.day + 30 };
+    ok(Math.abs(seizureOdds({ to: 'napoli' }) - SEIZURE.cap * SEIZURE.permitOff) < 1e-9,
+       `그 바다의 문서를 쥐면 확률이 ×${SEIZURE.permitOff}로 준다 — 값을 미리 치른 사람은 덜 물린다`);
+    state.boons.permit = {};
+  }
+
+  // ⑦ 몰수는 **calm에서만** 나온다 — pirate·storm·merchant 빈도가 그대로여야 한다
+  {
+    resetGame('venezia');
+    state.crew = 10;
+    const tally = (n = 40000) => {
+      const t = {};
+      for (let i = 0; i < n; i++) { const e = rollSeaEvent({ from: 'napoli', to: 'palermo' }); t[e.id] = (t[e.id] || 0) + 1; }
+      return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v / n]));
+    };
+    const poor = tally();
+    state.gold = 100000000;
+    const rich = tally();
+    ok((rich.seizure ?? 0) > 0 && (poor.seizure ?? 0) === 0,
+       `부자일 때만 몰수가 뜬다 (${((rich.seizure ?? 0) * 100).toFixed(1)}% vs 0%)`);
+    ok(Math.abs(rich.pirate - poor.pirate) < 0.012 && Math.abs(rich.storm - poor.storm) < 0.012
+       && Math.abs(rich.merchant - poor.merchant) < 0.012,
+       `해적·폭풍·상선조우 빈도는 그대로다 (해적 ${(poor.pirate * 100).toFixed(1)}% → ${(rich.pirate * 100).toFixed(1)}%)`);
+    ok(rich.calm < poor.calm,
+       `늘어난 몫은 calm에서 덜어온다 (평온 ${(poor.calm * 100).toFixed(1)}% → ${(rich.calm * 100).toFixed(1)}%)`);
+  }
+
+  // ⑧ 몰수는 **값나가는 것부터** 가져가되 통째로는 안 가져간다
+  {
+    resetGame('venezia');
+    state.crew = 10; state.gold = 200000;
+    buy('grain', 20); buy('wine', 20);
+    const had = cargoUsed();
+    const hit = seizeCargo(() => 0.5);
+    ok(hit.value > 0 && cargoUsed() < had && cargoUsed() > 0,
+       `실은 ${had}칸 중 ${had - cargoUsed()}칸(${hit.value.toLocaleString('en-US')}닢어치)을 뺏겼다 — 배를 세우지는 않는다`);
+  }
+
+  // ⑨ 입항세가 **운영비용 갈래**로 선다 — 화면이 읽을 자리가 있어야 비용이 된다
+  {
+    resetGame('venezia');
+    state.crew = 10; state.gold = 200000;
+    buy('grain', 20);
+    const c = voyageCost(6, state.crew, { from: 'venezia', to: 'napoli' });
+    ok(c.tariff > 0 && c.withTariff === c.total + c.tariff,
+       `항해비 옆에 입항세 ${c.tariff.toLocaleString('en-US')}닢이 선다 (합 ${c.withTariff.toLocaleString('en-US')}닢)`);
+    ok(c.total === c.wages + c.supplies + c.fleet + c.hull + c.arms + c.officer + c.insurance,
+       '★ `total`에는 안 넣는다 — `advanceDays`가 미리 걷거나 시뮬이 두 번 빼면 안 된다');
+    ok(baseTariff('napoli') > 0 && tariffRate('napoli') > 0,
+       `나폴리 기본세 ${(baseTariff('napoli') * 100).toFixed(1)}% · 지금 무는 세 ${(tariffRate('napoli') * 100).toFixed(1)}%`);
+  }
 }

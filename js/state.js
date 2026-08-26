@@ -5,7 +5,8 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   ROUTE_RISK, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
-  HOLDINGS, HOLDING_KEYS, HOLDING, BANKRUPT, HULL, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
   laneOf, sameRegion, isOceanLane, REGION_OF_CITY, REGIONS, REGION_BY_ID, HOME_REGION, citiesOfRegion, OCEAN_LANES,
@@ -42,6 +43,7 @@ export {
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
   USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW, FLEET,
   SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR,
+  TARIFF_SCALE, SEIZURE, ESTATE, ESTATE_KEYS,
 };
 
 export const state = {
@@ -188,9 +190,9 @@ export function pushLog(text, kind = 'info') {
 
    ★ 적는 자리를 흩뿌리지 않고 `book()` 하나로 모은다. 매출·관세·성과급처럼
      한 거래에서 세 갈래로 갈리는 것이 있어, 호출부마다 직접 더하면 반드시 빠뜨린다.
-   ★ 항목은 **수입 5 · 지출 9**로 고정한다. 늘리려면 화면(정산 모달)도 함께 본다 —
+   ★ 항목은 **수입 6 · 지출 9**로 고정한다. 늘리려면 화면(정산 모달)도 함께 본다 —
      이름만 늘고 화면에 안 나오면 "적히지 않은 돈"이 생긴 것처럼 보인다. */
-export const LEDGER_INCOME = ['sales', 'contracts', 'loot', 'salvage', 'insurance'];
+export const LEDGER_INCOME = ['sales', 'contracts', 'loot', 'salvage', 'insurance', 'estate'];
 export const LEDGER_OUTGO = ['goods', 'wages', 'officer', 'supplies', 'upkeep',
                              'insurance', 'tariff', 'port', 'ships'];
 
@@ -258,7 +260,10 @@ export function activeShocks() {
   return state.shocks.map((s) => ({
     ...s,
     cityName: CITY_BY_ID[s.city]?.name ?? s.city,
-    goodName: GOOD_BY_ID[s.good]?.name ?? s.good,
+    /* 품목이 없는 충격이 있다 — **관세 폭탄**은 도시에만 걸린다(`good: null`).
+       예전 코드는 `?? s.good`이라 화면에 `null`이 찍혔을 자리다. */
+    goodName: s.good == null ? '입항세' : (GOOD_BY_ID[s.good]?.name ?? s.good),
+    tariff: s.good == null,
     daysLeft: Math.max(0, s.until - state.day),
   }));
 }
@@ -391,7 +396,37 @@ export function baseTariff(cityId = state.at) {
   return CITY_TARIFF[cityId] ?? TARIFF[size] ?? 0.045;
 }
 
-/** 감면 총합(off)에서 실제 무는 세율까지 — 바닥·상관·부두 가산을 한곳에 모은다.
+/* ── 총자산 ────────────────────────────────────────────────────
+   **금화만 보면 "방금 배를 샀는가"에 지배된다** — 부관 효과를 잴 때 이것 때문에 부호가
+   뒤집힌 적이 있다(wiki/officer.md). 그래서 규모를 물을 때는 언제나
+   **다 팔면 얼마인가**로 센다 — 금화 + 선단 매각가 + 거점·시설 회수가.
+   대시보드 `wages.mjs: netWorth`가 같은 정의(금화+선단)를 쓰고 있었는데 게임 쪽에는 없어
+   계측기에만 있던 개념이었다 — 여기로 올리고 부동산·시설까지 넣는다.
+   ★ 거점·시설은 **`holdingsValue`·`worksValue`를 그대로 쓴다.** "내 재산이 얼마인가"의
+     정의가 두 개가 되면 어느 쪽이 옳은지 아무도 모르게 된다. */
+export function netWorth() {
+  let w = state.gold;
+  const keys = new Set([...Object.keys(state.fleet || {}), state.shipKey]);
+  for (const k of keys) if (SHIPS[k]) w += resaleOf(k);
+  return w + holdingsValue() + worksValue();
+}
+
+/** 후반 브레이크 — 자산이 클수록 관이 더 뜯는다. 가난하면 1.0 (→ data.js: TARIFF_SCALE) */
+export function tariffScale(worth = netWorth()) {
+  const over = Math.max(0, worth - TARIFF_SCALE.from);
+  return 1 + Math.min(TARIFF_SCALE.cap - 1, (over / TARIFF_SCALE.per) * TARIFF_SCALE.step);
+}
+
+/** 지금 이 항구에 걸린 **관세 폭탄**의 곱 (없으면 1).
+    `state.shocks`를 그대로 쓰되 품목이 없는 것(`good == null`)만 읽는다 — 시세 쪽
+    `shockFactor`는 품목이 맞아야 곱하므로 둘이 서로를 밟지 않는다. */
+export function tariffShockFactor(cityId = state.at) {
+  let f = 1;
+  for (const s of state.shocks) if (s.city === cityId && s.good == null) f *= s.mult;
+  return Math.min(SHOCK.cap, f);
+}
+
+/** 감면 총합(off)에서 실제 무는 세율까지 — 바닥·상관·부두 가산·**후반 브레이크**를 한곳에 모은다.
     `tariffRate()`와 `tariffCutPreview()`가 같이 쓴다. 이 계산을 두 곳에 따로 베끼면
     "지금 세율"과 "이 문서를 사면 얼마가 되나"가 서로 다른 공식으로 어긋나기 쉽다. */
 function tariffFromOff(off, cityId) {
@@ -401,8 +436,17 @@ function tariffFromOff(off, cityId) {
      그래도 바닥(1%)은 있다. 제도는 피해 갈 수 있되 없어지지 않는다. */
   /* 부두를 넓힌 항구는 세가 조금 오른다 — 늘어난 것을 관이 안 볼 리 없다(등급당 +0.5%p) */
   const yardUp = yardBoost(cityId) * YARD.tariffPerBoost;
-  if (!hasHolding('factory', cityId)) return rate + yardUp;
-  return Math.max(HOLDING.tariffFloorPt, rate - (HOLDINGS.factory.tariffCut ?? 0)) + yardUp;
+  const before = hasHolding('factory', cityId)
+    ? Math.max(HOLDING.tariffFloorPt, rate - (HOLDINGS.factory.tariffCut ?? 0)) + yardUp
+    : rate + yardUp;
+
+  /* ── 후반 브레이크 (#6) ────────────────────────────────────
+     ★ 누진과 관세 폭탄은 **깎는 것들이 다 끝난 뒤에** 곱한다. 순서를 바꾸면 문서·밀수가
+       누진분까지 깎아 버려, 정작 커진 상인이 가장 잘 빠져나가는 꼴이 된다.
+     ★ `ceil`은 **막다른 골목 금지**다 — 누진(×1.85)·악명(×2.6)·폭탄(×2.2)이 다 겹치면
+       실효세가 30%를 넘어 *팔수록 손해*가 되는데, 그건 값을 물리는 게 아니라 길을 막는 것이다.
+       이 프로젝트는 같은 자리에서 두 번 "막지 않고 값을 물린다"를 골랐다. */
+  return Math.min(TARIFF_SCALE.ceil, before * tariffScale() * tariffShockFactor(cityId));
 }
 
 /** 지금 우리가 실제로 무는 입항세율 — 부관이 서류를 갖추면 덜 뗀다 */
@@ -500,13 +544,137 @@ export function knowPort(cityId = state.at) {
 /** 유지비가 밀려 문을 닫았나 */
 export const holdingIdle = (cityId = state.at) => !!state.holdings?.[cityId]?.idle;
 
-/** 그 거점의 값 — 도시 규모(또는 공업력)에 따라 다르다 */
+/** 그 거점의 값 — 도시 규모(또는 공업력)에 따라 다르다.
+    등급이 있는 부동산(`shop`·`inn`)은 **다음 등급의 값**을 돌려준다. */
 export function holdingPrice(kind, cityId = state.at) {
   const h = HOLDINGS[kind];
   const c = CITY_BY_ID[cityId];
   if (!h || !c) return Infinity;
+  if (h.grades) return estatePrice(kind, estateGrade(kind, cityId) + 1, cityId);
   if (h.priceByIndustry != null) return h.priceBase + industryOf(cityId) * h.priceByIndustry;
   return h.priceBase + (c.size ?? 1) * (h.priceBySize ?? 0);
+}
+
+/* ── 수익형 부동산 (#5) ────────────────────────────────────────
+   ★ 등급은 **`state.holdings[city][kind]`에 숫자로** 들어간다(1·2·3). 기존 다섯은 `true`라
+     `hasHolding`의 `!!`가 둘 다 참으로 읽는다 — 세이브 모양이나 다른 규칙을 안 건드린다. */
+
+/** 지금 등급 (0이면 없다) */
+export function estateGrade(kind, cityId = state.at) {
+  const v = state.holdings?.[cityId]?.[kind];
+  return typeof v === 'number' ? v : (v ? 1 : 0);
+}
+
+/** 그 등급의 정의 (1부터) */
+export const estateDef = (kind, grade) => HOLDINGS[kind]?.grades?.[grade - 1] ?? null;
+
+/** 그 등급을 통째로 지을 때의 값 — 승급은 **차액만** 문다(`estateUpgradeCost`) */
+export function estatePrice(kind, grade, cityId = state.at) {
+  const g = estateDef(kind, grade);
+  const c = CITY_BY_ID[cityId];
+  if (!g || !c) return Infinity;
+  return g.priceBase + (c.size ?? 1) * (g.priceBySize ?? 0);
+}
+
+/** 한 등급 올리는 값 — 자리와 자재를 그대로 쓰므로 **차액**이다 */
+export function estateUpgradeCost(kind, cityId = state.at) {
+  const now = estateGrade(kind, cityId);
+  if (!now || now >= (HOLDINGS[kind]?.grades?.length ?? 0)) return Infinity;
+  return estatePrice(kind, now + 1, cityId) - estatePrice(kind, now, cityId);
+}
+
+/** 승급할 수 있나 — **공업력이 등급의 문**이다(사용자 원문: "승급은 공업력으로 올려도 되고").
+    부두(`HOLDINGS.dock`)와 A-2 승급(`YARD_UPGRADE`)으로 올린 공업력이 여기서 두 번째 쓸모를 얻는다. */
+export function canUpgradeEstate(kind, cityId = state.at) {
+  const h = HOLDINGS[kind];
+  if (!h?.grades) return { ok: false, reason: '등급이 없는 거점이다' };
+  const now = estateGrade(kind, cityId);
+  if (!now) return { ok: false, reason: `${h.name}${josa(h.name, '이/가')} 먼저다` };
+  if (now >= h.grades.length) return { ok: false, reason: '이미 꼭대기다' };
+  const next = h.grades[now];        // 0-based → 다음 등급
+  const ind = industryOf(cityId);
+  if (ind < (next.industry ?? 0)) {
+    return { ok: false, reason: `이 항구 공업력이 ${next.industry} 이상이어야 한다 (지금 ${ind})` };
+  }
+  const price = estateUpgradeCost(kind, cityId);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price, to: now + 1, name: next.name };
+}
+
+export function upgradeEstate(kind, cityId = state.at) {
+  const r = canUpgradeEstate(kind, cityId);
+  if (!r.ok) return r;
+  state.gold -= r.price;
+  book('outgo', 'ships', r.price);
+  const m = (state.holdings[cityId] ??= { paid: state.day, spent: 0 });
+  m[kind] = r.to;
+  m.spent = (m.spent ?? 0) + r.price;      // 유지비는 들인 돈 전체에 붙는다
+  pushLog(`${CITY_BY_ID[cityId].name}의 ${HOLDINGS[kind].name}${josa(HOLDINGS[kind].name, '을/를')} `
+        + `${r.name}(으)로 올렸다 (−${r.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: r.price, to: r.to };
+}
+
+/** 그 부동산이 빌 확률 — **고급일수록 크다.** 축은 둘뿐이다(항구 규모 · 그 깃발의 악명).
+    → 근거와 왜 이 둘인지는 `data.js: ESTATE` 주석. */
+export function vacancyOdds(kind, cityId = state.at, grade = estateGrade(kind, cityId)) {
+  const g = estateDef(kind, grade);
+  if (!g) return 0;
+  const c = CITY_BY_ID[cityId];
+  const size = c?.size ?? 2;
+  const fame = state.infamy?.[c?.flag] ?? 0;
+  const v = g.vacancy - ESTATE.sizeRelief * (size - 2) + ESTATE.infamyPer * fame;
+  return Math.max(ESTATE.floor, Math.min(ESTATE.ceil, v));
+}
+
+/** 만실일 때 한 기간(30일)에 들어오는 세 */
+export function estateRent(kind, cityId = state.at, grade = estateGrade(kind, cityId)) {
+  const g = estateDef(kind, grade);
+  if (!g) return 0;
+  return Math.round(estatePrice(kind, grade, cityId) * g.yield * (HOLDING.upkeepEvery / 360));
+}
+
+/** 그 기간에 손님이 들었나 — **결정론적**이다(시세 `wobble`과 같은 이유: 드나들며 다시 굴릴 수 없게). */
+export function estateOccupied(kind, cityId, period) {
+  let h = 2166136261;
+  const s = `${cityId}|${kind}|${period}`;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 1000) / 1000 >= vacancyOdds(kind, cityId);
+}
+
+/** 이 항구에서 밀린 기간 수 (유지비·세가 같은 시계를 쓴다) */
+function holdingPeriods(cityId) {
+  const m = state.holdings?.[cityId];
+  if (!m) return 0;
+  return Math.floor((state.day - (m.paid ?? state.day)) / HOLDING.upkeepEvery);
+}
+
+/** 이 항구의 부동산이 지금까지 벌어 둔 세 — 기간마다 공실을 따로 굴린다.
+    ★ **공실이면 그 달은 0**이고 유지비는 그대로 나가므로 **마이너스**가 된다.
+      이것이 없으면 고급 여관이 그냥 돈 찍는 기계다(설계의 심장). */
+export function holdingIncomeDue(cityId) {
+  const m = state.holdings?.[cityId];
+  if (!m) return { gold: 0, rows: [] };
+  /* ★ **문을 닫은 동안에는 한 닢도 안 들어온다.** 유예(`m.idle`)가 공짜면 미납이 답이 된다 —
+     유지비는 절반만 나가는데 세는 그대로 들어오는 꼴이 되기 때문이다. */
+  if (m.idle) return { gold: 0, rows: [], idle: true };
+  const periods = holdingPeriods(cityId);
+  if (periods <= 0) return { gold: 0, rows: [] };
+  const base = Math.floor((m.paid ?? state.day) / HOLDING.upkeepEvery);
+  let gold = 0;
+  const rows = [];
+  for (const kind of ESTATE_KEYS) {
+    const grade = estateGrade(kind, cityId);
+    if (!grade) continue;
+    const rent = estateRent(kind, cityId, grade);
+    let full = 0, empty = 0;
+    for (let p = 0; p < periods; p++) {
+      if (estateOccupied(kind, cityId, base + p)) { full++; gold += rent; } else empty++;
+    }
+    rows.push({ kind, grade, name: estateDef(kind, grade).name, rent, full, empty });
+  }
+  return { gold, rows };
 }
 
 /** 살 수 있나 — 앞 단계가 있어야 하는 것들이 있다(창고 없이 상관을 열 수 없다) */
@@ -524,6 +692,14 @@ export function canBuyHolding(kind, cityId = state.at) {
   if (kind === 'dock' && industryOf(cityId) >= HOLDING.industryCap) {
     return { ok: false, reason: `이 항구는 이미 공업력 ${HOLDING.industryCap}이다` };
   }
+  /* 부동산 1등급도 공업력 문을 통과해야 한다(지금은 전부 0이라 어디서든 열린다 —
+     문이 있다는 사실이 규칙에 남아 있어야 등급을 조정할 때 여기만 보면 된다). */
+  if (h.grades) {
+    const need = h.grades[0].industry ?? 0;
+    if (industryOf(cityId) < need) {
+      return { ok: false, reason: `이 항구 공업력이 ${need} 이상이어야 한다` };
+    }
+  }
   const price = holdingPrice(kind, cityId);
   if (price > state.gold) return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
   return { ok: true, price };
@@ -535,7 +711,9 @@ export function buyHolding(kind, cityId = state.at) {
   state.gold -= r.price;
   book('outgo', 'ships', r.price);
   const m = (state.holdings[cityId] ??= { paid: state.day, spent: 0 });
-  m[kind] = true;
+  /* 등급이 있는 부동산은 **숫자**로 적는다(1등급). 나머지는 예전대로 `true` —
+     `hasHolding`의 `!!`가 둘을 같게 읽으므로 다른 규칙은 그대로다. */
+  m[kind] = HOLDINGS[kind].grades ? 1 : true;
   m.spent = (m.spent ?? 0) + r.price;      // 유지비는 **들인 돈 전체**에 붙는다
   pushLog(`${CITY_BY_ID[cityId].name}에 ${HOLDINGS[kind].name}${josa(HOLDINGS[kind].name, '을/를')} 두었다`
         + ` (−${r.price.toLocaleString('ko-KR')}닢).`, 'good');
@@ -593,15 +771,29 @@ export function holdingUpkeepDue(cityId) {
   return Math.round(full * (m.idle ? HOLDING.idleRate : 1));
 }
 
-/** 이 항구의 거점 유지비를 치른다(항구에 들어올 때 · `settleWorks` 옆).
+/** 이 항구의 거점 유지비를 치르고 **부동산이 번 세를 걷는다**(항구에 들어올 때 · `settleWorks` 옆).
     ★ 시설과 **같은 모양으로 유예를 한 번 거친다** — 한 번은 문을 닫고, 두 번째에 압류다.
       전에는 유예가 없어 **3닢을 못 내 2,000닢짜리 거점이 그 자리에서 넘어갔다**(ISSUES #4).
-      근거와 값은 `data.js: HOLDING`의 주석. */
+      근거와 값은 `data.js: HOLDING`의 주석.
+    ★ 세를 **먼저** 걷는다(#5) — 그래야 만실이면 유지비를 제가 벌어 내고, 공실이면 그 달이
+      통째로 마이너스가 된다. 순서를 바꾸면 금고가 얕을 때 "세를 받고도 압류당하는" 일이 난다.
+      **문을 닫은 동안에는 세도 안 들어온다**(`holdingIncomeDue`) — 닫힌 여관에 누가 묵겠나. */
 export function settleHolding(cityId = state.at) {
   const m = state.holdings?.[cityId];
   if (!m) return null;
+  const rent = holdingIncomeDue(cityId);
   const due = holdingUpkeepDue(cityId);
-  if (due <= 0) return null;
+  if (due <= 0 && rent.gold <= 0) return null;
+  if (rent.gold > 0) {
+    state.gold += rent.gold;
+    book('income', 'estate', rent.gold);
+    const empty = rent.rows.reduce((a, r) => a + r.empty, 0);
+    pushLog(`${CITY_BY_ID[cityId].name}의 부동산이 ${rent.gold.toLocaleString('ko-KR')}닢을 벌었다`
+          + (empty ? ` (빈 달 ${empty}번).` : '.'), empty ? 'warn' : 'good');
+  } else if (rent.rows.length) {
+    pushLog(`${CITY_BY_ID[cityId].name}의 부동산이 내내 비어 있었다 — 들어온 것이 없다.`, 'bad');
+  }
+  if (due <= 0) return { due: 0, paid: 0, seized: false, rent };
   const paid = Math.min(state.gold, due);
   state.gold -= paid;
   if (paid) book('outgo', 'port', paid);
@@ -615,7 +807,7 @@ export function settleHolding(cityId = state.at) {
       pushLog(`${name} 거점 유지비 ${due.toLocaleString('ko-KR')}닢을 냈다.`, 'warn');
     }
     m.missed = 0;
-    return { due, paid, idle: false, seized: false };
+    return { due, paid, idle: false, seized: false, rent };
   }
   m.missed = (m.missed ?? 0) + 1;
   if (m.missed >= HOLDING.seizeAfter) {
@@ -3607,9 +3799,52 @@ export function rollSeaEvent(opts = {}) {
             : e.id === 'calm'   ? e.weight + (flat - p) * total
             : e.weight;
     n -= w;
-    if (n <= 0) return e;
+    if (n <= 0) return seizeMaybe(e, { from, to, rand });
   }
-  return SEA_EVENTS[0];
+  return seizeMaybe(SEA_EVENTS[0], { from, to, rand });
+}
+
+/** 관선 임검 확률 — **자산 누진에 물려 있다.** 가난하면 0이고, 문서를 쥐면 훨씬 준다. */
+export function seizureOdds({ to = state.at } = {}) {
+  const p = SEIZURE.perScale * (tariffScale() - 1);
+  const rid = REGION_OF_CITY[to];
+  const permit = rid && (state.boons?.permit?.[rid] ?? 0) > state.day;
+  return Math.min(SEIZURE.cap, p) * (permit ? SEIZURE.permitOff : 1);
+}
+
+/** **잔잔한 판정 하나를 잡아** 임검으로 바꾼다.
+    ★ 이 자리를 고른 이유: `SEA_EVENTS`의 weight 합 100 규약을 지키는 유일한 방법이다.
+      pirate·storm·merchant를 건드리면 그 상대 빈도가 통째로 흔들리고, 이 저장소는
+      이미 같은 실수를 한 번 했다(→ data.js: SEA_EVENTS 주석 · test-rules.mjs가 지킨다).
+      "늘어난 것은 calm에서 덜어온다"는 것이 이 게임이 정해 둔 답이다. */
+function seizeMaybe(ev, { from, to, rand }) {
+  if (ev.id !== 'calm' || from == null || to == null) return ev;
+  if (rand() >= seizureOdds({ to })) return ev;
+  return SEA_EVENTS.find((e) => e.id === 'seizure');
+}
+
+/** 관이 짐을 압수한다 — **값나가는 것부터.** 해상보험은 관의 처분을 인수하지 않는다.
+    노상강도(`banditRaid`)와 같은 꼴이지만 몫이 다르고, 뺏기는 이유가 다르다. */
+export function seizeCargo(rand = Math.random) {
+  const held = Object.entries(state.cargo).filter(([, n]) => n > 0);
+  if (!held.length) return { lost: {}, value: 0 };
+  const dearFirst = held.sort((a, b) =>
+    (GOOD_BY_ID[b[0]].base) - (GOOD_BY_ID[a[0]].base));
+  const totalQty = held.reduce((a, [, n]) => a + n, 0);
+  let take = Math.max(1, Math.round(totalQty * SEIZURE.share * (0.7 + rand() * 0.6)));
+  const lost = {};
+  let value = 0;
+  for (const [gid, have] of dearFirst) {
+    if (take <= 0) break;
+    const n = Math.min(have, take);
+    // ★ 값을 **먼저** 센다 — 전량이면 아래에서 `buyPrice`가 지워져 0원 손실로 잡힌다.
+    value += (state.buyPrice[gid] || GOOD_BY_ID[gid].base) * n;
+    state.cargo[gid] = have - n;
+    if (!state.cargo[gid]) { delete state.cargo[gid]; delete state.buyPrice[gid]; }
+    lost[gid] = n;
+    take -= n;
+  }
+  return { lost, value: Math.round(value) };
 }
 
 /* ── 전리품 상한 — 실어 갈 수 있는 만큼만 ─────────────────────
@@ -3993,9 +4228,23 @@ export function voyageCost(days, crew = state.crew, leg = null) {
   // 부관 급여 — 벌든 못 벌든 나간다. 선원 급여와 섞지 않고 따로 세운다:
   // 뭉뚱그리면 "부관을 데리고 있는 값"이 얼마인지 플레이어가 읽을 수 없다.
   const officer = state.officer ? Math.round(OFFICER.wage * days) : 0;
+
+  /* ── 입항세도 운영비용이다 (#6) ─────────────────────────────
+     사용자 원문: *"이것도 운영비용에 속하는거지."* 지금까지 관세는 `sell()` 안에서만
+     떼여서 **항해비 표에 자리가 없었고**, 그래서 후반에 세가 무거워져도 플레이어가
+     그것을 "비용"으로 읽을 데가 없었다. 여기에 갈래 하나를 더 세운다 —
+     지금 실은 짐을 저기서 팔면 얼마를 떼이나.
+
+     ★ **`total`에는 넣지 않는다.** `total`은 *출항하면 나갈 돈*이고 관세는 *팔 때* 나간다.
+       섞으면 두 곳이 조용히 깨진다: `advanceDays`가 관세까지 미리 걷고,
+       `sim-core.bestRun`이 이미 `planFor`에서 관세를 뺀 순이익에 또 뺀다(이중 계상).
+       그래서 **옆자리**(`tariff`)와 합계(`withTariff`)를 따로 준다. */
+  const tariff = leg?.to ? Math.round(cargoValue() * tariffRate(leg.to)) : 0;
+
   return {
-    wages, supplies, fleet, hull, arms, officer, insurance, consort: cs,
+    wages, supplies, fleet, hull, arms, officer, insurance, tariff, consort: cs,
     total: wages + supplies + fleet + hull + arms + officer + insurance,
+    withTariff: wages + supplies + fleet + hull + arms + officer + insurance + tariff,
   };
 }
 
@@ -4029,7 +4278,9 @@ export function portDayCost(days = 1) {
   const v = voyageCost(days, state.crew, null);
   const supplies = Math.round(v.supplies * PORT_SUPPLY_RATE);
   const now = supplies + v.hull + v.arms + v.fleet;     // 지금 나가는 것
-  return { ...v, supplies, now, total: now + v.wages + v.officer };
+  const total = now + v.wages + v.officer;
+  // 정박에는 관세가 없다(파는 것이 아니니까) — 갈래를 지우지 말고 0으로 세워 둔다.
+  return { ...v, supplies, now, total, tariff: 0, withTariff: total };
 }
 
 /** 항구에서 며칠을 보낸다 — 세계는 돌고, 삯은 쌓이고, 짐은 그대로다 */
@@ -4312,7 +4563,28 @@ export function rollShockEvents(days, rand = Math.random) {
   const density = CITIES.length / (SHOCK.densityBase || CITIES.length);
   for (let d = 0; d < days; d++) {
     for (const ev of SHOCK.events) {
-      if (rand() >= Math.min(0.4, ev.perDay * density)) continue;
+      /* ★ **관세 폭탄만 자산에 물려 있다.** 사용자 원문이 *"적당히 돈이 많아지는 시점에
+         특히 더"*라고 했고, 기근·봉쇄·풍작은 세계의 일이지 내 금고의 일이 아니다. */
+      const lean = ev.kind === 'tariff' ? tariffScale() : 1;
+      if (rand() >= Math.min(0.4, ev.perDay * density * lean)) continue;
+
+      /* ── 관세 폭탄은 **도시에만** 걸린다 ──────────────────────
+         품목이 없으므로(`good: null`) `shockFactor`는 이것을 절대 곱하지 않고,
+         `tariffShockFactor`만 읽는다. 사건 배관(`state.shocks`)을 새로 만들지 않고
+         성질만 다른 항목을 같은 배열에 둔다. */
+      if (ev.kind === 'tariff') {
+        const city = CITIES[Math.floor(rand() * CITIES.length)];
+        const already = state.shocks.some((sh) => sh.city === city.id && sh.good == null && sh.why === ev.id);
+        addShock(city.id, null, ev.mult, ev.days, ev.id);
+        if (already) continue;
+        hit.push({
+          kind: ev.id, name: ev.name, tone: ev.tone,
+          city: city.id, cityName: city.name, good: null, goodName: '입항세',
+          text: ev.line(city.name),
+        });
+        pushLog(ev.line(city.name), 'warn');
+        continue;
+      }
 
       // 그 사건이 걸릴 수 있는 도시·품목 짝을 모은다.
       // ★ 후보를 여기서 만드는 이유: 도시나 품목을 늘리면 사건도 저절로 늘어난다.
