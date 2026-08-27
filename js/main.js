@@ -4,7 +4,7 @@ import { VW, VH } from './sprites/scene.js';
 import { loadAssetPack } from './assets.js';
 import { loadEvidence } from './evidence.js';
 import { state, resetGame, START_GOLD, neighborsOf, grantShip, grantCrew, knowPort } from './state.js';
-import { CITY_BY_ID, SHIPS, CITIES, START_PORTS, REGION_BY_ID, ORIGINS, ORIGIN_BY_ID } from './data.js';
+import { CITY_BY_ID, SHIPS, CITIES, START_PORTS, REGION_BY_ID, ORIGINS, ORIGIN_BY_ID, seaOriginAt } from './data.js';
 import { savedHead, loadGame, clearSave, stashSave, restoreStashed } from './save.js';
 
 /* ★ **타이틀이 닫히기 전에는 저장하지 않는다.** `boot()`이 타이틀보다 먼저 `go('port')`를
@@ -357,13 +357,24 @@ function startPicker(onPick) {
     /* ★ **어떤 배로 서는지 여기서 말한다.** 시작배가 바다마다 갈리면서(사용자 지시)
        화물칸이 16~88로 벌어졌다 — 그것을 모르고 고르면 고른 게 아니다. */
     const sh = SHIPS[p.ship];
+    /* ★ **누구로 서는지도 말한다**(A-3 · `data.js: SEA_ORIGINS`). 배는 아홉으로 갈렸는데
+       사람이 하나였던 자리다. 동아시아는 타이틀 다음 화면에서 한반도 다섯을 따로 고르므로
+       여기서는 그 표(`ORIGINS`)가 이긴다 — 그래서 얼굴을 안 적는다. */
+    const face = p.region === 'eastasia' ? null : seaOriginAt(p.at);
     return el(`button.btn.dark.sea-pick${state.at === p.at ? '.on' : ''}`, {
       onclick: () => onPick(p.at),
-      title: sh ? `${p.hook}
-${sh.name} — 화물 ${sh.cargo}칸 · 선원 ${sh.crewMin}~${sh.crewMax}명 · 선체 ${sh.hp}` : p.hook,
+      title: [
+        p.hook,
+        sh ? `${sh.name} — 화물 ${sh.cargo}칸 · 선원 ${sh.crewMin}~${sh.crewMax}명 · 선체 ${sh.hp}` : null,
+        face ? `${face.name} — ${face.line}` : null,
+        face ? `얻는 것 · ${face.boon}` : null,
+        face ? `치르는 것 · ${face.cost}` : null,
+        p.region === 'eastasia' ? '조선에서는 갈래 다섯 가운데 하나를 따로 고른다.' : null,
+      ].filter(Boolean).join('\n'),
     }, [
       el('b', { text: region.name }),
       el('span.sea-port', { text: sh ? `${city.name} · ${sh.name} ${sh.cargo}칸` : city.name }),
+      el('span.sea-face', { text: face ? face.name : '갈래 다섯 가운데', style: { opacity: .75 } }),
     ]);
   }).filter(Boolean);
   const here = START_PORTS.find((p) => p.at === state.at);
@@ -371,6 +382,12 @@ ${sh.name} — 화물 ${sh.cargo}칸 · 선원 ${sh.crewMin}~${sh.crewMax}명 ·
     el('div.sea-label', { text: '어느 바다에서 시작할까 — 카드를 누르면 그 자리에서 시작한다' }),
     el('div.sea-grid', {}, rows),
     el('div.sea-hook', { text: here?.hook ?? '' }),
+    /* 지금 선 자리의 얼굴 — 카드 툴팁을 안 열어도 한 줄은 보인다 */
+    (() => {
+      const f = here && here.region !== 'eastasia' ? seaOriginAt(here.at) : null;
+      return f ? el('div.sea-hook', { style: { opacity: .8 },
+        text: `${f.name} — ${f.boon} / ${f.cost}` }) : null;
+    })(),
   ]);
 }
 

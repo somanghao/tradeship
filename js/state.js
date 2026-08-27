@@ -6,6 +6,7 @@ import {
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   /* 두 회차가 같은 줄에 이름을 더했다 — 부동산·브레이크(#5·#6)와 계절(#4). 둘 다 필요하다. */
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
+  SEA_ORIGINS, seaOriginAt,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
   TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
@@ -2676,11 +2677,17 @@ export function originPerk(key, cityId = state.at) {
   if (!o) return 0;
   const v = o.perks?.[key] ?? 0;
   if (!v) return 0;
+  /* ① 한반도 다섯 — **깃발**로 잠근다(조선 관이 알아주는 신분이다) */
   const gate = o.perks?.joseonOnly;
-  const gated = gate === true || (Array.isArray(gate) && gate.includes(key));
-  if (gated) {
+  if (gate === true || (Array.isArray(gate) && gate.includes(key))) {
     const c = CITY_BY_ID[cityId];
     if (!c || c.flag !== 'joseon') return 0;
+  }
+  /* ② 여덟 바다 — **권역**으로 잠근다(`data.js: SEA_ORIGINS`). 같은 장치의 다른 눈금이다:
+     한반도 갈래는 한 나라의 신분이고, 이쪽은 한 바다의 자리다. */
+  const home = o.perks?.homeOnly;
+  if (home === true || (Array.isArray(home) && home.includes(key))) {
+    if (!o.region || REGION_OF_CITY[cityId] !== o.region) return 0;
   }
   return v;
 }
@@ -5108,8 +5115,12 @@ export function resetGame(at = DEFAULT_START, originId = null) {
   /* ★ **갈래가 시작 항구를 정한다.** 한반도 다섯 갈래(`data.js: ORIGINS`)는 저마다 다른 문으로
      바다에 나가므로 부두도 다르다 — 역관은 부산포, 종친·상인·서자는 마포(경강), 군관은 여수.
      `at`을 따로 주면 그쪽이 이긴다(디버그·다른 바다에서 시작할 때). */
-  const origin = ORIGIN_BY_ID[originId] ?? null;
+  /* ★ 갈래를 고르면 그쪽이 이기고, 안 고르면 **그 바다의 얼굴**이 붙는다(A-3 · `SEA_ORIGINS`).
+     예전에는 아홉 어디서 시작해도 얼굴이 없었다 — 배만 갈리고 사람은 하나였다.
+     ⚠️ 동아시아는 한반도 다섯이 이미 있으므로 `DEFAULT_ORIGIN`(역관의 서자)이 이긴다. */
+  let origin = ORIGIN_BY_ID[originId] ?? null;
   if (origin && at === DEFAULT_START) at = origin.at;
+  if (!origin) origin = (at === DEFAULT_START ? ORIGIN_BY_ID[DEFAULT_ORIGIN] : null) ?? seaOriginAt(at);
   /* ★ **시작배는 그 바다에서 가장 싼 배다**(사용자 지시 · `data.js: START_PORTS[].ship`).
      갈래가 배를 따로 정하면 그쪽이 이긴다 — 군관은 사람을 열넷 데려오므로 정원이 큰 병선을 탄다. */
   const shipKey = origin?.ship ?? startShipAt(at);

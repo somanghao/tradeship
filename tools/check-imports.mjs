@@ -155,6 +155,37 @@ for (const file of files) {
   }
 }
 
+/* ── ★ 문법이 깨진 파일 — **같은 증상, 더 싼 원인** ────────────────────────
+   2026-08-27에 `js/main.js`의 템플릿 문자열 안에 진짜 줄바꿈이 들어가 게임이 통째로 안 떴다
+   (`SyntaxError: Invalid or unexpected token`). **`check-*` 열일곱이 전부 통과했다** —
+   이 도구조차 import 이름만 보고 파싱은 안 했기 때문이다. 잡은 것은 헤드리스 스모크뿐이었다.
+   ⇒ `node --check`와 같은 판정을 여기서 한다. 브라우저를 안 띄우고도 잡히는 자리다. */
+let syntaxBad = 0;
+{
+  const { execFileSync } = await import('node:child_process');
+  const { writeFileSync, mkdtempSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  /* ⚠️ **`node --check <파일>.js`는 ESM을 조용히 통과시킨다.** `import`가 보이면 CJS 파싱을
+     건너뛰고 그대로 exit 0을 낸다 — 일부러 깨뜨려 확인했다(`const y = ;`가 통과했다).
+     확장자가 `.mjs`면 제대로 파싱한다. 그래서 **내용을 임시 `.mjs`로 옮겨** 검사한다.
+     `--check`는 import를 **해석하지 않으므로** 없는 경로를 가져와도 상관없다(그건 위에서 본다). */
+  const dir = mkdtempSync(join(tmpdir(), 'tradeship-syntax-'));
+  try {
+    for (const file of files) {
+      const tmp = join(dir, 'probe.mjs');
+      writeFileSync(tmp, readFileSync(file, 'utf8'));
+      try {
+        execFileSync(process.execPath, ['--check', tmp], { stdio: 'pipe' });
+      } catch (e) {
+        syntaxBad++;
+        problems.push({ file, spec: '(문법)', name: null,
+          why: String(e.stderr ?? e.message).split(String.fromCharCode(10))
+            .filter(Boolean).slice(0, 3).join(' / ') });
+      }
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
 const rel = (f) => relative(ROOT, f).replaceAll(String.fromCharCode(92), '/');
 if (problems.length) {
   console.log(`✗ 없는 이름을 가져오는 자리 ${problems.length}곳 — **브라우저는 이 모듈 그래프를 통째로 거부한다**\n`);
@@ -165,4 +196,4 @@ if (problems.length) {
   console.log(`\n검사 ${files.length}개 파일 · import 이름 ${checked}개`);
   process.exit(1);
 }
-console.log(`검사 ${files.length}개 파일 · import 이름 ${checked}개 — 없는 이름 없음`);
+console.log(`검사 ${files.length}개 파일 · import 이름 ${checked}개 — 없는 이름 없음 · 문법 오류 ${syntaxBad}건`);

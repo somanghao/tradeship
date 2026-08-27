@@ -10,7 +10,7 @@ if (!globalThis.localStorage) {
   };
 }
 
-import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, ROUTES, ORIGINS, START_PORTS, DEFAULT_START, startShipAt, YARD } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, ROUTES, ORIGINS, START_PORTS, DEFAULT_START, DEFAULT_ORIGIN, startShipAt, YARD } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
@@ -18,7 +18,7 @@ import {
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf, legRegion,
-  flagshipSinks, sinkFlagship, liquidate,
+  flagshipSinks, sinkFlagship, liquidate, originPerk,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -51,7 +51,7 @@ import {
   routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
   routeFactor, windFactor, currentFactor, YEAR_DAYS,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
@@ -947,6 +947,38 @@ resetGame();
   }
   ok(bad === 0, `기한 안에 못 가는 일감이 없다 — 표본 ${seen}건 중 ${bad}건`
      + (worst ? ` (가장 나쁜 것 ${worst.o.from}→${worst.o.to} 실제 ${Math.round(worst.need)}일 vs 기한 ${worst.room}일)` : ''));
+}
+
+/* ── A-3 · 여덟 바다에도 얼굴이 생겼다 ────────────────────────────────
+   ★ 배는 2026-08-26에 아홉으로 갈렸는데 **사람은 하나**였다. 여기서 지켜야 하는 선은 하나 —
+     **금화·선원·배가 아홉 나란해야 한다.** 갈리는 것은 특전 하나와 대가 하나뿐이고,
+     그래야 *"콘텐츠는 늘고 곡선은 그대로"*가 성립한다. */
+{
+  const seats = START_PORTS.filter((p) => p.region !== 'eastasia');
+  for (const p of seats) {
+    const f = seaOriginAt(p.at);
+    ok(!!f && f.region === p.region, `${p.at} — 그 바다의 얼굴이 있다 (${f?.name ?? '없다'})`);
+  }
+  let golds = new Set(), crews = new Set();
+  for (const p of START_PORTS) {
+    resetGame(p.at);
+    golds.add(state.gold); crews.add(state.crew);
+    ok(state.shipKey === p.ship, `${p.at} — 배는 그 바다의 삭은 배 그대로다 (${SHIPS[state.shipKey].name})`);
+  }
+  ok(golds.size === 1 && crews.size === 1,
+     `아홉이 금화·선원에서 나란하다 — 금화 ${[...golds]}닢 · 선원 ${[...crews]}명`);
+  /* 특전은 제 바다에서만 산다(`homeOnly`) — 한반도의 `joseonOnly`와 같은 장치, 다른 눈금 */
+  resetGame('venezia');
+  ok(originPerk('contractUp', 'venezia') > 0 && originPerk('contractUp', 'lisboa') === 0,
+     '상관 서기의 특전은 제 바다에서만 산다(권역으로 잠근다)');
+  ok(originPerk('permitUp', 'lisboa') > 0,
+     '대가는 국경에서 안 죽는다 — 소설 원리 B를 종친 갈래와 같은 방식으로 지킨다');
+  resetGame('jamaica');
+  ok(originPerk('tariffOff', 'venezia') < 0,
+     '사략의 이름은 아홉 바다 어디서나 무겁다(그 갈래는 대가에 homeOnly를 안 걸었다)');
+  /* 한반도는 종전과 한 치도 같다 */
+  resetGame();
+  ok(state.origin === DEFAULT_ORIGIN, `부산포 기본값은 여전히 역관의 서자다 (${state.origin})`);
 }
 
 /* ── C-13 N4 · 기함이 가라앉는다 — **삭은 배로 졌을 때만** ────────────────

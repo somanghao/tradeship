@@ -1211,7 +1211,102 @@ export const ORIGINS = [
   },
 ];
 
-export const ORIGIN_BY_ID = Object.fromEntries(ORIGINS.map((o) => [o.id, o]));
+/* ── 여덟 바다의 시작 인물 (A-3의 남은 절반) ────────────────────────────────
+   ★ **배는 아홉으로 갈렸는데 사람은 하나였다.** 2026-08-26에 시작배가 바다마다 갈렸지만
+     *"어디서 시작해도 200닢에 얼굴이 없다"*는 그대로였다(A-3 「남은 것」).
+   ★ **위 `ORIGINS`(한반도 다섯)와 표를 나눠 둔다** — 그쪽은 소설 《구해기》의 갈래라
+     `story/PROTAGONISTS.md`·`GAME-LINK.md`와 값이 맞물려 있고 `check-origins.mjs`가
+     *"시작 부두가 조선 항구인가"*를 실패 조건으로 본다. 여덟을 그 표에 섞으면 그 검사가
+     통째로 무너지고, 소설이 안 다루는 인물이 소설 사본표에 요구된다.
+     ⇒ **표는 둘, 규칙은 하나**다(`ORIGIN_BY_ID`가 둘을 합치고 `originPerk`가 그대로 읽는다).
+   ★ **금화·선원·배는 아홉이 나란하다** — `START_PORTS`의 삭은 배와 200닢 그대로다.
+     *"바다마다 다른 것은 얼굴이지 난이도가 아니다"*(시작배를 만들 때 세운 원칙)를 사람에도 건다.
+     ⇒ **콘텐츠는 늘고 곡선은 안 움직인다.** 갈리는 것은 특전 하나와 대가 하나뿐이고,
+     특전은 대개 **제 바다에서만** 산다(`homeOnly` — 한반도 다섯의 `joseonOnly`와 같은 장치). */
+export const SEA_ORIGINS = [
+  {
+    id: 'scrivano', name: '상관 서기의 아들', region: 'mediterranean', at: 'venezia',
+    line: '리알토의 장부방에서 자랐다. 남의 셈을 옮겨 적는 손은 빠른데 제 배가 없었다.',
+    boon: '게시판을 먼저 읽는다 — 이 바다의 대형 주문이 후하다',
+    cost: '서기의 아들에게 관은 서류를 한 장 더 요구한다',
+    perks: { contractUp: 0.16, permitUp: 0.25, homeOnly: ['contractUp'] },
+  },
+  {
+    id: 'shahbandar', name: '샤반다르의 서기', region: 'seasia', at: 'melaka',
+    /* 사료: 믈라카에는 **샤반다르(항무장)가 넷** 있어 나라별로 상인을 맡았다.
+       세관과 창고, 다툼의 판정까지 그들 손을 거쳤다 — 세가 가벼운 이유가 그것이다. */
+    line: '항무장의 서기였다. 네 나라 상인의 짐이 어느 창고로 가는지를 다 알았다.',
+    boon: '항무장의 셈을 안다 — 이 바다의 세가 가볍다',
+    cost: '술탄이 쫓겨난 뒤의 서기다. 문서마다 값을 더 문다',
+    perks: { tariffOff: 0.12, permitUp: 0.30, homeOnly: ['tariffOff'] },
+  },
+  {
+    id: 'gomashta', name: '구자라트 상인의 대리인', region: 'indian', at: 'cambay',
+    /* 사료: 구자라트 상인은 **대리인(고마슈타)** 망으로 캄바트에서 믈라카까지 거래했다.
+       한 사람이 다 사지 않고 여럿에게 나눠 소화하는 것이 그 망의 성질이다. */
+    line: '남의 이름으로 사고 남의 이름으로 팔았다. 장부에 내 이름은 한 줄도 없다.',
+    boon: '흩어 사는 법을 안다 — 이 바다에서는 한꺼번에 사고팔아도 값이 덜 무너진다',
+    cost: '남의 이름으로 맡는 일이라 보수가 얇다',
+    perks: { impactOff: 0.25, contractUp: -0.15, homeOnly: ['impactOff'] },
+  },
+  {
+    id: 'dragoman', name: '세관의 통사', region: 'mideast', at: 'hormuz',
+    line: '재무관 뒤에 서서 말을 옮겼다. 어느 짐이 얼마에 통과하는지를 먼저 들었다.',
+    boon: '관의 말을 안다 — 이 바다에서 문서값이 싸다',
+    cost: '관에 매인 이름이다. 어느 항구에서도 세를 깎아 주지 않는다',
+    perks: { permitUp: -0.25, tariffOff: -0.10, homeOnly: ['permitUp'] },
+  },
+  {
+    id: 'lancado', name: '무역관의 중개인', region: 'africa', at: 'arguin',
+    /* 사료: **란사두**(lançado) — 뭍에 들어가 살며 내륙 대상과 유럽 배 사이를 이은 자들.
+       그 자리가 값을 만들었고, 같은 이유로 유럽 선원들은 그들을 반기지 않았다. */
+    line: '뭍에 들어가 살며 대상과 배 사이에 섰다. 양쪽 말을 다 하는데 양쪽 다 나를 저쪽 사람이라 한다.',
+    boon: '대상과 직접 셈한다 — 이 바다에서는 큰 거래에도 값이 덜 무너진다',
+    cost: '뭍에서 온 사람이다. 선원들이 삯을 더 부른다',
+    perks: { impactOff: 0.22, hireUp: 0.18, homeOnly: ['impactOff'] },
+  },
+  {
+    id: 'ironson', name: '철공소 주인의 아들', region: 'atlantic', at: 'bilbao',
+    /* 사료: 비스카야의 철은 이베리아 조선과 무장을 먹였다. 목수와 대장장이를 아는 값은
+       바다를 안 가린다 — 그래서 `repairCut`은 **어디서나** 산다(신분이 아니라 기술이다). */
+    line: '풀무 앞에서 자랐다. 쇠가 언제 상하는지를 배보다 먼저 알았다.',
+    boon: '쇠와 목수를 안다 — 어느 바다에서든 수리가 싸다',
+    cost: '콘술라도 장부에 이름이 올라 있다. 제 바다에서 세가 무겁다',
+    perks: { repairCut: 0.25, tariffOff: -0.10, homeOnly: ['tariffOff'] },
+  },
+  {
+    id: 'privateer', name: '사략선의 항해장', region: 'caribbean', at: 'jamaica',
+    line: '허가장 한 장을 믿고 남의 배에 올랐다. 그 종이가 언제 휴지가 되는지도 안다.',
+    boon: '갑판을 안다 — 백병전에서 밀리지 않는다',
+    cost: '그 이름은 어느 관도 반기지 않는다 — 아홉 바다 어디서나 세가 무겁다',
+    /* ★ 대가에 `homeOnly`를 안 건다 — 소설 원리 B(**신분은 국경에서 죽고 결격은 안 죽는다**)를
+       종친 갈래와 같은 방식으로 지킨다. 사략의 이름은 카리브 밖에서 더 무겁다. */
+    perks: { meleeUp: 0.20, tariffOff: -0.15 },
+  },
+  {
+    id: 'engenho', name: '제당소 감독의 아들', region: 'southamerica', at: 'salvador',
+    line: '엔제뉴의 맷돌 소리를 들으며 자랐다. 설탕이 몇 상자 나오는지를 눈으로 셌다.',
+    boon: '산지를 안다 — 이 바다에서는 한꺼번에 실어도 값이 덜 무너진다',
+    cost: '감독의 아들이지 주인의 아들이 아니다. 사람을 부르는 값이 비싸다',
+    perks: { impactOff: 0.20, hireUp: 0.22, homeOnly: ['impactOff'] },
+  },
+  {
+    id: 'trader', name: '왜관 장사치의 조카', region: 'eastasia', at: 'busanpo',
+    /* 동아시아는 **한반도 다섯이 이미 있다.** 여기 한 줄을 두는 것은 표를 아홉으로 닫기 위해서가
+       아니라, `?start=busanpo`로 갈래를 안 고르고 들어온 판이 **얼굴 없는 판**이 되지 않게 하기
+       위해서다 — 기본값은 여전히 역관의 서자(`DEFAULT_ORIGIN`)이고 이 줄은 그때만 쓰인다. */
+    line: '왜관 담 밖에서 심부름을 하며 컸다. 안에 누가 있는지는 아는데 들어가 본 적은 없다.',
+    boon: '담 밖의 셈 — 이 바다에서 문서값이 싸다',
+    cost: '담 안의 이름이 아니다. 세를 깎아 주는 자리에 못 선다',
+    perks: { permitUp: -0.20, tariffOff: -0.08, homeOnly: ['permitUp'] },
+  },
+];
+
+/** 그 부두에서 시작할 때의 얼굴 — 한반도 다섯은 `ORIGINS`가 이긴다 */
+export const seaOriginAt = (at) => SEA_ORIGINS.find((o) => o.at === at) ?? null;
+
+export const ORIGIN_BY_ID = Object.fromEntries(
+  [...ORIGINS, ...SEA_ORIGINS].map((o) => [o.id, o]));
 /** 아무것도 고르지 않았을 때의 갈래 — 소설의 주인공이자 기준선 */
 export const DEFAULT_ORIGIN = 'interpreter';
 
