@@ -106,6 +106,15 @@ if "export const ROUTE_RISK" in GEO:
 ROUTES = [(a, b) for a, b in ROUTES if frozenset((a, b)) not in INLAND]
 BY = {c["id"]: c for c in CITIES}
 
+# ★ **내륙 도시는 물이 안 닿는 것이 정상이다**(C-12). 뱃길이 하나도 없고 뭍길로만 이어진
+#   도시가 있다 — 알레포·바그다드·이스파한(대상로) · 쿠스코·포토시(안데스 노새길).
+#   지형 생성이 그 도시들의 앞바다를 안 파게 고쳤으므로(`auto.js: inland`), 검수기도
+#   같은 것을 알아야 한다. 안 그러면 **고증대로 그린 지도를 검수기가 반려한다.**
+SEA_CITY = set()
+for a, b in ROUTES:
+    SEA_CITY.add(a); SEA_CITY.add(b)
+INLAND_CITY = {c["id"] for c in CITIES if c["id"] not in SEA_CITY}
+
 W, H = 400, 225
 img_path = Path(_img_arg)
 if not img_path.is_absolute():
@@ -250,7 +259,9 @@ for c in CITIES:
                 if is_sea(xx, yy): s += 1
                 else: l += 1
     if s == 0:
-        bad_city.append((c, "물이 안 닿는다"))
+        # 뱃길이 하나도 없는 도시는 뭍에 있는 것이 맞다 — 반려하지 않는다
+        if c["id"] not in INLAND_CITY:
+            bad_city.append((c, "물이 안 닿는다"))
     elif l == 0:
         isle_city.append(c["name"])
     d = land_reach(x, y)
@@ -260,6 +271,8 @@ for c in CITIES:
 
 if isle_city:
     notes.append(f"섬 항구 {len(isle_city)}곳")
+if INLAND_CITY:
+    notes.append(f"내륙 도시 {len(INLAND_CITY)}곳(물이 안 닿아도 정상)")
 if reach:
     notes.append(f"뭍까지 평균 {sum(reach) / len(reach):.1f}px")
 if bad_city:

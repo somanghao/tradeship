@@ -61,8 +61,13 @@ try {
       if (onlyOne && rg.id !== onlyOne) continue;
       const cities = data.CITIES.filter((c) => c.region === rg.id);
       if (!cities.length) continue;
+      /* ★ **육로는 회랑을 파지 않는다**(C-12). `autoLandMap`은 받은 항로마다 바다를 파는데,
+         카이로~다마스쿠스~바그다드~바스라는 **대상로**다 — 그것까지 파니 **아라비아가 섬**이 됐다.
+         남아메리카의 카야오~우앙카벨리카~쿠스코~포토시(안데스 노새길)도 같은 자리다.
+         요율이 `null`인 구간이 곧 뭍길이고(`state.js: isInland`가 같은 기준을 쓴다), 여기서 뺀다. */
       const routes = data.ROUTES.filter(([a, b]) =>
-        geo.REGION_OF_CITY[a] === rg.id && geo.REGION_OF_CITY[b] === rg.id && !geo.isOceanLane(a, b));
+        geo.REGION_OF_CITY[a] === rg.id && geo.REGION_OF_CITY[b] === rg.id && !geo.isOceanLane(a, b)
+        && geo.ROUTE_RISK[geo.riskKey(a, b)] !== null);
       const img = scene.mapSprite(rg.id, cities, routes);
       const cv = document.createElement('canvas');
       cv.width = scene.VW; cv.height = scene.VH;

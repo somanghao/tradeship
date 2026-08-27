@@ -73,6 +73,15 @@ function landFromSpans(spans, GW, GH, GS) {
  * @param cities   그 권역의 도시 [{id,x,y,size}] — 자동 생성 권역에만 쓰인다
  * @param routes   그 권역 **안**의 항로 [[aId,bId]]
  */
+/** 뭍길만으로 이어진 도시 — 지형 생성에서 **앞바다를 안 판다**(C-12).
+    호출부가 넘긴 `routes`는 이미 육로가 빠진 목록이므로, **거기 한 번도 안 나오는 도시**가 곧 내륙이다.
+    ★ 새 데이터를 안 만든다 — 이미 있는 것으로만 잰다. */
+const inlandOf = (cities, routes) => {
+  const seen = new Set();
+  for (const [a, b] of routes) { seen.add(a); seen.add(b); }
+  return cities.filter((c) => !seen.has(c.id)).map((c) => c.id);
+};
+
 export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) {
   const def = mapDefOf(regionId);
   const clim = climateOf(regionId);
@@ -103,7 +112,7 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
          격자의 문제가 아니라 이 한 줄이었다. 검수기는 선분 위 표본만 보므로 좁혀도 통과한다. */
       ranges = def.hand.ranges ?? [];
     } else {
-      land = autoLandMap(cities, routes, def.auto);
+      land = autoLandMap(cities, routes, { ...def.auto, inland: inlandOf(cities, routes) });
       isles = scatterIsles(land, cities, routes, { seed: seed ^ 0x15E5, count: def.auto?.isles ?? 14 });
       /* ★ 흩뿌림은 "어디에 섬이 **있어야** 하는지"를 모른다. 섬 자체가 항구인 곳(쌍서)은
          좌표로 박는다 — `landmass`에 넣으면 그쪽은 저해상 격자라 작은 섬이 스무딩에 먹혀

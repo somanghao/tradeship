@@ -9,7 +9,7 @@ import { shipTopSprite } from '../sprites/ship.js';
 import { blit } from '../pixel.js';
 import {
   CITIES, CITY_BY_ID, ROUTES, GOOD_BY_ID, SHIPS, OFFICER, FLAG_NAME,
-  REGION_OF_CITY, REGION_BY_ID, laneOf, riskKey,
+  REGION_OF_CITY, REGION_BY_ID, laneOf, riskKey, ROUTE_RISK,
 } from '../data.js';
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
@@ -55,11 +55,17 @@ const viewRoutes = () => {
   return ROUTES.filter(([a, b]) => REGION_OF_CITY[a] === rid && REGION_OF_CITY[b] === rid);
 };
 
+/* ★ **지형을 만들 때 쓰는 항로는 다르다** — 육로는 회랑을 파면 안 된다(C-12).
+   `autoLandMap`은 받은 항로마다 바다를 파는데, 대상로(카이로~바그다드·안데스 노새길)까지
+   파면 **아라비아가 섬**이 된다. 요율이 `null`인 구간이 곧 뭍길이다.
+   ⚠️ 화면에 **그리는** 항로는 위 `viewRoutes` 그대로다 — 육로도 선은 보여야 한다. */
+const terrainRoutes = () => viewRoutes().filter(([a, b]) => ROUTE_RISK[riskKey(a, b)] !== null);
+
 /** 배경을 지금 권역에 맞춰 굽는다. 권역이 그대로면 캐시를 그대로 쓴다. */
 function syncBg() {
   const rid = curRegion();
   if (bgRegion === rid && bg) return;
-  bg = mapSprite(rid, viewCities(), viewRoutes());
+  bg = mapSprite(rid, viewCities(), terrainRoutes());
   bgRegion = rid;
   // 이 바다의 도시가 걸쳐 있는 폭만 보이면 된다 — 그래야 배율이 한 단계 안 떨어진다
   const xs = viewCities().map((c) => c.x);

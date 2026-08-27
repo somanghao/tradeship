@@ -95,8 +95,10 @@ function topology(cities, routes) {
  */
 export function autoLandMap(cities, routes, opts = {}) {
   const {
-    seed = 0xA11A5, lane = 8, bay = 9, openSea = [], landmass = [],
+    seed = 0xA11A5, lane = 8, bay = 9, openSea = [], landmass = [], inland = [],
   } = opts;
+  /* 뭍길만으로 이어진 도시 — 앞바다를 안 판다(C-12). 호출부가 요율 `null`로 골라 넘긴다. */
+  const inlandSet = new Set(inland);
 
   const { segs, dirs } = topology(cities, routes);
 
@@ -139,7 +141,13 @@ export function autoLandMap(cities, routes, opts = {}) {
           const r = bay * (0.8 + (c.size ?? 2) * 0.16) + wob * 3 + fine * 1.5;
           if (dist > r) continue;
           const dl = dirs[c.id];
-          if (!dl.length) { core = true; break; }        // 외딴 항구는 그냥 둘레를 판다
+          /* ★ **내륙 도시는 물을 안 판다**(C-12). 예전에는 항로 방향이 없으면 둘레를 통째로
+             팠는데, 육로를 회랑에서 뺀 뒤로는 **대상로 도시가 전부 그 갈래에 들어간다** —
+             포토시·쿠스코·라파스가 안데스 한복판에서 **동그란 호수**를 하나씩 이고 앉았다.
+             ⇒ `inland`에 적힌 도시는 건너뛴다. 진짜 외딴 섬 항구는 그 목록에 없으므로
+               예전처럼 둘레를 판다. */
+          if (inlandSet.has(c.id)) continue;
+          if (!dl.length) { core = true; break; }        // 외딴 섬 항구는 그냥 둘레를 판다
           if (dist < 2.5) { core = true; break; }        // 항구 바로 앞은 늘 물이다
           const ux = dx / dist, uy = dy / dist;
           // 항로 방향과 이루는 각이 100도 안쪽이면 바다 쪽이다
