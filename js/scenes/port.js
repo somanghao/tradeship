@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         ESTATE_KEYS, WORK, WORKS, FACTIONS, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
+         ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -40,6 +40,12 @@ import {
   /* 2단계 — 농장·광산 */
   growCandidates, growPrice, growRate, growCap, growOff, growStock, workAt,
   canBuyGrow, buyGrow, canUpgradeGrow, upgradeGrow, sellGrow,
+  /* 3단계 — 판매소 */
+  shopAt, shopPrice, shopTick, collectShop, consignToShop,
+  canBuyShop, buyShop, canUpgradeShop, upgradeShop, sellShop,
+  /* 3단계 — 위탁·정기선 */
+  canConsign, sendConsign, arriveConsign, consignFee,
+  lineList, canStartLine, startLine, stopLine,
   /* 세력 관계(SPEC-factions 1단계) — 규칙은 `state.js`, 값은 `data.js: FACTIONS·REGARD`.
      여기서는 **이 항구의 임자 한 줄**만 보여주고 나머지는 관계도 모달이 편다. */
   factionOfCity, factionsOfCity, regardOf, regardBand, infamyWeight,
@@ -95,6 +101,9 @@ export const portScene = {
        ★ `settleHolding` **바로 옆**에 두는 것이 규약이다. 한 곳에 모아 두지 않으면
          "어느 항구에서는 청구되고 어느 항구에서는 안 되는" 자리가 생긴다. */
     settleWorks(city.id);
+    /* 위탁도 **들를 때** 받는다(3단계 · §3-1) — 남의 배가 부려 놓고 간 짐이 창고에 들어온다.
+       자동으로 금고에 넣지 않는 것과 같은 규약이다: 유통은 **짐만 옮기고 사고팔지 않는다.** */
+    arriveConsign(city.id);
     settleYard(city.id);     // 부두 공사가 끝났으면 여기서 올라간다
     if (gameStarted()) autoSave();
     // 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
@@ -1282,6 +1291,108 @@ function holdingCard() {
    ★ **새 수입원이 아니다.** 원료를 시세로 사서 가공하면 그 완제품을 산지에서 사는 것보다
      손해다(`data.js: WORK` 머리주석의 가공마진 밴드). 이 카드가 파는 것은 이문이 아니라
      *"어디까지 가공해서 팔 것인가"*라는 판단이다. */
+/* ── 3단계 · 유통 — 위탁과 정기선 (SPEC-vertical §3) ───────────────────────
+   ★ **경계 하나가 이 카드의 전부다 — 짐을 옮기기만 하고 사고팔지 않는다.**
+     자동으로 시세를 보고 사고파는 창구를 만들면 최적 플레이가 *"항로를 걸어 놓고
+     지켜본다"*가 되고, 그 순간 이 게임의 몸통이 사라진다. 그래서 이 카드에는
+     「어디로 옮기나」만 있고 「얼마에 파나」는 없다. */
+function lineCard() {
+  const myPorts = CITIES.filter((c) => c.id !== city.id
+    && (hasHolding('warehouse', c.id) || hasHolding('factory', c.id)));
+  const here = hasHolding('warehouse', city.id) || hasHolding('factory', city.id);
+  const lines = lineList();
+  const open = (state.consign ?? []);
+  if (!here && !lines.length && !open.length) return null;
+
+  const rows = [];
+
+  /* ── 띄워 둔 위탁 ─────────────────────────────────────────── */
+  for (const c of open) {
+    const left = c.arrive - state.day;
+    rows.push(el('div.ctr-sub', {
+      html: `<b>${GOOD_BY_ID[c.good].name} ${c.n}칸</b> — ${CITY_BY_ID[c.from].name} → `
+          + `${CITY_BY_ID[c.to].name} · ${left > 0 ? `${left}일 남았다` : '도착했다 — 가서 받는다'}`
+          + (c.insured ? ' · 보험' : ''),
+    }));
+  }
+
+  /* ── 위탁 보내기 — 이 항구 창고의 짐을 내 다른 창고로 ─────────── */
+  if (here) {
+    const stored = Object.entries(state.stored?.[city.id] ?? {}).filter(([, n]) => n > 0);
+    for (const [gid, n] of stored.slice(0, 3)) {
+      /* 가장 가까운 내 창고 항구를 기본값으로 준다 — 목적지를 고르는 화면을 새로 열지 않는다.
+         (사이드패널이 이미 길다. 고를 것이 늘면 그때 모달로 뺀다.) */
+      const dest = myPorts
+        .map((c) => ({ c, d: voyageDays(city.id, c.id) }))
+        .sort((a, b) => a.d - b.d)[0];
+      if (!dest) break;
+      const f = consignFee(gid, Math.min(n, CONSIGN.capPer), city.id, dest.c.id, false);
+      const can = canConsign(gid, n, dest.c.id, city.id, false);
+      rows.push(svcRow(
+        `${GOOD_BY_ID[gid].name} ${Math.min(n, CONSIGN.capPer)}칸 → ${dest.c.name}`,
+        `남의 배에 실어 보낸다 — 수수료 ${f.fee.toLocaleString('ko-KR')}닢`
+        + `(${Math.round(f.rate * 100)}%) · 짐만 잃을 수 있다 · 한 건에 ${CONSIGN.capPer}칸까지`,
+        can.ok ? '위탁' : (can.reason.length > 10 ? '못 보낸다' : can.reason), !can.ok, () => {
+          const r = sendConsign(gid, n, dest.c.id, city.id, false);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`${GOOD_BY_ID[gid].name} ${r.n}칸 위탁 — ${r.days}일`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+  }
+
+  /* ── 정기선 ─────────────────────────────────────────────────
+     ★ **값은 돈이 아니라 선단이다** — 묶은 배는 동행에서 빠져 화물칸·포·피해 분산을 잃는다. */
+  for (const [key, l] of lines) {
+    const nm = SHIPS[key]?.name ?? key;
+    const at = l.leg === 'ab' ? l.a : l.b;
+    rows.push(svcRow(`정기선 ${nm}`,
+      `${CITY_BY_ID[l.a].name} ↔ ${CITY_BY_ID[l.b].name} · ${l.goods.map((g) => GOOD_BY_ID[g].name).join('·')}`
+      + ` · 다음 다리 ${Math.max(0, l.next - state.day)}일 · 지금 ${CITY_BY_ID[at].name} 쪽`,
+      '푼다', false, () => {
+        const r = stopLine(key);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`${nm} 정기선을 풀었다`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+  if (here && lines.length < LINE.max) {
+    const free = Object.keys(state.consorts ?? {});
+    const dest = myPorts
+      .map((c) => ({ c, d: voyageDays(city.id, c.id) }))
+      .sort((a, b) => a.d - b.d)[0];
+    const goods = Object.keys(state.stored?.[city.id] ?? {}).slice(0, LINE.goodsMax);
+    const key = free[0] ?? null;
+    const can = key && dest
+      ? canStartLine(key, city.id, dest.c.id, goods)
+      : { ok: false, reason: free.length ? '보낼 창고가 없다' : '동행선이 없다' };
+    rows.push(svcRow(
+      key && dest ? `${SHIPS[key].name}을(를) ${dest.c.name} 정기선으로` : '정기선을 묶는다',
+      key && dest
+        ? `왕복 ${voyageDays(city.id, dest.c.id) * 2 + LINE.turnPad}일 · 적재 `
+          + `${Math.floor((SHIPS[key].cargo ?? 0) * LINE.holdRate)}칸 · 나를 것 `
+          + (goods.length ? goods.map((g) => GOOD_BY_ID[g].name).join('·') : '창고가 비었다')
+          + ` — ★ 묶으면 동행에서 빠진다(화물칸·포·피해 분산을 잃는다)`
+        : (can.reason ?? '동행선과 창고 둘이 있어야 한다'),
+      can.ok ? '묶는다' : '못 묶는다', !can.ok, () => {
+        const r = startLine(key, city.id, dest.c.id, goods);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`정기선 — 왕복 ${r.turn}일`, 'good');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+
+  if (!rows.length) return null;
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '유통' }),
+      el('span', { text: `위탁 ${open.length}/${CONSIGN.maxOpen} · 정기선 ${lines.length}/${LINE.max}`,
+                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
 function worksCard() {
   const recipes = millRecipes(city.id);
   const mine = workList(city.id);
@@ -1414,6 +1525,80 @@ function worksCard() {
     rows.push(svcRow('　└ 넘긴다', `들인 돈의 ${Math.round(WORK.sellBack * 100)}%만 돌아온다 · 쌓인 것도 함께 넘어간다`,
       '넘긴다', false, () => {
         const res = sellGrow(cand.gid, city.id);
+        if (!res.ok) return toast(res.reason, 'bad');
+        toast(`+${res.back.toLocaleString('ko-KR')}닢`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+
+  /* ── 3단계 · 판매소 (SPEC-vertical §2-5·3-1) ────────────────────────
+     ★ **판매소가 파는 것은 마진이 아니라 시장 깊이다.** 한 항구에 쏟아부으면 `MARKET.cap`에
+       닿는데, 판매소는 그 벌점을 **시간으로 바꾼다.** 그래서 화면이 말해야 하는 것도
+       "얼마 버나"가 아니라 **「팔 때 얼마나 덜 무너지나」와 「지금 몇 칸이 남았나」**다. */
+  for (const gid of Object.keys(city.demand ?? {})) {
+    const w = shopAt(gid, city.id);
+    const gn = GOOD_BY_ID[gid]?.name ?? gid;
+    if (!w) {
+      /* 목록이 길어지지 않게 — **이미 하나라도 시설이 있는 항구**에서만 권한다 */
+      if (!mine.length) continue;
+      const can = canBuyShop(gid, city.id);
+      const price = shopPrice(gid, city.id, 1);
+      rows.push(svcRow(`${gn} 판매소 — ${price.toLocaleString('ko-KR')}닢`,
+        `팔 때 시장 벌점 −${Math.round(WORK.shopCut[1] * 100)}% · 위탁하면 하루 ${WORK.shopFlow[1]}칸씩`
+        + ` 그날 시세로 팔린다(수수료 ${Math.round(WORK.shopFee * 100)}%)`,
+        can.ok ? '연다' : (can.reason.length > 10 ? '못 연다' : can.reason),
+        !can.ok, () => {
+          const res = buyShop(gid, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${gn} 판매소를 열었다`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+      continue;
+    }
+    shopTick(gid, city.id);
+    const left = Math.floor(w.stock ?? 0);
+    const due = Math.round(w.proceeds ?? 0);
+    rows.push(svcRow(`${gn} 판매소 ${w.level}등급` + (w.idle ? ' · 휴업' : ''),
+      w.idle ? '휴업 중이라 한 칸도 안 팔린다 — 밀린 유지비를 내야 한다'
+             : `팔 때 시장 벌점 −${Math.round(WORK.shopCut[w.level] * 100)}%`
+               + ` · 맡긴 것 ${left}칸 · 하루 ${WORK.shopFlow[w.level]}칸씩 나간다`,
+      '—', true, () => {}));
+    const inStore = (state.stored?.[city.id] ?? {})[gid] ?? 0;
+    if (inStore > 0 && !w.idle) {
+      rows.push(svcRow(`　└ 창고의 ${gn} ${inStore}칸을 맡긴다`,
+        `하루 ${WORK.shopFlow[w.level]}칸씩 그날 시세로 팔린다 · 수수료 ${Math.round(WORK.shopFee * 100)}% + 입항세`,
+        '맡긴다', false, () => {
+          const res = consignToShop(gid, inStore, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${gn} ${res.n}칸을 판매소에 맡겼다`, 'good');
+          refreshLog(); after();
+        }));
+    }
+    if (due > 0) {
+      rows.push(svcRow(`　└ 팔린 돈 ${due.toLocaleString('ko-KR')}닢`,
+        '판매소는 금고로 자동 입금하지 않는다 — 들러서 걷는다',
+        '걷는다', false, () => {
+          const got = collectShop(city.id);
+          toast(`+${got.toLocaleString('ko-KR')}닢`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+    if (w.level < WORK.levelCap) {
+      const up = canUpgradeShop(gid, city.id);
+      const price = shopPrice(gid, city.id, w.level + 1);
+      rows.push(svcRow(`　└ ${w.level + 1}등급으로 — ${price.toLocaleString('ko-KR')}닢`,
+        `벌점 −${Math.round(WORK.shopCut[w.level] * 100)}% → −${Math.round(WORK.shopCut[w.level + 1] * 100)}%`
+        + ` · 하루 ${WORK.shopFlow[w.level]} → ${WORK.shopFlow[w.level + 1]}칸`,
+        up.ok ? '올린다' : (up.reason.length > 10 ? '못 올린다' : up.reason), !up.ok, () => {
+          const res = upgradeShop(gid, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${gn} 판매소 ${res.level}등급`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+    rows.push(svcRow('　└ 넘긴다', `들인 돈의 ${Math.round(WORK.sellBack * 100)}%만 돌아온다 · 맡긴 것은 창고로 돌아온다`,
+      '넘긴다', false, () => {
+        const res = sellShop(gid, city.id);
         if (!res.ok) return toast(res.reason, 'bad');
         toast(`+${res.back.toLocaleString('ko-KR')}닢`, 'warn');
         refreshHUD(); refreshLog(); after();
@@ -1650,6 +1835,7 @@ function sidePanel() {
     waitCard(),
     holdingCard(),
     worksCard(),
+    lineCard(),
     harborCard(),
 
     figureCard(),

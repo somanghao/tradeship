@@ -20,6 +20,8 @@ import {
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf, legRegion,
   flagshipSinks, sinkFlagship, liquidate, originPerk,
   growKind, growStock, growCap, canBuyGrow, buyGrow, workAt, chainMargin, costFor,
+  shopCut, canBuyShop, buyShop, shopTick, collectShop, consignToShop,
+  canConsign, sendConsign, arriveConsign, canStartLine, startLine, stopLine, cargoCapTotal, waitDays,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -997,6 +999,81 @@ resetGame();
      `가공 사슬 여덟이 전부 밴드[${WORK.marginMin}, ${WORK.marginMax}] 안이다`);
   ok(CHAIN_BY_ID.smelt_silver.req === 1,
      '제련만 공업력 1이다 — 포토시·우앙카벨리카가 내륙 광산이라 2를 걸면 그 사슬이 죽는다');
+}
+
+/* ── A-9 3단계 · 판매소 · 위탁 · 정기선 ───────────────────────────────
+   ★ **경계 하나가 이 층의 전부다 — 유통은 짐을 옮기기만 하고 사고팔지 않는다.**
+     그것이 깨지면 최적 플레이가 "항로를 걸어 놓고 지켜본다"가 되어 게임의 몸통이 사라진다.
+     그래서 검사도 **무엇을 안 하는가**부터 본다. */
+{
+  resetGame('venezia');
+  state.gold = 1e7;
+  state.holdings = { venezia: { rental: true, warehouse: true },
+                     genova:  { rental: true, warehouse: true } };
+  /* ⓐ 판매소 — 팔 때만 벌점을 깎는다 */
+  ok(buyShop('pepper', 'venezia').ok, '수요가 있는 항구에 판매소를 연다');
+  ok(!canBuyShop('grain', 'venezia').ok || CITY_BY_ID.venezia.demand.grain != null,
+     '수요가 없는 품목은 판매소를 못 연다');
+  ok(shopCut('pepper', 'venezia') === WORK.shopCut[1],
+     `팔 때 시장 벌점이 −${Math.round(WORK.shopCut[1] * 100)}%가 된다`);
+  {
+    state.impact = {}; state.cargoCap = 400; state.cargo = { pepper: 100 }; state.buyPrice = { pepper: 1 };
+    sell('pepper', 100);
+    const pressed = state.impact.venezia?.pepper ?? 0;
+    ok(Math.abs(pressed - 100 * (1 - WORK.shopCut[1])) < 1e-6,
+       `100칸을 팔아도 시장에는 ${Math.round(pressed)}칸만 쌓인다 — 값을 시간으로 산 것이다`);
+  }
+  /* ⓑ 위탁 판매 — 하루 몇 칸씩, 그리고 **들러야 들어온다** */
+  state.stored = { venezia: { pepper: 40 } };
+  ok(consignToShop('pepper', 40, 'venezia').ok, '창고의 짐을 판매소에 맡긴다');
+  const goldBefore = state.gold;
+  state.day += 10;
+  const sold = shopTick('pepper', 'venezia');
+  ok(sold === 10 * WORK.shopFlow[1], `하루 ${WORK.shopFlow[1]}칸씩 팔린다 — 10일에 ${sold}칸`);
+  ok(state.gold === goldBefore,
+     '★ 팔려도 금고에는 안 들어온다 — 그 항구에 들러 걷어야 한다(§3-1의 경계)');
+  ok(collectShop('venezia') > 0 && state.gold > goldBefore, '걷으면 그때 들어온다');
+
+  /* ⓒ 위탁 — 짐만 옮긴다. 창고가 양쪽에 있어야 한다 */
+  state.stored.venezia = { silk: 30 };
+  ok(!canConsign('silk', 30, 'napoli', 'venezia').ok,
+     '받는 항구에 창고가 없으면 위탁을 못 보낸다');
+  const cs = sendConsign('silk', 30, 'genova', 'venezia', false);
+  ok(cs.ok && !state.stored.venezia.silk, `위탁하면 창고에서 빠진다 — ${cs.n}칸 · ${cs.days}일`);
+  ok((state.consign ?? []).length === 1, '띄워 둔 위탁이 한 건이다');
+  state.day += cs.days;
+  state.at = 'genova';
+  const arr = arriveConsign('genova');
+  ok(arr.got.length + arr.lost.length === 1, '도착한 위탁은 들를 때 처리된다');
+
+  /* ⓓ 정기선 — 값은 돈이 아니라 선단이다 */
+  resetGame('venezia');
+  state.gold = 1e7;
+  state.holdings = { venezia: { rental: true, warehouse: true },
+                     genova:  { rental: true, warehouse: true } };
+  state.at = 'venezia';
+  const sh = SHIPS.cocca;
+  state.fleet.cocca = { at: 'venezia', hp: sh.hp, arms: { light: sh.guns, medium: 0, long: 0 }, refits: {} };
+  /* 동행선에는 선장이 있어야 한다(`FLEET.requireCaptain`) — 그 자리에 앉는 것이 동료다 */
+  const mate = matesAt('venezia')[0];
+  if (mate) hireMate(mate.id, { joint: false });
+  setConsort('cocca');
+  const capWith = cargoCapTotal();
+  state.stored = { venezia: { salt: 60 } };
+  const ln = startLine('cocca', 'venezia', 'genova', ['salt']);
+  ok(ln.ok, `정기선을 묶었다 — 왕복 ${ln.turn}일`);
+  ok(cargoCapTotal() < capWith,
+     `★ 묶은 배는 동행에서 빠진다 — 적재 ${capWith} → ${cargoCapTotal()}칸. 값은 돈이 아니라 선단이다`);
+  ok(!canStartLine('cocca', 'venezia', 'genova', ['salt']).ok, '같은 배를 두 번 묶지 못한다');
+  /* ⚠️ 양쪽 시계 — `waitDays`에도 걸려 있어야 한다 */
+  const moved0 = (state.stored.venezia?.salt ?? 0);
+  waitDays(Math.max(2, ln.turn));
+  ok((state.stored.venezia?.salt ?? 0) < moved0 && (state.stored.genova?.salt ?? 0) > 0,
+     `★ 항구에 서 있는 동안에도 정기선이 돈다 — tickLines가 waitDays에도 걸려 있다`
+     + ` (베네치아 ${moved0} → ${state.stored.venezia?.salt ?? 0}칸 · 제노바 ${state.stored.genova?.salt ?? 0}칸)`);
+  ok(!(state.stored.venezia?.salt > 0 && state.stored.genova?.salt === 0),
+     '★ 한 방향으로만 나른다 — 왕복 양쪽에서 실으면 같은 짐을 도로 실어 오는 배가 된다');
+  ok(stopLine('cocca').ok, '언제든 풀 수 있다');
 }
 
 /* ── A-3 · 여덟 바다에도 얼굴이 생겼다 ────────────────────────────────

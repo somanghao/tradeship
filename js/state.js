@@ -8,6 +8,7 @@ import {
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
   SEA_ORIGINS, seaOriginAt,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  CONSIGN, LINE,
   TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
@@ -1138,6 +1139,356 @@ export function sellGrow(goodId, cityId = state.at) {
   return { ok: true, back, spent };
 }
 
+/* ══ 3단계 · 판매소 · 위탁 · 정기선 (SPEC-vertical §2-5·3) ══════════════
+   ★ **경계 하나가 이 층의 전부다 — 유통은 짐을 옮기기만 하고 사고팔지 않는다.**
+     자동으로 시세를 보고 사고파는 창구를 만들면 최적 플레이가 *"항로를 걸어 놓고
+     지켜본다"*가 되고, 그 순간 이 게임의 몸통(항구를 눌러 사고파는 것)이 사라진다.
+     유일한 예외가 **판매소의 위탁 판매**인데 그것도 ①이미 산 물건을 ②수수료 12%를 물고
+     ③하루 3~8칸씩만 ④**그 항구에 들러야 정산된다** — 자동화가 아니라 **느린 매도 창구**다. */
+
+/** 그 항구의 그 품목 판매소 */
+export const shopAt = (goodId, cityId = state.at) => workAt('shop', goodId, cityId);
+
+/** 팔 때 시장에 쌓이는 압력을 이만큼 덜어 준다 (0이면 판매소가 없다).
+    ★ **팔 때만이다.** 살 때도 깎으면 같은 항구에서 사고팔기를 되풀이하는 무한 루프가 열린다. */
+export function shopCut(goodId, cityId = state.at) {
+  const w = shopAt(goodId, cityId);
+  return w && !w.idle ? (WORK.shopCut[w.level] ?? 0) : 0;
+}
+
+/** 판매소 값 — `(2,000 + base×22) × size` */
+export function shopPrice(goodId, cityId = state.at, level = 1) {
+  const g = GOOD_BY_ID[goodId], c = CITY_BY_ID[cityId];
+  if (!g || !c) return Infinity;
+  const w = WORKS.shop;
+  const full = (w.priceBase + g.base * w.priceByBase) * (c.size ?? 1);
+  return Math.round(full * (WORK.levelMul[level] ?? 1));
+}
+
+export function canBuyShop(goodId, cityId = state.at) {
+  const c = CITY_BY_ID[cityId];
+  if (!c?.demand?.[goodId]) return { ok: false, reason: '이 항구가 원하지 않는다' };
+  if (shopAt(goodId, cityId)) return { ok: false, reason: '이미 있다' };
+  if (!hasHolding('warehouse', cityId) && !hasHolding('factory', cityId)) {
+    return { ok: false, reason: '창고가 먼저다' };
+  }
+  const list = workList(cityId);
+  if (list.filter(([k]) => k.startsWith('shop:')).length >= WORKS.shop.perPort) {
+    return { ok: false, reason: `판매소는 한 항구에 ${WORKS.shop.perPort}까지다` };
+  }
+  if (list.length >= WORK.perPort) return { ok: false, reason: `시설은 한 항구에 ${WORK.perPort}까지다` };
+  const price = shopPrice(goodId, cityId, 1);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price };
+}
+
+export function buyShop(goodId, cityId = state.at) {
+  const c = canBuyShop(goodId, cityId);
+  if (!c.ok) return c;
+  state.gold -= c.price;
+  book('outgo', 'ships', c.price);
+  const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
+  m[workKey('shop', goodId)] = { level: 1, since: state.day, idle: false, stock: 0, proceeds: 0 };
+  m.spent = (m.spent ?? 0) + c.price;
+  const gn = GOOD_BY_ID[goodId].name;
+  pushLog(`${CITY_BY_ID[cityId].name}에 ${gn} 판매소를 열었다 (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: c.price };
+}
+
+export function canUpgradeShop(goodId, cityId = state.at) {
+  const w = shopAt(goodId, cityId);
+  if (!w) return { ok: false, reason: '판매소가 없다' };
+  if (w.level >= WORK.levelCap) return { ok: false, reason: '더 올릴 수 없다' };
+  const price = shopPrice(goodId, cityId, w.level + 1);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price, to: w.level + 1 };
+}
+
+export function upgradeShop(goodId, cityId = state.at) {
+  const c = canUpgradeShop(goodId, cityId);
+  if (!c.ok) return c;
+  shopTick(goodId, cityId);                 // 올리기 전에 그동안 팔린 것을 정산한다
+  const w = shopAt(goodId, cityId);
+  state.gold -= c.price;
+  book('outgo', 'ships', c.price);
+  state.works[cityId].spent += c.price;
+  w.level = c.to;
+  pushLog(`${CITY_BY_ID[cityId].name} ${GOOD_BY_ID[goodId].name} 판매소를 ${c.to}등급으로 올렸다`
+        + ` (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: c.price, level: c.to };
+}
+
+/** 매각 — 남은 위탁 재고는 창고로 돌아온다(창고가 좁으면 그만큼만) */
+export function sellShop(goodId, cityId = state.at) {
+  const w = shopAt(goodId, cityId);
+  if (!w) return { ok: false, reason: '판매소가 없다' };
+  shopTick(goodId, cityId);
+  if ((w.proceeds ?? 0) > 0) return { ok: false, reason: '팔린 돈부터 걷어야 한다' };
+  let spent = 0;
+  for (let lv = 1; lv <= w.level; lv++) spent += shopPrice(goodId, cityId, lv);
+  const back = Math.round(spent * WORK.sellBack);
+  const left = Math.floor(w.stock ?? 0);
+  const m = state.works[cityId];
+  delete m[workKey('shop', goodId)];
+  m.spent = Math.max(0, (m.spent ?? 0) - spent);
+  if (!workList(cityId).length) delete state.works[cityId];
+  if (left > 0) {
+    const room = storeCap(cityId) - storedUsed(cityId);
+    const put = Math.min(left, Math.max(0, room));
+    if (put > 0) {
+      ((state.stored ??= {})[cityId] ??= {})[goodId] = ((state.stored[cityId] ?? {})[goodId] ?? 0) + put;
+    }
+  }
+  state.gold += back;
+  book('income', 'loot', back);
+  pushLog(`${CITY_BY_ID[cityId].name} ${GOOD_BY_ID[goodId].name} 판매소를 넘겼다`
+        + ` (+${back.toLocaleString('ko-KR')}닢).`, 'warn');
+  return { ok: true, back, spent };
+}
+
+/** 창고 재고를 판매소에 넘긴다 — 하루 3~8칸씩 그날 시세로 팔린다 */
+export function consignToShop(goodId, n, cityId = state.at) {
+  const w = shopAt(goodId, cityId);
+  if (!w) return { ok: false, reason: '판매소가 없다' };
+  if (w.idle) return { ok: false, reason: '휴업 중이다' };
+  const have = (state.stored?.[cityId] ?? {})[goodId] ?? 0;
+  const take = Math.min(n, have);
+  if (take <= 0) return { ok: false, reason: '창고에 그 물건이 없다' };
+  shopTick(goodId, cityId);
+  state.stored[cityId][goodId] = have - take;
+  if (!state.stored[cityId][goodId]) delete state.stored[cityId][goodId];
+  w.stock = (w.stock ?? 0) + take;
+  return { ok: true, n: take };
+}
+
+/** 마지막으로 본 날부터 팔린 만큼을 `proceeds`에 쌓는다 (lazy — 밭과 같은 방식).
+    ★ **금고로 자동 입금하지 않는다.** 그 항구에 들러 `collectShop`을 눌러야 들어온다(§3-1). */
+export function shopTick(goodId, cityId = state.at) {
+  const w = shopAt(goodId, cityId);
+  if (!w) return 0;
+  const days = Math.max(0, state.day - (w.since ?? state.day));
+  w.since = state.day;
+  if (!days || w.idle || (w.stock ?? 0) <= 0) return 0;
+  const sold = Math.min(Math.floor(w.stock), days * (WORK.shopFlow[w.level] ?? 0));
+  if (sold <= 0) return 0;
+  w.stock -= sold;
+  /* 그날 시세로 판다. 시장 압력은 **안 쌓는다** — 하루 몇 칸씩 흘린 것이라 시장이 소화한다.
+     그 대신 수수료 12%와 입항세를 문다. */
+  const unit = state.prices[cityId]?.[goodId] ?? GOOD_BY_ID[goodId].base;
+  const raw = Math.round(unit * sold);
+  const fee = Math.round(raw * WORK.shopFee);
+  const tax = Math.round(raw * baseTariff(cityId));
+  w.proceeds = (w.proceeds ?? 0) + Math.max(0, raw - fee - tax);
+  return sold;
+}
+
+/** 그 항구의 판매소가 벌어 둔 돈을 걷는다 — **들러야 들어온다** */
+export function collectShop(cityId = state.at) {
+  let got = 0;
+  for (const [k, w] of workList(cityId)) {
+    if (!k.startsWith('shop:')) continue;
+    shopTick(k.slice(5), cityId);
+    got += w.proceeds ?? 0;
+    w.proceeds = 0;
+  }
+  if (got > 0) {
+    state.gold += got;
+    book('income', 'sales', got);
+    pushLog(`${CITY_BY_ID[cityId].name}의 판매소가 ${got.toLocaleString('ko-KR')}닢을 벌어 두었다.`, 'good');
+  }
+  return got;
+}
+
+/* ── 위탁 (§3-3) ─────────────────────────────────────────────────────
+   ★ **초반의 문**이다. 정기선은 동행선을 하나 빼야 하므로 선단이 자란 뒤에나 성립하는데,
+     위탁은 **창고 둘**만 있으면 된다. 대신 수수료 8~15%가 항차 ROI 중앙값과 맞먹어
+     *"급할 때만 쓰는 길"*이 된다. */
+
+/** 위탁 수수료 — 시가 × (0.06 + 그 항로 요율) · 보험을 켜면 ×2 */
+export function consignFee(goodId, n, from, to, insure = false) {
+  const unit = state.prices[from]?.[goodId] ?? GOOD_BY_ID[goodId].base;
+  const risk = (routeRisk(from, to) ?? 0) / 100;
+  const rate = (CONSIGN.feeBase + risk) * (insure ? CONSIGN.insureMul : 1);
+  return { fee: Math.round(unit * n * rate), value: Math.round(unit * n), rate };
+}
+
+export function canConsign(goodId, n, to, from = state.at, insure = false) {
+  if (!hasHolding('warehouse', from) && !hasHolding('factory', from)) {
+    return { ok: false, reason: '이 항구에 창고가 없다' };
+  }
+  if (!hasHolding('warehouse', to) && !hasHolding('factory', to)) {
+    return { ok: false, reason: '받는 항구에 창고가 없다' };
+  }
+  if ((state.consign ?? []).length >= CONSIGN.maxOpen) {
+    return { ok: false, reason: `동시에 ${CONSIGN.maxOpen}건까지다` };
+  }
+  const have = (state.stored?.[from] ?? {})[goodId] ?? 0;
+  const take = Math.min(n, have, CONSIGN.capPer);
+  if (take <= 0) return { ok: false, reason: '창고에 그 물건이 없다' };
+  const f = consignFee(goodId, take, from, to, insure);
+  if (f.fee > state.gold) return { ok: false, reason: `수수료 ${f.fee.toLocaleString('ko-KR')}닢이 모자란다` };
+  return { ok: true, n: take, fee: f.fee, value: f.value, rate: f.rate };
+}
+
+export function sendConsign(goodId, n, to, from = state.at, insure = false) {
+  const c = canConsign(goodId, n, to, from, insure);
+  if (!c.ok) return c;
+  state.stored[from][goodId] -= c.n;
+  if (!state.stored[from][goodId]) delete state.stored[from][goodId];
+  state.gold -= c.fee;
+  book('outgo', 'upkeep', c.fee);
+  const days = Math.max(1, Math.round((hopDays(from, to) ?? voyageDays(from, to)) * CONSIGN.daysMul));
+  (state.consign ??= []).push({
+    from, to, good: goodId, n: c.n, arrive: state.day + days, insured: !!insure, value: c.value,
+  });
+  pushLog(`${GOOD_BY_ID[goodId].name} ${c.n}칸을 ${CITY_BY_ID[to].name}으로 위탁했다`
+        + ` — 수수료 ${c.fee.toLocaleString('ko-KR')}닢 · ${days}일.`, 'warn');
+  return { ok: true, n: c.n, fee: c.fee, days };
+}
+
+/** 도착한 위탁을 받는다 — 그 항구에 **들를 때** 처리한다(§3-1) */
+export function arriveConsign(cityId = state.at) {
+  const list = state.consign ?? [];
+  const got = [], lost = [];
+  for (let i = list.length - 1; i >= 0; i--) {
+    const c = list[i];
+    if (c.to !== cityId || c.arrive > state.day) continue;
+    list.splice(i, 1);
+    /* 유실 — **짐만 잃는다**(남의 배다). 보험을 켰으면 시가의 30%가 돌아온다. */
+    const odds = (routeRisk(c.from, c.to) ?? 0) / 100 * CONSIGN.lossMul;
+    if (Math.random() < odds) {
+      const pay = c.insured ? Math.round(c.value * CONSIGN.cover) : 0;
+      if (pay) { state.gold += pay; book('income', 'loot', pay); }
+      lost.push({ ...c, pay });
+      pushLog(`위탁한 ${GOOD_BY_ID[c.good].name} ${c.n}칸이 오지 않았다.`
+            + (pay ? ` 보험으로 ${pay.toLocaleString('ko-KR')}닢을 받았다.` : ' 보험이 없었다.'), 'bad');
+      continue;
+    }
+    const room = storeCap(cityId) - storedUsed(cityId);
+    const put = Math.min(c.n, Math.max(0, room));
+    if (put > 0) {
+      ((state.stored ??= {})[cityId] ??= {})[c.good] = ((state.stored[cityId] ?? {})[c.good] ?? 0) + put;
+    }
+    got.push({ ...c, put });
+    pushLog(`위탁한 ${GOOD_BY_ID[c.good].name} ${put}칸이 ${CITY_BY_ID[cityId].name} 창고에 들어왔다.`
+          + (put < c.n ? ` (창고가 좁아 ${c.n - put}칸은 못 받았다)` : ''), put ? 'good' : 'warn');
+  }
+  return { got, lost };
+}
+
+/* ── 정기선 (§3-2) ─────────────────────────────────────────────────── */
+
+export const lineList = () => Object.entries(state.lines ?? {});
+
+export function canStartLine(shipKey, a, b, goods) {
+  if (lineList().length >= LINE.max) return { ok: false, reason: `정기선은 ${LINE.max}선까지다` };
+  if (state.lines?.[shipKey]) return { ok: false, reason: '이미 묶여 있다' };
+  if (!state.consorts?.[shipKey]) return { ok: false, reason: '동행 중인 배라야 묶는다' };
+  if (a === b) return { ok: false, reason: '두 항구가 같다' };
+  for (const id of [a, b]) {
+    if (!hasHolding('warehouse', id) && !hasHolding('factory', id)) {
+      return { ok: false, reason: `${CITY_BY_ID[id]?.name ?? id}에 창고가 없다` };
+    }
+  }
+  if (!goods?.length) return { ok: false, reason: '나를 물건을 골라야 한다' };
+  return { ok: true, goods: goods.slice(0, LINE.goodsMax) };
+}
+
+export function startLine(shipKey, a, b, goods) {
+  const c = canStartLine(shipKey, a, b, goods);
+  if (!c.ok) return c;
+  /* ★ **값은 돈이 아니라 선단이다** — 묶은 배는 동행에서 빠진다(화물칸·포·피해 분산을 잃는다). */
+  delete state.consorts[shipKey];
+  const turn = Math.max(2, voyageDays(a, b) * 2 + LINE.turnPad);
+  (state.lines ??= {})[shipKey] = { a, b, goods: c.goods, leg: 'ab', next: state.day + Math.round(turn / 2), turn };
+  const nm = SHIPS[shipKey]?.name ?? shipKey;
+  pushLog(`${nm}${josa(nm, '을/를')} ${CITY_BY_ID[a].name}~${CITY_BY_ID[b].name} 정기선으로 묶었다`
+        + ` — 왕복 ${turn}일. 동행에서는 빠진다.`, 'warn');
+  return { ok: true, turn };
+}
+
+export function stopLine(shipKey) {
+  const l = state.lines?.[shipKey];
+  if (!l) return { ok: false, reason: '그런 정기선이 없다' };
+  delete state.lines[shipKey];
+  const at = l.leg === 'ab' ? l.a : l.b;
+  if (state.fleet[shipKey]) state.fleet[shipKey].at = at;
+  pushLog(`${SHIPS[shipKey]?.name ?? shipKey} 정기선을 풀었다 — ${CITY_BY_ID[at].name}에 정박한다.`, 'warn');
+  return { ok: true, at };
+}
+
+/** 날이 지나면 정기선이 한 다리씩 나아간다.
+    ⚠️ **`advanceDays`와 `waitDays` 양쪽에서 부른다** — 한쪽만 걸면 항구에 서 있는 동안
+      정기선이 멈춘다(또는 그 반대). `QUICKMAP-trade.md`의 *"항구에는 시간이 없다"*가
+      이 층에서 절반만 참이 되는 자리다. */
+export function tickLines() {
+  const out = [];
+  for (const [key, l] of lineList()) {
+    let guard = 0;
+    while (state.day >= l.next && guard++ < 12) {
+      const from = l.leg === 'ab' ? l.a : l.b;
+      const to = l.leg === 'ab' ? l.b : l.a;
+      const cap = Math.floor((SHIPS[key]?.cargo ?? 0) * LINE.holdRate);
+      /* 창고 A에서 실을 수 있는 만큼 싣고 창고 B에 부린다 — **사고팔지 않는다**(§3-1).
+         ★ **한 방향으로만 나른다**(a→b). 처음엔 왕복 양쪽에서 실었는데, 그러면 같은 짐을
+           **도로 실어 오는** 배가 된다(실측: 60칸이 갔다가 그대로 돌아왔다).
+           정기선이 하는 일은 *"밭의 재고를 가공장으로"*·*"가공품을 판매소로"* 옮기는 것이라
+           방향이 있다. 돌아오는 다리는 빈 배이고, 그 시간이 이 장치의 값이다. */
+      const carrying = l.leg === 'ab';
+      let loaded = 0;
+      const src = carrying ? (state.stored?.[from] ?? {}) : {};
+      const moved = {};
+      for (const gid of (carrying ? l.goods : [])) {
+        if (loaded >= cap) break;
+        const take = Math.min(src[gid] ?? 0, cap - loaded);
+        if (take <= 0) continue;
+        src[gid] -= take;
+        if (!src[gid]) delete src[gid];
+        moved[gid] = take;
+        loaded += take;
+      }
+      /* 해적 — 편도마다 요율로 판정한다. 걸리면 짐 전량, 그중 15%는 배까지. */
+      let sunk = false, robbed = false;
+      if (loaded > 0 && Math.random() < (routeRisk(from, to) ?? 0) / 100) {
+        robbed = true;
+        if (Math.random() < LINE.lossShip) sunk = true;
+      }
+      if (!robbed) {
+        const room = storeCap(to) - storedUsed(to);
+        let put = 0;
+        for (const [gid, q] of Object.entries(moved)) {
+          const fit = Math.min(q, Math.max(0, room - put));
+          if (fit > 0) {
+            ((state.stored ??= {})[to] ??= {})[gid] = ((state.stored[to] ?? {})[gid] ?? 0) + fit;
+          }
+          put += fit;
+        }
+        if (loaded > 0) {
+          pushLog(`정기선 ${SHIPS[key]?.name ?? key} — ${CITY_BY_ID[from].name}에서 ${CITY_BY_ID[to].name}으로`
+                + ` ${put}칸을 옮겼다.`, 'good');
+        }
+      } else {
+        pushLog(`정기선 ${SHIPS[key]?.name ?? key}이(가) ${CITY_BY_ID[from].name}~${CITY_BY_ID[to].name}에서 털렸다`
+              + ` — ${loaded}칸을 잃었다.` + (sunk ? ' 배도 돌아오지 않았다.' : ''), 'bad');
+      }
+      out.push({ key, from, to, loaded, robbed, sunk });
+      if (sunk) {
+        delete state.lines[key];
+        delete state.fleet[key];
+        state.everOwned?.add(key);
+        break;
+      }
+      l.leg = l.leg === 'ab' ? 'ba' : 'ab';
+      l.next += Math.max(1, Math.round(l.turn / 2));
+    }
+  }
+  return out;
+}
+
 /** 가공장 값 — `(9,000 + 산출 base × 80) × TIER_MUL[요구 공업력]`.
     `level`은 **그 등급에 새로 내는 몫**이다(1→2가 0.80배, 2→3이 1.30배). */
 export function millPrice(recipeId, cityId = state.at, level = 1) {
@@ -2089,9 +2440,12 @@ export function sell(goodId, qty) {
   book('outgo', 'officer', cut + mcut);
   // 선원 몫은 급여 갈래에 적는다 — 삯의 다른 절반이지 성과급이 아니다
   book('outgo', 'wages', pcut);
-  addPressure(state.at, goodId, max);
+  /* ★ **판매소는 쏟아붓는 벌점을 시간으로 바꾼다**(3단계 · §2-5). 파는 쪽에만 걸린다 —
+     살 때도 깎으면 같은 항구에서 사고팔기를 되풀이하는 무한 루프가 열린다. */
+  const scut = shopCut(goodId, state.at);
+  addPressure(state.at, goodId, max * (1 - scut));
   return {
-    ok: true, qty: max, gain, tariff, cut, mateCut: mcut, crewCut: pcut,
+    ok: true, qty: max, gain, tariff, cut, mateCut: mcut, crewCut: pcut, shopCut: scut,
     unit: Math.round(gain / max),
     base: state.prices[state.at][goodId], profit: profit - cut - mcut - pcut,
   };
@@ -4972,7 +5326,10 @@ export function waitDays(n = 1) {
     if (!Object.keys(row).length) delete state.impact[cityId];
   }
   const shocks = rollShockEvents(n);
-  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks };
+  /* ⚠️ **정기선은 여기서도 돈다.** `advanceDays`에만 걸면 *"항구에 서 있는 동안 정기선이
+     멈춘다"*가 된다 — `QUICKMAP-trade.md`의 *"항구에는 시간이 없다"*가 이 층에서 절반만 참이다. */
+  const lines = tickLines();
+  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks, lines };
 }
 
 /** 사람을 내려놓는다 — 창고가 있는 항구에서만. 급여 시계가 멈춘다. */
@@ -5077,8 +5434,10 @@ export function advanceDays(n, leg = null) {
   const shocks = rollShockEvents(n);
 
   const expired = checkContractDue();
+  /* ⚠️ **정기선은 `waitDays`에도 걸려 있다** — 양쪽에 안 걸면 한쪽에서 시간이 멈춘다(§3-2). */
+  const lines = tickLines();
   refreshPrices();
-  return { ...c, leak, soaked, expired, shocks };
+  return { ...c, leak, soaked, expired, shocks, lines };
 }
 
 /* ── 급여 정산 ────────────────────────────────────────────────
@@ -5316,6 +5675,8 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     cargoCap: s.cargo,
     cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at,
     infamy: {}, holdings: {}, stored: {}, yards: {}, works: {},
+    /* 3단계 — 유통. 새 판에는 묶어 둔 배도 띄워 둔 위탁도 없다 */
+    lines: {}, consign: [],
     /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
     regard: {}, _regardAge: 0,
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
