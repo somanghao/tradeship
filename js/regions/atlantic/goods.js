@@ -18,33 +18,41 @@
 export const GOODS = [
   // 발트의 참나무·전나무. 서유럽은 제 숲을 다 베어 써서 배 지을 나무를 여기서 사 갔다.
   // 무게당 값이 가장 싼 축이라 곡물 바로 위에 둔다 — 부피로 버는 물건의 표본이다.
-  { id: 'timber',    name: '목재',     base: 28,  icon: 'timber',   bulk: 1 },
+  { id: 'timber',    name: '목재',     base: 28,  icon: 'timber',   kind: 'crop', bulk: 1 },
   // 한자동맹의 밑천. 스카니아 시장은 좋은 해에 청어 30만 통을 내보냈고
   // 덴마크 왕 수입의 1/3이 여기서 나왔다. 절이는 소금이 곧 뤼베크의 권력이었다.
-  { id: 'herring',   name: '청어',     base: 40,  icon: 'herring',  bulk: 1 },
+  { id: 'herring',   name: '청어',     base: 40,  icon: 'herring',  kind: 'crop', bulk: 1 },
   // 발트의 소나무를 구워 낸 타르와 피치. 배를 짓고 밧줄을 먹이는 데 반드시 있어야 했다.
-  { id: 'tar',       name: '타르',     base: 44,  icon: 'tar',      bulk: 1 },
+  { id: 'tar',       name: '타르',     base: 44,  icon: 'tar',      kind: 'craft', bulk: 1 },
   // 로포텐에서 말린 대구. 소금 없이 몇 해를 가는 단백질이라 사순절 유럽 전체가 사 먹었다.
   // 절인 청어보다 값이 붙는다 — 말리는 데 시간이 들고 부피 대비 열량이 높다.
-  { id: 'stockfish', name: '건대구',   base: 58,  icon: 'stockfish', bulk: 1 },
+  { id: 'stockfish', name: '건대구',   base: 58,  icon: 'stockfish', kind: 'crop', bulk: 1 },
   // 바스크와 스웨덴의 철. 오스문드 철은 단치히를 거쳐 잉글랜드까지 갔다.
   // 완제 무기(165)의 절반이 안 되게 두어 "재료와 물건" 사이가 벌어지게 했다.
-  { id: 'iron',      name: '철',       base: 78,  icon: 'iron',     bulk: 1 },
+  { id: 'iron',      name: '철',       base: 78,  icon: 'iron',     kind: 'mineral', bulk: 1 },
   // 플랑드르·브라반트·리보니아의 아마포. 모직보다 싸고 흔한 옷감이라 그만큼 아래에 둔다.
-  { id: 'linen',     name: '아마포',   base: 145, icon: 'linen',    bulk: 1 },
+  { id: 'linen',     name: '아마포',   base: 145, icon: 'linen',    kind: 'craft', bulk: 1 },
   // ★ 이 바다의 주인공. 잉글랜드·플랑드르의 모직물은 중세 유럽 최대의 제조업이었고
   //   한자가 동쪽으로 실어 나른 것도, 카스티야가 양모를 대 준 것도 결국 이 옷감이다.
   //   사료 비율은 무게당 밀의 40배가 넘지만(1479년 잉글랜드 소매 6실링/야드),
   //   그건 소매 완제품 값이고 대량 교역품으로는 그렇게까지 벌지 못했다. 비단(420)을
   //   넘지 않는 선에서 유리세공(190) 위에 앉혔다 — 값비싼 공산품의 자리다.
-  { id: 'woolcloth', name: '모직물',   base: 210, icon: 'woolcloth', bulk: 1 },
+  { id: 'woolcloth', name: '모직물',   base: 210, icon: 'woolcloth', kind: 'craft', bulk: 1 },
   // 러시아·리투아니아 숲의 밀랍. 유럽 교회의 초가 전부 이것이었다.
   // 1406년 잉글랜드 밀랍초가 파운드당 6.5펜스 — 무게당 밀의 40배 안팎이다.
-  { id: 'wax',       name: '밀랍',     base: 260, icon: 'wax',      bulk: 1 },
+  { id: 'wax',       name: '밀랍',     base: 260, icon: 'wax',      kind: 'crop', bulk: 1 },
   // 마데이라 설탕. 1490년대에 키프로스를 제치고 유럽 최대 산지가 됐고,
   // 1480년에는 안트베르펜 배 70척이 이 설탕만 실어 날랐다. 아직 약에 가까운 사치품이다.
-  { id: 'sugar',     name: '설탕',     base: 280, icon: 'sugar',    bulk: 1 },
+  { id: 'sugar',     name: '설탕',     base: 280, icon: 'sugar',    kind: 'crop', bulk: 1 },
   // 발트의 보석. 튜턴 기사단이 채취를 독점했고 묵주로 깎여 유럽 전역에 팔렸다.
   // 향신료(330)와 비단(420) 사이에 두어 "북방에도 한 방이 있다"를 남긴다.
-  { id: 'amber',     name: '호박',     base: 360, icon: 'amber',    bulk: 1 },
+  { id: 'amber',     name: '호박',     base: 360, icon: 'amber',    kind: 'craft', bulk: 1 },
+
+  /* ── 수직계열화 2단계 · 원료 (SPEC-vertical §1-4) ────────────────────────
+     ★ **사탕수수는 산지에서 졸여야 한다.** 벤 줄기는 며칠을 못 견뎌 즙이 시어 버리므로
+       엔제뉴(제당소)가 밭 옆에 섰다 — 마데이라에서 상투메로, 다시 브라질과 카리브로
+       그 모델이 그대로 옮겨 갔다. 그래서 이 원료의 산지와 제당소가 같은 항구에 서고,
+       **팔 데는 북유럽**이다(설탕 수요가 거기다). 사슬의 대가가 돈이 아니라 항로가 되는 자리.
+     설탕(280)의 12% 남짓 — 7칸을 졸여야 1칸이 나오므로 그 비율에서 역산했다(마진 1.176). */
+  { id: 'cane',      name: '사탕수수', base: 34,  icon: 'grain',    kind: 'crop', bulk: 1 },
 ];

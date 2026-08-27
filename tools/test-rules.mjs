@@ -19,6 +19,7 @@ import {
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf, legRegion,
   flagshipSinks, sinkFlagship, liquidate, originPerk,
+  growKind, growStock, growCap, canBuyGrow, buyGrow, workAt, chainMargin, costFor,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -51,7 +52,7 @@ import {
   routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
   routeFactor, windFactor, currentFactor, YEAR_DAYS,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
@@ -947,6 +948,55 @@ resetGame();
   }
   ok(bad === 0, `기한 안에 못 가는 일감이 없다 — 표본 ${seen}건 중 ${bad}건`
      + (worst ? ` (가장 나쁜 것 ${worst.o.from}→${worst.o.to} 실제 ${Math.round(worst.need)}일 vs 기한 ${worst.room}일)` : ''));
+}
+
+/* ── A-9 2단계 · 농장과 광산 ──────────────────────────────────────────
+   ★ **여기서 처음 곡선이 움직인다.** 밭이 원료를 원가로 대 줄 때 사슬이 남기 시작한다.
+   ★ 그리고 `costFor`가 **두 구간**을 갖게 됐다 — `buy()`의 이분 탐색은 단조 증가를
+     전제하므로, 그것을 사람 눈으로 믿지 않고 여기서 매번 확인한다. */
+{
+  resetGame('venezia');
+  state.at = 'funchal'; state.gold = 1e7;
+  state.holdings = { funchal: { rental: true, warehouse: true } };
+  ok(growKind('cane') === 'farm' && growKind('silverore') === 'mine' && growKind('silk') === null,
+     '무엇이 밭에서 나는지는 `GOODS[].kind`가 정한다 — 「은광석 농장」이 안 지어진다');
+  ok(!canBuyGrow('silk', 'funchal').ok, '푼샬에서 안 나는 것은 밭을 못 세운다');
+  const b = buyGrow('cane', 'funchal');
+  ok(b.ok && b.kind === 'farm', `사탕수수 농장을 세웠다 (−${b.price?.toLocaleString('ko-KR')}닢)`);
+  ok(growStock('cane', 'funchal') === 0, '세운 날은 밭이 비어 있다');
+  state.day += 30;
+  ok(growStock('cane', 'funchal') === 30 * WORKS.farm.perDay[1],
+     `하루 ${WORKS.farm.perDay[1]}칸씩 쌓인다 — 30일에 ${growStock('cane', 'funchal')}칸`);
+  state.day += 999;
+  ok(growStock('cane', 'funchal') === growCap('farm', 1),
+     `상한(${WORKS.farm.stockDays}일치 = ${growCap('farm', 1)}칸)을 넘으면 안 쌓인다 — 밭에서 썩는다`);
+  /* ★ 단조 — 원가 구간이 섞여도 `costFor(n)`은 늘기만 해야 한다 */
+  let mono = true, prev = -1;
+  for (let i = 0; i <= 300; i++) { const v = costFor('cane', i, 'funchal'); if (v < prev) mono = false; prev = v; }
+  ok(mono, '원가 구간이 섞여도 costFor(n)이 단조 증가다 — buy()의 이분 탐색이 안 깨진다');
+  /* 밭 몫은 싸고, 시장을 안 누른다 */
+  const unit = state.prices.funchal.cane;
+  const off = WORK.farmOff[1];
+  ok(Math.abs(costFor('cane', 10, 'funchal') - Math.round(unit * 10 * (1 - off))) <= 1,
+     `밭 재고까지는 원가다 — 10칸 ${costFor('cane', 10, 'funchal')}닢 (시세 ${Math.round(unit * 10)}닢)`);
+  state.impact = {}; state.cargoCap = 400; state.cargo = {};
+  const r = buy('cane', 20);
+  ok(r.ok && r.grown === 20 && !(state.impact.funchal?.cane),
+     '밭에서 실은 몫은 시장을 안 누른다 — 자기 밭에서 실었기 때문이다');
+  /* 휴업이면 안 쌓인다 */
+  const w = workAt('farm', 'cane', 'funchal');
+  w.idle = true; const before = growStock('cane', 'funchal');
+  state.day += 30;
+  ok(growStock('cane', 'funchal') === before, '휴업 중에는 한 칸도 안 쌓인다');
+  w.idle = false;
+  /* 사슬 여덟이 전부 밴드 안 */
+  const bad = CHAIN.filter((x) => {
+    const m = chainMargin(x); return m < WORK.marginMin || m > WORK.marginMax;
+  });
+  ok(CHAIN.length === 8 && !bad.length,
+     `가공 사슬 여덟이 전부 밴드[${WORK.marginMin}, ${WORK.marginMax}] 안이다`);
+  ok(CHAIN_BY_ID.smelt_silver.req === 1,
+     '제련만 공업력 1이다 — 포토시·우앙카벨리카가 내륙 광산이라 2를 걸면 그 사슬이 죽는다');
 }
 
 /* ── A-3 · 여덟 바다에도 얼굴이 생겼다 ────────────────────────────────

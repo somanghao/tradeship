@@ -85,9 +85,21 @@ for (const r of CHAIN) {
   const src = supplyOf(outId);
   const buyAt = src.length ? priceAt(outId, src[0].mul) : null;
   const ratio = buyAt ? perUnit / buyAt : null;
-  if (ratio != null && (ratio < 0.95 || ratio > 1.10)) {
+  /* ── ②-c ★ **밭을 얹은 대조식**(2단계) ────────────────────────────────
+     위 ②-b는 **원료를 시세로 사는** 가정이다. 그런데 2단계의 설계는 정확히 그 반대다 —
+     *"1단계에서는 거의 안 남는 것이 정상이고, 남기 시작하는 것은 농장·광산이 원료를
+     원가로 대 줄 때다"*(`data.js: CHAIN` 머리주석). ⇒ ②-b만 보면 **설계대로 굴러가는 것을
+     경고로 읽게 된다.** 그래서 밭 최고 등급(`WORK.farmOff[3]`)을 얹은 값을 나란히 낸다.
+     ★ 경고는 **둘 다 밖일 때만** 낸다 — 밭을 얹어 밴드에 들면 그것이 설계다. */
+  const farmOff = WORK.farmOff?.[3] ?? 0;
+  let farmCost = 0;
+  for (const [gid, n] of Object.entries(r.in)) farmCost += cheapest(gid) * (1 - farmOff) * n;
+  const farmUnit = (farmCost + fee) / chainOutUnits(r);
+  const farmRatio = buyAt ? farmUnit / buyAt : null;
+  const outBand = (x) => x != null && (x < 0.95 || x > 1.10);
+  if (outBand(ratio) && outBand(farmRatio)) {
     soft('대조식', `${r.name}: 사슬 조달가 ${perUnit.toFixed(1)}닢 ÷ 최저 산지 시세 ${buyAt.toFixed(1)}닢`
-      + ` = ${ratio.toFixed(3)} — 목표 [0.95, 1.10] 밖이다.`
+      + ` = ${ratio.toFixed(3)} (밭을 얹어도 ${farmRatio.toFixed(3)}) — 목표 [0.95, 1.10] 밖이다.`
       + (ratio < 0.95 ? ' 산지 배율이 얕거나(비싸거나) 마진이 높다 — 사슬이 공짜 차익에 가깝다.'
                       : ' 사슬이 지나치게 불리해 아무도 짓지 않는다.'));
   }
@@ -118,7 +130,7 @@ for (const r of CHAIN) {
   rows.push({
     name: r.name, work: r.work, margin, req: r.req,
     price: millPrice(r.id, sites[0]?.id ?? CITIES[0].id, 1),
-    perUnit, buyAt, ratio, sites: sites.length, oneStop: oneStop.length,
+    perUnit, buyAt, ratio, farmRatio, sites: sites.length, oneStop: oneStop.length,
     src: src.length, dem: dem.length,
     inU: chainInUnits(r), outU: chainOutUnits(r),
   });
@@ -151,12 +163,13 @@ for (const node of edges.keys()) walk(node, []);
 /* ── 보고 ────────────────────────────────────────────────────── */
 const pad = (s, n) => String(s).padEnd(n, ' ');
 console.log(pad('사슬', 10) + pad('시설', 16) + pad('비율', 8) + pad('마진', 8)
-          + pad('값', 10) + pad('조달가', 9) + pad('산지가', 9) + pad('대조식', 8) + '자리');
+          + pad('값', 10) + pad('조달가', 9) + pad('산지가', 9) + pad('대조식', 8) + pad('밭얹어', 8) + '자리');
 for (const r of rows) {
   console.log(pad(r.name, 10) + pad(r.work, 16) + pad(`${r.inU}:${r.outU}`, 8)
     + pad(r.margin.toFixed(3), 8) + pad(r.price.toLocaleString('en-US'), 10)
     + pad(r.perUnit.toFixed(1), 9) + pad(r.buyAt ? r.buyAt.toFixed(1) : '—', 9)
     + pad(r.ratio ? r.ratio.toFixed(3) : '—', 8)
+    + pad(r.farmRatio ? r.farmRatio.toFixed(3) : '—', 8)
     + `공업력 ${r.req} ${r.sites}곳 (원료까지 있는 곳 ${r.oneStop}) · 산지 ${r.src} · 수요 ${r.dem}`);
 }
 

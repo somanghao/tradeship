@@ -356,9 +356,21 @@ export function addPressure(cityId, goodId, n) {
 }
 
 /** n개 매입 총액 / 매각 총액 — 수량이 늘수록 불리해진다 */
+/* ★ **두 구간이다**(2단계 · SPEC-vertical §2-5). 앞의 `밭 재고`칸은 **원가**(−12~24%)이고
+   시장 압력을 안 받는다 — 자기 밭에서 실었기 때문이다. 그 위는 지금까지와 똑같다.
+   ⚠️ `buy()`의 이분 탐색은 **단조 증가**를 전제한다. 원가 < 시세이므로 단조는 유지되지만,
+     그것을 사람 눈으로 믿지 않고 `test-rules`가 매번 확인한다("원가 구간이 섞여도 단조인가"). */
 export function costFor(goodId, n, cityId = state.at) {
   if (n <= 0) return 0;
-  return Math.round(state.prices[cityId][goodId] * n * (1 + impactFactor(cityId, goodId, n)));
+  const unit = state.prices[cityId][goodId];
+  const g = growReady(goodId, cityId);
+  const own = Math.min(n, g.n);
+  const rest = n - own;
+  /* 밭 몫은 압력을 **일으키지도 받지도** 않는다. 나머지 칸의 압력도 `rest` 기준으로 잰다 —
+     밭에서 실은 칸까지 시장 물량으로 세면 자기 밭이 제 시세를 밀어 올린다. */
+  const ownCost = unit * own * (1 - g.off);
+  const restCost = rest > 0 ? unit * rest * (1 + impactFactor(cityId, goodId, rest)) : 0;
+  return Math.round(ownCost + restCost);
 }
 export function gainFor(goodId, n, cityId = state.at) {
   if (n <= 0) return 0;
@@ -407,8 +419,11 @@ export function buy(goodId, qty) {
   state.buyPrice[goodId] = Math.round((prevAvg * had + cost) / (had + max));
   state.gold -= cost;
   book('outgo', 'goods', cost);
-  addPressure(state.at, goodId, max);
-  return { ok: true, qty: max, cost, unit: Math.round(cost / max), base: state.prices[state.at][goodId] };
+  /* ★ **밭에서 실은 몫은 시장을 안 누른다**(2단계). 재고에서 빼고, 남은 칸만 압력이 된다. */
+  const grown = takeGrown(goodId, max);
+  if (max - grown > 0) addPressure(state.at, goodId, max - grown);
+  return { ok: true, qty: max, cost, unit: Math.round(cost / max), grown,
+           base: state.prices[state.at][goodId] };
 }
 
 /** 그 항구가 매기는 입항세 — 부관 특전을 **빼기 전**의 값.
@@ -956,6 +971,172 @@ export const worksIdle = (cityId = state.at) => workList(cityId).some(([, w]) =>
       **영영 0이다.** 2단계에서 정련 사슬을 얹을 때 `req`를 2로 두면 그 사슬이 통째로 죽는다. */
 export const millRecipes = (cityId = state.at) =>
   CHAIN.filter((r) => industryOf(cityId) >= r.req);
+
+/* ══ 2단계 · 농장과 광산 (SPEC-vertical §2-4·2-5) ═══════════════════════
+   ★ **이 층에서 처음 곡선이 움직인다.** 가공장만 있을 때는 원료를 시세로 사야 해서
+     "거의 안 남는 것이 정상"이었다(`check-chain`의 대조식 1.15~1.22가 그 말이다).
+     밭이 원료를 **원가로** 대 주는 순간 그 사슬이 남기 시작한다.
+   ★ 밭에서 실은 몫은 **`addPressure`를 안 한다** — 시장에서 산 것이 아니기 때문이다.
+     그 대신 **45일 상한**이 규모를 묶는다(넘으면 밭에서 썩는다). 창고 칸도 안 먹는다.
+   ★ 농장이냐 광산이냐는 **`GOODS[].kind`**가 정한다(`crop`/`mineral`). 없으면 "은광석 농장"이
+     지어진다 — 태그 90종을 그래서 붙였다. */
+
+/** 이 품목에 어울리는 시설 종 — `farm` | `mine` | null */
+export function growKind(goodId) {
+  const k = GOOD_BY_ID[goodId]?.kind;
+  if (k === 'crop') return 'farm';
+  if (k === 'mineral') return 'mine';
+  return null;                     // 사람이 만든 것(`craft`)은 밭에서 안 난다
+}
+
+/** 이 항구에 세울 수 있는 밭·광산 후보 — **그 도시가 실제로 내는 것**만 */
+export function growCandidates(cityId = state.at) {
+  const c = CITY_BY_ID[cityId];
+  if (!c) return [];
+  return Object.keys(c.supply ?? {})
+    .filter((gid) => growKind(gid))
+    .map((gid) => ({ gid, kind: growKind(gid), good: GOOD_BY_ID[gid] }));
+}
+
+/** 농장·광산 값 — `(3,000 + base×50) × (0.7 + 0.15×size)`.
+    `level`은 가공장과 같은 규약이다 — **그 등급에 새로 내는 몫**(1→2가 0.80배, 2→3이 1.30배). */
+export function growPrice(goodId, cityId = state.at, level = 1) {
+  const kind = growKind(goodId);
+  const g = GOOD_BY_ID[goodId];
+  const c = CITY_BY_ID[cityId];
+  if (!kind || !g || !c) return Infinity;
+  const w = WORKS[kind];
+  const size = c.size ?? 1;
+  const full = (w.priceBase + g.base * w.priceByBase)
+             * (WORK.farmPriceBySize.base + WORK.farmPriceBySize.per * size);
+  return Math.round(full * (WORK.levelMul[level] ?? 1));
+}
+
+/** 하루에 밭에 쌓이는 칸 · 재고 상한 */
+export const growRate = (kind, level = 1) => WORKS[kind]?.perDay?.[level] ?? 0;
+export const growCap = (kind, level = 1) => growRate(kind, level) * (WORKS[kind]?.stockDays ?? 0);
+/** 밭 재고까지는 이만큼 싸게 산다 */
+export const growOff = (level = 1) => WORK.farmOff[level] ?? 0;
+
+/** 마지막으로 본 날부터 오늘까지 쌓인 것을 반영하고 지금 재고를 돌려준다.
+    ★ **읽을 때 정산한다**(lazy) — 날마다 도는 루프를 새로 만들지 않는다.
+      `advanceDays`에 얹으면 아홉 바다 265항구를 매일 훑게 되고, 그것은 이 층이
+      치를 값이 아니다. `since`가 마지막 정산일이다. */
+export function growStock(goodId, cityId = state.at) {
+  const kind = growKind(goodId);
+  if (!kind) return 0;
+  const w = workAt(kind, goodId, cityId);
+  if (!w) return 0;
+  const days = Math.max(0, state.day - (w.since ?? state.day));
+  if (days > 0) {
+    if (!w.idle) {
+      const cap = growCap(kind, w.level);
+      w.stock = Math.min(cap, (w.stock ?? 0) + days * growRate(kind, w.level));
+    }
+    w.since = state.day;           // 휴업 중이면 쌓지 않고 날짜만 넘긴다
+  }
+  return Math.floor(w.stock ?? 0);
+}
+
+/** 그 항구에서 밭이 대 주는 칸 수 — `costFor`가 이만큼을 싸게 판다 */
+export function growReady(goodId, cityId = state.at) {
+  const kind = growKind(goodId);
+  const w = kind ? workAt(kind, goodId, cityId) : null;
+  if (!w || w.idle) return { n: 0, off: 0, level: 0 };
+  return { n: growStock(goodId, cityId), off: growOff(w.level), level: w.level };
+}
+
+/** 밭에서 실은 몫을 재고에서 뺀다 — `buy()`가 부른다 */
+export function takeGrown(goodId, n, cityId = state.at) {
+  const kind = growKind(goodId);
+  const w = kind ? workAt(kind, goodId, cityId) : null;
+  if (!w || n <= 0) return 0;
+  const took = Math.min(n, Math.floor(w.stock ?? 0));
+  w.stock = (w.stock ?? 0) - took;
+  return took;
+}
+
+export function canBuyGrow(goodId, cityId = state.at) {
+  const kind = growKind(goodId);
+  if (!kind) return { ok: false, reason: '밭에서 나는 것이 아니다' };
+  const c = CITY_BY_ID[cityId];
+  if (!c?.supply?.[goodId]) return { ok: false, reason: '이 항구에서 나지 않는다' };
+  if (workAt(kind, goodId, cityId)) return { ok: false, reason: '이미 있다' };
+  if (!hasHolding('warehouse', cityId) && !hasHolding('factory', cityId)) {
+    return { ok: false, reason: '창고가 먼저다' };
+  }
+  const list = workList(cityId);
+  if (list.filter(([k]) => k.startsWith(kind + ':')).length >= WORKS[kind].perPort) {
+    return { ok: false, reason: `${WORKS[kind].name}은 한 항구에 ${WORKS[kind].perPort}까지다` };
+  }
+  if (list.length >= WORK.perPort) return { ok: false, reason: `시설은 한 항구에 ${WORK.perPort}까지다` };
+  const price = growPrice(goodId, cityId, 1);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price, kind };
+}
+
+export function buyGrow(goodId, cityId = state.at) {
+  const c = canBuyGrow(goodId, cityId);
+  if (!c.ok) return c;
+  state.gold -= c.price;
+  book('outgo', 'ships', c.price);
+  const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
+  m[workKey(c.kind, goodId)] = { level: 1, since: state.day, idle: false, stock: 0 };
+  m.spent = (m.spent ?? 0) + c.price;
+  const nm = WORKS[c.kind].name, gn = GOOD_BY_ID[goodId].name;
+  pushLog(`${CITY_BY_ID[cityId].name}에 ${gn} ${nm}${josa(nm, '을/를')} 세웠다`
+        + ` (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: c.price, kind: c.kind };
+}
+
+export function canUpgradeGrow(goodId, cityId = state.at) {
+  const kind = growKind(goodId);
+  const w = kind ? workAt(kind, goodId, cityId) : null;
+  if (!w) return { ok: false, reason: '없다' };
+  if (w.level >= WORK.levelCap) return { ok: false, reason: '더 올릴 수 없다' };
+  const price = growPrice(goodId, cityId, w.level + 1);
+  if (price > state.gold) {
+    return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
+  }
+  return { ok: true, price, to: w.level + 1, kind };
+}
+
+export function upgradeGrow(goodId, cityId = state.at) {
+  const c = canUpgradeGrow(goodId, cityId);
+  if (!c.ok) return c;
+  const w = workAt(c.kind, goodId, cityId);
+  growStock(goodId, cityId);            // 올리기 전에 그동안 쌓인 것을 정산한다
+  state.gold -= c.price;
+  book('outgo', 'ships', c.price);
+  state.works[cityId].spent += c.price;
+  w.level = c.to;
+  const gn = GOOD_BY_ID[goodId].name;
+  pushLog(`${CITY_BY_ID[cityId].name} ${gn} ${WORKS[c.kind].name}${josa(WORKS[c.kind].name, '을/를')}`
+        + ` ${c.to}등급으로 올렸다 (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
+  return { ok: true, price: c.price, level: c.to };
+}
+
+/** 매각 — 가공장과 같은 회수율(60%). 쌓여 있던 재고는 함께 넘어간다. */
+export function sellGrow(goodId, cityId = state.at) {
+  const kind = growKind(goodId);
+  const w = kind ? workAt(kind, goodId, cityId) : null;
+  if (!w) return { ok: false, reason: '없다' };
+  let spent = 0;
+  for (let lv = 1; lv <= w.level; lv++) spent += growPrice(goodId, cityId, lv);
+  const back = Math.round(spent * WORK.sellBack);
+  const m = state.works[cityId];
+  delete m[workKey(kind, goodId)];
+  m.spent = Math.max(0, (m.spent ?? 0) - spent);
+  if (!workList(cityId).length) delete state.works[cityId];
+  state.gold += back;
+  book('income', 'loot', back);
+  const gn = GOOD_BY_ID[goodId].name;
+  pushLog(`${CITY_BY_ID[cityId].name} ${gn} ${WORKS[kind].name}${josa(WORKS[kind].name, '을/를')} 넘겼다`
+        + ` (+${back.toLocaleString('ko-KR')}닢 — 들인 돈의 ${Math.round(WORK.sellBack * 100)}%).`, 'warn');
+  return { ok: true, back, spent };
+}
 
 /** 가공장 값 — `(9,000 + 산출 base × 80) × TIER_MUL[요구 공업력]`.
     `level`은 **그 등급에 새로 내는 몫**이다(1→2가 0.80배, 2→3이 1.30배). */

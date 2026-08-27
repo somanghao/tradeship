@@ -2,7 +2,6 @@
   "_읽는이에게": "가공 사슬의 투입:산출 비율이 왜 이 값인지. 코드 정본은 js/data.js: CHAIN이고 이 파일과 어긋나면 node tools/check-chain.mjs가 경고한다. 설계 사양은 .claude/docs/SPEC-vertical.md. 자매 파일 — 교역품 물가 goods-evidence.json · 유지비 upkeep-evidence.json · 부동산/선박 asset-evidence.json.",
   "version": 1,
   "stage": "1단계 — 직물 세 갈래(가공장만 · 세력 없음). 남은 네 갈래(제당·제사·제련·건조·요업)와 농장·판매소·유통은 2~4단계다.",
-
   "howValuesWereChosen": {
     "rule": "★ **비율의 방향만 사료이고 정수는 밴드에서 역산했다.** 이 저장소는 근거로 정한 값과 밸런스로 정한 값을 섞어 적지 않는다(goods-evidence.json과 같은 규약).",
     "band": "1.08 ≤ (산출 기준가 × 수량) ÷ Σ(투입 기준가 × 수량) ≤ 1.25 — js/data.js: WORK.marginMin/marginMax가 정본이고 check-chain.mjs가 **실패**시킨다.",
@@ -10,20 +9,22 @@
     "fee": "가공비(현금) = 산출 기준가 합 × 0.10. 밴드의 절반쯤을 먹도록 정한 밸런스 값이다 — 이 하나가 '사슬은 시세보다 비싸다'는 정리를 만든다.",
     "newGoodsBase": "chintz 320 · scarlet 510은 **밴드에서 역산한 값**이다. 사료가 말해 주는 것은 순서(날염포 > 흰 면포 · scarlatto가 유럽 직물 최고가)뿐이고, 그 순서를 지키는 구간 안에서 밴드에 드는 수를 골랐다."
   },
-
   "verdicts": {
     "confirmed": "사료로 확인됨",
     "probable": "개연성 있음 (인접 사례나 비율로 채움)",
     "balance": "비율의 방향만 사료이고 정수는 가공마진 밴드에서 역산",
     "gameplay": "게임이 성립하도록 고증을 의도적으로 덮어씀"
   },
-
   "chains": {
     "weave_calico": {
       "name": "방직",
       "work": "직조장(면)",
-      "in": { "cotton": 3 },
-      "out": { "calico": 2 },
+      "in": {
+        "cotton": 3
+      },
+      "out": {
+        "calico": 2
+      },
       "margin": 1.239,
       "req": 1,
       "verdict": "balance",
@@ -31,55 +32,250 @@
       "note": "공업력 1을 요구하는 것은 베 짜기가 도시의 기술이 아니라 어디서나 하던 일이었기 때문이다. 유럽·인도·동아시아의 웬만한 항구가 이 사슬을 돌릴 수 있다.",
       "checkChainWarning": "②-b 대조식이 0.929로 목표 [0.95, 1.10] 아래다. 원인은 사슬이 아니라 **원면의 최저 산지가 상루이스(0.44)**라는 것이다 — 브라질 대농장 값이 구자라트 면포값(0.48)보다 깊어서, 무게만 보면 브라질에서 원면을 사 인도 면포보다 싸게 짤 수 있다는 계산이 나온다. 실제로는 ① 그 둘이 대양 하나를 사이에 두고 있고(§1-6) ② 원면을 3배로 사야 하므로 대량거래 벌점이 3배로 쌓이며(방어 ②) ③ 직조장 20,600닢의 연 10% 고정비가 따로 붙는다. 대조식은 그 셋을 안 보는 **하한**이라 경고로만 둔다. 밴드(②)는 통과한다.",
       "sources": [
-        { "title": "Wikipedia — Cotton gin (씨가 목화 무게의 대부분을 차지한다)", "url": "https://en.wikipedia.org/wiki/Cotton_gin" },
-        { "title": "Wikipedia — Fustian (지중해가 레반트 원면을 들여와 짜던 혼방)", "url": "https://en.wikipedia.org/wiki/Fustian" }
+        {
+          "title": "Wikipedia — Cotton gin (씨가 목화 무게의 대부분을 차지한다)",
+          "url": "https://en.wikipedia.org/wiki/Cotton_gin"
+        },
+        {
+          "title": "Wikipedia — Fustian (지중해가 레반트 원면을 들여와 짜던 혼방)",
+          "url": "https://en.wikipedia.org/wiki/Fustian"
+        }
       ]
     },
-
     "print_chintz": {
       "name": "날염",
       "work": "염색장(사라사)",
-      "in": { "calico": 2, "indigo": 1 },
-      "out": { "chintz": 2 },
+      "in": {
+        "calico": 2,
+        "indigo": 1
+      },
+      "out": {
+        "chintz": 2
+      },
       "margin": 1.164,
       "req": 2,
       "verdict": "balance",
       "basis": "염색·날염은 천을 늘리지도 줄이지도 않는다 — 그래서 면포 2칸이 사라사 2칸이 되고, 값의 차이는 인디고와 손이 만든다. 투입에 인디고 1을 붙인 것은 '천이 주재료이고 염료는 그 위에 얹힌다'는 방향이며, 정확한 1:2는 밴드에서 역산했다.",
       "note": "공업력 2를 요구한다. 매염(mordant)과 방염(resist)을 되풀이하는 인도 날염은 물·잿물·염색장이 함께 있어야 하는 도시의 기술이었고, 유럽이 18세기까지 재현하지 못한 것이 바로 그 공정이다.",
       "sources": [
-        { "title": "Wikipedia — Chintz (인도 캘리코에 매염·방염으로 무늬를 낸 천)", "url": "https://en.wikipedia.org/wiki/Chintz" },
-        { "title": "Wikipedia — Kalamkari (코로만델의 붓 그림 날염)", "url": "https://en.wikipedia.org/wiki/Kalamkari" }
+        {
+          "title": "Wikipedia — Chintz (인도 캘리코에 매염·방염으로 무늬를 낸 천)",
+          "url": "https://en.wikipedia.org/wiki/Chintz"
+        },
+        {
+          "title": "Wikipedia — Kalamkari (코로만델의 붓 그림 날염)",
+          "url": "https://en.wikipedia.org/wiki/Kalamkari"
+        }
       ]
     },
-
     "dye_scarlet": {
       "name": "주홍 염색",
       "work": "염색장(주홍)",
-      "in": { "woolcloth": 2, "cochineal": 1 },
-      "out": { "scarlet": 2 },
+      "in": {
+        "woolcloth": 2,
+        "cochineal": 1
+      },
+      "out": {
+        "scarlet": 2
+      },
       "margin": 1.159,
       "req": 2,
       "verdict": "balance",
       "basis": "날염과 같은 이유로 칸 수가 그대로다. 코치닐 1이 모직 2칸을 물들이는 것은 게임의 정수이고, 사료가 지지하는 것은 '이 붉은색의 값은 염료가 만든다'는 방향이다 — 코치닐은 부피 대비 값이 신대륙에서 은 다음가는 수출품이었다.",
       "note": "★ 세 갈래 가운데 이것만 **대서양을 한 번 건너야** 만들어진다. 모직은 플랑드르·잉글랜드, 코치닐은 누에바에스파냐다. check-chain.mjs가 '원료까지 있는 곳 0'으로 그것을 표시한다 — 결함이 아니라 설계다(SPEC-vertical.md §1-6: 수직계열화의 진짜 대가는 돈이 아니라 항로다).",
       "sources": [
-        { "title": "Wikipedia — Scarlet (cloth) ('the most expensive cloth of the medieval and early modern periods')", "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)" },
-        { "title": "Wikipedia — Cochineal (신대륙 수출품 가운데 은 다음가는 값)", "url": "https://en.wikipedia.org/wiki/Cochineal" }
+        {
+          "title": "Wikipedia — Scarlet (cloth) ('the most expensive cloth of the medieval and early modern periods')",
+          "url": "https://en.wikipedia.org/wiki/Scarlet_(cloth)"
+        },
+        {
+          "title": "Wikipedia — Cochineal (신대륙 수출품 가운데 은 다음가는 값)",
+          "url": "https://en.wikipedia.org/wiki/Cochineal"
+        }
+      ]
+    },
+    "refine_sugar": {
+      "name": "제당",
+      "work": "제당소",
+      "in": {
+        "cane": 7
+      },
+      "out": {
+        "sugar": 1
+      },
+      "margin": 1.176,
+      "req": 1,
+      "verdict": "confirmed",
+      "basis": "벤 사탕수수는 며칠 안에 즙이 시어 버려 **밭 옆에서 졸여야** 했다 — 그것이 엔제뉴(engenho)가 농장과 한 몸이었던 이유이고, 마데이라에서 상투메로, 다시 브라질과 카리브로 옮겨 간 것도 농장이 아니라 그 **한 몸의 모델**이다. 7:1은 즙을 졸여 굳히는 동안 부피가 크게 준다는 방향을 지키면서 밴드에 드는 가장 단순한 정수다.",
+      "note": "공업력 1이다 — 제당소는 도시의 기술이 아니라 농장의 설비였다. 대신 이 사슬은 **산지와 가공지가 같고 팔 데가 북유럽**이라, 대가를 항로로 문다.",
+      "checkChainWarning": "②-b 대조식 1.179. 원료 산지(푼샬 0.60 · 헤시피 0.58 · 바베이도스 0.64 · 상투메 0.62)와 설탕 최저 산지(푼샬 0.48)를 견주면 사슬이 불리하게 나온다 — **밭(−12~24%)을 안 보는 하한**이기 때문이다. 2단계의 농장이 원료를 원가로 대면 그 값이 밴드로 들어온다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Sugar plantations in the Caribbean",
+          "url": "https://en.wikipedia.org/wiki/Sugar_plantations_in_the_Caribbean"
+        },
+        {
+          "title": "Wikipedia — Engenho",
+          "url": "https://en.wikipedia.org/wiki/Engenho"
+        }
+      ]
+    },
+    "weave_silk": {
+      "name": "제사·직조",
+      "work": "직조장(견)",
+      "in": {
+        "rawsilk": 2
+      },
+      "out": {
+        "silk": 1
+      },
+      "margin": 1.105,
+      "req": 2,
+      "verdict": "confirmed",
+      "basis": "이탈리아 견직업(루카·제노바·베네치아)은 제 누에를 다 못 쳐서 **중국·페르시아·그라나다 생사를 사다 짰다.** 생사값이 완성 직물값의 40~55%였다는 것이 이 비율의 근거이고, 190/420 = 45%가 그 구간의 한복판이다. 2:1은 켜고 짜는 동안 칸이 준다는 방향이다.",
+      "note": "마진 1.105로 여덟 사슬 가운데 가장 얇다 — 견직은 손이 많이 가는 대신 남는 것이 얇았다. 공업력 2를 요구하는 것은 그것이 **도시의 기술**이었기 때문이다.",
+      "checkChainWarning": "②-b 대조식 1.188. 위와 같은 이유(밭을 안 본다).",
+      "sources": [
+        {
+          "title": "Wikipedia — Silk industry in Italy / Lucca",
+          "url": "https://en.wikipedia.org/wiki/Lucca"
+        },
+        {
+          "title": "Wikipedia — Silk Road (생사 교역)",
+          "url": "https://en.wikipedia.org/wiki/Silk_Road"
+        }
+      ]
+    },
+    "smelt_silver": {
+      "name": "제련",
+      "work": "정련소",
+      "in": {
+        "silverore": 15,
+        "mercury": 1
+      },
+      "out": {
+        "silver": 2
+      },
+      "margin": 1.239,
+      "req": 1,
+      "verdict": "confirmed",
+      "basis": "포토시 광석은 품위가 낮아 **여덟 짐에서 은 한 짐**이 나오는 정도였고, 그래서 광석을 먼 데로 나르는 일이 없었다. 1554년 이후 파티오 공정(아말감법)이 들어오면서 **수은이 없으면 은이 안 나왔고**, 그 수은을 우앙카벨리카에서 실어 올렸다 — 스페인 왕실이 수은을 독점한 이유가 그것이다. 15:2 + 수은 1이 그 두 사실을 함께 담은 정수다.",
+      "note": "★ **이 사슬만 공업력 1이다.** 포토시도 우앙카벨리카도 `industry 0`인 내륙 광산이라 2를 걸면 사슬이 통째로 죽는다(SPEC-vertical §1-3). 정련은 실제로 광산 옆에서 했다.",
+      "checkChainWarning": "②-b 대조식 1.148. 위와 같은 이유(밭·광산을 안 본다).",
+      "sources": [
+        {
+          "title": "Wikipedia — Patio process",
+          "url": "https://en.wikipedia.org/wiki/Patio_process"
+        },
+        {
+          "title": "Wikipedia — Potosí",
+          "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+        },
+        {
+          "title": "Wikipedia — Huancavelica (수은)",
+          "url": "https://en.wikipedia.org/wiki/Huancavelica"
+        }
+      ]
+    },
+    "dry_pepper": {
+      "name": "건조·선별",
+      "work": "정제장",
+      "in": {
+        "rawpepper": 5
+      },
+      "out": {
+        "pepper": 3
+      },
+      "margin": 1.2,
+      "req": 1,
+      "verdict": "confirmed",
+      "basis": "덩굴에서 딴 초록 열매를 데쳐 볕에 말려야 검게 쪼그라든 흑후추가 된다. 말리면 무게가 절반 아래로 주는 것이 그 공정의 성질이고, 5:3이 그 방향 안에서 밴드에 드는 정수다. 말리고 고르는 일은 산지 항구의 몫이었다.",
+      "note": "공업력 1 — 볕과 멍석이면 되는 일이라 도시의 기술이 아니다.",
+      "checkChainWarning": "②-b 대조식 1.216. 위와 같은 이유(밭을 안 본다).",
+      "sources": [
+        {
+          "title": "Wikipedia — Black pepper (processing)",
+          "url": "https://en.wikipedia.org/wiki/Black_pepper"
+        }
+      ]
+    },
+    "kiln_ceramic": {
+      "name": "요업",
+      "work": "요장",
+      "in": {
+        "kaolin": 4
+      },
+      "out": {
+        "ceramic": 1
+      },
+      "margin": 1.161,
+      "req": 2,
+      "verdict": "confirmed",
+      "basis": "고령(高嶺)의 백토에 백돈자(petuntse)를 섞어 1,300도로 구워야 백자가 나왔다. 유럽이 삼백 년을 흉내 내지 못한 것이 그 **배합과 온도**이고, 그래서 흙은 싸고 굽는 기술이 값이다. 4:1은 성형·건조·소성에서 깨지고 주는 몫을 담은 정수다.",
+      "note": "공업력 2가 이 사슬의 문지기다 — 가마가 도시의 기술이었다는 뜻이고, A-2 부두 승급과 물린다.",
+      "checkChainWarning": "②-b 대조식 1.213. 위와 같은 이유(광산을 안 본다).",
+      "sources": [
+        {
+          "title": "Wikipedia — Kaolinite / porcelain",
+          "url": "https://en.wikipedia.org/wiki/Kaolinite"
+        },
+        {
+          "title": "Wikipedia — Jingdezhen porcelain",
+          "url": "https://en.wikipedia.org/wiki/Jingdezhen_porcelain"
+        }
       ]
     }
   },
-
   "facilities": {
     "mill": {
       "priceFormula": "(9,000 + 산출 품목 base × 80) × TIER_MUL[요구 공업력] · TIER_MUL = {1: 1.0, 2: 1.35, 3: 1.8}",
-      "prices": { "직조장(면)": 20600, "염색장(사라사)": 46710, "염색장(주홍)": 67230 },
+      "prices": {
+        "직조장(면)": 20600,
+        "염색장(사라사)": 46710,
+        "염색장(주홍)": 67230
+      },
       "verdict": "balance",
       "basis": "자릿수의 앵커는 asset-evidence.json이 이미 갖고 있다 — 도시 연립주택 3,000~4,000두카트(선원 연봉 150~200배), 대운하 궁전 200,000두카트. 염색장 둘이 대형 갈레온(42,000)과 같은 자리에 오도록 계수를 잡았다. 곧 이 층은 **배 꼭대기를 산 뒤에 갈 곳**이지 초·중반의 선택지가 아니다.",
       "upkeep": "들인 돈의 연 10%를 30일마다. 거점(연 6%)보다 무거운 이유는 **사람이 붙기 때문**이다 — 근거는 upkeep-evidence.json의 유지비 갈래와 같은 성격이고, 그 값 자체는 밸런스다(SPEC-vertical.md §6-3의 '고정비 ÷ 총지출 +8%p'가 판정한다).",
       "sellBack": "0.60 — 잘못 지으면 아프되 재기는 되는 폭. 자본이 배 밖에 묶이고 되돌리면 40%가 증발한다는 것이 이 층의 대가다."
+    },
+    "farm": {
+      "name": "농장",
+      "price": "(3,000 + base×50) × (0.7 + 0.15×size)",
+      "perDay": {
+        "1": 4,
+        "2": 7,
+        "3": 10
+      },
+      "stockDays": 45,
+      "costOff": {
+        "1": 0.12,
+        "2": 0.18,
+        "3": 0.24
+      },
+      "verdict": "balance",
+      "basis": "밭이 대는 것은 마진이 아니라 **원가**다(−12~24%). 그 몫은 시장 압력을 일으키지 않는다 — 자기 밭에서 실었기 때문이다. 규모를 묶는 것은 값이 아니라 **45일 상한**이고, 그것이 '밭에서 썩는다'는 현실의 번역이다.",
+      "note": "여기서 처음 곡선이 움직인다. 1단계(가공장만)는 '거의 안 남는 것이 정상'이었고, 남기 시작하는 것이 이 층이다."
+    },
+    "mine": {
+      "name": "광산",
+      "price": "농장과 같은 공식",
+      "perDay": {
+        "1": 2,
+        "2": 4,
+        "3": 6
+      },
+      "stockDays": 45,
+      "costOff": {
+        "1": 0.12,
+        "2": 0.18,
+        "3": 0.24
+      },
+      "verdict": "balance",
+      "basis": "광산이 농장의 절반만 캐는 이유는 **광물이 값이 높아 같은 칸이 훨씬 큰 이득**이기 때문이다. 은광석(31)은 싸지만 수은(310)·에메랄드(560) 같은 것이 같은 표를 쓴다.",
+      "note": "무엇이 농장이고 무엇이 광산인지는 `GOODS[].kind`가 정한다(crop/mineral). 태그가 없으면 '은광석 농장'이 지어진다."
     }
   },
-
   "openQuestions": [
     "2단계에서 농장·광산이 붙으면 '사슬은 시세보다 비싸다'가 깨진다 — 그때가 곡선이 처음 움직이는 지점이고, sim-chain.mjs 'full'로 정면으로 재야 한다.",
     "방직의 ②-b 경고(0.929)는 원면의 최저 산지(상루이스 0.44)가 만든 것이다. 2단계에서 사탕수수·원면 농장이 들어오면 같은 항구에서 원가로 대는 길이 열리므로 그때 다시 잰다.",

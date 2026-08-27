@@ -202,7 +202,7 @@ export const TRADE = {
     // ★★ 섬이 통째로 사탕수수밭이 되어 **먹을 것과 통널과 가죽을 죄다 배로 들여왔다.**
     //   demand가 규모에 비해 넓고 높은 것이 그 뜻이고, 이 바다에서 가죽을 사는 두 번째
     //   항구다(첫째는 은광이 낸 베라크루스다).
-    supply: { sugar: 0.46, tobacco: 0.56 },
+    supply: { sugar: 0.46, tobacco: 0.56, cane: 0.64 },
     demand: { grain: 1.34, weapon: 1.28, hide: 1.24, timber: 1.22 },
     blurb: '설탕 하나로 카리브의 부를 옮겨 놓은 섬. 먹을 것은 마지막 한 알까지 배로 들어온다.',
   },

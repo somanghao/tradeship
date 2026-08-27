@@ -36,7 +36,7 @@ export const TRADE = {
        주홍 모직도 사들인다 — 궁정과 교회가 입는 붉은 옷은 여기서 만들지 못했다. */
     demand: { woolcloth: 1.30, clove: 1.30, grain: 1.28, tar: 1.22, linen: 1.20,
               chintz: 1.34, scarlet: 1.28, sugar: 1.36, tobacco: 1.32,
-              coral: 1.26, melegueta: 1.30 },
+              coral: 1.26, melegueta: 1.30, cane: 1.26 },
     blurb: '테주 강어귀의 왕도. 대양에서 돌아온 배가 여기서 짐을 푼다.',
   },
   sevilla: {
@@ -47,7 +47,7 @@ export const TRADE = {
     //   그래서 유럽에서 은이 가장 싼 곳이 여기이고, 그 은이 제노바·카탈루냐 은행으로 흩어졌다.
     supply: { oliveoil: 0.38, wine: 0.40, mercury: 0.62 },
     demand: { woolcloth: 1.32, timber: 1.26, linen: 1.22, amber: 1.18,
-              tobacco: 1.40, weapon: 1.36, sugar: 1.28 },
+              tobacco: 1.40, weapon: 1.36, sugar: 1.28, cane: 1.24 },
     blurb: '과달키비르 강을 거슬러 올라간 내륙 항구. 대서양으로 나갈 배가 여기서 등록된다.',
   },
   porto: {
@@ -90,7 +90,7 @@ export const TRADE = {
     // ★ 대양으로 나가는 배의 첫 기항지이자 돌아오는 배의 마지막 기항지다. 그래서
     //   섬이 쓸 것(소금)뿐 아니라 **서인도에서 올라온 것을 받아 유럽행 배에 넘기는**
     //   중계 수요가 함께 선다 — 아바나가 함대 짐을 모으는 것과 같은 자리다.
-    supply: { sugar: 0.48, wine: 0.52 },
+    supply: { sugar: 0.48, wine: 0.52, cane: 0.60 },
     demand: { grain: 1.34, woolcloth: 1.28, iron: 1.22,
               salt: 1.32, hide: 1.38, ginger: 1.34 },
     blurb: '사탕수수가 산비탈을 뒤덮은 섬. 유럽 설탕이 여기서 가장 많이 난다.',
@@ -190,7 +190,7 @@ export const TRADE = {
     // ★ 사라사 — 리스본이 푼 인도 날염포가 여기서 북유럽 값을 받았다. 리스본(1.34)보다
     //   조금 낮은 것은 여기가 재분배 시장이기 때문이다.
     demand: { spice: 1.34, clove: 1.36, nutmeg: 1.34, sugar: 1.26, wax: 1.22, iron: 1.20,
-              chintz: 1.32 },
+              chintz: 1.32, cane: 1.22 },
     blurb: '스헬더 강의 세계 시장. 리스본의 후추와 잉글랜드의 모직이 여기서 값을 매긴다.',
   },
   amsterdam: {

@@ -76,7 +76,7 @@ export const TRADE = {
   recife: {
     // 1541년 제당 기계가 들어온 뒤로 카피바리비 강가가 통째로 사탕수수밭이 됐다.
     // 이 권역에서 설탕이 가장 싼 자리다. 붉은 나무는 남쪽에서 올라와 여기서 배를 탄다.
-    supply: { sugar: 0.44 },
+    supply: { sugar: 0.44, cane: 0.58 },
     demand: { brazilwood: 1.26, wine: 1.34, oliveoil: 1.24 },
     blurb: '올린다의 사탕수수가 여기서 배에 실린다. 제당소 연기가 강가에서 걷히지 않는다.',
   },
@@ -218,13 +218,13 @@ export const TRADE = {
     //   로하·키토의 예수회 껍질이 안데스를 넘어 여기서 배를 탔고, 유럽으로 가는 길은
     //   파나마 지협뿐이었다. 페루에 진주 어장이 없어 파나마 진주를 사들인다.
     supply: { silver: 0.60, quina: 0.58 },
-    demand: { woolcloth: 1.34, wine: 1.32, mercury: 1.26, pearl: 1.34 },
+    demand: { woolcloth: 1.34, wine: 1.32, mercury: 1.26, pearl: 1.34, silverore: 1.20 },
     blurb: '리마의 외항. 파나마로 올라가는 은이 여기서 배를 타고, 유럽 물건은 여기서 뭍에 오른다.',
   },
   arica: {
     // 1545년부터 포토시 은의 적출항. 사막 한복판이라 먹을 것이 하나도 안 난다 —
     // 곡물도 말린 감자도 다 실어 와야 하고, 그것이 이 항구의 유일한 되짐이다.
-    supply: { silver: 0.54 },
+    supply: { silver: 0.54, silverore: 0.66 },
     demand: { grain: 1.32, potato: 1.26, wine: 1.24 },
     blurb: '포토시의 은이 노새 등에 실려 내려오는 사막의 적출항. 먹을 것은 한 톨도 안 난다.',
   },
@@ -286,7 +286,7 @@ export const TRADE = {
     // ★ 확장에서 **육포**를 한 줄 얹었다. 해발 4,000m에 곡물이 안 나므로 미타에 끌려온
     //   사람들을 먹인 것은 감자(추뇨)와 소금에 절인 고기였고, 그것을 대는 쪽이 칠레와
     //   라플라타였다(콘셉시온 0.48 · 몬테비데오 0.52). 광산은 은만 사들이는 곳이 아니었다.
-    supply: { silver: 0.44 },
+    supply: { silver: 0.44, silverore: 0.60 },
     demand: { mercury: 1.46, coca: 1.38, charqui: 1.32, yerbamate: 1.30, hide: 1.30 },
     blurb: '은의 산 아래 세워진 도시. 한때 런던 다음으로 컸고, 그 부는 미타에 끌려온 사람들 위에 있었다.',
   },
@@ -298,7 +298,7 @@ export const TRADE = {
     //   만든 것이다 — 수은 다음으로 광산에 절실한 것이 불이었다. 이 물건은 칠레의 목장에서
     //   나 아리카·카야오를 거쳐 산으로 오른다(콘셉시온 0.50).
     supply: { mercury: 0.46 },
-    demand: { potato: 1.32, tallow: 1.32, coca: 1.30, grain: 1.26 },
+    demand: { potato: 1.32, tallow: 1.32, coca: 1.30, grain: 1.26, silverore: 1.24 },
     blurb: '주사를 구워 수은을 내는 산. 이 수은이 없으면 포토시의 은은 돌덩이일 뿐이다.',
   },
   cusco: {

@@ -108,7 +108,7 @@ export const TRADE = {
     // 데칸 왕들이 여기서 말을 사게 만들었다 — 그것이 고아를 쥔 값어치의 절반이었다.
     // 유럽인 수천이 겨울을 나는 도시라 포도주와 쌀은 배로 들어와야 한다.
     supply: { weapon: 0.66, teak: 0.64 },
-    demand: { wine: 1.34, horse: 1.32, indigo: 1.30, grain: 1.22 },
+    demand: { wine: 1.34, horse: 1.32, indigo: 1.30, grain: 1.22, rawpepper: 1.24 },
     blurb: '에스타두 다 인디아의 수도. 유럽 배가 여기서 겨울을 나고 카르타즈를 판다.',
   },
   bhatkal: {
@@ -148,7 +148,7 @@ export const TRADE = {
        사료가 말하는 30배는 말라바르에서 북유럽까지의 전 구간이고, 지중해 한 구간만
        떼면 1.2~2.0이다(content/voyage-evidence.json: spiceLegMultiple).
        게임의 원양 한 구간이 그 전 구간을 대신하므로, 산지 값을 권역 안 하한보다 깊게 준다. */
-    supply: { pepper: 0.38, spice: 0.46, ginger: 0.58, calico: 0.60 },
+    supply: { pepper: 0.38, spice: 0.46, ginger: 0.58, calico: 0.60, rawpepper: 0.58 },
     // 아라비아 말과 유향은 반대편 되짐이다 — 후추를 실어 간 배가 그것을 싣고 돌아왔다.
     demand: { gold: 1.36, grain: 1.32, incense: 1.28 },
     blurb: '후추가 나는 말라바르의 관문. 사무티리가 다스리고 마라카르의 배가 지킨다.',
@@ -160,7 +160,7 @@ export const TRADE = {
     // ★ 코이어를 세계에서 가장 싸게 내는 곳으로 두었다. 이 바다의 배는 못이 아니라
     //   야자 밧줄로 판자를 꿰맸으니, 후추 해안이 삭구의 산지이기도 했던 것이 우연이 아니다.
     //   조선대가 있는 바세인·후글리·타타가 이것을 사가는 왕복이 여기서 생긴다.
-    supply: { coir: 0.46, pepper: 0.52, ginger: 0.60 },
+    supply: { coir: 0.46, pepper: 0.52, ginger: 0.60, rawpepper: 0.62 },
     demand: { grain: 1.30, gold: 1.26, wine: 1.24 },
     blurb: '로마 배가 대던 옛 무지리스. 홍수가 강을 막은 뒤로는 야자와 후추의 포구다.',
   },
@@ -168,7 +168,7 @@ export const TRADE = {
     // 1341년 홍수가 크랑가노르를 메우고 대신 열어 준 갯벌 항구.
     // 포르투갈이 요새를 짓고 후추를 싣던 곳이라 캘리컷보다 살짝 비싸게 산다.
     supply: { pepper: 0.50, spice: 0.52, ginger: 0.56 },
-    demand: { gold: 1.30, grain: 1.28, wine: 1.26 },
+    demand: { gold: 1.30, grain: 1.28, wine: 1.26, rawpepper: 1.26 },
     blurb: '포르투갈이 후추를 싣는 항구. 1341년의 홍수가 이 갯벌을 항구로 만들었다.',
   },
   quilon: {

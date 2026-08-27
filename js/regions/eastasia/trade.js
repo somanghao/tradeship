@@ -24,7 +24,7 @@ export const TRADE = {
     // ★ 원양 관문(믈라카 16일). 남해 시박사가 앉은 문이라 남양 물건이 여기로 든다 —
     //   후추와 주석은 중국 안에서 안 나는 물건이고, 명대 내내 남해에서 사들였다.
     //   생사·자기 값을 조금 더 내린 것은 여기가 그 두 물건의 **값을 매기는 시장**이라서다.
-    supply: { silk: 0.50, ceramic: 0.50, musk: 0.58 },
+    supply: { silk: 0.50, ceramic: 0.50, musk: 0.58, kaolin: 0.60 },
     demand: { silver: 1.44, sulfur: 1.30, ivory: 1.26, tin: 1.30, pepper: 1.30 },
     blurb: '정월과 유월에 비단 시장이 선다. 생사와 자기의 값이 여기서 매겨진다.',
   },
@@ -36,7 +36,7 @@ export const TRADE = {
     // 불랑기포(佛郎機砲)는 명이 유럽에서 들여간 무기라 무기 수요가 실재하고,
     // 광저우 시장에서 사 온 사향은 여기서 인도·유럽행 배에 오른다.
     supply: { silk: 0.70, gold: 0.72 },
-    demand: { silver: 1.34, lacquer: 1.28, weapon: 1.26, musk: 1.24 },
+    demand: { silver: 1.34, lacquer: 1.28, weapon: 1.26, musk: 1.24, kaolin: 1.26 },
     blurb: '명이 유일하게 유럽 배에 내준 부두. 광저우의 금과 생사가 여기서 배에 오른다.',
   },
   yuegang: {
@@ -56,7 +56,7 @@ export const TRADE = {
     //   마닐라로 건너가 갤리온에 실리는 자기가 여기서 실린다.
     //   시암·루손의 사슴 가죽은 반대로 사들였다: 명의 가죽 수요는 남양에서 채웠다.
     supply: { ceramic: 0.42, silk: 0.66 },
-    demand: { grain: 1.28, copper: 1.24, spice: 1.36, deerhide: 1.34 },
+    demand: { grain: 1.28, copper: 1.24, spice: 1.36, deerhide: 1.34, kaolin: 1.24 },
     blurb: '모래에 막힌 옛 세계 제일의 항구. 이제는 배 짓는 망치 소리가 더 크다.',
   },
   fuzhou: {
@@ -70,7 +70,7 @@ export const TRADE = {
     // 감합 무역의 일본 담당 시박사. 배후가 강남이라 **호주(湖州) 생사**의 집산지이고
     // 이 바다에서 생사가 가장 싼 자리다. 명은 동전 주조용 구리가 늘 모자랐고,
     // 조선 인삼은 약재로 값이 높았다.
-    supply: { silk: 0.48, ceramic: 0.60 },
+    supply: { silk: 0.48, ceramic: 0.60, rawsilk: 0.58, kaolin: 0.64 },
     demand: { silver: 1.40, copper: 1.28, ginseng: 1.26 },
     blurb: '감합을 든 배만 들어오는 강남의 관문. 호주의 생사가 여기서 풀린다.',
   },

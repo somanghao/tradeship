@@ -115,7 +115,7 @@ export const TRADE = {
     // 포르투갈령 믈라카를 건너뛰고 후추를 홍해로 직송하던 항구다. 그 때문에
     // 화기 수요가 이 권역 최고다(오스만에서 포와 포수를 들여왔다).
     // 정향 수요를 여기 둔 것은 그 홍해 직항로가 향료도 함께 실어 올렸기 때문이다.
-    supply: { pepper: 0.46, gold: 0.74 },
+    supply: { pepper: 0.46, gold: 0.74, rawpepper: 0.66 },
     // ★ 사라사 — 인도 날염포는 이 바다에서 **화폐에 가까운 물건**이었다(향신료를 사는 값이
     //   은이 아니라 천이었다). 구자라트 배가 실어 온 것 가운데 값이 가장 높은 축이다.
     demand: { clove: 1.28, weapon: 1.38, grain: 1.30, silk: 1.26, chintz: 1.24 },
@@ -157,7 +157,7 @@ export const TRADE = {
     //   두 대양 항로가 다 그 값에 걸린다. 반대로 중국 비단·자기는 여기서 인도 상인에게 넘어갔다.
     supply: { tin: 0.50, pepper: 0.56 },
     demand: { clove: 1.36, nutmeg: 1.34, grain: 1.30, calico: 1.44, salt: 1.26,
-              silk: 1.44, ceramic: 1.38 },
+              silk: 1.44, ceramic: 1.38, rawpepper: 1.22 },
     blurb: '두 계절풍이 만나는 해협의 문. 나는 것은 없는데 세상의 모든 것이 여기를 지난다.',
   },
   johor: {

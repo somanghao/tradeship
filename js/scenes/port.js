@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         ESTATE_KEYS, WORK, FACTIONS, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
+         ESTATE_KEYS, WORK, WORKS, FACTIONS, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -37,6 +37,9 @@ import {
   millRecipes, millOf, millPrice, canBuyMill, buyMill, canUpgradeMill, upgradeMill, sellMill,
   millBatchCap, millFee, millDays, canRunMill, runMill, collectMill,
   worksUpkeepDue, settleWorks, workList, chainOutUnits,
+  /* 2단계 — 농장·광산 */
+  growCandidates, growPrice, growRate, growCap, growOff, growStock, workAt,
+  canBuyGrow, buyGrow, canUpgradeGrow, upgradeGrow, sellGrow,
   /* 세력 관계(SPEC-factions 1단계) — 규칙은 `state.js`, 값은 `data.js: FACTIONS·REGARD`.
      여기서는 **이 항구의 임자 한 줄**만 보여주고 나머지는 관계도 모달이 편다. */
   factionOfCity, factionsOfCity, regardOf, regardBand, infamyWeight,
@@ -1282,7 +1285,8 @@ function holdingCard() {
 function worksCard() {
   const recipes = millRecipes(city.id);
   const mine = workList(city.id);
-  if (!recipes.length && !mine.length) return null;
+  const grows = growCandidates(city.id);
+  if (!recipes.length && !mine.length && !grows.length) return null;
 
   const rows = [];
   const due = worksUpkeepDue(city.id);
@@ -1365,10 +1369,61 @@ function worksCard() {
       }));
   }
 
+  /* ── 2단계 · 농장과 광산 (SPEC-vertical §2-5) ────────────────────────
+     ★ **밭이 대는 것은 마진이 아니라 원가다.** 재고까지는 −12~24%로 사고 **시장을 안 누른다**.
+       그래서 화면이 말해야 하는 것도 값이 아니라 **「지금 몇 칸이 서 있나」**다. */
+  for (const cand of growCandidates(city.id)) {
+    const w = workAt(cand.kind, cand.gid, city.id);
+    const nm = WORKS[cand.kind].name;
+    const gn = cand.good.name;
+    if (!w) {
+      const can = canBuyGrow(cand.gid, city.id);
+      const price = growPrice(cand.gid, city.id, 1);
+      rows.push(svcRow(`${gn} ${nm} — ${price.toLocaleString('ko-KR')}닢`,
+        `하루 ${growRate(cand.kind, 1)}칸 · ${WORKS[cand.kind].stockDays}일치까지 쌓인다`
+        + ` · 그 몫은 원가 −${Math.round(growOff(1) * 100)}%이고 시장을 안 누른다`,
+        can.ok ? '세운다' : (can.reason.length > 10 ? '못 세운다' : can.reason),
+        !can.ok, () => {
+          const res = buyGrow(cand.gid, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${gn} ${nm}${josa(nm, '을/를')} 세웠다`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+      continue;
+    }
+    const have = growStock(cand.gid, city.id);
+    const cap = growCap(cand.kind, w.level);
+    rows.push(svcRow(`${gn} ${nm} ${w.level}등급` + (w.idle ? ' · 휴업' : ''),
+      w.idle ? '휴업 중이라 한 칸도 안 쌓인다 — 밀린 유지비를 내야 한다'
+             : `밭에 ${have}/${cap}칸 · 하루 ${growRate(cand.kind, w.level)}칸`
+               + ` · 여기서 ${gn}을(를) 사면 그만큼 원가 −${Math.round(growOff(w.level) * 100)}%`,
+      '—', true, () => {}));
+    if (w.level < WORK.levelCap) {
+      const up = canUpgradeGrow(cand.gid, city.id);
+      const price = growPrice(cand.gid, city.id, w.level + 1);
+      rows.push(svcRow(`　└ ${w.level + 1}등급으로 — ${price.toLocaleString('ko-KR')}닢`,
+        `하루 ${growRate(cand.kind, w.level)} → ${growRate(cand.kind, w.level + 1)}칸`
+        + ` · 원가 −${Math.round(growOff(w.level) * 100)}% → −${Math.round(growOff(w.level + 1) * 100)}%`,
+        up.ok ? '올린다' : (up.reason.length > 10 ? '못 올린다' : up.reason), !up.ok, () => {
+          const res = upgradeGrow(cand.gid, city.id);
+          if (!res.ok) return toast(res.reason, 'bad');
+          toast(`${gn} ${nm} ${res.level}등급`, 'good');
+          refreshHUD(); refreshLog(); after();
+        }));
+    }
+    rows.push(svcRow('　└ 넘긴다', `들인 돈의 ${Math.round(WORK.sellBack * 100)}%만 돌아온다 · 쌓인 것도 함께 넘어간다`,
+      '넘긴다', false, () => {
+        const res = sellGrow(cand.gid, city.id);
+        if (!res.ok) return toast(res.reason, 'bad');
+        toast(`+${res.back.toLocaleString('ko-KR')}닢`, 'warn');
+        refreshHUD(); refreshLog(); after();
+      }));
+  }
+
   if (!rows.length) return null;
   return el('div.panel', {}, [
     el('h3', {}, [
-      el('span', { text: '가공장' }),
+      el('span', { text: '시설' }),
       el('span', {
         text: mine.length ? `${mine.length}개 · 연 ${Math.round(WORK.upkeepRate * 100)}%`
                           : `공업력 ${city.industry}`,

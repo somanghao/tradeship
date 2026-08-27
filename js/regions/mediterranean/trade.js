@@ -24,7 +24,7 @@ export const TRADE = {
        나게 해 두었는데 **사 주는 곳이 인도 안 두 곳뿐이었다** — 유럽이 대양으로 나선 이유가
        인도 안에서만 도는 사구간 화물이었다는 뜻이다. 후추는 향신료 무역의 *부피*였으므로
        범용 향신료(1.42)보다 조금 낮게 둔다. */
-    demand: { spice: 1.42, pepper: 1.36, clove: 1.38, nutmeg: 1.40, fur: 1.30, grain: 1.18, oliveoil: 1.20 },
+    demand: { spice: 1.42, pepper: 1.36, clove: 1.38, nutmeg: 1.40, fur: 1.30, grain: 1.18, oliveoil: 1.20, rawsilk: 1.34 },
     blurb: '유리와 비단의 도시. 동방 향신료라면 값을 아끼지 않는다.',
   },
   genova: {
@@ -36,7 +36,7 @@ export const TRADE = {
        알게로(0.48)가 어장이고 여기는 세공·중개값이라 그보다 높다.
        후추·향신료는 반대로 리스본에서 올라온다 — 카사 다 인디아가 그것을 되팔았다. */
     supply: { wine: 0.62, silk: 0.70, weapon: 0.76, coral: 0.62 },
-    demand: { spice: 1.40, pepper: 1.42, ivory: 1.28, fur: 1.26 },
+    demand: { spice: 1.40, pepper: 1.42, ivory: 1.28, fur: 1.26, rawsilk: 1.32 },
     blurb: '베네치아의 숙적. 조선소가 항구를 메우고 조알리의 벨벳이 실려 나간다.',
   },
   marseille: {
@@ -106,13 +106,13 @@ export const TRADE = {
     /* ★ 사라사·주홍 모직 수요 — 오스만 궁정과 이스탄불 시장은 인도 날염포의 최대 소비지였고,
        카프탄에 쓰는 최상급 붉은 모직은 베네치아에서 사 왔다. 유럽 직물이 이 도시로 흘러드는
        자리라 주홍을 사라사보다 높게 둔다. */
-    demand: { glass: 1.42, wine: 1.46, grain: 1.30, scarlet: 1.34, chintz: 1.30 },
+    demand: { glass: 1.42, wine: 1.46, grain: 1.30, scarlet: 1.34, chintz: 1.30, rawsilk: 1.26 },
     blurb: '두 대륙이 만나는 대도시. 부르사의 생사와 흑해의 모피가 여기서 풀린다.',
   },
   bursa: {
     // 1400~1630년 이란산 원료 생사의 국제 시장. 이탈리아 상인이 여기까지 와서
     // 생사를 사고 금·은화로 결제했다 — 그 금이 다시 동방으로 빠져나간다.
-    supply: { silk: 0.46 },
+    supply: { silk: 0.46, rawsilk: 0.62 },
     demand: { gold: 1.26, glass: 1.30, spice: 1.22 },
     blurb: '이란 생사가 풀리는 아나톨리아의 시장. 배는 뮈단야에 대고 뭍길로 들어간다.',
   },
@@ -202,7 +202,7 @@ export const TRADE = {
     // 비단 거래소(론하)와 마니세스 러스터웨어. 카스티야 양모가 이탈리아로 나가던
     // 지중해 쪽 창구이기도 했다. 염색에 쓸 명반은 반대로 사들인다.
     supply: { silk: 0.64, ceramic: 0.56, wool: 0.60 },
-    demand: { alum: 1.32, grain: 1.26 },
+    demand: { alum: 1.32, grain: 1.26, rawsilk: 1.28 },
     blurb: '비단 거래소가 선 아라곤 최대의 항구. 카스티야 양모도 여기서 배를 탄다.',
   },
   malaga: {
