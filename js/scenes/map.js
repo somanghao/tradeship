@@ -13,7 +13,7 @@ import {
 } from '../data.js';
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
-  rollSeaEvent, pickEnemy, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
+  rollSeaEvent, pickEnemy, legRegion, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
   knowPort, priceKnown, priceOf, payBounties, activeBounty, insuranceShare,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
@@ -811,7 +811,10 @@ function resolveEvent(ev0, voyage) {
          (돈을 치르고 산 약속이 세이브 하나로 깨지면 안 된다 · ISSUES #26). */
       const live = (voyage.foes ?? []).find((n) => !n.defId || !rosterClosed(n.defId));
       const npc = live || huntedOnLeg(voyage.from.id, voyage.to.id) || null;
-      const enemy = npc ? pirateEnemy(npc) : pickEnemy();
+      /* ★ 원양 구간이면 **두 바다 어느 쪽 얼굴도 나온다**(C-10 · `state.js: legRegion`).
+         예전에는 출발지의 표만 봐서 태평양 한복판에서 왜구가 나왔다. */
+      const enemy = npc ? pirateEnemy(npc)
+                        : pickEnemy(Math.random, legRegion(voyage.from.id, voyage.to.id));
       const pdef = defOf(npc);
       if (npc) {
         /* `world.js`는 명부 이름 뒤에 '호'를 붙인다 — '왕직호'·'식량형제단호'가 그렇게 나왔다.

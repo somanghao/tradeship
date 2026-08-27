@@ -17,7 +17,7 @@ import {
   buyShot, useShot, shotStock, maxHullOf, buy, sell, hire, sellsShip, yardsOf,
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
-  hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf,
+  hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf, legRegion,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -906,6 +906,63 @@ resetGame();
   ok(payRatio > 1.05 && payRatio < holdRatio,
      `동행이 계약을 키우되 **배수는 아니다** — 적재 ×${holdRatio.toFixed(2)}에 보수 ×${payRatio.toFixed(2)}`
      + ` (consortHold ${CONTRACT.consortHold})`);
+}
+
+/* ── C-3 · 받는 순간 실패가 확정된 일감이 없어야 한다 ─────────────────
+   ★ 기한을 **직선거리**로 재고 있었다. 이웃끼리는 직선이 곧 항로지만 목적지는 2홉까지 뽑고,
+     권역이 다르면 좌표계 자체가 달라 직선이 뜻을 잃는다 — 바르셀로나→아바나가 직선 13일인데
+     실제 길은 75일이었다. 실측 530건 중 **38건(7.2%)이 도착 불가능**이었다.
+   ★ 검사는 `hopDays`를 안 쓰고 **직접 다익스트라를 돌린다** — 검사기가 검사 대상의 함수로
+     자기를 검사하면 둘이 함께 틀렸을 때 통과한다(`check-routes`가 계절에서 배운 자리). */
+{
+  resetGame('busanpo');
+  const minDays = (a, b, day, maxHops = 4) => {
+    if (a === b) return 0;
+    const best = new Map([[a, 0]]);
+    let front = [a];
+    for (let h = 0; h < maxHops; h++) {
+      const nx = new Set();
+      for (const c of front) for (const n of neighborsOf(c)) {
+        const dd = best.get(c) + voyageDays(c, n, day);
+        if (best.has(n) && best.get(n) <= dd) continue;
+        best.set(n, dd); nx.add(n);
+      }
+      front = [...nx];
+    }
+    return best.has(b) ? best.get(b) : null;
+  };
+  let bad = 0, seen = 0, worst = null;
+  for (const c of CITIES) {
+    for (let k = 0; k < 2; k++) {
+      const day = 1 + k * 3;
+      const o = contractOffer(c.id, day);
+      if (!o) continue;
+      seen++;
+      const need = minDays(o.from, o.to, day);
+      if (need == null) continue;
+      const room = o.due - day;
+      if (need > room) { bad++; if (!worst || need - room > worst.gap) worst = { o, need, room, gap: need - room }; }
+    }
+  }
+  ok(bad === 0, `기한 안에 못 가는 일감이 없다 — 표본 ${seen}건 중 ${bad}건`
+     + (worst ? ` (가장 나쁜 것 ${worst.o.from}→${worst.o.to} 실제 ${Math.round(worst.need)}일 vs 기한 ${worst.room}일)` : ''));
+}
+
+/* ── C-10 · 원양 구간의 적은 두 바다 어느 쪽에서도 온다 ────────────────
+   ★ 태평양 한복판에서 부카니에가, 반대 방향에서 왜구가 나왔다 — 같은 물인데
+     **어디서 떠났는지로 얼굴이 갈렸다.** 수치(`ENEMIES`)는 안 건드리고 얼굴만 고른다. */
+{
+  resetGame('busanpo');
+  const seen = new Set();
+  for (let i = 0; i < 200; i++) seen.add(legRegion('acapulco', 'manila', () => i / 200));
+  ok(seen.has('caribbean') && seen.has('eastasia'),
+     `아카풀코~마닐라는 두 바다의 물이다 — 나온 얼굴의 바다 ${[...seen].join('·')}`);
+  const near = new Set();
+  for (let i = 0; i < 50; i++) near.add(legRegion('busanpo', 'hakata', () => i / 50));
+  ok(near.size === 1 && near.has('eastasia'),
+     '근해 구간은 종전과 한 치도 같다 — 한 바다 안이면 갈릴 것이 없다');
+  ok(legRegion('nagasaki') === 'eastasia',
+     '목적지를 안 주면 예전처럼 서 있는 바다다(옛 호출부가 그대로 돈다)');
 }
 
 /* ── P3 동료 = 코멘다 ────────────────────────────────────────

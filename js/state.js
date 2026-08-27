@@ -1926,6 +1926,27 @@ function hash(...parts) {
 }
 
 /** 그 항구에 지금 걸려 있는 주문 (결정론적 — 드나들며 새로 뽑을 수 없다) */
+/* ── C-3 · 기한은 **실제로 가는 길**로 잰다 ─────────────────────────────
+   ★ `voyageDays(a,b)`는 **직선거리**다. 이웃끼리는 그것이 곧 항로지만, 계약 목적지는
+     2홉까지 뽑으므로 **직선이 길이 아니다.** 게다가 권역이 다르면 좌표계 자체가 달라
+     (`regions/index.js` 머리주석) 직선거리는 **뜻이 없다** — 바르셀로나→아바나가 직선 13일인데
+     실제 길은 75일이었다(세비야를 거쳐 대서양을 건넌다).
+   ⇒ 실측: 주문 530건 가운데 **38건(7.2%)이 기한 안에 도착이 불가능**했다.
+     받는 순간 실패가 확정된 일감이라, 이것은 어려움이 아니라 결함이다.
+   ★ 목적지가 1~2홉이라 **BFS를 2홉으로 닫는다** — 항구 화면이 매 프레임 부르는 자리다. */
+export function hopDays(aId, bId, day = state.day) {
+  if (aId === bId) return 0;
+  const nb = neighborsOf(aId);
+  if (nb.includes(bId)) return voyageDays(aId, bId, day);
+  let best = null;
+  for (const m of nb) {
+    if (!neighborsOf(m).includes(bId)) continue;
+    const d = voyageDays(aId, m, day) + voyageDays(m, bId, day);
+    if (best == null || d < best) best = d;
+  }
+  return best;                                  // 2홉 안에 길이 없으면 null
+}
+
 export function contractOffer(cityId = state.at, day = state.day) {
   /* 사흘마다 갈리는 것이 기본이고, **중개인에게 값을 치르면 한 칸 앞당겨 다른 일감을 본다**
      (`boons.reroll`). 드나들며 새로 뽑을 수는 없다는 규칙은 그대로다 — 값을 낸 만큼만 바뀐다. */
@@ -1989,7 +2010,9 @@ export function contractOffer(cityId = state.at, day = state.day) {
   // 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
   const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp') + originPerk('contractUp', cityId)));
 
-  const legs = Math.max(1, voyageDays(cityId, to, day));
+  /* ★ 직선이 아니라 **실제로 가는 길**이다(C-3 · 위 `hopDays` 주석).
+     2홉 안에 길이 없으면 예전처럼 직선으로 떨어뜨린다 — 일감이 사라지지는 않게. */
+  const legs = Math.max(1, hopDays(cityId, to, day) ?? voyageDays(cityId, to, day));
   const [dl, dh] = CONTRACT.daysPad;
   const due = day + Math.round(legs * 1.6) + Math.round(dl + hash(cityId, slot, 'due') * (dh - dl));
 
@@ -4317,6 +4340,20 @@ export function foeWealthGate(tier) {
     if (foeOdds(w, 'carrack')[tier - 1] > 0) return w;
   }
   return null;
+}
+
+/* ── C-10 · **원양 구간의 적은 두 바다 어느 쪽에서도 온다** ────────────────
+   ★ `pickEnemy`의 기본값이 `currentRegion()`, 곧 **출발지의 바다**였다. 그런데 원양 구간은
+     두 바다 사이를 건너는 길이라, 아카풀코→마닐라(태평양 한복판)에서 **부카니에**가 나오고
+     반대 방향에서 **왜구**가 나왔다 — 같은 물 위인데 어디서 떠났는지로 얼굴이 갈렸다.
+   ★ 수치는 한 톨도 안 바뀐다(`ENEMIES` 등급 그대로) — `localize`가 갈아 끼우는 **얼굴**만 갈린다.
+     그래서 밸런스에 손대지 않고 「같은 바다인데 적이 다르다」만 없앤다. */
+export function legRegion(fromId = state.at, toId = null, rand = Math.random) {
+  const a = REGION_OF_CITY[fromId] ?? currentRegion();
+  if (toId == null) return a;
+  const b = REGION_OF_CITY[toId] ?? a;
+  if (a === b) return a;
+  return rand() < 0.5 ? a : b;      // 반반 — 그 물은 두 바다의 것이다
 }
 
 export function pickEnemy(rand = Math.random, regionId = currentRegion()) {
