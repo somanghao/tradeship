@@ -18,6 +18,7 @@ import {
   cargoUsed, armsTotal, industryOf, tierNeeded, shipPriceAt, shipLockedBy,
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf, legRegion,
+  flagshipSinks, sinkFlagship, liquidate,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -50,7 +51,7 @@ import {
   routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
   routeFactor, windFactor, currentFactor, YEAR_DAYS,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
@@ -948,6 +949,37 @@ resetGame();
      + (worst ? ` (가장 나쁜 것 ${worst.o.from}→${worst.o.to} 실제 ${Math.round(worst.need)}일 vs 기한 ${worst.room}일)` : ''));
 }
 
+/* ── C-13 N4 · 기함이 가라앉는다 — **삭은 배로 졌을 때만** ────────────────
+   ★ 오래 「고를 자리」를 못 찾던 규칙이다. 폭풍에 붙이면 사고가 되고, 안 붙이면 삭은 배를
+     영원히 몬다. 그래서 **플레이어가 고른 자리(전투)**에, **고른 상태(선체 바닥)**에만 붙였다. */
+{
+  resetGame('busanpo');
+  ok(!flagshipSinks(), '멀쩡한 배는 안 가라앉는다');
+  state.gold = 1e7;
+  state.fleet.jounseon = { at: 'busanpo', hp: SHIPS.jounseon.hp,
+                           arms: { light: SHIPS.jounseon.guns, medium: 0, long: 0 }, refits: {} };
+  boardShip('jounseon');
+  delete state.fleet.oldsahuseon;
+  state.hp = Math.round(state.maxHp * 0.05);
+  ok(flagshipSinks(), `선체가 ${Math.round(HULL.sinkAt * 100)}% 밑이면 지는 순간 가라앉는다`);
+  state.fleet.gyeonggangseon = { at: 'busanpo', hp: 10, arms: { light: 0, medium: 0, long: 0 }, refits: {} };
+  ok(!flagshipSinks(), '정박해 둔 배가 있으면 안 가라앉는다 — 갈아탈 데가 있다');
+  delete state.fleet.gyeonggangseon;
+  const r = sinkFlagship();
+  ok(r.lost === 'jounseon' && state.shipKey === wreckShipOf('eastasia'),
+     `가라앉으면 **그 바다의 삭은 배**로 다시 선다 — ${r.lostName} → ${r.keptName}`);
+  ok(state.hp === state.maxHp && !Object.keys(state.cargo).length,
+     '배는 새것이고 짐은 없다 — 막다른 골목을 만들지 않는다');
+  /* ★ 공짜 수리가 되면 안 된다 — 이미 삭은 배면 안 가라앉는다 */
+  state.hp = 1;
+  ok(!flagshipSinks(), '이미 그 바다의 삭은 배를 몰고 있으면 안 가라앉는다 — 「져서 새 배」가 공짜 수리가 된다');
+  /* 청산도 그 바다의 배를 남긴다 */
+  resetGame('jamaica');
+  state.gold = 0; liquidate();
+  ok(state.shipKey === wreckShipOf('caribbean'),
+     `청산 뒤에 남는 배도 그 바다의 것이다 — ${SHIPS[state.shipKey].name}`);
+}
+
 /* ── C-10 · 원양 구간의 적은 두 바다 어느 쪽에서도 온다 ────────────────
    ★ 태평양 한복판에서 부카니에가, 반대 방향에서 왜구가 나왔다 — 같은 물인데
      **어디서 떠났는지로 얼굴이 갈렸다.** 수치(`ENEMIES`)는 안 건드리고 얼굴만 고른다. */
@@ -1177,8 +1209,10 @@ resetGame();
     state.boons = state.boons || {};
     state.boons.loan = { owed: 4000, due: state.day + 30 };
     const w2 = totalLoss(() => 0.5, null);
-    ok(w2.mode === 'liquidate' && state.shipKey === BANKRUPT.keepShip && debtOwed() === 0,
-       '혼자면 청산이다 — 배가 사라지면 **채무도 사라진다**(해상대차). 판은 1일차 조건으로 돌아간다');
+    /* ★ 남는 배는 **그 바다의 삭은 배**다(2026-08-27). 군산창은 동아시아라 삭은 사후선이고,
+       지중해였다면 `BANKRUPT.keepShip`(낡은 바사)이다 — 시작배가 아홉으로 갈린 것과 짝이다. */
+    ok(w2.mode === 'liquidate' && state.shipKey === wreckShipOf('eastasia') && debtOwed() === 0,
+       `혼자면 청산이다 — 배가 사라지면 **채무도 사라진다**(해상대차). 남는 것은 그 바다의 ${SHIPS[state.shipKey].name}`);
   }
 }
 

@@ -6,7 +6,7 @@ import {
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   /* 두 회차가 같은 줄에 이름을 더했다 — 부동산·브레이크(#5·#6)와 계절(#4). 둘 다 필요하다. */
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
-  HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
   TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
@@ -2313,7 +2313,10 @@ export function enforceDebt() {
     남는 것: 거점 · 세력 관계 · 악명 · 아는 항구 · 해적 명부 · 공업력 승급.
     가는 것: 배 전부(낡은 바사만 남는다) · 실은 짐 · 창고 짐 · 대부분의 선원 · 맡은 주문. */
 export function liquidate() {
-  const keep = BANKRUPT.keepShip;
+  /* ★ **그 바다의 삭은 배**를 남긴다(2026-08-27). 시작배는 아홉으로 갈렸는데 청산 뒤에 남는
+     배만 `hulk` 하나여서, 광저우에서 파산한 사람이 지중해 배를 받고 있었다.
+     제원이 아홉 나란하므로 난이도는 안 움직인다 — 얼굴만 맞는다. */
+  const keep = wreckShipOf(currentRegion()) ?? BANKRUPT.keepShip;
   const s = SHIPS[keep];
   const lostShips = Object.keys(state.fleet).filter((k) => k !== keep);
   const arms = { light: s.guns, medium: 0, long: 0 };
@@ -3782,6 +3785,50 @@ export function spreadDamage(dmg) {
           + (lostCrew ? ` 선원 ${lostCrew}명이 함께 바다에 남았다.` : ''), 'bad');
   }
   return { toYou: Math.max(0, dmg - taken), absorbed: taken, hit: { key, name, hp: Math.max(0, rec.hp) }, sunk };
+}
+
+/* ── C-13 N4 · **기함이 가라앉는다 — 삭은 배로 졌을 때만** ────────────────────
+   ★ 오래 「고를 자리」를 못 찾던 규칙이다(`data.js: HULL.sinkAt` 주석에 그 판단이 있다).
+     폭풍에 붙이면 사고가 되고, 안 붙이면 **삭은 배를 수리 없이 영원히 몬다.**
+     ⇒ **플레이어가 고른 자리**(전투)에, **플레이어가 고른 상태**(선체 바닥)에서만 붙인다.
+   ★ 막다른 골목을 만들지 않는다 — 청산과 **같은 출구**를 쓴다. 그 바다의 삭은 배 한 척이 남고
+     거점·관계·악명·아는 항구·해적 명부는 그대로다. 빚은 안 지운다(배를 뺏긴 것이 아니라 잃은 것이다).
+   ★ 정박해 둔 배가 있으면 **가라앉지 않는다** — 갈아탈 배가 있는데 판을 되돌릴 이유가 없다. */
+export function flagshipSinks() {
+  /* ★ **잃을 것이 있을 때만 가라앉는다.** 이미 그 바다의 삭은 배를 몰고 있으면 안 가라앉는다 —
+     안 그러면 「져서 배를 새로 받는 것」이 **공짜 수리**가 된다(패배는 선체를 25%로 되돌리는데
+     침몰은 100%짜리 배를 준다). 그리고 그 자리는 애초에 이 규칙의 과녁이 아니다.
+     과녁은 **좋은 배를 사 놓고 수리를 안 하는 사람**이다. */
+  if (state.shipKey === (wreckShipOf(currentRegion()) ?? BANKRUPT.keepShip)) return false;
+  return state.maxHp > 0 && state.hp / state.maxHp <= HULL.sinkAt
+      /* 정박해 둔 배가 있으면 갈아탈 데가 있다 — 판을 되돌릴 이유가 없다 */
+      && Object.keys(state.fleet).filter((k) => k !== state.shipKey).length === 0;
+}
+
+/** 기함이 가라앉는다 — 그 바다의 삭은 배 한 척으로 다시 선다 */
+export function sinkFlagship() {
+  const lost = state.shipKey;
+  const lostName = SHIPS[lost]?.name ?? lost;
+  const keep = wreckShipOf(currentRegion()) ?? BANKRUPT.keepShip;
+  const s = SHIPS[keep];
+  const arms = { light: s.guns, medium: 0, long: 0 };
+
+  state.fleet = { [keep]: { at: state.at, hp: s.hp, arms: { ...arms }, refits: {} } };
+  state.consorts = {};
+  state.towing = null;
+  state.shipKey = keep;
+  state.hp = s.hp; state.maxHp = s.hp; state.cargoCap = s.cargo;
+  state.guns = s.guns; state.arms = { ...arms }; state.refits = {};
+  state.shots = { grape: 0, chain: 0, heated: 0 };
+  state.cargo = {}; state.buyPrice = {};
+  state.contract = null;
+  state.crewMax = s.crewMax;
+  state.crew = Math.max(s.crewMin ?? 1, Math.round(state.crew * 0.5));
+  trimLoadout();
+  state.everOwned?.add(keep);
+  pushLog(`${lostName}${josa(lostName, '이/가')} 갈라진 현측으로 물을 먹고 가라앉았다.`
+        + ` 삭은 배로 싸운 값이다 — 부두에서 ${s.name} 한 척을 얻어 다시 선다.`, 'bad');
+  return { lost, lostName, kept: keep, keptName: s.name };
 }
 
 /** 정박해 둔 배로 갈아탄다 — 화물·선원은 함께 옮겨진다 */

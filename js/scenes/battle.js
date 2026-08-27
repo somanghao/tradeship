@@ -15,6 +15,9 @@ import {
      포화력이 얹히고(consortGunBonus), 갑판이 두꺼워지고(consortMeleeBoost),
      맞는 것을 나눠 받는다(spreadDamage — 크게 상한 배는 여기서 가라앉는다). */
   consortCount, consortGunBonus, consortMelee, consortMeleeBoost, spreadDamage,
+  /* ★ 기함은 여기서 가라앉지 않는다 — **패배 처리**가 따로 있고(C-13 N4),
+     그 판정과 실행이 이 둘이다. 삭은 배로 졌을 때만 걸린다. */
+  flagshipSinks, sinkFlagship,
 } from '../state.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa, spriteElTrim } from '../ui.js';
 import { go } from '../main.js';
@@ -578,6 +581,9 @@ function finish(kind) {
   trimLoadout();          // 선원이 줄면 갑판 슬롯도 닫힌다
 
   if (kind === 'lose') {
+    /* ★ **삭은 배로 지면 가라앉는다**(C-13 N4 · `state.js: flagshipSinks`).
+       판정을 선체를 되돌리기 **전에** 한다 — 되돌린 뒤에 재면 영영 안 걸린다. */
+    const sinking = flagshipSinks();
     const lostGold = Math.round(state.gold * 0.5);
     state.gold -= lostGold;
     const dumped = [];
@@ -588,6 +594,7 @@ function finish(kind) {
     state.hp = Math.max(12, Math.round(state.maxHp * 0.25));
     state.crew = Math.max(4, Math.round(state.crew * 0.5));
     trimLoadout();
+    const sank = sinking ? sinkFlagship() : null;
     /* ★ 여기는 언제나 "해적들이 화물칸을 털어갔다"였다. 그런데 이 자리에는
        국왕의 순찰선도 오고, **내가 먼저 덮친 상선**도 온다 — 그때 이 문장은
        누가 도둑이었는지를 통째로 뒤집는다. 진 상대가 누구였는지로 말을 가른다. */
@@ -600,11 +607,16 @@ function finish(kind) {
     pushLog(`${e.name}에게 배를 내주었다. 화물과 금화 ${lostGold}닢을 빼앗겼다.`, 'bad');
     refreshHUD(); refreshLog();
     modal({
-      title: k === 'merchant' ? '되레 털렸다' : k === 'navy' ? '임검당했다' : '나포당했다',
+      title: sank ? '배를 잃었다'
+           : k === 'merchant' ? '되레 털렸다' : k === 'navy' ? '임검당했다' : '나포당했다',
       body: `${scene}<br><br>`
           + `<b>금화 ${lostGold.toLocaleString('ko-KR')}닢</b> 상실`
           + (dumped.length ? `<br>화물 전량 상실 — ${dumped.join(', ')}` : '')
-          + `<br>가까스로 목숨은 건져 항구로 예인되었다.`,
+          + (sank
+              ? `<br><br><b style="color:#d05a4a">${sank.lostName}이(가) 가라앉았다.</b>`
+                + ` 삭은 배로 싸운 값이다 — 부두에서 <b>${sank.keptName}</b> 한 척을 얻어 다시 선다.`
+                + `<br><span style="opacity:.85">거점 · 세력 관계 · 악명 · 아는 항구 · 해적 명부는 그대로다.</span>`
+              : `<br>가까스로 목숨은 건져 항구로 예인되었다.`),
       actions: [{
         label: '항구로 돌아간다', kind: 'danger',
         onClick: () => { B = null; go('port'); },

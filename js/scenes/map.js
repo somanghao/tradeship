@@ -19,7 +19,7 @@ import {
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   /* 입항세를 **운영비용으로 보여 주는** 자리(#6) · 관선 임검 */
   tariffRate, seizeCargo,
-  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount,
+  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount, flagshipSinks,
   totalLossOdds, totalLoss,
   /* 입장권 체크리스트가 쓰는 것 — **판정을 여기서 새로 만들지 않는다.**
      `oceanReady`가 보는 그 상수와 그 함수를 그대로 읽어 세 줄로 편다. */
@@ -414,10 +414,16 @@ function quote(line, color = '#c9b98a') {
 function foeVersusLine(e) {
   const odds = fleeOdds({ foeHull: e.hull });
   const heavier = e.guns > state.guns * 1.6 || e.crew > state.crew * 2;
+  /* ★ **지면 배를 잃는다는 것을 싸우기 전에 말한다**(C-13 N4). 규칙이 멀쩡해도 화면이
+     침묵하면 없는 것이고, 여기서 침묵하면 그것은 「몰랐던 상실」이 된다. */
+  const doom = flagshipSinks()
+    ? `<br><b style="color:#d05a4a">★ 선체가 바닥이다 — 여기서 지면 배가 가라앉는다.</b>`
+      + ` <span style="opacity:.85">수리하거나 돛을 돌리는 쪽이 낫다.</span>`
+    : '';
   return `<span style="opacity:.9">상대는 <b>선체 ${e.hp} · 선원 ${e.crew} · 포 ${e.guns}문</b>`
        + `, 내 배는 선체 ${state.hp}/${state.maxHp} · 선원 ${state.crew} · 포 ${state.guns}문.`
        + `${heavier ? ' <b style="color:#d98a6a">이쪽이 밀린다.</b>' : ''}`
-       + ` 돛을 돌리면 ${fleeWord(odds)}.</span>`;
+       + ` 돛을 돌리면 ${fleeWord(odds)}.${doom}</span>`;
 }
 
 /* 이름만으로는 급이 안 보인다. 명부의 소개가 있으면 그것을, 없으면 세기를 말로 옮긴다.
