@@ -63,7 +63,10 @@ function tradableBetween(from, to) {
   return list.length ? list : GOODS;
 }
 
-export function planFor(to, room, budget, minMargin = 0) {
+/* 한 가지 기준으로 칸을 채운다. `by`가 판정 기준이다 —
+     'slot' : 칸당 마진이 큰 것부터 (칸이 모자랄 때 옳다)
+     'coin' : 닢당 마진이 큰 것부터 (밑천이 모자랄 때 옳다) */
+function fillBy(to, room, budget, minMargin, by) {
   const take = {};
   let spend = 0, gain = 0;
   const pool = tradableBetween(state.at, to);
@@ -76,7 +79,8 @@ export function planFor(to, room, budget, minMargin = 0) {
       const margin = dGain * (1 - tariffRate(to)) - dCost;
       if (dCost > budget - spend) continue;
       if (margin <= 0 || margin < dCost * minMargin) continue;
-      if (!best || margin > best.margin) best = { id: g.id, margin, dCost, dGain };
+      const score = by === 'coin' ? margin / Math.max(1, dCost) : margin;
+      if (!best || score > best.score) best = { id: g.id, score, margin, dCost, dGain };
     }
     if (!best) break;
     take[best.id] = (take[best.id] || 0) + 1;
@@ -84,6 +88,19 @@ export function planFor(to, room, budget, minMargin = 0) {
     gain += best.dGain * (1 - tariffRate(to));
   }
   return { take, spend, gain };
+}
+
+/** 이 항차에 무엇을 얼마나 싣나.
+    ★ **밑천이 묶일 때와 칸이 묶일 때의 답이 다르다.** 예전에는 칸당 마진만 보고 샀는데,
+      그러면 밑천 2만 닢으로 **칸당 300닢짜리 은 66칸을 사고 선창 108칸을 비운 채** 떠난다.
+      값나가는 짐이 최고 품목인 원양 항로가 그래서 통째로 저평가됐다 —
+      「원양은 근해에 진다」는 신호가 게임이 아니라 **측정기의 매입 전략**에서 나왔다.
+      (이 프로젝트에서 `sim-core`의 매입 판단이 거짓 신호를 낸 것은 이번이 세 번째다.)
+    ⇒ 두 기준으로 각각 채워 보고 **순이익이 큰 쪽**을 쓴다. 결정론이라 시드가 안 흔들린다. */
+export function planFor(to, room, budget, minMargin = 0) {
+  const a = fillBy(to, room, budget, minMargin, 'slot');
+  const b = fillBy(to, room, budget, minMargin, 'coin');
+  return (b.gain - b.spend) > (a.gain - a.spend) ? b : a;
 }
 
 /** 이웃 항구 중 순이익 최대인 곳으로 간다 */

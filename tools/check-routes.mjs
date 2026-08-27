@@ -110,8 +110,16 @@ if (hi - lo < 0.05) {
 const SUMMER_DAY = 0, WINTER_DAY = 60;
 /** 기대되는 계절 배율 — `state.js`를 안 믿고 `data.js: SEASON`에서 직접 잰다.
     (검사기가 검사 대상의 함수로 자기를 검사하면 둘이 함께 틀렸을 때 통과한다) */
+const LANE_OF = (a, b) => OCEAN_LANES.find((l) => (l.a === a && l.b === b) || (l.a === b && l.b === a)) ?? null;
+/** ★ 계절풍은 방향을 가린다(`state.js: routeSeason` 주석) — 여기서도 **독립으로** 그렇게 판정한다.
+    결빙(`ROUTE_SEASON`)은 대칭이다. */
+const seasonOfLeg = (a, b) => {
+  const l = LANE_OF(a, b);
+  if (l?.monsoon && l.season) return l.a === a ? l.season : (l.season === 'summer' ? 'winter' : 'summer');
+  return ROUTE_SEASON[riskKey(a, b)] ?? null;
+};
 const seasonFactorOf = (a, b, day) => {
-  const s = ROUTE_SEASON[riskKey(a, b)];
+  const s = seasonOfLeg(a, b);
   if (!s) return 1;
   return s === ((day % 120) < 60 ? 'summer' : 'winter') ? 1 : SEASON.offSpeed;
 };

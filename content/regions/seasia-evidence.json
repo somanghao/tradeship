@@ -135,6 +135,50 @@
           "verdict": "probable",
           "basis": "버마와 되풀이해 싸운 왕국이라 화기 수요가 컸다. 유럽 용병과 포를 들였다는 정황은 널리 알려져 있으나 수치를 담은 사료는 확보하지 못했다.",
           "sources": []
+        },
+        "deerhide": {
+          "side": "supply",
+          "value": 0.44,
+          "verdict": "confirmed",
+          "basis": "주인선이 시암에서 실어 간 최대 품목이 녹비였고 왕실 창고가 그것을 쥐고 있었다 — 일본은 갑주·칼집에 쓰려고 해마다 수만 장을 사 갔다. 리고르(0.54)는 속국에서 올라온 물건을 되파는 값이라 **왕도가 사다리의 맨 아래 칸**이다(침향의 회안과 같은 꼴).",
+          "sources": [
+            {
+              "title": "Ayutthaya Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ayutthaya_Kingdom"
+            },
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.38,
+          "verdict": "confirmed",
+          "basis": "그 녹비를 사 간 배가 무엇을 내려놓고 갔는지다. 야마다 나가마사의 일본인 마을이 선 것도 이 왕복 위다.",
+          "sources": [
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            },
+            {
+              "title": "Ayutthaya Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ayutthaya_Kingdom"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "일본 구리는 시암에서도 주전과 주조에 쓰였다. 수입량을 특정한 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            }
+          ]
         }
       }
     },
@@ -207,6 +251,50 @@
           "verdict": "probable",
           "basis": "반도 동안은 논이 좁아 쌀을 샴 쪽에서 들여왔다. 상시 수입을 특정한 사료는 확보하지 못해 개연성으로 둔다.",
           "sources": []
+        },
+        "sappanwood": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "《역대보안》이 나하에서 시암·믈라카·파타니로 보낸 배를 적어 두었고, 그 배가 싣고 온 것이 소목·후추·상아였다. 소목은 명·일본이 붉은 물감으로 쓰던 물건이다.",
+          "sources": [
+            {
+              "title": "歷代寶案 (Rekidai Hōan) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Rekidai_H%C5%8Dan"
+            },
+            {
+              "title": "Ryukyu Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+            }
+          ]
+        },
+        "sulfur": {
+          "side": "demand",
+          "value": 1.34,
+          "verdict": "confirmed",
+          "basis": "같은 배가 싣고 간 것이 류큐 유황조도의 유황이었다.",
+          "sources": [
+            {
+              "title": "歷代寶案 (Rekidai Hōan) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Rekidai_H%C5%8Dan"
+            },
+            {
+              "title": "Ryukyu Kingdom — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Ryukyu_Kingdom"
+            }
+          ]
+        },
+        "ceramic": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "진공선이 명에서 받은 도자기를 남해로 되넘겼다. 파타니의 수입량을 특정한 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "歷代寶案 (Rekidai Hōan) — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Rekidai_H%C5%8Dan"
+            }
+          ]
         }
       }
     },
@@ -1361,6 +1449,114 @@
             {
               "title": "Nutmeg",
               "url": "https://en.wikipedia.org/wiki/Nutmeg"
+            }
+          ]
+        }
+      }
+    },
+    "hoian": {
+      "goods": {
+        "agarwood": {
+          "side": "supply",
+          "value": 0.42,
+          "verdict": "confirmed",
+          "basis": "회안(파이포)이 낀 꽝남은 침향의 산지였고, 이 세계에서 가장 싼 침향 창구가 되어야 `goods.js`의 근거 문장(\"회안에서 산 것이 나가사키에서 수십 배\")이 값으로 성립한다. 아유타야 0.56·조호르 0.54는 속국에서 올라온 물건을 되파는 값이다.",
+          "sources": [
+            {
+              "title": "Hội An — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/H%E1%BB%99i_An"
+            },
+            {
+              "title": "Agarwood — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Agarwood"
+            }
+          ]
+        },
+        "cinnamon": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "꽝남 계피는 중국·일본 배가 사 가던 물건이었다. 정확한 값의 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Hội An — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/H%E1%BB%99i_An"
+            }
+          ]
+        },
+        "sugar": {
+          "side": "supply",
+          "value": 0.56,
+          "verdict": "probable",
+          "basis": "꽝남의 사탕수수는 일본 배가 실어 간 품목 가운데 하나였다.",
+          "sources": [
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            }
+          ]
+        },
+        "silver": {
+          "side": "demand",
+          "value": 1.42,
+          "verdict": "confirmed",
+          "basis": "★ 이 항구의 뼈대. 슈인장 356통 중 교지(交趾=회안)행이 가장 많았고, 일본 배가 싣고 온 것은 은이었다. 강 저쪽 중국인 거리가 그 은으로 생사를 넘겼다 — 회안은 일본 은과 중국 생사가 만나던 자리다.",
+          "sources": [
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            },
+            {
+              "title": "Hội An — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/H%E1%BB%99i_An"
+            }
+          ]
+        },
+        "weapon": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "응우옌과 찐의 전쟁이 이어지던 땅이라 화기를 밖에서 사들였다.",
+          "sources": [
+            {
+              "title": "Hội An — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/H%E1%BB%99i_An"
+            }
+          ]
+        },
+        "copper": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "일본 구리는 응우옌의 대포와 주전(鑄錢)으로 갔다. 은과 함께 주인선이 내려놓던 두 금속이다. 다만 수입량을 특정한 사료는 확보하지 못했다.",
+          "sources": [
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
+            }
+          ]
+        },
+        "saltpetre": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "화약 원료. 초석은 벵골이 댔다.",
+          "sources": [
+            {
+              "title": "Hội An — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/H%E1%BB%99i_An"
+            }
+          ]
+        },
+        "sulfur": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "화약 원료. 유황은 일본이 댔다.",
+          "sources": [
+            {
+              "title": "Red seal ships — Wikipedia",
+              "url": "https://en.wikipedia.org/wiki/Red_seal_ships"
             }
           ]
         }

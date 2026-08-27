@@ -3893,10 +3893,29 @@ export const inSeason = (def, day = state.day) => !def?.season || def.season ===
        철에 따라 입장권이 흔들리면 *같은 문이 날짜에 따라 열렸다 닫혔다* 한다 —
        그것은 「막지 않는다」는 판정을 뒷문으로 깨는 것이다. 그래서 **무는 자리에서만** 곱한다. */
 
-/** 그 항로가 열리는 철 — 'summer'|'winter'. 계절이 안 걸린 항로면 null */
+/** 그 항로가 열리는 철 — 'summer'|'winter'. 계절이 안 걸린 항로면 null.
+
+    ★ **계절풍은 방향을 가린다 — 반년마다 뒤집히기 때문이다.** 이것이 결빙과 다른 점이다.
+      발트가 어는 것은 오가는 두 방향에 똑같이 걸리지만(그래서 `ROUTE_SEASON`은 대칭이다),
+      계절풍은 *내려갈 때 미는 바람이 올라올 때는 맞바람*이다 — 주인선이 겨울 북동풍에 남으로
+      내려가 여름 남서풍에 돌아왔고, 인도양의 배가 그 반대였다. 항로 주석이 이미
+      *"여름 남서 계절풍이면 스무 날이 열흘로 준다"*고 적어 두었는데 규칙은 왕복 모두에
+      같은 철을 요구하고 있었다 — **그래서 어느 한쪽 다리는 언제나 철을 어겼다.**
+    ⇒ `OCEAN_LANES`의 `monsoon: true`인 선만 방향을 가린다. `a→b`가 적힌 철이고 `b→a`는 그 반대다.
+      `ROUTE_SEASON`(결빙·연안 폐쇄)은 그대로 대칭이다. */
 export function routeSeason(aId, bId) {
-  return ROUTE_SEASON[riskKey(aId, bId)] ?? laneOf(aId, bId)?.season ?? null;
+  /* 계절풍 선이 먼저다 — `ROUTE_SEASON`은 원양 항로의 철도 **대칭으로** 접어 넣은 표라
+     (`regions/index.js: ALL_ROUTE_SEASON`) 그것을 먼저 보면 방향이 도로 지워진다.
+     그 표는 근거 대조(`check-routes`)가 쓰므로 건드리지 않고 여기서 방향만 되살린다. */
+  const lane = laneOf(aId, bId);
+  if (lane?.monsoon && lane.season) {
+    return aId === lane.a ? lane.season : flipSeason(lane.season);
+  }
+  return ROUTE_SEASON[riskKey(aId, bId)] ?? lane?.season ?? null;
 }
+
+/** 반년 뒤의 철 */
+export const flipSeason = (s) => (s === 'summer' ? 'winter' : 'summer');
 
 /** 지금 이 구간이 철에 맞나 — `null`(계절 없음) · `true`(제철) · `false`(철을 어긴다) */
 export function inRouteSeason(aId, bId, day = state.day) {

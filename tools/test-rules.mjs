@@ -1580,4 +1580,19 @@ resetGame();
      `항로 카드가 그것을 말한다 — "${lab?.text}"`);
   ok(routeSeasonLabel('lisboa', 'sevilla', WIN) === null,
      '계절이 안 걸린 항로에는 줄을 안 만든다');
+
+  /* ★ 계절풍은 **방향을 가린다** — 반년마다 뒤집히기 때문이다(2026-08-27).
+     전에는 왕복이 같은 철을 요구해 **어느 한쪽 다리는 언제나 철을 어겼다.**
+     결빙(`ROUTE_SEASON`)은 그대로 대칭이어야 한다 — 얼음은 오가는 두 방향에 똑같이 걸린다. */
+  ok(routeSeason('nagasaki', 'hoian') === 'winter'
+     && routeSeason('hoian', 'nagasaki') === 'summer',
+     '계절풍은 방향을 가린다 — 주인선은 겨울에 내려가 여름에 돌아온다');
+  ok(routeSeason('aden', 'calicut') === 'summer'
+     && routeSeason('calicut', 'aden') === 'winter',
+     '인도양 원양도 같다 — 여름 남서풍에 건너가 겨울 북동풍에 돌아온다');
+  ok(routeSeason('danzig', 'lubeck') === routeSeason('lubeck', 'danzig'),
+     '결빙은 대칭이다 — 얼음은 방향을 안 가린다');
+  ok(seasonFactor('hoian', 'nagasaki', SUM) === 1
+     && seasonFactor('nagasaki', 'hoian', SUM) === SEASON.offSpeed,
+     '그 방향성이 일수에 실제로 곱해진다(같은 날 같은 구간인데 두 방향이 갈린다)');
 }
