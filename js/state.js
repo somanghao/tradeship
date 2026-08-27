@@ -1234,6 +1234,33 @@ export function yardNext(cityId = state.at) {
   return { to, ...spec };
 }
 
+/* ── C-18 · 공업력을 올리는 길이 **둘**이고 순서로 값이 갈린다 ───────────────
+   ★ `HOLDINGS.dock.industryUp = 1`과 `YARD_UPGRADE`가 **같은 값을 올린다.** 그런데
+     부두값은 `priceByIndustry`로 **지금 공업력에 비례**하고, 승급값은 **올라갈 칸**으로 정해진다.
+     ⇒ 어느 것을 먼저 사느냐로 남은 비용이 통째로 달라지는데(염포 실측: 부두 먼저면 자재 760칸·360일에
+       부두값 100,000닢 · 승급 먼저면 자재 330칸·180일에 부두값 140,000닢) **화면이 그 존재를
+       말하지 않았다.** 되돌릴 수 없는 선택을 모르고 하게 두는 것은 선택이 아니다.
+   ★ 값을 두 화면이 각자 계산하면 반드시 어긋난다 — **여기 한 곳**에서 내고 둘이 읽는다.
+     (거점 카드 `scenes/port.js: holdingCard` · 부두 카드 `scenes/shipyard.js: yardUpgradeCard`) */
+export function industryPathHint(cityId = state.at) {
+  const base = industryOf(cityId);
+  const dockOwned = ownsHolding('dock', cityId);
+  if (dockOwned || base >= YARD.cap) return null;      // 갈림길이 이미 지났거나 꼭대기다
+  const d = HOLDINGS.dock;
+  const dockNow = d.priceBase + base * (d.priceByIndustry ?? 0);
+  const dockLater = d.priceBase + Math.min(YARD.cap, base + 1) * (d.priceByIndustry ?? 0);
+  /* 부두를 먼저 세우면 남은 승급이 **한 칸 위**에서 시작한다 */
+  const upNow = YARD_UPGRADE[base + 1] ?? null;        // 승급 먼저
+  const upLater = YARD_UPGRADE[base + 2] ?? null;      // 부두 먼저
+  const matSum = (u) => (u ? Object.values(u.mats).reduce((a, b) => a + b, 0) : 0);
+  return {
+    base, to: base + 2 > YARD.cap ? YARD.cap : base + 2,
+    dockNow, dockLater, dockUp: dockLater - dockNow,
+    dockFirst: upLater && { gold: upLater.gold, days: upLater.days, mats: matSum(upLater) },
+    upFirst: upNow && { gold: upNow.gold, days: upNow.days, mats: matSum(upNow) },
+  };
+}
+
 /** 승급을 걸 수 있나 — 금화와 **실은 자재**를 함께 본다 */
 export function canUpgradeYard(cityId = state.at) {
   if (yardBusy(cityId)) {

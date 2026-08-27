@@ -15,7 +15,8 @@ import {
 } from '../data.js';
 import {
   state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT, repairUnit,
-  yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding,
+  yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding, industryPathHint,
+  storeCap, ownsHolding,
   gunCap, armsTotal, armsFactor, armsAimAt, zoneFactor, buyCannon, removeCannon,
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
   pushLog, hasRefit, buyRefit, sellsShip, yardsOf, buyShot, shipSpeed, shorthanded,
@@ -248,6 +249,33 @@ function yardUpgradeCard() {
         style: can.ok ? null : { color: '#c98a6a' },
         text: `자재 ${mats}` + (can.ok ? '' : ` — ${can.reason}`),
       }));
+      /* ★ C-18 ⓒ — **배 한 척으로는 자재를 못 싣는다.** 예전에는 `목재가 N칸 모자란다`만
+         되풀이해서, 화물칸이 380인 사람이 1,440칸을 어떻게 모으는지 알 길이 없었다.
+         답은 **동행 선단**(`cargoCapTotal`)과 **이 항구의 창고**인데 화면이 그 말을 안 했다. */
+      const needSum = Object.values(n.mats).reduce((a, b) => a + b, 0);
+      const room = cargoCapTotal() + (ownsHolding('warehouse', state.at) ? storeCap(state.at) : 0);
+      if (needSum > room) {
+        rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+          html: `⚠️ 자재가 모두 <b>${needSum}칸</b>인데 지금 실을 수 있는 것은 <b>${room}칸</b>이다`
+              + ` — <b>한 척으로는 못 나른다.</b> 동행선을 붙이거나(선단 적재가 합쳐진다)`
+              + ` 이 항구에 창고를 세워 여러 항차에 나눠 부린다.`,
+        }));
+      }
+      /* ★ C-18 ⓑ — **공사 중에는 배를 못 짓는데 그 대가가 공사를 건 뒤에만 떴다.** */
+      rows.push(el('div.ctr-sub', { style: { color: '#8f8878' },
+        text: `공사 ${n.days}일 동안 이 부두는 배를 짓지도 팔지도 않는다 — 돈보다 그것이 크다.`,
+      }));
+      /* ★ C-18 — 부두 거점이 같은 공업력을 올린다. 순서로 남은 비용이 갈린다. */
+      const hint = industryPathHint(state.at);
+      if (hint) {
+        rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+          html: `⚠️ <b>거점 「부두」도 공업력을 1 올린다</b>(지금 ${hint.dockNow.toLocaleString('ko-KR')}닢).`
+              + ` 승급을 먼저 하면 그 값이 ${hint.dockLater.toLocaleString('ko-KR')}닢`
+              + `(+${hint.dockUp.toLocaleString('ko-KR')})이 되고, 부두를 먼저 세우면 남은 승급이`
+              + ` 한 칸 위에서 시작해 자재가 ${hint.upFirst ? hint.upFirst.mats : 0}칸 →`
+              + ` ${hint.dockFirst ? hint.dockFirst.mats : 0}칸으로 는다. <b>되돌릴 수 없다.</b>`,
+        }));
+      }
       rows.push(el('button.btn.sm', {
         text: can.ok ? `부두를 넓힌다 (−${n.gold.toLocaleString('ko-KR')}닢)` : '아직 못 넓힌다',
         disabled: !can.ok,

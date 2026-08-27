@@ -20,6 +20,7 @@ import {
   /* 동료 — 코멘다(P3). 규칙은 `state.js`, 값은 `data.js: COMMENDA` */
   matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
+  industryPathHint,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   /* 수익형 부동산(#5) — 등급·세·공실. 값은 `data.js: HOLDINGS[].grades·ESTATE` */
   estateGrade, estateDef, estateRent, estateUpgradeCost, vacancyOdds, canUpgradeEstate, upgradeEstate,
@@ -252,6 +253,10 @@ function marketTable() {
              차이는 하나 — 시뮬은 짐을 싣고 다녔다. 규칙은 안 바꾸고 **보이게만 한다**(`insuranceAdd`). */
           text: '사기', disabled: costFor(g.id, 1) > state.gold || cargoFree() <= 0,
           title: (() => {
+            /* ★ C-18 ⓒ의 짝 — **왜 못 누르는지를 말한다.** 화물칸이 차면 단추가 이유 없이
+               잠겨, 자재를 모으던 사람이 "게임이 고장 났나"로 읽었다. */
+            if (cargoFree() <= 0) return `화물칸이 가득 찼다 (${cargoCapTotal()}칸) — 팔거나 창고에 맡겨야 산다`;
+            if (costFor(g.id, 1) > state.gold) return `금화가 모자란다 — 한 개에 ${costFor(g.id, 1).toLocaleString('ko-KR')}닢`;
             const ins = insuranceAdd(g.id, 10, city.id);
             return '10개 · Shift 전량 · Ctrl 1개 (금화·빈 칸이 모자라면 살 수 있는 만큼만)'
               + (ins.add > 0
@@ -1231,6 +1236,26 @@ function holdingCard() {
         toast(`${h.name}${josa(h.name, '을/를')} 세웠다`, 'good');
         refreshHUD(); refreshLog(); after();
       }));
+    /* ★ C-18 — **부두와 승급이 같은 값을 올리는데 순서로 남은 비용이 갈린다.**
+       되돌릴 수 없는 선택이므로 **누르기 전에** 두 길의 값을 다 적는다.
+       계산은 `state.js: industryPathHint` 한 곳이다(조선소 부두 카드와 같은 수를 쓴다). */
+    if (k === 'dock') {
+      const hint = industryPathHint(city.id);
+      if (hint && (hint.dockFirst || hint.upFirst)) {
+        rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+          html: `⚠️ <b>순서로 값이 갈린다</b> — 조선소 승급도 같은 공업력을 올린다.`
+              + `<br>· <b>부두 먼저</b>: 지금 ${hint.dockNow.toLocaleString('ko-KR')}닢 · 남은 승급 `
+              + (hint.dockFirst
+                  ? `${hint.dockFirst.gold.toLocaleString('ko-KR')}닢 · 자재 ${hint.dockFirst.mats}칸 · ${hint.dockFirst.days}일`
+                  : '없다(꼭대기)')
+              + `<br>· <b>승급 먼저</b>: 승급 `
+              + (hint.upFirst
+                  ? `${hint.upFirst.gold.toLocaleString('ko-KR')}닢 · 자재 ${hint.upFirst.mats}칸 · ${hint.upFirst.days}일`
+                  : '없다')
+              + ` · 그 뒤 부두값 ${hint.dockLater.toLocaleString('ko-KR')}닢(+${hint.dockUp.toLocaleString('ko-KR')})`,
+        }));
+      }
+    }
   }
   if (!rows.length) return null;
 
