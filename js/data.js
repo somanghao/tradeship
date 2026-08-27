@@ -781,6 +781,8 @@ export const FACTIONS = {
       // (`[a,b].sort().join('|')`). 손으로 적을 때 순서를 뒤집으면 영영 안 걸린다.
       routes: ['athens|chios'],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 톨파 명반이 플랑드르 직물업으로 갔다 */
+    convoy: { goods: ['alum'], to: ['valencia', 'salonika'], everyDays: 75 },
     fleets: [],                        // ★ 배가 아니라 장부로 이긴다 — 적 명부에 얼굴이 없다
     blurb: '배가 아니라 장부로 이긴다. 남의 전쟁에 양쪽으로 돈을 대고 양쪽에서 이자를 받는다.',
     lines: {
@@ -801,6 +803,8 @@ export const FACTIONS = {
       cities: ['malaga', 'antwerpen', 'danzig'],   // 알마덴의 수은이 말라가로 나온다
       routes: [],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 티롤·헝가리 구리가 안트베르펜으로 내려왔다 */
+    convoy: { goods: ['copper', 'mercury'], to: ['havana', 'elmina'], everyDays: 60 },
     fleets: [],
     blurb: '깃발이 없다. 광산과 왕실 대부를 쥐고, 배는 남의 것을 산다.',
     lines: {
@@ -819,6 +823,8 @@ export const FACTIONS = {
       cities: ['venezia', 'candia', 'famagusta'],
       routes: ['alexandria|candia', 'candia|famagusta'],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 무다는 한 해 두세 번 떴다 */
+    convoy: { goods: ['spice', 'glass'], to: ['venezia', 'candia'], everyDays: 60 },
     fleets: [],
     blurb: '국가가 달력을 짠다. 정기 갤리선단의 자리를 경매로 판다.',
     lines: {
@@ -832,12 +838,17 @@ export const FACTIONS = {
     flags: ['hanse'],
     // ★ 브뤼헤는 `burgundy` 깃발이다 — 콘토어는 **남의 도시 안의 남의 구역**이라는 것이 그 제도의 정의다
     seats: ['lubeck', 'danzig', 'brugge'],
-    sells: 'enroll',                   // 한 철 손님 자격 — 값은 2단계에 붙는다
+    sells: 'enroll',
+    /* ★ 값이 소설에 이미 적혀 있다 — 52장 「명부에 없는 이름」의 **한 철 520닢**.
+       카사는 정액이 아니라 그 항구 size × 900닢이라 `enrollFlat`을 안 준다. */
+    enrollFlat: 520,                   // 한 철 손님 자격 — 값은 2단계에 붙는다
     grip: {
       goods: ['grain', 'timber', 'herring', 'stockfish', 'amber'],
       cities: ['danzig', 'riga', 'hamburg'],
       routes: ['danzig|lubeck', 'antwerpen|brugge'],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 발트는 짧고 잦다 */
+    convoy: { goods: ['herring', 'amber'], to: ['riga', 'lubeck'], everyDays: 45 },
     fleets: [],
     blurb: '배제가 무기다. 세율이 아니라 자격을 쥔다 — 명부에 없으면 부두 밖으로 못 나간다.',
     lines: {
@@ -879,6 +890,8 @@ export const FACTIONS = {
     /* ★ **이 세력의 함대는 이미 있다.** `FOES`(권역별 등급 1~5)의 넷째·다섯째가 그것이고,
        권역 패권 조건 ③이 그 등급 5를 꺾으라고 이미 말한다. 여기서는 **잇기만** 한다 —
        새 적을 한 척도 만들지 않는다. 어느 바다의 몇 번째 얼굴이 이 세력인가를 적을 뿐이다. */
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 카레이라 다 인디아의 나우 두 트라투도 한 해 한 번이다 */
+    convoy: { goods: ['pepper'], to: ['venezia', 'santhome'], everyDays: 90 },
     fleets: [
       { region: 'indian', tier: 5, name: '포르투갈 인도 함대 기함' },
       { region: 'indian', tier: 4, name: '포르투갈 순찰 함대' },
@@ -901,6 +914,8 @@ export const FACTIONS = {
       cities: ['potosi', 'veracruz', 'havana', 'portobelo'],
       routes: ['havana|sevilla', 'nombrededios|portobelo'],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 플로타는 한 해 한 번이었다 */
+    convoy: { goods: ['silver', 'cochineal'], to: ['barcelona', 'havana'], everyDays: 90 },
     fleets: [
       { region: 'caribbean', tier: 5, name: '스페인 은함대 호위기함' },
       { region: 'caribbean', tier: 4, name: '과르다코스타 순찰선' },
@@ -924,6 +939,8 @@ export const FACTIONS = {
       cities: ['guangzhou', 'quanzhou', 'ningbo', 'yuegang'],
       routes: ['guangzhou|macau'],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 조공선단의 리듬이다 */
+    convoy: { goods: ['silk', 'ceramic'], to: ['tianjin', 'penghu'], everyDays: 60 },
     fleets: [
       { region: 'eastasia', tier: 4, name: '명 수군 순찰선' },
     ],
@@ -944,6 +961,8 @@ export const FACTIONS = {
       cities: ['mokha', 'aden', 'alexandria', 'istanbul'],
       routes: ['alexandria|jeddah', 'aden|mokha'],
     },
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. */
+    convoy: { goods: ['coffee', 'incense'], to: ['alexandria', 'jeddah'], everyDays: 60 },
     fleets: [
       { region: 'africa', tier: 5, name: '오스만 홍해 함대' },
       { region: 'mideast', tier: 4, name: '오스만 홍해 함대' },
@@ -971,6 +990,8 @@ export const FACTIONS = {
       routes: ['ambon|makassar', 'ambon|banda'],
     },
     /* ★ 몸이 가장 작고 이빨이 가장 크다 — 깃발 도시는 넷뿐인데 등급 4·5 함대가 넷이다 */
+    /* 정기선단 — **확률이 아니라 달력.** 예측 가능해야 「늦으면 손해」가 판단이 된다. 회사의 배는 잦지도 드물지도 않다 */
+    convoy: { goods: ['clove', 'nutmeg'], to: ['antwerpen'], everyDays: 75 },
     fleets: [
       { region: 'seasia', tier: 5, name: '회사 향료 함대' },
       { region: 'seasia', tier: 4, name: '회사 순찰선' },
@@ -1027,6 +1048,51 @@ export const FACTION_TIES = {
       (`HEGEMONY.bossTier: 5` — 여덟 바다의 등급 5가 나라·회사의 함대다), 같은 것이 둘이 되면 둘 다 죽는다.
     ⚠️ grip 웃돈·입회비·정기선단·가로채기·`enroll`·연대 악명은 **2단계**라 값도 여기 없다 —
       안 쓰는 상수를 미리 두면 화면이 그것을 읽어 **없는 규칙을 말하게 된다.** */
+/* ── A-10 2단계 · 경쟁의 값 (SPEC-factions §3) ─────────────────────────
+   ★ **전쟁을 새로 만들지 않는다.** 여덟 바다의 등급 5가 나라·회사의 함대이고 그것을 꺾는
+     문의 이름이 이미 「패권」이다. 2단계가 더하는 것은 **값과 동선**뿐이다. */
+export const FACTION = {
+  /* 쥔 자리에서 무는 웃돈 — **그 세력이 앉은 도시에서 그 세력이 쥔 품목**을 살 때만.
+     ★ 밖의 항구에서는 안 붙는다. 그래야 "딴 데서 사면 된다"가 답이 되고, 그 답이 곧
+       **항로가 길어진다**는 대가다. ⚠️ **상수 배율이라야 한다** — `buy()`의 이분 탐색이
+       단조 증가를 전제하므로 수량에 따라 움직이는 항을 넣으면 그 탐색이 깨진다. */
+  gripUp: 0.08,          // 눈총(−1~−5)
+  gripUpHard: 0.18,      // 원수(−6 아래)
+  /* ★ 빠져나갈 항구가 없는 품목(마스틱=키오스 하나)에는 **절반만** 문다 —
+     온 값을 물리면 그것은 경쟁이 아니라 통행세다. */
+  gripSoleHalf: 0.5,
+
+  /* 그 자리에 시설을 세울 때 — **막지 않는다. 값을 물린다.** */
+  entryFreeAt: 6,        // 한편이면 입회비가 없다
+  entryFee: 0.25,        // 거래처(그리고 「모른다」)면 시설값의 이만큼
+  /* ⚠️ **사양에서 한 칸 물러섰다 — 그리고 그것이 이 저장소의 절대 원칙이다.**
+     `SPEC-factions §3-2`는 *"regard ≤ 0이면 침범"*이라고 적었는데, **0은 「모른다」이고
+     모두가 거기서 시작한다.** 그대로 넣었더니 첫 판의 플레이어가 베네치아·포토시·고아 어디에
+     시설을 세워도 **전부 휴업으로 시작**했다(실측: 판매소·가공장 검사 열셋이 한꺼번에 깨졌다).
+     그것은 값을 물리는 것이 아니라 **콘텐츠를 억제하는 장치**다.
+     ⇒ 침범은 **눈총(≤ −1)부터**다. 「모른다」에서는 입회비를 내고 들어간다 —
+       *"아직 아무 잘못도 안 한 사람"*에게 문을 닫지 않는다. 아래 `trespassAt`이 그 선이다. */
+  trespassAt: -1,
+  trespassRaw: -3,       // 눈총부터는 침범이다. 그리고 **휴업으로 시작한다**
+
+  /* 자격·등록 (`BOON.enroll`) — ⚠️ **세를 깎아 주지 않는다.** 주는 것은 관계뿐이다 */
+  enrollDays: 90,
+  enrollBySize: 900,     // 카사 — 그 항구 size × 이것
+  enrollRegard: 2,
+
+  /* 함대를 꺾으면 −4 — **패권을 향해 가는 것이 곧 척지는 것이다** */
+  fleetTier: 4,          // 등급 4·5만 세력의 함대다
+  fleetRaw: -4,
+
+  /* 정기선단 — **확률이 아니라 달력.** 수요 도시에만 건다(산지에 걸면 싸게 살 기회가 된다) */
+  convoyMult: 0.72,
+  convoyDays: 12,
+
+  /* 계약 가로채기 — 기한의 절반이 지난 시점에 1회. **손실은 선금 반환뿐**이다 */
+  poachOdds: 0.20,
+  poachHard: 0.35,
+};
+
 export const REGARD = {
   cap: 10,                 // ★ 악명과 **같은 눈금**이다 — 자를 둘 만들지 않으려고 일부러 같게 뒀다
   decayDays: 90,           // 악명(40일)의 2.25배. **소문은 잊히고 장부는 안 잊힌다**

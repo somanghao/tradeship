@@ -18,6 +18,8 @@ import {
   /* ★ 기함은 여기서 가라앉지 않는다 — **패배 처리**가 따로 있고(C-13 N4),
      그 판정과 실행이 이 둘이다. 삭은 배로 졌을 때만 걸린다. */
   flagshipSinks, sinkFlagship,
+  /* 세력 — 함대를 꺾으면 그 집 장부에 이름이 붉게 적힌다(−4) */
+  fleetSlain,
 } from '../state.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa, spriteElTrim } from '../ui.js';
 import { go } from '../main.js';
@@ -631,6 +633,10 @@ function finish(kind) {
   /* 누구를 꺾었는지 남긴다 — 권역 패권 조건 ③이 읽는다(`state.js: recordSlain`).
      격침이든 나포든 꺾은 것은 같으므로 가르지 않는다. 상선은 저쪽에서 걸러진다. */
   recordSlain(e, regionOf(state.at));
+  /* ★ **함대를 꺾으면 그 집 장부에 이름이 붉게 적힌다**(A-10 2단계 · −4).
+     패권을 향해 가는 것이 곧 척지는 것이다 — 성장이 대가를 낳는 구조이지 보상을 낳는 구조가 아니다.
+     등급 4·5만 세력의 함대이므로 잡배를 잡는 것으로는 안 걸린다. */
+  const facHit = fleetSlain(e, state.at);
   const [lo, hi] = e.loot.gold;
   const mult = kind === 'capture' ? 1 : 0.45;
   const coin = Math.round((lo + Math.random() * (hi - lo)) * mult);
@@ -704,6 +710,15 @@ function finish(kind) {
     title: kind === 'capture' ? '나포 성공' : '적선 격침',
     body: el('div', {}, [
       el('p', { text: won + weight }),
+      /* ★ **꺾은 값이 관계로 돌아온다**(A-10 2단계). 이긴 자리에서 그 사실을 함께 말하지 않으면
+         플레이어는 다음 항구에서 문서가 안 팔릴 때까지 이유를 모른다 —
+         "규칙이 멀쩡한데 화면이 말하지 않아 수백 일을 잃는다"의 그 자리다. */
+      facHit ? el('p', {
+        style: { marginTop: '6px', color: '#d98a6a', fontSize: '12px' },
+        text: `${facHit.name}의 함대였다. 그 집 장부에 내 이름이 붉게 적힌다`
+            + ` (${facHit.delta} → 지금 ${facHit.now}).`
+            + ' 패권을 향해 가는 것이 곧 척지는 것이다.',
+      }) : null,
       rows,
       prize ? el('p', {
         style: { marginTop: '6px', color: '#9a927f', fontSize: '12px' },

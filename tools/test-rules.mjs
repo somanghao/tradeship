@@ -10,7 +10,7 @@ if (!globalThis.localStorage) {
   };
 }
 
-import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, ROUTES, ORIGINS, START_PORTS, DEFAULT_START, DEFAULT_ORIGIN, startShipAt, YARD } from '../js/data.js';
+import { SHIPS, ENEMIES, REFITS, OFFICER, CITY_BY_ID, CITIES, GOOD_BY_ID, ROUTES, ORIGINS, START_PORTS, DEFAULT_START, DEFAULT_ORIGIN, startShipAt, YARD } from '../js/data.js';
 import {
   state, resetGame, advanceDays, purchaseShip, boardShip, buyRefit, gunCap,
   shipSpeed, shorthanded, captureShip, fleetUpkeep, pickEnemy, voyageDays,
@@ -22,6 +22,8 @@ import {
   growKind, growStock, growCap, canBuyGrow, buyGrow, workAt, chainMargin, costFor,
   shopCut, canBuyShop, buyShop, shopTick, collectShop, consignToShop,
   canConsign, sendConsign, arriveConsign, canStartLine, startLine, stopLine, cargoCapTotal, waitDays,
+  gripMarkup, hasOutsideSource, enrollOffer, buyEnroll, enrolled, convoyDue, rollConvoys,
+  fleetSlain, bondPenalty, workEntry, rollPoach, addRegard, regardOf, reviveTrespass,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -54,7 +56,7 @@ import {
   routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
   routeFactor, windFactor, currentFactor, YEAR_DAYS,
 } from '../js/state.js';
-import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
+import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, FACTION, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
@@ -411,7 +413,11 @@ resetGame();
   ok(millRecipes('iznik').length === 0, '내륙 도시(공업력 0)에서는 사슬이 하나도 안 열린다');
 
   const gold0 = state.gold;
-  ok(buyMill(R, 'venezia').ok && state.gold === gold0 - 67230, '가공장을 세우면 그 값이 금고에서 빠진다');
+  /* ★ 베네치아는 **베네치아 상단이 앉은 자리**라 입회비가 붙는다(A-10 2단계 · 시설값의 25%).
+     「모른다」(0)에서는 침범이 아니라 입회비다 — 아무 잘못도 안 한 사람에게 문을 닫지 않는다. */
+  const entryFee = Math.round(67230 * FACTION.entryFee);
+  ok(buyMill(R, 'venezia').ok && state.gold === gold0 - 67230 - entryFee,
+     `가공장을 세우면 그 값이 금고에서 빠진다 (67,230닢 + 임자 입회비 ${entryFee.toLocaleString('en-US')}닢)`);
 
   // 착수 — 투입은 **창고에서** 빠지고 가공비는 **지금** 나간다
   state.stored.venezia = { woolcloth: 20, cochineal: 10 };
@@ -999,6 +1005,125 @@ resetGame();
      `가공 사슬 여덟이 전부 밴드[${WORK.marginMin}, ${WORK.marginMax}] 안이다`);
   ok(CHAIN_BY_ID.smelt_silver.req === 1,
      '제련만 공업력 1이다 — 포토시·우앙카벨리카가 내륙 광산이라 2를 걸면 그 사슬이 죽는다');
+}
+
+/* ── A-10 2단계 · 경쟁 ────────────────────────────────────────────────
+   ★ **전쟁을 새로 만들지 않는다.** 2단계가 더하는 것은 **값과 동선**뿐이다 —
+     쥔 자리에서 웃돈을 물고, 자격을 사고, 일감을 가로채이고, 선단이 시세를 무너뜨린다. */
+{
+  resetGame('venezia');
+  state.gold = 1e7;
+  /* ⓐ 쥔 자리의 웃돈 — **그 세력이 앉은 도시에서만** 붙는다 */
+  ok(gripMarkup('pepper', 'goa') === 0, '사이가 멀쩡하면 웃돈이 없다');
+  addRegard('estado', -3, 'test');
+  const upGoa = gripMarkup('pepper', 'goa');
+  const upCal = gripMarkup('pepper', 'calicut');
+  ok(upGoa === FACTION.gripUp && upCal === 0,
+     `눈총이면 고아에서 후추가 +${Math.round(upGoa * 100)}% — 캘리컷에서는 안 붙는다(딴 데서 사면 된다)`);
+  addRegard('estado', -5, 'test');
+  ok(gripMarkup('pepper', 'goa') === FACTION.gripUpHard,
+     `원수면 +${Math.round(FACTION.gripUpHard * 100)}%로 오른다`);
+  /* ★ 빠져나갈 항구가 없는 품목은 절반만 문다 */
+  addRegard('sangiorgio', -8, 'test');
+  ok(!hasOutsideSource('sangiorgio', 'mastic')
+     && gripMarkup('mastic', 'chios') === FACTION.gripUpHard * FACTION.gripSoleHalf,
+     '마스틱은 산지가 키오스 하나뿐이라 웃돈이 절반이다 — 온 값을 물리면 경쟁이 아니라 통행세다');
+  /* ★ 상수 배율이라 `buy()`의 이분 탐색이 안 깨진다 */
+  {
+    state.at = 'goa'; state.cargoCap = 400; state.cargo = {}; state.impact = {};
+    let mono = true, prev = -1;
+    for (let i = 0; i <= 200; i++) { const v = costFor('pepper', i, 'goa'); if (v < prev) mono = false; prev = v; }
+    ok(mono, '웃돈이 붙어도 costFor(n)이 단조 증가다 — 상수 배율이라야 하는 이유');
+  }
+
+  /* ⓑ 자격(`enroll`) — **세를 깎아 주지 않는다** */
+  resetGame('venezia'); state.gold = 1e7;
+  ok(enrollOffer('venezia') === null, '베네치아는 자격을 팔지 않는다(파는 것이 흥정이다)');
+  const off = enrollOffer('lubeck');
+  ok(off && off.fac === 'hanse' && off.price === 520,
+     `한자는 한 철 자격을 판다 — ${off?.price}닢 (소설 52장이 값까지 적어 두었다)`);
+  {
+    state.at = 'lubeck';
+    const t0 = baseTariff('lubeck');
+    const r = buyEnroll('lubeck');
+    ok(r.ok && regardOf('hanse') === FACTION.enrollRegard,
+       `명부에 올리면 관계가 +${FACTION.enrollRegard}가 된다`);
+    ok(baseTariff('lubeck') === t0,
+       '★ 세는 한 닢도 안 깎인다 — `enroll`이 주는 것은 오직 관계뿐이다');
+    ok(enrolled('hanse'), '올라 있는 동안은 명부에 있다');
+  }
+
+  /* ⓒ 정기선단 — **확률이 아니라 달력**이고 **수요 도시에만** 건다 */
+  {
+    resetGame('venezia');
+    const d = convoyDue('casa', 1);
+    ok(d && d.every === 90, `카사의 플로타는 ${d?.every}일마다다 — 한 해 한 번`);
+    state.day = 90; state.shocks = [];
+    const fired = rollConvoys(1);
+    ok(fired.length > 0, `달력이 오면 선단이 든다 — ${fired.length}건`);
+    for (const f of fired) {
+      ok(CITY_BY_ID[f.city].demand?.[f.good] != null,
+         `★ 수요 도시에만 건다 — ${CITY_BY_ID[f.city].name}의 ${GOOD_BY_ID[f.good].name}`
+         + ' (산지에 걸면 싸게 살 기회가 되어 새 수입원이 된다)');
+    }
+    ok(state.shocks.some((x) => x.kind === 'convoy' && x.mult < 1),
+       '값이 주저앉는다 — 비싸게 팔 기회를 잃는 것 하나뿐이다');
+  }
+
+  /* ⓓ 함대를 꺾으면 −4 — 등급 4·5만 */
+  {
+    resetGame('venezia');
+    const before = regardOf('venezia');
+    ok(fleetSlain({ level: 2 }, 'venezia') === null, '잡배를 잡는 것으로는 안 걸린다');
+    const hit = fleetSlain({ level: 5 }, 'venezia');
+    ok(hit && regardOf('venezia') === before + FACTION.fleetRaw,
+       `함대를 꺾으면 ${FACTION.fleetRaw} — 패권을 향해 가는 것이 곧 척지는 것이다`);
+  }
+
+  /* ⓔ 연대 — 한 배를 덮치면 여럿이 등을 돌린다 */
+  {
+    resetGame('venezia');
+    const hit = bondPenalty({ bond: ['venezia', 'sangiorgio'] });
+    ok(hit.length === 2 && regardOf('venezia') === -1 && regardOf('sangiorgio') === -1,
+       `뒤에 선 것이 하나가 아니면 함께 등을 돌린다 — ${hit.join(' · ')}`);
+  }
+
+  /* ⓕ 시설 입회비와 침범 — **막지 않는다. 값을 물린다** */
+  {
+    resetGame('venezia'); state.gold = 1e7;
+    state.holdings = { potosi: { rental: true, warehouse: true } };
+    state.at = 'potosi';
+    ok(workEntry('potosi').fee === FACTION.entryFee && !workEntry('potosi').idle,
+       '★ 「모른다」(0)는 침범이 아니다 — 입회비를 내고 들어간다. 사양에서 한 칸 물러선 자리다');
+    addRegard('casa', -2, 'test');            // 눈총으로 내려간다
+    const ent = workEntry('potosi');
+    ok(ent.fac === 'casa' && ent.idle && ent.raw === FACTION.trespassRaw,
+       '눈총부터는 침범이다 — 세울 수는 있다');
+    ok(buyGrow('silverore', 'potosi').ok
+       && workAt('mine', 'silverore', 'potosi').idle,
+       '★ 막지 않는다 — 대신 **휴업으로 시작**해 유지비만 나가고 산출이 0이다');
+    ok(regardOf('casa') === -2 + FACTION.trespassRaw, `침범한 값이 관계로 온다 (${regardOf('casa')})`);
+    /* ★ 침범으로 닫힌 문은 **관계가 풀리면 열린다** — 유지비 문제가 아니라 관계 문제이므로
+       `settleWorks`가 못 연다. 그러면 유지비만 영원히 나가는 자리가 생긴다. */
+    addRegard('casa', 8, 'test');
+    ok(reviveTrespass('potosi') && !workAt('mine', 'silverore', 'potosi').idle,
+       '관계가 풀리면 그 문이 열린다 — 회복하는 길이 있어야 벌이 벌이 된다');
+  }
+
+  /* ⓖ 가로채기 — **손실은 선금 반환뿐**이다 */
+  {
+    resetGame('sevilla'); state.gold = 1e7; state.cargoCap = 400;
+    addRegard('casa', -8, 'test');
+    state.contract = { from: 'sevilla', to: 'lisboa', goodId: 'wine', qty: 5, pay: 1000,
+                       due: state.day + 20, advance: 200, by: 'casa', taken: state.day };
+    state.day += 20;
+    let poached = 0;
+    for (let i = 0; i < 200; i++) {
+      state.contract = { ...state.contract, poachRolled: false };
+      if (rollPoach()) poached++;
+    }
+    ok(poached > 0, `원수면 가로채인다 — 200번에 ${poached}번`);
+  }
 }
 
 /* ── A-9 3단계 · 판매소 · 위탁 · 정기선 ───────────────────────────────

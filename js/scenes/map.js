@@ -19,7 +19,7 @@ import {
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   /* 입항세를 **운영비용으로 보여 주는** 자리(#6) · 관선 임검 */
   tariffRate, seizeCargo,
-  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount, flagshipSinks,
+  fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount, flagshipSinks, bondPenalty,
   totalLossOdds, totalLoss,
   /* 입장권 체크리스트가 쓰는 것 — **판정을 여기서 새로 만들지 않는다.**
      `oceanReady`가 보는 그 상수와 그 함수를 그대로 읽어 세 줄로 편다. */
@@ -512,10 +512,16 @@ function meetMerchant(n, finish) {
          털린 배가 항구에 닿으면 누가 털었는지 말하기 때문이다(ISSUES #22). */
       const flag = n.flag ?? defOf(n)?.flag ?? null;
       const lvl = flag ? addInfamy(flag, 1) : 0;
+      /* ★ **연대(連帶)** — 그 상단 뒤에 선 세력이 여럿이면 **그들이 함께 등을 돌린다**(A-10 2단계).
+         악명은 깃발 하나에만 붙고(위 줄) 관계만 여럿에 걸린다. */
+      const bonded = bondPenalty(defOf(n) ?? n);
       pushLog(`${who}${josa(who, '을/를')} 덮치기로 했다.`
             + (def?.lines?.refuse ? ` ${def.lines.refuse}` : ''), 'warn');
       if (lvl) {
         pushLog(`이 일은 소문이 난다 — ${FLAG_NAME[flag] ?? flag} 쪽 항구에서 값을 치르게 된다 (악명 ${lvl}).`, 'bad');
+      }
+      if (bonded.length) {
+        pushLog(`이 배 뒤에 선 것이 하나가 아니다 — ${bonded.join(' · ')}이(가) 함께 등을 돌린다.`, 'bad');
       }
       refreshLog();
       go('battle', {

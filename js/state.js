@@ -8,7 +8,7 @@ import {
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
   SEA_ORIGINS, seaOriginAt,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
-  CONSIGN, LINE,
+  CONSIGN, LINE, FACTION,
   TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
@@ -370,8 +370,13 @@ export function costFor(goodId, n, cityId = state.at) {
   /* 밭 몫은 압력을 **일으키지도 받지도** 않는다. 나머지 칸의 압력도 `rest` 기준으로 잰다 —
      밭에서 실은 칸까지 시장 물량으로 세면 자기 밭이 제 시세를 밀어 올린다. */
   const ownCost = unit * own * (1 - g.off);
+  /* ★ **쥔 자리에서 무는 웃돈**(A-10 2단계) — 그 세력이 앉은 도시에서 그 세력이 쥔 품목을
+     살 때만 붙는다. 밖에서는 안 붙으므로 답은 언제나 **딴 데서 사는 것**이고,
+     그 답이 곧 항로가 길어진다는 대가다. ⚠️ **수량과 무관한 상수 배율**이라
+     `buy()`의 이분 탐색이 전제하는 단조 증가가 안 깨진다. */
+  const grip = 1 + gripMarkup(goodId, cityId);
   const restCost = rest > 0 ? unit * rest * (1 + impactFactor(cityId, goodId, rest)) : 0;
-  return Math.round(ownCost + restCost);
+  return Math.round((ownCost + restCost) * grip);
 }
 export function gainFor(goodId, n, cityId = state.at) {
   if (n <= 0) return 0;
@@ -1081,11 +1086,20 @@ export function canBuyGrow(goodId, cityId = state.at) {
 export function buyGrow(goodId, cityId = state.at) {
   const c = canBuyGrow(goodId, cityId);
   if (!c.ok) return c;
-  state.gold -= c.price;
-  book('outgo', 'ships', c.price);
+  /* ★ **임자가 있는 자리에는 값이 붙는다**(A-10 §3-2). 막지는 않는다 — 막으면 사슬 여럿이
+     관계 하나에 잠긴다(설탕=푼샬이 에스타두 · 은=포토시가 카사). 대신 값을 물리고,
+     눈총 아래에서 세운 것은 **휴업으로 시작**해 유지비만 나간다. */
+  const ent = workEntry(cityId);
+  const fee = Math.round(c.price * ent.fee);
+  if (c.price + fee > state.gold) {
+    return { ok: false, reason: `입회비까지 ${(c.price + fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  }
+  state.gold -= c.price + fee;
+  book('outgo', 'ships', c.price + fee);
   const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
-  m[workKey(c.kind, goodId)] = { level: 1, since: state.day, idle: false, stock: 0 };
+  m[workKey(c.kind, goodId)] = { level: 1, since: state.day, idle: ent.idle, stock: 0 };
   m.spent = (m.spent ?? 0) + c.price;
+  noteEntry(ent, cityId);
   const nm = WORKS[c.kind].name, gn = GOOD_BY_ID[goodId].name;
   pushLog(`${CITY_BY_ID[cityId].name}에 ${gn} ${nm}${josa(nm, '을/를')} 세웠다`
         + ` (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
@@ -1189,9 +1203,15 @@ export function buyShop(goodId, cityId = state.at) {
   if (!c.ok) return c;
   state.gold -= c.price;
   book('outgo', 'ships', c.price);
+  const ent = workEntry(cityId);
+  const fee = Math.round(c.price * ent.fee);
+  if (fee > state.gold) return { ok: false, reason: `입회비 ${fee.toLocaleString('ko-KR')}닢이 모자란다` };
+  state.gold -= fee;
+  if (fee) book('outgo', 'ships', fee);
   const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
-  m[workKey('shop', goodId)] = { level: 1, since: state.day, idle: false, stock: 0, proceeds: 0 };
+  m[workKey('shop', goodId)] = { level: 1, since: state.day, idle: ent.idle, stock: 0, proceeds: 0 };
   m.spent = (m.spent ?? 0) + c.price;
+  noteEntry(ent, cityId);
   const gn = GOOD_BY_ID[goodId].name;
   pushLog(`${CITY_BY_ID[cityId].name}에 ${gn} 판매소를 열었다 (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
   return { ok: true, price: c.price };
@@ -1539,9 +1559,15 @@ export function buyMill(recipeId, cityId = state.at) {
   const r = CHAIN_BY_ID[recipeId];
   state.gold -= c.price;
   book('outgo', 'ships', c.price);      // 거점과 같은 갈래 — 배 밖에 묶이는 자본이다
+  const ent = workEntry(cityId);
+  const fee = Math.round(c.price * ent.fee);
+  if (fee > state.gold) return { ok: false, reason: `입회비 ${fee.toLocaleString('ko-KR')}닢이 모자란다` };
+  state.gold -= fee;
+  if (fee) book('outgo', 'ships', fee);
   const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
-  m[workKey('mill', chainOut(r))] = { level: 1, since: state.day, idle: false, job: null };
+  m[workKey('mill', chainOut(r))] = { level: 1, since: state.day, idle: ent.idle, job: null };
   m.spent = (m.spent ?? 0) + c.price;   // 유지비는 **들인 돈 전체**에 붙는다(거점과 같다)
+  noteEntry(ent, cityId);
   pushLog(`${CITY_BY_ID[cityId].name}에 ${r.work}${josa(r.work, '을/를')} 세웠다`
         + ` (−${c.price.toLocaleString('ko-KR')}닢).`, 'good');
   return { ok: true, price: c.price };
@@ -1703,9 +1729,25 @@ export function worksUpkeepDue(cityId) {
 /** 이 항구의 시설 유지비를 치른다(항구에 들어올 때 · `settleHolding` 옆).
     ★ 거점과 달리 **휴업을 한 번 거친다** — 사슬은 여러 항구에 걸치므로 한 항구의 사고로
       전체가 끊기면 "수직계열화"가 도박이 된다. 두 번 연속이면 그때 압류다. */
+/** ★ **침범으로 문을 닫은 시설은 관계가 풀리면 열린다**(A-10 §3-2).
+    허락 없이 세운 것은 유지비 문제가 아니라 **관계 문제**라 `settleWorks`가 못 연다 —
+    그러면 유지비만 영원히 나가는 자리가 생긴다. 회복하는 길은 **그 세력과 다시 거래하는 것**이다. */
+export function reviveTrespass(cityId = state.at) {
+  const m = state.works?.[cityId];
+  if (!m || (m.missed ?? 0) > 0) return null;      // 체불로 닫힌 것은 저쪽 규칙이다
+  const ent = workEntry(cityId);
+  if (!ent.fac || ent.idle) return null;            // 아직 눈총 아래다
+  const shut = workList(cityId).filter(([, w]) => w.idle);
+  if (!shut.length) return null;
+  for (const [, w] of shut) w.idle = false;
+  pushLog(`${FACTIONS[ent.fac].name}이(가) 문을 열어 주었다 — ${CITY_BY_ID[cityId].name}의 시설이 다시 돈다.`, 'good');
+  return { fac: ent.fac, n: shut.length };
+}
+
 export function settleWorks(cityId = state.at) {
   const m = state.works?.[cityId];
   if (!m) return null;
+  reviveTrespass(cityId);
   const due = worksUpkeepDue(cityId);
   if (due <= 0) return null;
   const paid = Math.min(state.gold, due);
@@ -2213,6 +2255,216 @@ export function sellBlocked(cityId, service = 'permit') {
   if (!(SELLS_FOR[service] ?? []).includes(f.sells)) return null;
   if (regardOf(fid) > REGARD.refuseAt) return null;
   return f.lines?.refuse ?? `${f.name}이 이 문서를 내주지 않는다`;
+}
+
+/* ══ A-10 2단계 · 경쟁 (SPEC-factions §3) ═══════════════════════════════
+   ★ **전쟁을 새로 만들지 않는다.** 여덟 바다의 등급 5가 나라·회사의 함대이고,
+     그것을 꺾는 문의 이름이 이미 「패권」이다. 2단계가 더하는 것은 **값과 동선**뿐이다:
+     쥔 자리에서 웃돈을 물고 · 자격을 사고 · 일감을 가로채이고 · 선단이 시세를 무너뜨린다. */
+
+/** 이 도시에서 그 세력이 「앉아 있는가」 — seat이거나 grip 도시 */
+export function gripsHere(facId, cityId = state.at) {
+  const f = FACTIONS[facId];
+  if (!f) return false;
+  return f.seats.includes(cityId) || f.grip.cities.includes(cityId);
+}
+
+/** 이 품목의 산지가 그 세력 grip 도시 **밖에도** 있나.
+    ★ 없으면(마스틱처럼 키오스 하나뿐이면) 웃돈을 **절반**으로 문다 —
+      빠져나갈 항구가 없는 품목에 온 값을 물리면 그것은 경쟁이 아니라 통행세다. */
+export function hasOutsideSource(facId, goodId) {
+  const f = FACTIONS[facId];
+  if (!f) return true;
+  const inside = new Set([...f.seats, ...f.grip.cities]);
+  for (const c of CITIES) {
+    if (inside.has(c.id)) continue;
+    if (c.supply?.[goodId] != null) return true;
+  }
+  return false;
+}
+
+/** **쥔 자리에서 무는 웃돈** — 그 세력이 앉은 도시에서 그 세력이 쥔 품목을 살 때만 붙는다.
+    ★ 밖의 항구에서는 안 붙는다. 그래야 *"딴 데서 사면 된다"*가 답이 되고,
+      그 답이 곧 **항로가 길어진다**는 대가다. 후추를 고아에서 못 사면 캘리컷으로 간다.
+    ★ **상수 배율이라야 한다** — `buy()`의 이분 탐색이 단조 증가를 전제하므로
+      수량에 따라 움직이는 항을 여기 넣으면 그 탐색이 깨진다. */
+export function gripMarkup(goodId, cityId = state.at) {
+  let worst = 0;
+  for (const [id, f] of Object.entries(FACTIONS)) {
+    if (!f.grip.goods.includes(goodId)) continue;
+    if (!gripsHere(id, cityId)) continue;
+    const v = regardOf(id);
+    if (v >= 0) continue;
+    let up = v <= REGARD.refuseAt ? FACTION.gripUpHard : FACTION.gripUp;
+    if (!hasOutsideSource(id, goodId)) up *= FACTION.gripSoleHalf;
+    worst = Math.max(worst, up);
+  }
+  return worst;
+}
+
+/** 그 자리에 시설을 세울 때의 **입회비와 대가** — `SPEC-vertical`과 물리는 자리.
+    ★ **막지 않는 것이 규약이다.** 막으면 사슬 여럿이 관계 하나에 잠긴다
+      (설탕=푼샬이 에스타두 · 은=포토시가 카사 · 육두구=반다가 회사).
+      대신 **값을 물린다** — 눈총 아래에서 세운 시설은 **휴업으로 시작**해서
+      유지비만 나가고 산출이 0이다. */
+/** 시설을 세운 뒤 그 자리의 임자에게 무엇을 치렀는지 적는다 — **화면이 말해야 값이 값이 된다** */
+export function noteEntry(ent, cityId = state.at) {
+  if (!ent?.fac) return;
+  const f = FACTIONS[ent.fac];
+  if (ent.raw) {
+    addRegard(ent.fac, ent.raw, 'trespass');
+    pushLog(`${f.name}이(가) 쥔 자리다 — 허락 없이 세웠다(${ent.raw}).`
+          + ' 문을 열어 주지 않아 **휴업으로 시작한다** — 유지비만 나간다.', 'bad');
+  } else if (ent.fee) {
+    pushLog(`${f.name}에 입회비를 냈다 — 시설값의 ${Math.round(ent.fee * 100)}%.`, 'warn');
+  } else {
+    pushLog(`${f.name}과 한편이라 입회비가 없다.`, 'good');
+  }
+}
+
+export function workEntry(cityId = state.at) {
+  const fid = factionOfCity(cityId);
+  const f = FACTIONS[fid];
+  if (!f || !gripsHere(fid, cityId)) return { fee: 0, idle: false, raw: 0, fac: null };
+  const v = regardOf(fid);
+  if (v >= FACTION.entryFreeAt) return { fee: 0, idle: false, raw: 0, fac: fid };
+  /* ⚠️ **「모른다」(0)는 침범이 아니다** — 아무 잘못도 안 한 사람에게 문을 닫지 않는다.
+     사양에서 한 칸 물러선 자리이고 그 이유는 `data.js: FACTION.trespassAt` 주석에 있다. */
+  if (v > FACTION.trespassAt) return { fee: FACTION.entryFee, idle: false, raw: 0, fac: fid };
+  return { fee: 0, idle: true, raw: FACTION.trespassRaw, fac: fid };
+}
+
+/* ── 자격·등록 (`BOON.enroll`) — 한자와 카사가 파는 것 ─────────────────
+   ★ **세를 깎아 주지 않는다.** `enroll`이 주는 것은 오직 `regard +2`뿐이다 —
+     그것이 "명부에 이름을 올린다"의 정직한 번역이다. */
+
+/** 그 세력의 자격을 이 항구에서 살 수 있나 · 값은 얼마인가 */
+export function enrollOffer(cityId = state.at) {
+  const fid = factionOfCity(cityId);
+  const f = FACTIONS[fid];
+  if (!f || f.sells !== 'enroll' || !f.seats.includes(cityId)) return null;
+  const size = CITY_BY_ID[cityId]?.size ?? 1;
+  const price = f.enrollFlat ?? Math.round(size * FACTION.enrollBySize);
+  const until = state.boons?.enroll?.[fid] ?? 0;
+  return { fac: fid, name: f.name, price, days: FACTION.enrollDays, until,
+           blocked: regardOf(fid) <= REGARD.refuseAt ? (f.lines?.refuse ?? null) : null };
+}
+
+export function buyEnroll(cityId = state.at) {
+  const o = enrollOffer(cityId);
+  if (!o) return { ok: false, reason: '여기서는 자격을 팔지 않는다' };
+  if (o.blocked) return { ok: false, reason: o.blocked };
+  if (o.price > state.gold) {
+    return { ok: false, reason: `금화가 ${(o.price - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  }
+  state.gold -= o.price;
+  book('outgo', 'upkeep', o.price);
+  ((state.boons ??= {}).enroll ??= {})[o.fac] = state.day + o.days;
+  addRegard(o.fac, FACTION.enrollRegard, 'enroll');
+  pushLog(`${o.name}의 명부에 이름을 올렸다 — ${o.days}일 (−${o.price.toLocaleString('ko-KR')}닢).`
+        + ' 세가 깎이지는 않는다. 이름이 올랐을 뿐이다.', 'good');
+  return { ok: true, price: o.price, until: state.day + o.days };
+}
+
+/** 지금 그 세력 명부에 올라 있나 */
+export const enrolled = (facId) => (state.boons?.enroll?.[facId] ?? 0) > state.day;
+
+/* ── 연대(連帶) — 한 상단을 덮치면 여럿이 함께 등을 돌린다 ────────────────
+   ★ **악명은 깃발 하나에만** 붙고(기존 그대로) `regard`만 여럿에 걸린다.
+     ⚠️ `bond`는 **대사가 있는 상단에만** 단다 — 대사가 없는데 규칙만 있으면
+       플레이어가 이유를 못 읽는다. */
+export function bondPenalty(npc) {
+  const bond = npc?.bond ?? [];
+  const hit = [];
+  for (const fid of bond) {
+    if (!FACTIONS[fid]) continue;
+    addRegard(fid, -1, 'bond');
+    hit.push(FACTIONS[fid].name);
+  }
+  return hit;
+}
+
+/* ── 함대를 꺾으면 관계가 내려간다 (−4) ──────────────────────────────
+   ★ **패권을 향해 가는 것이 곧 척지는 것이다** — 성장이 대가를 낳는 구조이지
+     보상을 낳는 구조가 아니다. 등급 4·5만 세력의 함대다. */
+export function fleetSlain(enemy, cityId = state.at) {
+  const tier = enemy?.level ?? 0;
+  if (tier < FACTION.fleetTier) return null;
+  const fid = FACTIONS[enemy?.fac] ? enemy.fac : factionOfCity(cityId);
+  const f = FACTIONS[fid];
+  if (!f) return null;
+  addRegard(fid, FACTION.fleetRaw, 'fleet');
+  pushLog(`${f.name}의 함대를 꺾었다 — 그 집 장부에 내 이름이 붉게 적힌다`
+        + ` (${f.name} ${regardOf(fid)}).`, 'warn');
+  return { fac: fid, name: f.name, delta: FACTION.fleetRaw, now: regardOf(fid) };
+}
+
+/* ── 정기선단 — 달력이 시세를 무너뜨린다 (§3-3) ─────────────────────────
+   ★ **확률이 아니라 달력이다.** 예측 가능해야 *"늦으면 손해"*가 판단이 된다.
+   ★ **`demand` 도시에만** 건다 — 산지에 걸면 **싸게 살 기회**가 되어 새 수입원이 된다.
+     그래서 이 사건이 주는 것은 **비싸게 팔 기회를 잃는 것 하나**뿐이다. */
+export function convoyDue(facId, day = state.day) {
+  const f = FACTIONS[facId];
+  if (!f?.convoy?.everyDays) return null;
+  const every = f.convoy.everyDays;
+  const next = Math.ceil(Math.max(1, day) / every) * every;
+  return { next, inDays: next - day, every, goods: f.convoy.goods, to: f.convoy.to };
+}
+
+/** 오늘 도착하는 선단이 있으면 그 항구·품목에 시세 충격을 건다.
+    `advanceDays`·`waitDays`가 부르는 `rollShockEvents` 옆에 선다. */
+export function rollConvoys(days = 1) {
+  const out = [];
+  for (const [fid, f] of Object.entries(FACTIONS)) {
+    const c = f.convoy;
+    if (!c?.everyDays) continue;
+    for (let d = state.day - days + 1; d <= state.day; d++) {
+      if (d <= 0 || d % c.everyDays !== 0) continue;
+      for (const cityId of c.to) {
+        const city = CITY_BY_ID[cityId];
+        if (!city) continue;
+        for (const gid of c.goods) {
+          /* ★ 수요 도시에만 — 산지에 걸면 싸게 살 기회가 된다 */
+          if (city.demand?.[gid] == null) continue;
+          (state.shocks ??= []).push({
+            id: `convoy:${fid}:${cityId}:${gid}:${d}`, kind: 'convoy',
+            city: cityId, good: gid, mult: FACTION.convoyMult,
+            until: state.day + FACTION.convoyDays,
+            text: `${f.name}의 정기선단이 ${city.name}에 들었다 — ${GOOD_BY_ID[gid].name} 값이 주저앉는다`,
+          });
+          out.push({ fac: fid, city: cityId, good: gid });
+        }
+      }
+    }
+  }
+  if (out.length) {
+    for (const o of out) {
+      pushLog(`${FACTIONS[o.fac].name}의 정기선단이 ${CITY_BY_ID[o.city].name}에 들었다`
+            + ` — ${GOOD_BY_ID[o.good].name} 값이 주저앉는다.`, 'warn');
+    }
+  }
+  return out;
+}
+
+/* ── 계약 가로채기 (§3-4) ────────────────────────────────────────────
+   ★ **손실이 선금 반환뿐**인 것이 중요하다. 가로채기가 파산을 만들면
+     그것은 경쟁이 아니라 사고다. 위약금은 안 문다 — 내 잘못이 아니다. */
+export function rollPoach() {
+  const c = state.contract;
+  if (!c || c.poachRolled) return null;
+  const half = c.taken + Math.round((c.due - c.taken) / 2);
+  if (state.day < half) return null;
+  c.poachRolled = true;
+  const fid = c.by;
+  if (!FACTIONS[fid]) return null;
+  const odds = regardOf(fid) <= REGARD.refuseAt ? FACTION.poachHard : FACTION.poachOdds;
+  if (Math.random() >= odds) return null;
+  const back = c.advance ?? 0;
+  state.contract = null;
+  if (back > 0) { state.gold -= back; book('outgo', 'upkeep', back); }
+  pushLog(`${FACTIONS[fid].name}이(가) 그 일감을 다른 배에 넘겼다 — 선금 ${back.toLocaleString('ko-KR')}닢만 토했다.`
+        + ' 위약금은 없다. 내 잘못이 아니다.', 'bad');
+  return { fac: fid, back };
 }
 
 /** 지금 이 항구에서 누리고 있는 혜택 — 화면이 "무엇이 걸려 있나"를 보여줄 때 쓴다 */
@@ -5329,7 +5581,9 @@ export function waitDays(n = 1) {
   /* ⚠️ **정기선은 여기서도 돈다.** `advanceDays`에만 걸면 *"항구에 서 있는 동안 정기선이
      멈춘다"*가 된다 — `QUICKMAP-trade.md`의 *"항구에는 시간이 없다"*가 이 층에서 절반만 참이다. */
   const lines = tickLines();
-  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks, lines };
+  const convoys = rollConvoys(n);
+  rollPoach();
+  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks, lines, convoys };
 }
 
 /** 사람을 내려놓는다 — 창고가 있는 항구에서만. 급여 시계가 멈춘다. */
@@ -5436,8 +5690,10 @@ export function advanceDays(n, leg = null) {
   const expired = checkContractDue();
   /* ⚠️ **정기선은 `waitDays`에도 걸려 있다** — 양쪽에 안 걸면 한쪽에서 시간이 멈춘다(§3-2). */
   const lines = tickLines();
+  const convoys = rollConvoys(n);      // 세력의 정기선단 — 확률이 아니라 달력이다(A-10 §3-3)
+  rollPoach();                          // 일감 가로채기 — 기한의 절반이 지나면 한 번 판정한다
   refreshPrices();
-  return { ...c, leak, soaked, expired, shocks, lines };
+  return { ...c, leak, soaked, expired, shocks, lines, convoys };
 }
 
 /* ── 급여 정산 ────────────────────────────────────────────────

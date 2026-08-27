@@ -5,7 +5,7 @@ import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
-         ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
+         ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, FACTION, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -14,6 +14,8 @@ import {
   hasOfficer, paydayDue, paydayDeferred, daysToPayday, payrollOwed, regionOf,
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
+  /* 세력 2단계 — 웃돈·자격·선단 달력 */
+  gripMarkup, enrollOffer, buyEnroll, convoyDue,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
   tamedIn, passOff, tipOff, regionHasHolding, huntLegs,
   knowPort, holdingTip, insuranceAdd,
@@ -1059,8 +1061,46 @@ function factionCard() {
             + (inf ? ` · 그중 악명 ${inf}` : '')
             + (bite.length ? ` · ${bite.join(' · ')}` : ''),
       }),
+      /* ── 2단계 · 쥔 자리에서 무는 것과, 살 수 있는 자격 ─────────────── */
+      (() => {
+        /* **웃돈은 이 항구에서 실제로 무는 것만** 적는다 — 규칙이 있어도 화면이 침묵하면
+           플레이어는 왜 여기가 비싼지 영영 못 읽는다. */
+        const bites = (f.grip.goods ?? [])
+          .map((g) => ({ g, up: gripMarkup(g, city.id) }))
+          .filter((x) => x.up > 0);
+        return bites.length ? el('div.ctr-sub', { style: { color: '#c98a6a' },
+          html: `쥔 자리라 웃돈이 붙는다 — `
+              + bites.map((x) => `${GOOD_BY_ID[x.g].name} +${Math.round(x.up * 100)}%`).join(' · ')
+              + `<br><span style="opacity:.8">밖의 항구에서는 안 붙는다. 딴 데서 사면 된다 — 대신 항로가 길어진다.</span>`,
+        }) : null;
+      })(),
+      (() => {
+        const o = enrollOffer(city.id);
+        if (!o) return null;
+        if (o.until > state.day) {
+          return el('div.ctr-sub', { style: { color: '#8fbf8a' },
+            text: `${o.name} 명부에 올라 있다 — ${o.until - state.day}일 남았다 (세는 안 깎인다)` });
+        }
+        return svcRow(`${o.name}의 명부에 이름을 올린다 — ${o.price.toLocaleString('ko-KR')}닢`,
+          o.blocked ? o.blocked
+                    : `${o.days}일 · 관계 +${FACTION.enrollRegard}. ★ 세를 깎아 주지는 않는다 — 이름이 오를 뿐이다`,
+          o.blocked ? '거절당했다' : '올린다', !!o.blocked || o.price > state.gold, () => {
+            const r = buyEnroll(city.id);
+            if (!r.ok) return toast(r.reason, 'bad');
+            toast(`${o.name} 명부에 올랐다`, 'good');
+            refreshHUD(); refreshLog(); after();
+          });
+      })(),
+      (() => {
+        /* 정기선단 달력 — **한편이면 그냥 보인다.** 값은 안 바뀌고 아는 것만 는다. */
+        const c = convoyDue(fid);
+        if (!c || regardOf(fid) < 6) return null;
+        return el('div.ctr-sub', { style: { color: '#8f8878' },
+          text: `정기선단 — ${c.inDays}일 뒤 ${c.to.map((x) => CITY_BY_ID[x]?.name ?? x).join('·')}에`
+              + ` ${c.goods.map((g) => GOOD_BY_ID[g].name).join('·')}가 든다 (${c.every}일마다)` });
+      })(),
       el('button.btn.sm.dark', { text: '관계도를 편다  (F)', onclick: () => openFactions(city.id) }),
-    ]),
+    ].filter(Boolean)),
   ]);
 }
 
