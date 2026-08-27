@@ -8,7 +8,7 @@ import {
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
   SEA_ORIGINS, seaOriginAt,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
-  CONSIGN, LINE, FACTION,
+  CONSIGN, LINE, FACTION, FACTION_TIES,
   TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
   FACTIONS, REGARD,
@@ -2426,12 +2426,9 @@ export function rollConvoys(days = 1) {
         for (const gid of c.goods) {
           /* ★ 수요 도시에만 — 산지에 걸면 싸게 살 기회가 된다 */
           if (city.demand?.[gid] == null) continue;
-          (state.shocks ??= []).push({
-            id: `convoy:${fid}:${cityId}:${gid}:${d}`, kind: 'convoy',
-            city: cityId, good: gid, mult: FACTION.convoyMult,
-            until: state.day + FACTION.convoyDays,
-            text: `${f.name}의 정기선단이 ${city.name}에 들었다 — ${GOOD_BY_ID[gid].name} 값이 주저앉는다`,
-          });
+          /* ★ **`addShock`을 쓴다** — 같은 도시·품목에 같은 이유가 이미 걸려 있으면
+             기간만 늘린다(무한 중첩 방지). 손으로 push하면 그 규칙을 비켜 간다. */
+          addShock(cityId, gid, FACTION.convoyMult, FACTION.convoyDays, `convoy:${fid}`);
           out.push({ fac: fid, city: cityId, good: gid });
         }
       }
@@ -2465,6 +2462,74 @@ export function rollPoach() {
   pushLog(`${FACTIONS[fid].name}이(가) 그 일감을 다른 배에 넘겼다 — 선금 ${back.toLocaleString('ko-KR')}닢만 토했다.`
         + ' 위약금은 없다. 내 잘못이 아니다.', 'bad');
   return { fac: fid, back };
+}
+
+/* ══ A-10 3단계 · 회사의 벌목 · 세력끼리의 나포 (SPEC-factions §3-6·§8-1) ══
+   ★★ **이 층이 「회사」를 규칙으로 무섭게 만든다.** 다른 아홉과는 값을 치르면 대화가 되는데,
+     회사는 **관계가 0에서 내려가기만 하고 회복하는 길이 돈이 아니다**(`REGARD.companyCap` — 1단계).
+     회복하는 유일한 길은 **그 산지에서 손을 떼고 90일을 기다리는 것**(자연 삭음)이다.
+   ★ 그리고 **파는 대신 벤다** — 값을 지키는 방법이 파는 것을 줄이는 것이 아니라
+     자라는 것을 없애는 것이다. 아래 `rollFelling`이 그 한 줄이다. */
+
+/** 오늘 「벌목」이 걸리는가 — `sells: 'nothing'`인 세력이 regard ≤ −3일 때, 그 세력이 쥔
+    산지의 그 품목에 **공급 충격**(값이 오른다)을 60일마다 건다.
+    ⚠️ **새 수입원이 아니다.** 산지 값이 **오르므로 사는 쪽이 손해**이고, 수요지 값은
+      한 톨도 안 건드리므로 **팔 때 이득이 되는 자리가 없다.** */
+export function rollFelling(days = 1) {
+  const out = [];
+  for (const [fid, f] of Object.entries(FACTIONS)) {
+    if (f.sells !== 'nothing') continue;
+    if (regardOf(fid) > FACTION.fellAt) continue;
+    for (let d = state.day - days + 1; d <= state.day; d++) {
+      if (d <= 0 || d % FACTION.fellEvery !== 0) continue;
+      for (const cityId of f.grip.cities) {
+        const city = CITY_BY_ID[cityId];
+        if (!city) continue;
+        for (const gid of f.grip.goods) {
+          /* ★ **산지에만** 건다 — 그 물건이 자라는 자리를 베는 것이다 */
+          if (city.supply?.[gid] == null) continue;
+          addShock(cityId, gid, FACTION.fellMult, FACTION.fellDays, `fell:${fid}`);
+          out.push({ fac: fid, city: cityId, good: gid });
+        }
+      }
+    }
+  }
+  for (const o of out) {
+    pushLog(`${FACTIONS[o.fac].name}이(가) ${CITY_BY_ID[o.city].name}의 ${GOOD_BY_ID[o.good].name}`
+          + '을(를) 베어 냈다 — 파는 것을 줄이는 대신 자라는 것을 없앤다. 값이 뛴다.', 'bad');
+  }
+  return out;
+}
+
+/** 저 둘이 서로 싸우는 사이인가 — `FACTION_TIES.war`는 대칭이다 */
+export function atWar(a, b) {
+  return (FACTION_TIES.war ?? []).some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+}
+
+/* ── 세력끼리의 나포 — **목격할 뿐이다** (§8-1 ①) ──────────────────────
+   ★ *"실선(싸움)은 전부 세력끼리다 — 주인공에게로 오는 실선이 하나도 없다."*
+     ⚠️ **플레이어에게 아무것도 안 준다.** 그 물건이 그 항구에서 귀해지는 것을 볼 뿐이다.
+     ⚠️ **상선 정원을 안 줄인다** — 털린 배는 다시 채워진다. 그래서 `state.npcs`를 안 건드린다.
+   ★ 기존 `raid` 충격을 그대로 재사용한다 — 새 사건 유형을 만들지 않는다. */
+export function rollFactionRaid(days = 1) {
+  const pairs = FACTION_TIES.war ?? [];
+  if (!pairs.length) return null;
+  if (Math.random() >= FACTION.raidPerDay * days) return null;
+  const [a, b] = pairs[Math.floor(Math.random() * pairs.length)];
+  const fa = FACTIONS[a], fb = FACTIONS[b];
+  if (!fa || !fb) return null;
+  /* 터는 쪽·털리는 쪽을 반반으로 정하고, **털린 쪽이 쥔 산지**에서 그 물건이 귀해진다 */
+  const [hunter, prey] = Math.random() < 0.5 ? [fa, fb] : [fb, fa];
+  const cities = prey.grip.cities.filter((id) => CITY_BY_ID[id]);
+  if (!cities.length) return null;
+  const cityId = cities[Math.floor(Math.random() * cities.length)];
+  const goods = prey.grip.goods.filter((g) => CITY_BY_ID[cityId].supply?.[g] != null);
+  if (!goods.length) return null;
+  const gid = goods[Math.floor(Math.random() * goods.length)];
+  addShock(cityId, gid, FACTION.raidMult, FACTION.raidDays, 'facraid');
+  pushLog(`${CITY_BY_ID[cityId].name} 앞바다에서 ${hunter.name}이(가) ${prey.name}의 배를 끌고 갔다`
+        + ` — ${GOOD_BY_ID[gid].name}값이 뛴다. 이쪽으로 온 배는 아니다.`, 'warn');
+  return { hunter: hunter.name, prey: prey.name, city: cityId, good: gid };
 }
 
 /** 지금 이 항구에서 누리고 있는 혜택 — 화면이 "무엇이 걸려 있나"를 보여줄 때 쓴다 */
@@ -5582,6 +5647,8 @@ export function waitDays(n = 1) {
      멈춘다"*가 된다 — `QUICKMAP-trade.md`의 *"항구에는 시간이 없다"*가 이 층에서 절반만 참이다. */
   const lines = tickLines();
   const convoys = rollConvoys(n);
+  rollFelling(n);
+  rollFactionRaid(n);
   rollPoach();
   return { ok: true, days: n, cost: c, unpaid: r.owed, shocks, lines, convoys };
 }
@@ -5691,6 +5758,8 @@ export function advanceDays(n, leg = null) {
   /* ⚠️ **정기선은 `waitDays`에도 걸려 있다** — 양쪽에 안 걸면 한쪽에서 시간이 멈춘다(§3-2). */
   const lines = tickLines();
   const convoys = rollConvoys(n);      // 세력의 정기선단 — 확률이 아니라 달력이다(A-10 §3-3)
+  rollFelling(n);                       // 회사의 벌목 — 파는 대신 벤다(3단계)
+  rollFactionRaid(n);                   // 세력끼리의 나포 — 목격할 뿐이다(3단계)
   rollPoach();                          // 일감 가로채기 — 기한의 절반이 지나면 한 번 판정한다
   refreshPrices();
   return { ...c, leak, soaked, expired, shocks, lines, convoys };

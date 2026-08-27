@@ -24,6 +24,7 @@ import {
   canConsign, sendConsign, arriveConsign, canStartLine, startLine, stopLine, cargoCapTotal, waitDays,
   gripMarkup, hasOutsideSource, enrollOffer, buyEnroll, enrolled, convoyDue, rollConvoys,
   fleetSlain, bondPenalty, workEntry, rollPoach, addRegard, regardOf, reviveTrespass,
+  rollFelling, rollFactionRaid, atWar,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
   buyHolding, canBuyMill, buyMill, sellMill, millPrice, millRecipes,
@@ -1066,7 +1067,7 @@ resetGame();
          `★ 수요 도시에만 건다 — ${CITY_BY_ID[f.city].name}의 ${GOOD_BY_ID[f.good].name}`
          + ' (산지에 걸면 싸게 살 기회가 되어 새 수입원이 된다)');
     }
-    ok(state.shocks.some((x) => x.kind === 'convoy' && x.mult < 1),
+    ok(state.shocks.some((x) => String(x.why).startsWith('convoy:') && x.mult < 1),
        '값이 주저앉는다 — 비싸게 팔 기회를 잃는 것 하나뿐이다');
   }
 
@@ -1108,6 +1109,41 @@ resetGame();
     addRegard('casa', 8, 'test');
     ok(reviveTrespass('potosi') && !workAt('mine', 'silverore', 'potosi').idle,
        '관계가 풀리면 그 문이 열린다 — 회복하는 길이 있어야 벌이 벌이 된다');
+  }
+
+  /* ⓗ 3단계 · 회사의 벌목 — **파는 대신 벤다** */
+  {
+    resetGame('venezia');
+    state.shocks = []; state.day = FACTION.fellEvery;
+    ok(rollFelling(1).length === 0, '사이가 멀쩡하면 안 벤다');
+    addRegard('company', FACTION.fellAt - 2, 'test');
+    const fell = rollFelling(1);
+    ok(fell.length > 0, `회사와 사이가 ${regardOf('company')}이면 벤다 — ${fell.length}곳`);
+    for (const x of fell) {
+      ok(CITY_BY_ID[x.city].supply?.[x.good] != null,
+         `★ **산지에만** 건다 — ${CITY_BY_ID[x.city].name}의 ${GOOD_BY_ID[x.good].name}`);
+    }
+    ok(state.shocks.every((x) => x.mult > 1),
+       '★ 값이 **오른다** — 사는 쪽이 손해다. 새 수입원이 아니다(수요지는 한 톨도 안 건드린다)');
+    ok(addRegard('company', 5, 'test') <= 0,
+       '★ 회사는 0 위로 못 올라간다 — 살 것이 없으니 거래로 못 올린다(1단계 규칙이 여기서 값을 갖는다)');
+  }
+
+  /* ⓘ 3단계 · 세력끼리의 나포 — **목격할 뿐이다** */
+  {
+    resetGame('venezia');
+    ok(atWar('estado', 'company') && !atWar('estado', 'casa'),
+       '싸우는 사이는 `FACTION_TIES.war`가 정한다 — 대칭이다');
+    const npc0 = (state.npcs ?? []).length;
+    /* ★ 확률 지표를 검사에 그대로 쓰지 않는다 — 이 프로젝트가 두 번 밟은 자리다.
+       `days`를 크게 줘 **문턱을 확실히 넘긴 뒤** 「짝을 고르는 규칙」만 본다. */
+    let seen = null;
+    for (let i = 0; i < 400 && !seen; i++) seen = rollFactionRaid(200);
+    ok(seen, `드물게 목격한다 — ${seen?.hunter}이(가) ${seen?.prey}의 배를 끌고 갔다`);
+    ok((state.npcs ?? []).length === npc0,
+       '★ **상선 정원을 안 줄인다** — 털린 배는 다시 채워진다');
+    ok(state.shocks.some((x) => x.why === 'facraid' && x.mult > 1),
+       '★ 플레이어에게 아무것도 안 준다 — 그 물건이 그 항구에서 귀해지는 것을 볼 뿐이다');
   }
 
   /* ⓖ 가로채기 — **손실은 선금 반환뿐**이다 */
