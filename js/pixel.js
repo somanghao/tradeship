@@ -13,6 +13,12 @@ export const PAL = {
   woodD:  '#3d2a1b', woodM:  '#6b4626', woodL:  '#9c6b38', woodH: '#c99a5c',
   skinD:  '#8a5334', skinM:  '#c58a5c', skinL:  '#e6b487',
   skin2D: '#5d3520', skin2M: '#8f5b34', skin2L: '#b8825a', // 어두운 피부톤
+  /* ★ 아홉 바다가 되면서 **둘로는 모자랐다**(C-14 — *권역이 이름만 갈리고 얼굴은 안 갈린다*).
+     동아시아·동남아·남아메리카가 전부 지중해 얼굴이었다. 두 톤을 더해 넷으로 간다.
+     ⚠️ 램프 셋(D·M·L)의 명도 간격을 기존 둘과 나란히 둔다 — 안 그러면 같은 그림에서
+     한 사람만 대비가 튄다. */
+  skin3D: '#7a5738', skin3M: '#c99a6c', skin3L: '#ecc79c', // 동·동남아 — 노란기
+  skin4D: '#7d4a2e', skin4M: '#b47448', skin4L: '#dda071', // 아메리카·인도양 — 붉은기
 
   steelD: '#3f4a5c', steelM: '#7d8ca3', steelL: '#c3cede',
   ironD:  '#2c2f36', ironM:  '#565c68', ironL:  '#8b93a1',

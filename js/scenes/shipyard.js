@@ -15,7 +15,7 @@ import {
 } from '../data.js';
 import {
   state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT, repairUnit,
-  yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding, industryPathHint,
+  yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding, industryPathHint, regionOf,
   storeCap, ownsHolding,
   gunCap, armsTotal, armsFactor, armsAimAt, zoneFactor, buyCannon, removeCannon,
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
@@ -98,7 +98,8 @@ export const shipyardScene = {
     crewList.forEach((k, i) => {
       const x = SHIP_X + H.x0 + Math.round(H.len * 0.18) + i * gap;
       const step = tab === 'crew' ? Math.round(Math.sin(t * 2 + i) * 1) : 0;
-      blit(ctx, unitSprite(k, 'idle'), x, deckY + step, 1, i % 2 === 1);
+      /* ★ 갑판에 선 사람도 그 바다의 얼굴이다(C-14) — 항구·술집·전투와 같은 규약 */
+      blit(ctx, unitSprite(k, 'idle', null, regionOf(state.at)), x, deckY + step, 1, i % 2 === 1);
     });
 
     if (tab === 'arms') drawBattery(ctx);
@@ -606,7 +607,7 @@ function crewTab() {
     slots.push(el(`div.slot${i === 0 ? '.fixed' : ''}${locked ? '.locked' : ''}`, {
       onclick: i === 0 || locked ? null : () => pickTroop(i),
     }, [
-      k && !locked ? spriteElTrim(unitSprite(k, 'idle'), 2, 0)
+      k && !locked ? spriteElTrim(unitSprite(k, 'idle', null, regionOf(state.at)), 2, 0)
                    : el('div.empty', { text: locked ? '─' : '＋' }),
       el('div.sn', { text: locked ? `선원 ${i * 7}명` : k ? TROOPS[k].name : '비었음' }),
       locked ? el('div.sn2', { text: '필요' }) : null,
@@ -681,7 +682,7 @@ function pickTroop(i) {
       onclick: take,
       style: k === prev ? null : { cursor: 'pointer' },
     }, [
-      spriteElTrim(unitSprite(k, 'idle'), 2, 0),
+      spriteElTrim(unitSprite(k, 'idle', null, regionOf(state.at)), 2, 0),
       el('div.info', {}, [
         el('div.n', {}, [
           el('b', { text: t.name }),

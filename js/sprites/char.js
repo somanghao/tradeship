@@ -27,9 +27,27 @@ export const SCHEMES = {
              pD: '#243a3c', pM: '#3a5c5c', skin: 'light' },
 };
 
-const skinOf = (s) => s.skin === 'dark'
-  ? { D: P.skin2D, M: P.skin2M, L: P.skin2L }
-  : { D: P.skinD,  M: P.skinM,  L: P.skinL };
+/* ── 피부톤 넷 ────────────────────────────────────────────────────
+   ★ **C-14 — 권역이 이름만 갈리고 얼굴은 안 갈렸다.** `faceKey`는 *키만* 갈라 두어
+     PNG를 갈아 끼울 자리를 만들었을 뿐이라, **그림이 없는 여덟 바다는 전부 지중해 얼굴**이었다.
+     그림을 기다리는 동안에도 바다가 달라 보이게, **코드 생성 쪽도 권역을 본다.**
+   ★ 갈리는 것은 **피부톤 하나**다 — 의상 배색(`scheme`)은 병종의 정보라 안 건드린다.
+     실루엣·머리장구를 바다마다 바꾸면 "또 다른 병종"으로 읽힌다(이 도메인의 함정). */
+const SKINS = {
+  light: { D: P.skinD,  M: P.skinM,  L: P.skinL },
+  dark:  { D: P.skin2D, M: P.skin2M, L: P.skin2L },
+  amber: { D: P.skin3D, M: P.skin3M, L: P.skin3L },
+  copper:{ D: P.skin4D, M: P.skin4M, L: P.skin4L },
+};
+
+/** 그 바다의 얼굴빛 — 없으면 배색이 정한 대로 간다(지중해·대서양이 그렇다) */
+export const REGION_SKIN = {
+  eastasia: 'amber', seasia: 'amber',
+  indian: 'copper', southamerica: 'copper', caribbean: 'copper',
+  africa: 'dark', mideast: 'dark',
+};
+
+const skinOf = (s, faceKey = null) => SKINS[REGION_SKIN[faceKey]] ?? SKINS[s.skin] ?? SKINS.light;
 
 /* ── 포즈 ───────────────────────────────────────────────────────
    idle / attack / hit 세 가지. 오프셋 몇 개만 바꿔 실루엣을 흔든다. */
@@ -550,14 +568,15 @@ export function unitSprite(unitKey, pose = 'idle', schemeOverride = null, faceKe
      전에는 키가 배색뿐이라 `assets/npc/char-sailor-eastasia.png`를 manifest에 적어도
      **아무 데서도 불리지 않아** 그림이 한 픽셀도 안 나왔다(로더는 "갈아 끼웠다"고 말한다). */
   const key = `char:${unitKey}:${pose}:${faceKey || schemeKey}`;
-  return bake(key, CW, CH, painter(u, pose, schemeKey));
+  return bake(key, CW, CH, painter(u, pose, schemeKey, faceKey));
 }
 
 /** 한 사람을 그리는 붓 — 키만 다른 초상들(인물·이름난 해적)이 같은 붓을 쓴다. */
-function painter(u, pose, schemeKey) {
+function painter(u, pose, schemeKey, faceKey = null) {
   return (g, ctx) => {
     const s = SCHEMES[schemeKey];
-    const sk = skinOf(s);
+    /* ★ 얼굴빛만 권역을 본다 — 배색은 병종의 정보라 안 건드린다(C-14) */
+    const sk = skinOf(s, faceKey);
     const po = poseOf(pose);
     const fem = u.body === 'fem';
     (fem ? drawArmsFem : drawArms)(g, s, po, sk);      // 뒤쪽 팔 먼저
