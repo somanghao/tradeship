@@ -178,6 +178,11 @@ async function ui() {
       const r = el.getBoundingClientRect();
       raw.push({ el, t, x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) });
     }
+    /* ★ **화면 밖 요소를 누를 수 있게 표를 남긴다**(F-7). 조선소 선박 목록은 세로 9,000px이
+       넘고 항구 인물 패널도 뷰포트 밖(y≈985)에 있어서, 지금까지는 `eval "…scrollIntoView()"`를
+       손으로 먼저 넣어야 했다. 여기서 번호를 박아 두면 `click`이 그 번호로 스크롤하고
+       **좌표를 다시 재서** 누른다. 다시 그려지면 이 속성도 함께 사라진다(문제 없다). */
+    raw.forEach((e, i) => { try { e.el.dataset.ptIdx = String(i); } catch (err) { void err; } });
     // 값만 다른 형제도 "같은 단추"다 — 술집 `태운다 (−21닢)`×4는 글자가 달라도 누구인지 알 수 없다.
     const norm = s => s.replace(/[\d.,]+/g, '#');
     const n = new Map();
@@ -206,9 +211,9 @@ async function ui() {
       }
       return '';
     };
-    return raw.map(e => {
+    return raw.map((e, i) => {
       const ctx = n.get(norm(e.t)) > 1 ? ctxOf(e.el, e.t) : '';
-      return { t: e.t, ctx, label: ctx ? `${ctx} · ${e.t}` : e.t, x: e.x, y: e.y };
+      return { t: e.t, ctx, label: ctx ? `${ctx} · ${e.t}` : e.t, x: e.x, y: e.y, idx: i };
     });
   });
 }
@@ -263,8 +268,20 @@ else if (cmd === 'clickxy') {
   if (!hits.length) { console.log('NOT_FOUND: ' + want); console.log(render(list)); process.exit(2); }
   if (hits.length > 1) console.log(`AMBIGUOUS ×${hits.length} — 첫 번째를 누른다. 골라 누르려면: ${hits.slice(0, 3).map(e => `"${e.label}"`).join(' / ')}`);
   const hit = hits[0];
-  console.log(`click "${hit.label}" @ ${hit.x},${hit.y}`);
-  await humanClick(hit.x, hit.y);
+  /* ★ **뷰포트 밖이면 스크롤하고 좌표를 다시 잰다**(F-7). `click`은 보이는 좌표만 누르므로,
+     세로 9,000px짜리 조선소 목록이나 y≈985의 인물 패널은 예전에는 손으로 스크롤해야 했다. */
+  const at = await page.evaluate((i) => {
+    const el = document.querySelector(`[data-pt-idx="${i}"]`);
+    if (!el) return null;
+    const r0 = el.getBoundingClientRect();
+    const off = r0.top < 0 || r0.bottom > innerHeight || r0.left < 0 || r0.right > innerWidth;
+    if (off) el.scrollIntoView({ block: 'center', inline: 'center' });
+    const r = el.getBoundingClientRect();
+    return { x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2), scrolled: off };
+  }, hit.idx);
+  const px = at?.x ?? hit.x, py = at?.y ?? hit.y;
+  console.log(`click "${hit.label}" @ ${px},${py}` + (at?.scrolled ? ' (뷰포트 밖 — 스크롤했다)' : ''));
+  await humanClick(px, py);
   await shot();
 } else if (cmd === 'start') {
   // 권역별 시작 시험 — `?start=<도시id>`로 다시 열고, 검게 있는 동안(에셋 베이크) 기다렸다가 타이틀을 닫는다.

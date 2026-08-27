@@ -136,6 +136,19 @@ if len(colors) > 96:
     warn("색 수", f"고유색 {len(colors):,}색 — 픽셀아트로는 많다. "
                   f"바다 그라데이션 때문이면 정상이고, 사진 같은 번짐이면 손실 저장을 의심할 것")
 
+# ── 2-b. ★ **너무 단순한 그림** — F-6이 남겨 둔 우회 구멍 ─────────────
+#   2차 외주가 **8색 · 해안선이 전부 직선**인 그림으로 **전 항목을 통과했다.**
+#   상한(96색)만 있고 하한이 없었기 때문이다. 기계 검수는 최소조건이지 합격조건이 아니지만,
+#   **최소조건조차 없으면 자로 그은 그림이 통과한다.**
+#
+#   ⚠️ **문턱은 사양이 제안한 24색이 아니라 실측으로 잡았다.** 24로 두면 지금 붙어 있는
+#      아홉 장 가운데 **여덟이 반려된다**(실측 17~25색). 이 프로젝트의 지도는 일부러
+#      좁은 팔레트를 쓰는 픽셀아트라 그 제안은 이 그림들과 안 맞는다.
+#      ⇒ **하한 14색** — 8색 납품은 잡고 지금 아홉 장은 여유 있게 통과한다.
+if len(colors) < 14:
+    fail("색 수 하한", f"고유색 {len(colors)}색뿐이다 — 자로 칠한 그림이거나 팔레트가 무너졌다. "
+                       f"이 저장소의 지도는 17~25색이다(하한 14)")
+
 twin = img_path.with_suffix(".png" if img_path.suffix == ".webp" else ".webp")
 if twin.exists():
     t = Image.open(twin).convert("RGB")
@@ -163,6 +176,42 @@ if sea_ratio < 0.20:
     fail("범위", f"바다가 {sea_ratio * 100:.0f}%뿐이다 — 항로가 지날 물이 없다")
 elif sea_ratio > 0.80:
     fail("범위", f"바다가 {sea_ratio * 100:.0f}% — 뭍이 거의 없어 지도로 읽히지 않는다")
+
+# ── 3-b. ★ **자로 그은 해안선** — F-6이 남겨 둔 두 번째 구멍 ────────────
+#   2차 외주 그림은 해안선이 전부 직선이었는데 어떤 항목도 그것을 안 봤다.
+#   해안 픽셀을 뽑아 **가로·세로로 이어진 가장 긴 직선 구간**을 재고,
+#   **해안이 얼마나 있는지**(자로 그으면 해안 픽셀 자체가 적다)도 함께 본다.
+#
+#   ⚠️ **문턱은 실측으로 잡았다** — 지금 아홉 장이 해안 1,864~2,715px · 최장 직선 13~39px이다.
+#      ⇒ 해안 하한 **800px** · 직선 상한 **60px**(남아메리카 39px 위로 넉넉히).
+coast = set()
+for cy in range(H):
+    for cx in range(W):
+        if not is_sea(cx, cy):
+            continue
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = cx + dx, cy + dy
+            if 0 <= nx < W and 0 <= ny < H and not is_sea(nx, ny):
+                coast.add((cx, cy))
+                break
+longest = 0
+for cy in range(H):
+    run = 0
+    for cx in range(W):
+        run = run + 1 if (cx, cy) in coast else 0
+        longest = max(longest, run)
+for cx in range(W):
+    run = 0
+    for cy in range(H):
+        run = run + 1 if (cx, cy) in coast else 0
+        longest = max(longest, run)
+notes.append(f"해안 {len(coast):,}px · 최장직선 {longest}px")
+if len(coast) < 800:
+    fail("해안선", f"해안이 {len(coast):,}px뿐이다 — 굴곡 없이 자로 그은 그림이다 "
+                   f"(이 저장소의 지도는 1,864~2,715px)")
+if longest > 60:
+    fail("해안선", f"직선 해안이 {longest}px 이어진다 — 자를 대고 그은 자리다 "
+                   f"(이 저장소의 지도는 최장 13~39px)")
 
 # ── 4. 도시 16곳이 해안선 위인가 ───────────────────────────
 # ★ 반경을 2px에서 6px로 넓혔다. 5×5는 항구 앞바다 안이라 **늘 물**이어서 판정이 무의미했다
