@@ -34,6 +34,10 @@ import {
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES, LIVE_LANES } from '../regions/index.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
+/* 조우 손실 — **값은 `data.js: ENCOUNTER_LOSS` 한 벌**, **식은 `scenes/battle.js` 두 함수**가 정본이다.
+   패배(금고 ×0.50)와 도주(×0.12)가 같은 상수·같은 함수를 봐야 어긋나지 않는다. */
+import { capEncounterLoss } from './battle.js';
+import { ENCOUNTER_LOSS } from '../data.js';
 import { go, toLogical, canvas, setInsetRight, setViewSpan } from '../main.js';
 /* 항해 애니메이션은 **연출**이라 배속을 탄다. 일수(`voyageDays`)·판정 횟수(`rollsLeft`)·
    사건 확률은 여기서 손대지 않는다 — 8배로 굴려도 같은 항해가 되어야 한다. → js/speed.js */
@@ -864,6 +868,12 @@ function resolveEvent(ev0, voyage) {
       const blackFlag = outlaw;
       const rank = RANK_WORD[blackFlag ? 'pirate' : 'navy'][enemy.level] ?? '';
 
+      /* ★ **뱃삯에 상한이 붙었다** — 정본은 `scenes/battle.js: capEncounterLoss`이고
+         패배 쪽과 **같은 함수·같은 상수**를 본다(각자 계산하면 반드시 어긋난다).
+         ⚠️ 여기서 **한 번만** 재서 라벨과 실제 차감이 같은 값을 쓰게 한다 —
+            고르기 전에 보여 준 값과 물리는 값이 갈리면 그 안내는 거짓말이 된다. */
+      const fleeCoin = capEncounterLoss(state.gold * ENCOUNTER_LOSS.fleeShare, enemy.crew, enemy.level);
+
       pushLog(`${name}${josa(name, '이/가')} 항로를 막아섰다!`, 'warn');
       refreshLog();
       modal({
@@ -905,18 +915,18 @@ function resolveEvent(ev0, voyage) {
                빈 배로 도망친 플레이어가 금화가 왜 줄었는지 알 방법이 없었다.
                고르기 전에 값을 보여 주는 것이 선택의 조건이다 — 값을 숨기면 선택이 아니다. */
             label: Object.keys(state.cargo).length
-              ? `짐을 넘기고 도주 (화물 35% · 금화 ${Math.round(state.gold * 0.12).toLocaleString('ko-KR')}닢)`
-              : `뱃삯을 물고 도주 (금화 ${Math.round(state.gold * 0.12).toLocaleString('ko-KR')}닢)`,
+              ? `짐을 넘기고 도주 (화물 ${Math.round(ENCOUNTER_LOSS.fleeCargoShare * 100)}% · 금화 ${fleeCoin.toLocaleString('ko-KR')}닢)`
+              : `뱃삯을 물고 도주 (금화 ${fleeCoin.toLocaleString('ko-KR')}닢)`,
             kind: 'dark',
             onClick: () => {
               const ids = Object.keys(state.cargo);
               let dumped = 0;
               for (const id of ids) {
-                const n = Math.ceil(state.cargo[id] * 0.35);
+                const n = Math.ceil(state.cargo[id] * ENCOUNTER_LOSS.fleeCargoShare);
                 state.cargo[id] -= n; dumped += n;
                 if (state.cargo[id] <= 0) delete state.cargo[id];
               }
-              const coin = Math.round(state.gold * 0.12);
+              const coin = fleeCoin;          // 위에서 잰 그 값 — 라벨과 반드시 같다
               state.gold -= coin;
               pushLog(dumped
                 ? `화물 ${dumped}개와 금화 ${coin}닢을 넘기고 ${name}에게서 빠져나왔다.`

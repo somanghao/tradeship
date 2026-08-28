@@ -4,7 +4,7 @@ import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
 import { unitSprite, figureSprite } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING,
+import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING, FLAG_NAME,
          ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, FACTION, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
@@ -24,7 +24,7 @@ import {
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
   industryPathHint,
   /* 나라가 짓는 조선소(C-18) — 규칙은 `state.js`, 값은 `data.js: CIVIC`. 여기서는 **말만** 한다 */
-  civicProgress, tickCivic, duesOf, duesOfFlag, industryOf,
+  civicProgress, tickCivic, duesOf, duesOfFlag, civicCutOf, mainPortOf, industryOf,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   /* 수익형 부동산(#5) — 등급·세·공실. 값은 `data.js: HOLDINGS[].grades·ESTATE` */
   estateGrade, estateDef, estateRent, estateUpgradeCost, vacancyOdds, canUpgradeEstate, upgradeEstate,
@@ -1171,6 +1171,9 @@ function waitCard() {
      이 저장소가 한 회차에 다섯 번 잃은 자리가 그것이다.
    ★ 값은 **`state.js: civicProgress` 한 곳**에서 온다 — 조선소 화면과 같은 수를 쓴다.
      두 화면이 각자 계산하면 반드시 어긋난다. */
+/** 깃발 이름 — 없으면 깃발 코드를 그대로 쓴다(콘텐츠가 앞서 가도 화면이 안 깨지게) */
+const flagName = (f) => FLAG_NAME[f] ?? f ?? '이 나라';
+
 function civicCard() {
   const p = civicProgress(city.id);
   const flag = city.flag;
@@ -1195,7 +1198,7 @@ function civicCard() {
     // ③ 진척 — **낸 세 N닢 · 다음 조선소까지 M닢**
     const pct = Math.min(100, Math.round((p.paid / Math.max(1, p.need)) * 100));
     rows.push(el('div.ctr-line', {
-      html: `<b>이 항구에 낸 세 ${Math.round(p.paid).toLocaleString('ko-KR')}닢</b>`
+      html: `<b>이 항구에 쌓인 세 ${Math.round(p.paid).toLocaleString('ko-KR')}닢</b>`
           + ` <span style="opacity:.7">/ ${p.need.toLocaleString('ko-KR')}닢 (${pct}%)</span>`,
     }));
     rows.push(el('div.ctr-sub', {
@@ -1205,11 +1208,19 @@ function civicCard() {
         : `다음 조선소까지 ${Math.round(p.left).toLocaleString('ko-KR')}닢 — `
           + `여기서 사고팔면 그만큼 세를 내고, 그것이 쌓이면 관아가 부두를 놓는다 (공사 ${p.days}일).`,
     }));
+    /* ★ **낸 것과 쌓인 것이 다르다**(2026-08-28 「국가를 거쳐 항구로」). 화면이 그 말을 안 하면
+       플레이어는 *"만 닢을 냈는데 왜 육천만 올랐지"*를 버그로 읽는다 — 규칙이 멀쩡한데
+       화면이 말하지 않아 잃는 그 자리다. 그래서 **몫과 이유를 함께** 적는다. */
+    const cut = Math.round(civicCutOf(city.id) * 100);
+    rows.push(el('div.ctr-sub', { style: { opacity: 0.8 },
+      text: `여기 내는 세의 ${cut}%가 이 항구 몫이다 — 나머지는 나라를 거쳐 `
+          + `${flagName(flag)} 다른 항구로 흘러간다(주항구가 먼저).`,
+    }));
     rows.push(el('div.ctr-sub', { style: { opacity: 0.75 },
       text: `공업력 ${industryOf(city.id)} → ${p.now + 1}`
           + ` (도시 ${p.base} + 나라 ${p.civic}`
           + `${industryOf(city.id) - p.now ? ` + 내 승급 ${industryOf(city.id) - p.now}` : ''})`
-          + ` · 이 깃발 전체 ${Math.round(duesOfFlag(flag)).toLocaleString('ko-KR')}닢`,
+          + ` · 이 나라 전체 ${Math.round(duesOfFlag(flag)).toLocaleString('ko-KR')}닢`,
     }));
   }
 

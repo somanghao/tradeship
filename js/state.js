@@ -28,6 +28,8 @@ import {
   SHIP_RESALE, YARD_SLACK_OFF, YARD_SLACK_CAP, YARD_TRADITION_OFF,
   USED, PRIZE_HULL, PRIZE_SCRAP, PRIZE_CREW, FLEET,
   SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR, SPOILS_GOODS_PER_CREW, SPOILS_GOODS_CAP,
+  /* 조우 손실 상한(2026-08-28) — 값은 data.js, 식은 이 파일 */
+  ENCOUNTER_LOSS,
 } from './data.js';
 import { josa } from './josa.js';   // leaf 유틸 — 화면 헬퍼(ui.js)가 아니라 모듈 방향을 안 깬다
 
@@ -1871,13 +1873,87 @@ export function civicRoom(cityId = state.at) {
   return Math.max(0, CIVIC.cap - base - civicOf(cityId));
 }
 
+/* ── 낸 세를 나눈다 — 「국가를 거쳐 항구로」 (2026-08-28 · 사용자 결정) ──────
+   ★ 갈래는 둘이다: `keep`은 **낸 그 항구**에 남고, 나머지는 **그 나라 몫**이 되어
+     그 깃발 항구들에 `size` 가중으로 흘러든다(주항구에 `mainBonus`). → `data.js: CIVIC.spill`
+   ★ **총량은 보존된다** — 세를 새로 만들지 않는다. 나뉘어 들어갈 뿐이다.
+   ★ **미리 나눠 넣는다**(읽을 때 계산하지 않는다). `state.dues[cityId]`가 그대로 「그 항구 몫」이라
+     화면·판정·세이브가 전부 예전 모양 그대로 돌고, **몫이 나중에 줄어드는 자리가 없다.** */
+
+/** 그 깃발의 주항구 — (공업력, 규모, id) 순으로 가장 앞. 정적 데이터라 판마다 안 변한다. */
+const MAIN_PORT = new Map();
+export function mainPortOf(flag) {
+  if (MAIN_PORT.has(flag)) return MAIN_PORT.get(flag);
+  const list = CITIES.filter((c) => c.flag === flag).sort((a, b) =>
+    (b.industry ?? 0) - (a.industry ?? 0) || (b.size ?? 0) - (a.size ?? 0) || (a.id < b.id ? -1 : 1));
+  const id = list[0]?.id ?? null;
+  MAIN_PORT.set(flag, id);
+  return id;
+}
+
+/** 나라 몫이 어떻게 갈리나 — `[{ id, w }]`(정규화 전). **아직 올릴 자리가 남은 항구만** 센다.
+    상한에 닿은 항구는 한 번 닿으면 되돌아오지 않으므로, 남은 항구의 몫은 **늘기만 한다.** */
+export function civicSplit(flag) {
+  const main = mainPortOf(flag);
+  const out = [];
+  for (const c of CITIES) {
+    if (c.flag !== flag) continue;
+    if (civicRoom(c.id) <= 0) continue;            // 꼭대기에 닿은 항구에는 안 흘러든다
+    out.push({ id: c.id, w: (c.size ?? 1) + (c.id === main ? CIVIC.spill.mainBonus : 0) });
+  }
+  return out;
+}
+
+/** 이 항구에 세를 냈을 때 **그중 얼마가 이 항구 몫이 되나**(0~1).
+    ★ 화면이 제 손으로 계산하면 배분 규칙이 바뀔 때 조용히 어긋난다 — `noteDues`와 같은 식을 쓴다. */
+export function civicCutOf(cityId = state.at) {
+  const flag = CITY_BY_ID[cityId]?.flag ?? null;
+  const keep = CIVIC.spill.keep;
+  if (!flag) return 1;
+  const split = civicSplit(flag);
+  const sum = split.reduce((a, b) => a + b.w, 0);
+  if (!sum) return 1;                                  // 그 나라가 전부 꼭대기다 — 낸 자리에 그대로
+  const mine = split.find((x) => x.id === cityId);
+  return keep + (1 - keep) * ((mine?.w ?? 0) / sum);
+}
+
 /** 세를 냈다 — **여기 한 곳에서만** 쌓는다. 관세를 떼는 자리는 전부 이것을 부른다. */
 export function noteDues(cityId, gold) {
   if (!cityId || !(gold > 0)) return 0;
   const m = (state.dues ??= {});
-  m[cityId] = (m[cityId] ?? 0) + Math.round(gold);
-  tickCivic(cityId);          // 문턱을 넘은 **그 순간**에 로그가 떠야 한다
-  return m[cityId];
+  const flag = CITY_BY_ID[cityId]?.flag ?? null;
+  const add = (id, v) => { if (v > 0) m[id] = (m[id] ?? 0) + v; };
+
+  /* ① 낸 그 항구에 남는 몫 */
+  const keep = Math.round(gold * CIVIC.spill.keep);
+  add(cityId, keep);
+
+  /* ② 나라 몫 — 그 깃발 항구들에 `size` 가중으로. 나머지 한 닢까지 주항구 쪽에 몰아 준다
+     (반올림으로 세가 사라지거나 생기지 않게 — 총량 보존이 이 규칙의 약속이다). */
+  const touched = new Set([cityId]);
+  let pool = gold - keep;
+  if (flag && pool > 0) {
+    const split = civicSplit(flag);
+    const sum = split.reduce((a, b) => a + b.w, 0);
+    if (sum > 0) {
+      let left = pool;
+      for (let i = 0; i < split.length; i++) {
+        const share = i === split.length - 1 ? left : Math.round(pool * (split[i].w / sum));
+        const give = Math.max(0, Math.min(left, share));
+        add(split[i].id, give);
+        if (give > 0) touched.add(split[i].id);
+        left -= give;
+      }
+    } else {
+      add(cityId, pool);        // 그 나라가 전부 꼭대기다 — 낸 자리에 그대로 둔다
+    }
+  } else if (pool > 0) {
+    add(cityId, pool);
+  }
+
+  /* ③ 몫이 늘어난 항구는 그 자리에서 문턱을 다시 본다 — **로그가 그 순간에 떠야 한다.** */
+  for (const id of touched) tickCivic(id);
+  return m[cityId] ?? 0;
 }
 
 /** 화면이 읽는 한 곳 — 「이 항구에 낸 세 N닢 · 다음 조선소까지 M닢」.
@@ -5284,6 +5360,49 @@ export function seizeCargo(rand = Math.random) {
    상한 위로도 꼬리(SPOILS_TAIL)가 남아 큰 놈이 여전히 더 값나간다. → data.js: SPOILS_* */
 export function spoilsCap() {
   return Math.max(SPOILS_FLOOR, Math.round((state.gold + cargoValue()) * SPOILS_SHARE));
+}
+
+/* ── 조우가 앗아가는 것 — 상한 (2026-08-28 · 사용자 결정 「상한 + 선원 바닥」) ────
+   ★ **값은 `data.js: ENCOUNTER_LOSS`, 식은 여기다.** 개발자 B가 `scenes/battle.js`에 먼저 세웠는데,
+     그 파일은 **node에서 import하면 `main.js: boot()`가 돌아 게임이 통째로 뜬다** — 회귀 검사를
+     걸 수 없다. 이 저장소의 규약(`값은 data.js · 규칙은 state.js` · 모듈 방향 `data → state → scenes`)
+     대로 순수 함수를 규칙 파일로 올린다. 그래야 `tools/test-rules.mjs`가 **진짜 그 함수**를 잰다.
+   ⚠️ **지금은 `scenes/battle.js`에 같은 식이 쌍둥이로 있다**(B의 파일이라 내가 안 지웠다).
+     B가 그 사본을 지우고 `import { capEncounterLoss } from '../state.js'`로 갈아 끼우면 끝난다
+     (`scenes/map.js`도 같은 한 줄 — 지금 scene이 scene을 import하고 있어 모듈 방향도 함께 풀린다).
+     **그때까지는 아래 「식이 갈라졌나」 검사가 두 사본을 묶어 둔다**(`test-rules.mjs`).
+
+   ── 왜 상한인가 ────────────────────────────────────────────
+   손실이 금고의 **비율**이고 상한이 없으면 금고에 자연 상한이 선다:
+   `G* = 항차이익 / (조우율 × 손실률)`. 항차이익 2,000닢이면 도주만 골라도 46,425닢에서 멈추는데
+   **패권 거점 총투자가 912,630닢**이다 — 후반 목표의 문이 구조적으로 닫힌다.
+   ★ 이 게임은 *내가 얻는* 전리품을 이미 `capLoot`/`spoilsCap`으로 *"옮겨 실을 수 있는 만큼"*
+     누른다. **그 대칭이 없어서** 잃는 쪽만 무한이었다. → `data.js: ENCOUNTER_LOSS` 머리주석 */
+
+/** 저 갑판이 지고 갈 수 있는 금화 — **적의 크기**로 잰다(내 자산이 아니다. 그것이 이 설계의 심장이다).
+    적 선원 수를 못 읽으면 등급으로 어림잡는다(`crewPerLevel`). */
+export function encounterLossCap(foeCrew = 0, level = 1) {
+  const crew = foeCrew > 0 ? foeCrew : Math.max(1, level) * ENCOUNTER_LOSS.crewPerLevel;
+  return Math.max(ENCOUNTER_LOSS.floor, Math.round(crew * ENCOUNTER_LOSS.perCrew));
+}
+
+/** 조우로 잃는 금화 — 비율로 재고 **상한에서 꺾는다**. 패배·도주가 같은 이 함수를 쓴다.
+    ★ 딱 자르지 않고 `tail`만큼 더 간다(`capSpoils`와 같은 모양) — 그래야 *"큰 놈에게 지는 것이
+      여전히 더 아프다"*가 남는다. 그 대신 천장이 `1/tail`배로 물러난다. */
+export function capEncounterLoss(raw, foeCrew = 0, level = 1) {
+  const v = Math.max(0, raw);
+  const cap = encounterLossCap(foeCrew, level);
+  return Math.round(v <= cap ? v : cap + (v - cap) * ENCOUNTER_LOSS.tail);
+}
+
+/** 패배 뒤 남는 선원 — **하한이지 회복이 아니다**(`min(지금, 바닥)`이라 사람을 주지 않는다).
+    잠기는 축은 금고가 아니라 사람이다: 선체는 되돌아갈 뿐인데 선원은 ×0.5로 누적된다. */
+export function crewAfterLoss(crew = state.crew, shipKey = state.shipKey) {
+  const s = SHIPS[shipKey];
+  const oceanFloor = ENCOUNTER_LOSS.crewFloorOcean
+    ? Math.max(3, Math.ceil((s?.crewMin ?? 0) * OCEAN_CREW_MIN)) : 0;
+  const floor = Math.min(crew, Math.max(ENCOUNTER_LOSS.crewFloor, oceanFloor));
+  return Math.max(floor, Math.round(crew * ENCOUNTER_LOSS.crewShare));
 }
 
 export function capSpoils(v) {

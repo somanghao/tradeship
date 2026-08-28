@@ -21,6 +21,10 @@ import {
   flagshipSinks, sinkFlagship, liquidate, originPerk,
   /* C-18 — 부두는 살 수 없고 나라가 짓는다 */
   noteDues, duesOf, duesOfFlag, civicOf, civicRoom, civicBusy, civicBuilding, civicProgress, tickCivic,
+  /* 조우 손실 상한(2026-08-28) — 값은 data.js, 식은 state.js */
+  encounterLossCap, capEncounterLoss, crewAfterLoss,
+  /* 국가를 거쳐 항구로(2026-08-28) */
+  mainPortOf, civicSplit,
   industryPathHint, yardBusy, endingProgress,
   growKind, growStock, growCap, canBuyGrow, buyGrow, workAt, chainMargin, costFor,
   shopCut, canBuyShop, buyShop, shopTick, collectShop, consignToShop,
@@ -64,7 +68,8 @@ import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, W
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, HOLDING_KEYS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON,
   /* C-18 — 나라가 짓는 조선소 */
-  CIVIC } from '../js/data.js';
+  CIVIC, ENCOUNTER_LOSS } from '../js/data.js';
+import { readFileSync } from 'node:fs';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
@@ -2039,10 +2044,17 @@ resetGame();
   const p0 = civicProgress('busanpo');
   ok(p0.need === CIVIC.dues[2] && p0.paid === 0,
      `문턱은 지금 공업력이 정한다 — 부산포(공업력 2)는 ${p0.need.toLocaleString('en-US')}닢`);
-  noteDues('busanpo', p0.need - 1);
-  ok(!civicProgress('busanpo').ready && !civicBuilding('busanpo'),
-     '한 닢 모자라면 공사가 안 걸린다');
-  noteDues('busanpo', 1);
+  /* ★ 「국가를 거쳐 항구로」 이후 **낸 것과 쌓인 것이 다르다** — 낸 세의 일부는 다른 항구로 간다.
+     그래서 검사도 「얼마를 냈나」가 아니라 **「그 항구에 얼마가 쌓였나」**로 센다. */
+  let paid0 = 0;
+  /* 한 번에 크게 내면 문턱을 **건너뛴다** — 잘게 내서 바로 아래에 세운다(경계를 재는 검사다) */
+  while (duesOf('busanpo') < p0.need - 20) { noteDues('busanpo', 10); paid0 += 10; }
+  ok(duesOf('busanpo') < p0.need && !civicProgress('busanpo').ready && !civicBuilding('busanpo'),
+     `문턱 바로 아래에서는 공사가 안 걸린다 (${duesOf('busanpo').toLocaleString('en-US')}/${p0.need.toLocaleString('en-US')})`);
+  ok(paid0 > p0.need,
+     `쌓인 것보다 **더 많이 냈다** — ${paid0.toLocaleString('en-US')}닢 내서 ${duesOf('busanpo').toLocaleString('en-US')}닢이 쌓였다`
+     + ' (나머지는 그 나라의 다른 항구로 흘렀다)');
+  noteDues('busanpo', 100);      // 이 한 번이 문턱을 넘긴다
   const b = civicBuilding('busanpo');
   ok(!!b && b.to === 3, '문턱을 넘으면 나라가 **스스로** 공사를 건다 — 플레이어의 단추가 아니다');
   ok(industryOf('busanpo') === 2,
@@ -2067,11 +2079,36 @@ resetGame();
   ok(industryOf('busanpo') === 3,
      '상한을 넘겨 세를 내도 더 안 오른다 — 무역만으로 꼭대기에 닿지 않는다');
 
-  /* ⑤ 세는 **항구별**이다 — 깃발로 쌓으면 한 항구 무역이 아홉을 동시에 올린다 */
-  ok(duesOf('yeompo') === 0 && industryOf('yeompo') === 1,
-     '부산포에 낸 세는 염포를 안 올린다 — 지표는 깃발이 아니라 그 항구다');
-  ok(duesOfFlag('joseon') >= duesOf('busanpo'),
-     '깃발 합계는 따로 읽을 수 있다(화면용) — 판정에는 안 쓴다');
+  /* ⑤ **국가를 거쳐 항구로**(2026-08-28 사용자 결정) — 셋을 함께 지킨다:
+     ⓐ 총량 보존(세를 새로 만들지 않는다) ⓑ 주항구가 가장 많이 받는다
+     ⓒ 다른 항구에도 흘러들되 **동시에 다 올라가지는 않는다**(「차근차근」) */
+  resetGame('busanpo');
+  state.crew = 10;
+  noteDues('yeompo', 100000);                 // 염포에 냈는데
+  const spread = CITIES.filter((c) => c.flag === 'joseon')
+    .map((c) => ({ id: c.id, v: duesOf(c.id) })).sort((a, b) => b.v - a.v);
+  const total = spread.reduce((a, b) => a + b.v, 0);
+  ok(total === 100000,
+     `★ 총량이 보존된다 — 100,000닢을 내면 조선 아홉 항구에 정확히 ${total.toLocaleString('en-US')}닢이 쌓인다`
+     + ' (세를 새로 만들지 않는다)');
+  ok(spread[0].id === 'yeompo',
+     `낸 그 항구가 가장 많이 받는다 — 염포 ${spread[0].v.toLocaleString('en-US')}닢`
+     + ` (`+ Math.round(spread[0].v / 1000) + '%) · 「차근차근」이 사는 자리다');
+  ok(duesOf('busanpo') > 0 && duesOf('busanpo') < duesOf('yeompo'),
+     `★ 나라를 거쳐 다른 항구로도 흘러든다 — 부산포 ${duesOf('busanpo').toLocaleString('en-US')}닢`
+     + ' (안 흘러들면 사용자 결정 「둘 다」가 반만 구현된 것이다)');
+  ok(duesOf('busanpo') === Math.max(...spread.filter((x) => x.id !== 'yeompo').map((x) => x.v)),
+     '주항구가 나머지 중 가장 많이 받는다 — `CIVIC.spill.mainBonus`');
+  ok(mainPortOf('joseon') === 'busanpo' && mainPortOf('joseon') === mainPortOf('joseon'),
+     '주항구는 정적 데이터로 정해진다 — 판마다·부를 때마다 안 변한다');
+  ok(duesOf('venezia') === 0,
+     '깃발이 다르면 한 닢도 안 간다 — 나라를 거치는 것이지 세계를 거치는 것이 아니다');
+  /* ⓓ 상한에 닿은 항구는 배분에서 빠진다 — 남은 항구 몫은 **늘기만** 한다(줄면 선 공사가 취소된다) */
+  const beforeSplit = civicSplit('joseon').length;
+  state.yards.busanpo = { boost: 0, building: null, civic: 1 };   // 부산포 base2 + civic1 = 상한
+  ok(civicSplit('joseon').length === beforeSplit - 1
+     && !civicSplit('joseon').some((x) => x.id === 'busanpo'),
+     '꼭대기에 닿은 항구에는 더 안 흘러든다 — 몫이 새지 않는다');
 
   /* ⑥ 파는 순간 실제로 쌓인다 — 배선이 `sell()`에 붙어 있나 */
   resetGame('busanpo');
@@ -2095,12 +2132,19 @@ resetGame();
   /* ⑧ 조선의 끝이 막히지 않는다 — 두 길 중 어느 쪽으로든 염포 3에 닿는다 */
   resetGame('busanpo');
   state.crew = 10;
-  noteDues('yeompo', CIVIC.dues[1]);          // 염포 base 1 → 2
+  let bill = 0;
+  const payUntil = (id, want) => { while (duesOf(id) < want) { noteDues(id, 250); bill += 250; } };
+  payUntil('yeompo', CIVIC.dues[1]);          // 염포 base 1 → 2
   state.day += CIVIC.days[1];
-  noteDues('yeompo', CIVIC.dues[2]);          // 2 → 3
+  payUntil('yeompo', CIVIC.dues[2]);          // 2 → 3
   state.day += CIVIC.days[2];
   ok(industryOf('yeompo') === 3,
-     `교역만으로 염포 공업력 3에 닿는다 — 낸 세 ${(CIVIC.dues[1] + CIVIC.dues[2]).toLocaleString('en-US')}닢 · 공사 ${CIVIC.days[1] + CIVIC.days[2]}일`);
+     `교역만으로 염포 공업력 3에 닿는다 — **낸 세 ${bill.toLocaleString('en-US')}닢**`
+     + ` (쌓인 ${duesOf('yeompo').toLocaleString('en-US')}닢) · 공사 ${CIVIC.days[1] + CIVIC.days[2]}일`);
+  /* ★ 앵커 — 옛 부두 한 칸이 약 30,000닢이었다. 「국가를 거쳐 항구로」로 회수율이 55%가 되면서
+     문턱을 0.55배로 되돌려 곱했으므로, **납부액**이 그 앵커 자리에 그대로 앉아야 한다. */
+  ok(bill > 25000 && bill < 70000,
+     `그 값이 앵커 구간 안이다 — ${bill.toLocaleString('en-US')}닢 (옛 부두 100,000닢 · 한 칸 약 30,000닢 납부)`);
   ok(endingProgress().steps.find((s) => s.key === 'yards').detail.includes('염포 3/3'),
      '끝 카드가 그것을 말한다 — ENDING 판정이 나라 조선소를 센다');
 
@@ -2129,4 +2173,99 @@ resetGame();
   ok(industryOf('yeompo') === wasInd,
      `★ 이어한 판의 공업력이 안 움직인다 — 염포 ${industryOf('yeompo')} (옛 규칙과 같다)`);
   clearSave();
+}
+
+/* ── 조우 손실 상한 (2026-08-28 · 사용자 결정 「상한 + 선원 바닥」) ──────────
+   ★ **이 회차 최대의 밸런스 변경인데 그물이 0개였다**(개발자 B가 스스로 지적).
+     손실이 금고의 비율이고 상한이 없으면 금고에 자연 상한이 선다 —
+     `G* = 항차이익 / (조우율 × 손실률)`. 여기서 지키는 것은 그 천장이 다시 내려오지 않는 것이다.
+   ⚠️ 규칙 함수는 **`state.js`**를 잰다 — `scenes/battle.js`는 node에서 import하면
+     `main.js: boot()`가 돌아 게임이 통째로 뜬다. 두 사본이 갈라지지 않게 아래 ⑦이 묶는다. */
+{
+  const EL = ENCOUNTER_LOSS;
+
+  /* ① **초반은 한 자리도 안 바뀐다** — 상한이 초반을 건드리면 실패해야 한다 */
+  const foe1 = { crew: 22, level: 1 };          // 세기 1 좀도둑
+  ok(capEncounterLoss(200 * EL.loseShare, foe1.crew, foe1.level) === 100,
+     '금고 200닢에서 패배 손실은 정확히 100닢 — 상한이 붙기 전과 한 자리도 안 다르다');
+  ok(capEncounterLoss(200 * EL.loseShare, foe1.crew, foe1.level) === Math.round(200 * EL.loseShare),
+     '초반에는 상한이 아예 안 걸린다 — 날 비율 그대로다 (어려움은 있던 자리에 그대로 둔다)');
+
+  /* ② **상한은 「적의 크기」로 잰다** — 내 자산의 비율로 재면 `G*`가 한 치도 안 움직인다.
+     이 설계의 심장이라 「자산에 비례하지 않는다」를 못으로 박는다. */
+  const capSmall = encounterLossCap(22, 1);
+  const capBig = encounterLossCap(130, 5);
+  ok(capBig > capSmall && capSmall === Math.max(EL.floor, 22 * EL.perCrew),
+     `상한이 적 선원 수를 따라간다 — 22명 ${capSmall.toLocaleString('en-US')}닢 · 130명 ${capBig.toLocaleString('en-US')}닢`);
+  {
+    /* 같은 적에게 금고만 열 배로 늘려 본다. 자산 비례라면 손실도 열 배여야 한다. */
+    const lo = capEncounterLoss(100000 * EL.fleeShare, 22, 1);
+    const hi = capEncounterLoss(1000000 * EL.fleeShare, 22, 1);
+    ok(hi / lo < 3,
+       `★ 금고가 열 배가 되어도 손실은 ${(hi / lo).toFixed(2)}배뿐이다 — 상한이 **내 자산이 아니라 적의 크기**로`
+       + ` 재진다는 증거다 (자산 비례면 10배가 되고 그러면 천장이 그대로 남는다)`);
+    ok(encounterLossCap(22, 1) === capEncounterLoss(1e9, 22, 1) - Math.round((1e9 - encounterLossCap(22, 1)) * EL.tail),
+       '상한 위로는 `tail`만큼만 더 간다 — `capSpoils`와 같은 모양(큰 놈이 여전히 더 아프다)');
+  }
+
+  /* ③ **천장이 실제로 걷혔나** — `G* = P / (q × share × tail)`.
+     P·q는 `.playtest/round-22/probe-purse.mjs` 실측(항차 순이익 2,000닢 · 값나가는 짐 조우율 35.9%). */
+  {
+    const P = 2000, q = 0.359, TARGET = 912630;      // 패권 거점 총투자(실측)
+    const gStar = (tail) => P / (q * EL.fleeShare * tail);
+    ok(gStar(EL.tail) > TARGET,
+       `후반 천장이 패권 총투자 위에 있다 — G* ${Math.round(gStar(EL.tail)).toLocaleString('en-US')}닢`
+       + ` > ${TARGET.toLocaleString('en-US')}닢 (tail ${EL.tail})`);
+    /* ★ 이 검사에 이빨이 있나 — 옛 값(0.10)이면 실제로 떨어져야 한다.
+       안 떨어지면 검사가 아니라 벽지다(이 저장소가 `ok()`의 exit code로 한 번 겪은 자리). */
+    ok(gStar(0.10) < TARGET,
+       `그 검사에 이빨이 있다 — tail 0.10이면 G*가 ${Math.round(gStar(0.10)).toLocaleString('en-US')}닢으로 목표 아래다`);
+  }
+
+  /* ④ **선원 바닥은 하한이지 회복이 아니다** — `min(지금, 바닥)`이라 사람을 주지 않는다 */
+  resetGame('busanpo');
+  ok(crewAfterLoss(42) === 21, `패배하면 선원이 절반 — 42 → ${crewAfterLoss(42)}`);
+  ok(crewAfterLoss(3) === 3 && crewAfterLoss(2) === 2 && crewAfterLoss(1) === 1,
+     '★ 바닥이 선원을 **주지는 않는다** — 3명이면 3명, 1명이면 1명 그대로다');
+  for (const n of [0, 1, 2, 3, 5, 8, 13, 40, 200]) {
+    if (crewAfterLoss(n) > n) ok(false, `바닥이 사람을 만들어 냈다 — ${n} → ${crewAfterLoss(n)}`);
+  }
+  ok(true, '어떤 인원에서도 패배가 선원을 늘리지 않는다 (0·1·2·3·5·8·13·40·200 전수)');
+  ok(crewAfterLoss(8) >= EL.crewFloor || crewAfterLoss(8) === 8,
+     `바닥 아래로는 안 내려간다 — 8명 → ${crewAfterLoss(8)} (절대 바닥 ${EL.crewFloor})`);
+
+  /* ⑤ **`keepAfloat`는 꺼진 채다** — 사용자가 ⓑ 하한 보장을 **채택하지 않았다**(*"파산의 긴장은 남긴다"*).
+     ★ 조용히 아무것도 안 하는 손잡이를 두지 않으려고 **일부러 배선하지 않았다.**
+       이 검사는 그 사실을 못으로 박는다 — 나중에 누가 `true`로 되돌리면 배선 없이 켜진 척하게 된다. */
+  ok(EL.keepAfloat === false,
+     '`keepAfloat`는 false다 — 사용자가 하한 보장을 채택하지 않았다(파산의 긴장은 남긴다)');
+
+  /* ⑥·⑦ **화면과 규칙이 갈라지지 않았나** — 소스를 읽어 구조를 본다.
+     ⚠️ 값이 아니라 **배선**을 재는 검사다. `scenes/*`는 node에서 못 불러오므로(게임이 뜬다)
+       이 셋만은 텍스트로 잰다 — 그래도 "두 곳이 각자 계산한다"는 사고는 여기서 잡힌다. */
+  {
+    const battleSrc = readFileSync(new URL('../js/scenes/battle.js', import.meta.url), 'utf8');
+    const mapSrc = readFileSync(new URL('../js/scenes/map.js', import.meta.url), 'utf8');
+
+    /* ⑥ 광고된 값 = 무는 값 — 도주 비용을 **한 번만** 재서 라벨과 차감이 같은 변수를 쓴다 */
+    ok((mapSrc.match(/capEncounterLoss\(/g) || []).length === 1,
+       '도주 비용을 **한 번만** 잰다 — 두 번 재면 라벨과 차감이 갈려 조우 카드가 거짓말을 한다');
+    ok(/const fleeCoin = capEncounterLoss\(/.test(mapSrc)
+       && /금화 \$\{fleeCoin/.test(mapSrc) && /const coin = fleeCoin;/.test(mapSrc),
+       '★ 라벨과 차감이 **같은 `fleeCoin`**을 쓴다 — 고르기 전에 보여 준 값이 곧 무는 값이다');
+    ok(!/state\.gold\s*\*\s*0\.12/.test(mapSrc) && !/state\.gold\s*\*\s*0\.5\b/.test(battleSrc),
+       '상한 없는 날 비율(`state.gold * 0.12` · `* 0.5`)이 씬에 남아 있지 않다');
+
+    /* ⑦ 식이 갈라졌나 — `battle.js`의 쌍둥이가 `state.js`와 **같은 식**이거나, 아예 import로 바뀌었거나 */
+    const imported = /import\s*\{[^}]*capEncounterLoss[^}]*\}\s*from\s*'\.\.\/state\.js'/.test(battleSrc);
+    const sameFormula = /cap \+ \(v - cap\) \* ENCOUNTER_LOSS\.tail/.test(battleSrc)
+                     && /Math\.max\(ENCOUNTER_LOSS\.floor, Math\.round\(crew \* ENCOUNTER_LOSS\.perCrew\)\)/.test(battleSrc);
+    ok(imported || sameFormula,
+       imported
+         ? '`battle.js`가 `state.js`의 규칙을 import한다 — 사본이 사라졌다(가장 좋은 상태)'
+         : '★ `battle.js`의 쌍둥이 식이 `state.js`와 아직 같다 — 갈라지면 여기서 걸린다'
+           + ' (B가 import로 갈아 끼우면 이 줄이 위 문구로 바뀐다)');
+    ok(/keepAfloat/.test(battleSrc) === false || /배선하지 않/.test(battleSrc),
+       '`keepAfloat`는 배선되지 않았다 — 켜도 아무 일이 안 나는 손잡이를 두지 않는다');
+  }
 }

@@ -18,6 +18,8 @@ import {
   yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding, industryPathHint, regionOf,
   /* 나라가 짓는 조선소(C-18) — 값은 `data.js: CIVIC`, 규칙은 `state.js` */
   civicBuilding, civicProgress,
+  /* 원양 문턱 — 「왜 지금 고쳐야 하나」를 수리 줄이 말한다(2026-08-28) */
+  OCEAN_HULL_MIN,
   storeCap, ownsHolding,
   gunCap, armsTotal, armsFactor, armsAimAt, zoneFactor, buyCannon, removeCannon,
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
@@ -196,6 +198,17 @@ function buildUI() {
       ]),
       el('button.btn.sm.dark', { text: '나가기', onclick: () => go('port') }),
     ]),
+    /* ★ **수리가 탭 하나에 숨어 있었다**(2026-08-28 · 완주 러너 run 4).
+       조선소는 「선박」 탭으로 열리는데 「전부 수리」는 **「선원」 탭에만** 있었다.
+       그래서 하카타에서 **금고 10,046,290닢 · 선체 1/285**인 판이 **358일 동안 원양에 못 나갔다** —
+       러너가 조선소에 들어가 수리를 찾았지만 화면에 0개였고, 만 닢이면 될 일이었다(실제로는 2,380닢).
+       ★ **사람에게도 똑같이 일어난다.** 선체가 바닥인 플레이어가 「선박」 탭을 보고
+         *수리할 데가 없다*고 읽는다. 이 저장소가 되풀이해 배우는 그 자리다 —
+         *"규칙이 멀쩡한데 화면이 말하지 않아 수백 일을 잃는다."*
+       ⇒ **수리는 탭의 소속이 아니다.** 배를 손보는 것이 조선소가 하는 일이므로
+         탭 **밖**, 머리말 바로 아래에 세운다. 어느 탭으로 들어와도 보인다.
+         (선원 탭에 있던 같은 줄은 지웠다 — 단추가 둘이면 어느 것이 참인지 묻게 된다.) */
+    repairBar(),
     el('div.yard-tabs', {}, TABS.map((t) =>
       el(`button.yard-tab${t.id === tab ? '.on' : ''}`, {
         text: t.label,
@@ -653,14 +666,49 @@ function crewTab() {
           toast(`선원 ${r.n}명 고용 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
           redraw();
         }),
-      svcRow(`선체 수리 (${repairUnit()}닢/pt${repairUnit() < REPAIR_UNIT ? ' · 깎았다' : ''})`, `${state.hp}/${state.maxHp}`, '전부 수리',
-        state.hp >= state.maxHp, () => {
-          const r = repair(state.maxHp - state.hp);
-          if (!r.ok) return toast(r.reason, 'bad');
-          toast(`선체 ${r.need}pt 수리 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
-          redraw();
-        }),
+      /* ⚠️ 「선체 수리」는 여기 없다 — **탭 밖 `repairBar()`로 올렸다**(2026-08-28).
+         이 탭에만 있어서 러너가 358일을 잃었다. 되돌리지 말 것. */
     ]),
+  ]);
+}
+
+/* ── 선체 수리 — 탭 밖에 늘 서 있는 줄 ─────────────────────────
+   ★ 판정 기준은 하나다: **선체가 바닥인 판으로 조선소에 들어갔을 때 수리가 눈에 보이는가.**
+     그래서 ⓐ 탭과 무관하게 뜨고 ⓑ 선체가 낮으면 색이 갈리고 ⓒ *왜 급한지*를 적는다
+     (원양이 막히는 것은 선체가 아니라 `OCEAN_HULL_MIN`이라 화면이 말해 주지 않으면 모른다). */
+function repairBar() {
+  const full = state.hp >= state.maxHp;
+  const pct = state.maxHp ? state.hp / state.maxHp : 1;
+  const need = state.maxHp - state.hp;
+  const cost = Math.round(need * repairUnit());
+  const low = pct <= OCEAN_HULL_MIN;
+  const color = full ? '#8f8878' : low ? '#e0806e' : '#c9b98a';
+  return el('div.yard-fix', {
+    style: {
+      flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '8px',
+      padding: '6px 10px', borderBottom: '1px solid var(--line)',
+      background: low ? '#e0806e14' : 'transparent',
+    },
+  }, [
+    el('div', { style: { flex: '1 1 auto', minWidth: 0, fontSize: '11.5px', lineHeight: 1.45 } }, [
+      el('div', { style: { color },
+        html: `선체 <b>${state.hp}/${state.maxHp}</b>`
+            + (full ? ' — 성하다'
+                    : ` · 전부 고치는 데 <b>${cost.toLocaleString('ko-KR')}닢</b>`
+                      + `(${repairUnit()}닢/pt${repairUnit() < REPAIR_UNIT ? ' · 깎았다' : ''})`) }),
+      low && !full ? el('div', { style: { color: '#e0806e', fontSize: '10.5px', marginTop: '2px' },
+        text: `삭아서 원양에 못 나간다 (선체 ${Math.round(OCEAN_HULL_MIN * 100)}% 필요) — 고치지 않으면 근해에 갇힌다` }) : null,
+    ]),
+    el('button.btn.sm', {
+      text: full ? '성하다' : '전부 수리',
+      disabled: full,
+      onclick: () => {
+        const r = repair(state.maxHp - state.hp);
+        if (!r.ok) return toast(r.reason, 'bad');
+        toast(`선체 ${r.need}pt 수리 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
+        refreshHUD(); redraw();
+      },
+    }),
   ]);
 }
 

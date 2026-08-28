@@ -5,8 +5,14 @@
 import { VW, openSeaSprite, blastSprite, smokeSprite, splashSprite, ballSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE, SW, HULLS } from '../sprites/ship.js';
 import { unitSprite, pirateSprite, CHAR_FOOT } from '../sprites/char.js';
-import { blit } from '../pixel.js';
-import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS } from '../data.js';
+/* `blitTinted`는 실루엣만 단색으로 찍는다 — 백병전 피격 플래시·쓰러지는 병사에 쓴다.
+   ⚠️ `js/pixel.js`·`js/sprites/**`는 **읽기 전용**이다(아트 테스터가 동시에 만진다).
+      여기서는 부르기만 한다. 그 함수는 부를 때마다 캔버스를 새로 만드므로(bake 캐시를 안 탄다)
+      **플래시가 살아 있는 몇 프레임·몇 유닛에만** 쓴다. → DEV-B-ISSUES #4 */
+import { blit, blitTinted } from '../pixel.js';
+/* 조우 손실의 몫·상한·선원 바닥은 **`data.js: ENCOUNTER_LOSS` 한 벌이 정본**이다.
+   `scenes/map.js`(도주)가 이 파일의 두 함수를 그대로 불러 **같은 값을 본다**. */
+import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS, ENCOUNTER_LOSS } from '../data.js';
 import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
   shotStock, useShot, fleeBonus, fleeOdds, fleeWord, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL, regionOf,
@@ -20,11 +26,16 @@ import {
   flagshipSinks, sinkFlagship,
   /* 세력 — 함대를 꺾으면 그 집 장부에 이름이 붉게 적힌다(−4) */
   fleetSlain,
+  /* 패배가 **원양을 막지 않게** 하는 선원 바닥이 이 문턱을 정본으로 쓴다(ⓒ) */
+  OCEAN_CREW_MIN,
 } from '../state.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, bar, josa, spriteElTrim } from '../ui.js';
 import { go } from '../main.js';
-/* 연출 대기는 전부 배속을 거친다 — 규칙(피해·확률·거리)은 건드리지 않는다. → js/speed.js */
-import { after } from '../speed.js';
+/* 연출 대기는 전부 배속을 거친다 — 규칙(피해·확률·거리)은 건드리지 않는다. → js/speed.js
+   ★ `speed`(계수 자체)를 함께 가져오는 이유: 백병전 연출은 `after`가 아니라 **프레임(dt)**으로 돈다.
+     대기만 8배로 줄고 그림은 실시간으로 남으면 라운드가 끝난 뒤에도 병사가 계속 찌른다 —
+     그래서 이 씬의 연출 시계는 `dt * speed.mul`로 감는다. **규칙 수치에는 절대 안 쓴다.** */
+import { after, speed } from '../speed.js';
 
 const SEA_Y = 138;          // 두 배가 떠 있는 기준 수면 y
 const MIN_RANGE = 0, MAX_RANGE = 100;
@@ -33,6 +44,133 @@ const gapOf = (range) => 14 + (range / MAX_RANGE) * 68;
 
 let B = null;               // 전투 상태
 let fx = [];                // 이펙트 목록
+
+/* ══════════════════════════════════════════════════════════════
+   동료 특전 둘 — `gunUp`·`crewLossOff` (A-5의 남은 것)
+   ══════════════════════════════════════════════════════════════
+   ★ 나머지 여덟은 `state.js`가 겹치는데 이 둘만 **전투 씬 안쪽**이라 여기서 겹친다.
+     값을 합치는 것은 여전히 `state.js: matePerk()`이고 — 부관(`OFFICER.perks`)·
+     갈래(`ORIGINS`)와 **같은 키**를 본다. 새 계산 경로를 파지 않는다:
+     `meleeUp`이 이미 `(1 + originPerk(k) + matePerk(k))` 꼴로 곱해지고(meleeRound),
+     여기 둘도 그 자리에 그대로 얹는다.
+
+   ★ 상한을 두는 이유 — `state.js`의 선례(`hullUp` .35 · `fleeUp` .25 · `sailDaysOff` .30)와 같다.
+     명부 51명 중 포수는 여덟(합 0.86) · 외과의·갑판장은 일곱(합 0.87)이고 갑판에 여덟까지
+     태울 수 있다(`mateCap()`). 상한이 없으면 **포수만 모아 태운 배가 전투를 지운다** —
+     사상 −87%면 등급 5 격파(패권 조건 ③)가 헐거워진다. 0.30은 "포수 셋"쯤이다.
+
+   ★ `gunUp`을 명중과 피해에 **나눠** 싣는다. 둘 다 온전히 곱하면 1.30 × 1.30 = 1.69로
+     복리가 되고, 포수 셋이 대포를 두 배로 만든다. 포수가 버는 것은 화약이 아니라
+     **정조준**이라 명중에 온전히, 피해에는 절반만 준다(`GUN_PERK_DMG_SHARE`).
+     ⚠️ 되돌리기 쉽게 상수 셋을 여기 모아 둔다. */
+const GUN_PERK_CAP = 0.30;          // gunUp 합산 상한
+const GUN_PERK_DMG_SHARE = 0.5;     // 그중 피해에 실리는 몫 (나머지는 명중에만)
+const CREW_LOSS_PERK_CAP = 0.30;    // crewLossOff 합산 상한
+
+/** 동료 포수들이 벌어 주는 포격 보정 (0~GUN_PERK_CAP) */
+const gunPerk = () => Math.min(GUN_PERK_CAP, matePerk('gunUp'));
+/** 전투 사상에 곱하는 배율 — 외과의·갑판장이 있으면 1보다 작다 */
+const crewLossPerk = () => 1 - Math.min(CREW_LOSS_PERK_CAP, matePerk('crewLossOff'));
+
+/* ══════════════════════════════════════════════════════════════
+   조우 손실의 상한 — 「적도 옮겨 실을 수 있는 만큼만 가져간다」
+   ══════════════════════════════════════════════════════════════
+   실측·설계는 `.playtest/round-22/DEV-B-ISSUES.md`(PM 지시 절)가 정본이다. 요약만 둔다.
+
+   ★ **왜 필요했나** — 패배(금고 ×0.50)도 도주(×0.12)도 **비율이고 상한이 없었다.**
+     조우는 드물지 않다(100일에 5.5~9.0회). 비율 손실 × 잦은 조우는 금고에
+     **자연 상한**을 만든다: `G* = P/(q·r)` — 그 위로는 버는 족족 걷어간다.
+     *올바른 플레이*(언제나 싸우기 전 도주)조차 항차 이익의 23배에서 멈춰,
+     패권 거점 총투자 912,630닢에 닿는 문이 구조적으로 닫혀 있었다.
+
+   ★ **왜 이 모양인가** — 새 상한을 발명하지 않았다. 이 게임은 *내가* 얻는 전리품을 이미
+     「옮겨 실을 수 있는 만큼」으로 누른다(`data.js: SPOILS_*` · `state.js: capLoot`),
+     그리고 그 양을 **갑판의 사람 수**로 잰다(`spoilsGoodsLimit`: 선원 25명마다 한 품목).
+     **없던 것은 그 대칭뿐이다.** 그래서 같은 자를 반대로 대어 준다 —
+     적 갑판에 선 사람 수가 그들이 지고 갈 수 있는 양을 정한다.
+
+   ⚠️ **`capSpoils`의 꼬리(tail)는 일부러 안 가져왔다.** 그대로 뒤집으면
+     `0.5G → 0.3G + 0.2G×0.12 = 0.324G`로 **여전히 비율**이라 천장이 낮아질 뿐 안 걷힌다
+     (실측: `probe-purse.mjs` ⑥). 게다가 "질 수 있는 만큼보다 조금 더 진다"는 말이 안 된다.
+     플레이어 쪽 꼬리는 *"큰 놈이 더 값나가게"*라는 다른 이유로 있는 것이다.
+
+   ⚠️ **패배의 아픔은 화물이 짊어진다.** 금화에만 상한을 두고 **화물 전량 상실은 그대로**다.
+     화물 손실은 쌓인 재산이 아니라 **한 항차의 밑천**에 비례해 천장을 안 만든다.
+     ⇒ 지는 것은 여전히 아프고, 다만 **다시 설 수 있게** 아프다.
+
+   ⓘ 최종 거처는 `js/data.js: ENCOUNTER_LOSS`다(PM 결정 · 개발자 A가 넣는 중).
+     그 블록이 들어오면 **이 상수만 지우고 import로 갈아 끼운다** — 식은 그대로다.
+     `scenes/map.js`(도주)가 **이 파일의 이것을 그대로 본다.** 각자 계산하면 반드시 어긋난다. */
+/** 저 갑판이 지고 갈 수 있는 금화 — 살아남은 사람 수로 잰다.
+    ★ 전투 끝에 저쪽 갑판을 비워 놓았다면 **덜 실어 간다**(포도탄이 값을 하는 자리).
+    적 선원 수를 못 읽으면 등급으로 어림잡는다(`crewPerLevel`). */
+export function encounterLossCap(foeCrew = 0, level = 1) {
+  const crew = foeCrew > 0 ? foeCrew : Math.max(1, level) * ENCOUNTER_LOSS.crewPerLevel;
+  return Math.max(ENCOUNTER_LOSS.floor, Math.round(crew * ENCOUNTER_LOSS.perCrew));
+}
+
+/** 조우로 잃는 금화 — 비율로 재고 **상한에서 꺾는다**. 패배·도주가 같은 이 함수를 쓴다.
+    ★ 딱 자르지 않고 `tail`만큼 더 간다 — `capSpoils`와 **같은 모양**이고, 그래야
+      *"큰 놈에게 지는 것이 여전히 더 아프다"*가 남는다. 그 대신 천장이 `1/tail`배로 물러난다. */
+export function capEncounterLoss(raw, foeCrew = 0, level = 1) {
+  const v = Math.max(0, raw);
+  const cap = encounterLossCap(foeCrew, level);
+  return Math.round(v <= cap ? v : cap + (v - cap) * ENCOUNTER_LOSS.tail);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   백병전 연출 상수 (§D — **연출만**이다)
+   ══════════════════════════════════════════════════════════════
+   ★ 여기 있는 것은 전부 **초(sec)와 픽셀**뿐이다. 피해·확률·라운드 수·선원 사상은
+     한 줄도 안 건드린다 — 같은 씨앗이면 연출을 켜기 전과 **같은 결과**여야 한다.
+   ★ 시계는 전부 `dt * speed.mul`로 감긴다(위 import 주석). 배속을 올리면 그림도 같이 빨라진다. */
+const MELEE_LUNGE_SEC = 0.42;   // 찌르고 돌아오는 한 동작
+const MELEE_LUNGE_PX  = 7;      // 앞으로 나가는 최대 거리
+const MELEE_FLASH_SEC = 0.22;   // 맞은 병사가 하얗게 뜨는 시간 — 길면 유령처럼 보인다
+const MELEE_FALL_SEC  = 0.55;   // 쓰러진 병사가 가라앉으며 사라지는 시간
+const MELEE_FALL_PX   = 9;      // 그동안 내려앉는 높이
+const FLASH_COLOR = '#fff2d8';  // 피격 — 등불빛에 가까운 흰색
+const FALL_COLOR  = '#3b1512';  // 전사 — 그늘로 내려앉는 어두운 핏빛
+
+/* ══════════════════════════════════════════════════════════════
+   포격전의 바람 — 풍상(weather gauge) (§D)
+   ══════════════════════════════════════════════════════════════
+   설계와 버린 안은 `.playtest/round-22/DEV-B-ISSUES.md` ③이 정본이다. 요약만 둔다.
+
+   ★ **`fleeOdds`에 한 톨도 안 들어간다.** 조우 카드가 싸우기 전에 보여 준 도주 가망이
+     그대로 참이어야 하기 때문이다 — 바람은 전투가 열린 뒤에 알게 되는 것이라, 그것이
+     도주율을 깎으면 **안내가 거짓말이 된다.** 풍하를 잡았으면 광고된 그 확률로 도망칠 수 있다.
+     「사람은 이길 수 있는 상대만 싸운다」가 이 설계의 첫 제약이었다.
+   ★ 방향이 화면과 맞다 — 우리 배가 왼쪽, 적이 오른쪽이다.
+     **하늬바람(서풍)은 왼쪽→오른쪽**이라 우리가 풍상이고, 샛바람(동풍)은 그 반대다.
+   ⚠️ 되돌리기 쉽게 손잡이를 셋으로 모았다. `WIND_AIM_EDGE = 0`이면 **연출만** 남는다. */
+const WIND_AIM_EDGE     = 0.06;   // 풍상을 쥔 쪽이 얻는 조준 보정 — 규칙에 닿는 것은 이 하나뿐
+const WIND_SMOKE_DRIFT  = 18;     // 포연이 바람에 밀리는 거리(px) — 연출 전용
+const WIND_STREAKS      = 18;     // 수면의 바람결 개수 — 연출 전용
+
+/** 이 판의 바람을 정한다. 빠른 배가 풍상을 잘 쥔다 — `fleeOdds`가 쓰는 계수(0.25) 그대로다. */
+function rollWind(enemy) {
+  const foeSpd = SHIPS[enemy.hull]?.speed ?? 1;
+  const p = Math.max(0.2, Math.min(0.8, 0.5 + (shipSpeed() - foeSpd) * 0.25));
+  const mine = Math.random() < p;
+  return {
+    mine,
+    dir: mine ? 1 : -1,                       // 화면에서 바람이 부는 쪽 (+1 = 왼→오른)
+    name: mine ? '하늬바람' : '샛바람',
+    t: 0,                                     // 바람결이 흐른 시간 (배속을 탄다)
+  };
+}
+/** 지금 이 편이 풍상인가에 따른 조준 보정 */
+const windEdge = (mine) => (B.wind && B.wind.mine === mine ? WIND_AIM_EDGE : 0);
+
+/** 찌르기 곡선: 빠르게 나가고(0~18%) **멈춰 있다가**(~45%) 천천히 돌아온다.
+    가운데의 멈춤이 히트스톱이다 — 타격이 닿은 순간을 눈이 붙잡는 자리. */
+function lungeCurve(v) {
+  const u = 1 - Math.max(0, Math.min(1, v));      // 진행도 0→1
+  if (u < 0.18) return u / 0.18;
+  if (u < 0.45) return 1;
+  return Math.max(0, 1 - (u - 0.45) / 0.55);
+}
 
 /* 이름이 없는 상대의 첫마디 — 세기가 곧 성격이다.
    명부에서 온 자는 제 대사(`lines.hail`)를 쓰므로 여기까지 오지 않는다. */
@@ -69,6 +207,7 @@ export const battleScene = {
       you: { hp: state.hp, maxHp: state.maxHp, crew: state.crew, guns: state.guns, sailDmg: 0, fire: 0,
              aux: consortGunBonus(), consorts: consortCount() },
       foe: { hp: enemy.hp, maxHp: enemy.hp, crew: enemy.crew, guns: enemy.guns, sailDmg: 0, fire: 0 },
+      wind: rollWind(enemy),     // 이 판의 풍상 — 위 주석이 정본
       shot: 'round',             // 다음 발에 재어 넣을 탄
       saved: false,              // 4부 격실로 한 번 버텼는가
       aim: null,
@@ -82,6 +221,13 @@ export const battleScene = {
        여기서 처음 화면에 뜬다 — 없는 상대는 급으로 대신한다. 이 한 줄이 있고 없고가
        "바르바로사와 붙었다"와 "적선과 붙었다"를 가른다. */
     logLine(enemy.hail ?? OPENING[enemy.level] ?? OPENING[1], 'warn');
+    /* ★ **바람을 먼저 말한다.** 규칙이 멀쩡한데 화면이 말하지 않아 수백 일을 잃는 그 자리다 —
+       풍하를 잡았다는 것을 알아야 "그럼 도망친다"를 고를 수 있고, 도주 가망은 바람과
+       무관하게 조우 카드가 보여 준 그대로다(위 주석). */
+    logLine(B.wind.mine
+      ? `${B.wind.name}이 우리 뒤에서 분다 — 풍상을 쥐었다. 포연이 저쪽으로 흐른다.`
+      : `${B.wind.name}이 정면으로 온다 — 풍상은 저쪽이다. 조준이 한 뼘 밀린다.`,
+      B.wind.mine ? 'good' : 'bad');
     buildUI();
   },
 
@@ -89,7 +235,18 @@ export const battleScene = {
 
   update(dt, t) {
     if (!B) return;
-    B.shake = Math.max(0, B.shake - dt * 3.4);
+    /* 흔들림도 연출이라 배속을 탄다 — 8배에서 화면이 계속 떨고 있던 것을 여기서 멎게 한다 */
+    B.shake = Math.max(0, B.shake - dt * speed.mul * 3.4);
+    if (B.wind) B.wind.t += dt * speed.mul;      // 바람결도 연출이라 배속을 탄다
+    // 백병전 연출 시계 — 대기(`after`)와 같은 배속으로 감아야 라운드와 어긋나지 않는다
+    if (B.melee) {
+      const ds = dt * speed.mul;
+      for (const u of [...B.melee.you, ...B.melee.foe]) {
+        if (u.lunge > 0) u.lunge = Math.max(0, u.lunge - ds / MELEE_LUNGE_SEC);
+        if (u.flash > 0) u.flash = Math.max(0, u.flash - ds / MELEE_FLASH_SEC);
+        if (u.fall  > 0) u.fall  = Math.max(0, u.fall  - ds / MELEE_FALL_SEC);
+      }
+    }
     if (B.aim) {
       B.aim.pos += B.aim.dir * B.aim.speed * dt;
       if (B.aim.pos > 1) { B.aim.pos = 1; B.aim.dir = -1; }
@@ -108,6 +265,7 @@ export const battleScene = {
     ctx.save();
     ctx.translate(sh, Math.round(sh * 0.4));
     blit(ctx, B.bg, 0, 0, 1);
+    drawWindStreaks(ctx);      // 배보다 먼저 — 뱃전 아래 물결이라 선체를 가리지 않는다
 
     // 백병전은 두 선체가 현측을 맞댄 상태로 고정한다
     const gap = B.phase === 'melee' ? 62 : gapOf(B.range);
@@ -146,6 +304,26 @@ const dmgLevel = (s) => s.hp / s.maxHp < 0.3 ? 2 : s.hp / s.maxHp < 0.62 ? 1 : 0
    ══════════════════════════════════════════════════════════════ */
 function addFx(kind, x, y, life = 0.5) { fx.push({ kind, x, y, t: 0, life }); }
 
+/** 수면의 바람결 — 뱃전 아래(y 150~214)를 바람 방향으로 흐른다. **연출 전용**이다.
+    자리는 인덱스에서 뽑으므로 난수를 안 쓴다(매 프레임 튀지 않는다). */
+function drawWindStreaks(ctx) {
+  const w = B?.wind;
+  if (!w || WIND_STREAKS <= 0) return;
+  const span = VW + 48;
+  ctx.save();
+  ctx.fillStyle = 'rgba(226,240,248,0.34)';
+  for (let i = 0; i < WIND_STREAKS; i++) {
+    const seed = i * 97 + 13;
+    const y = 150 + ((seed * 13) % 64);
+    const len = 3 + (seed % 5);
+    const spd = 13 + (seed % 11);          // 앞쪽 물결이 빨라 깊이가 생긴다
+    let x = ((seed * 31) % span) + w.dir * w.t * spd;
+    x = (((x % span) + span) % span) - 24;
+    ctx.fillRect(Math.round(x), y, len, 1);
+  }
+  ctx.restore();
+}
+
 function drawFx(ctx) {
   for (const f of fx) {
     const u = f.t / f.life;
@@ -156,7 +334,9 @@ function drawFx(ctx) {
     } else if (f.kind === 'smoke') {
       const fr = Math.min(3, Math.floor(u * 4));
       const s = smokeSprite(fr);
-      blit(ctx, s, f.x - s.width / 2, f.y - s.height / 2 - u * 10, 1, false, 0.85 - u * 0.7);
+      // 포연은 뜨면서 **바람을 탄다** — 이 한 줄이 화면에서 바람을 가장 크게 말한다(연출 전용)
+      const drift = (B?.wind?.dir ?? 0) * u * WIND_SMOKE_DRIFT;
+      blit(ctx, s, f.x - s.width / 2 + drift, f.y - s.height / 2 - u * 10, 1, false, 0.85 - u * 0.7);
     } else if (f.kind === 'splash') {
       const fr = Math.min(3, Math.floor(u * 4));
       const s = splashSprite(fr);
@@ -179,15 +359,20 @@ function startAim() {
   // 여기에 실린 대포의 조준 배율이 곱해지는데, 그 값은 거리마다 다르다 —
   // 대포마다 잘 맞는 구간(CANNONS.near~far)이 있어 밖으로 나가면 무너진다.
   const closeness = Math.max(0, Math.min(1, 1 - B.range / MAX_RANGE));
-  const aim = armsAimAt(B.range);
+  /* 동료 포수는 판정대를 넓힌다 — 포문의 조준 배율과 **같은 자리**에 곱한다(A-5 gunUp).
+     풍상을 쥐었으면 여기에 한 뼘 더 붙는다(§D · `WIND_AIM_EDGE`) — 바람이 규칙에 닿는 곳은 여기뿐이다. */
+  const aim = armsAimAt(B.range) * (1 + gunPerk() + windEdge(true));
   const goodW = (0.20 + closeness * 0.24) * aim;
   const critW = (0.05 + closeness * 0.06) * aim;
   const center = 0.30 + Math.random() * 0.40;
+  /* 바늘은 0~1만 오가므로 판정대를 [0,1]로 자르는 것은 **판정을 바꾸지 않는다**(p≥0·p≤1은 항상 참).
+     자르는 이유는 화면뿐이다 — 넓어진 띠가 패널 밖으로 삐져나가 안 보인다. */
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
   B.aim = {
     pos: 0, dir: 1,
     speed: 0.85 + Math.random() * 0.35 + B.range / 260,
-    good: [center - goodW / 2, center + goodW / 2],
-    crit: [center - critW / 2, center + critW / 2],
+    good: [clamp01(center - goodW / 2), clamp01(center + goodW / 2)],
+    crit: [clamp01(center - critW / 2), clamp01(center + critW / 2)],
   };
   buildUI();
 }
@@ -224,7 +409,9 @@ function fire() {
       logLine(`${SHOT.name}이 빗나가 물기둥만 솟았다.`);
     } else {
       // 동행선의 포가 함께 쏜다 — 조준은 기함 것이라 전부는 못 얹는다(data.js: FLEET.gunShare)
-      const base = (4 + (B.you.guns + B.you.aux) * 1.15) * armsFactor('dmg') * SHOT.dmg;
+      // 동료 포수의 몫은 **절반만** 여기 실린다 — 나머지 절반은 조준폭이 이미 받았다(A-5 gunUp)
+      const base = (4 + (B.you.guns + B.you.aux) * 1.15) * armsFactor('dmg') * SHOT.dmg
+                 * (1 + gunPerk() * GUN_PERK_DMG_SHARE);
       const mult = grade === 'crit' ? 2.1 : 1;
       const dmg = Math.round((base * mult) * (0.85 + Math.random() * 0.3));
       B.foe.hp = Math.max(0, B.foe.hp - dmg);
@@ -347,8 +534,11 @@ function foeTurn() {
     fx.push({ kind: 'ball', x: fromX, y: SEA_Y - 24, x2: toX, y2: SEA_Y - 26, t: 0, life: 0.42 });
     after(() => { if (B) B.fireFlash = null; }, 160);
 
-    // 거리가 가까울수록 잘 맞는다
-    const acc = 0.34 + (1 - B.range / MAX_RANGE) * 0.42;
+    /* 거리가 가까울수록 잘 맞는다. 풍상이 저쪽이면 저쪽 조준도 한 뼘 낫다(§D).
+       ★ **곱으로 준다.** 처음엔 `+ 0.06`으로 더했는데, 우리 쪽은 판정대에 `× 1.06`이라
+         적만 +6%p(= 상대값 +9.5%)를 받아 **바람이 플레이어에게만 손해**가 됐다.
+         실측으로 잡았다 — 양쪽 다 상대값 +6%로 맞춘다. */
+    const acc = (0.34 + (1 - B.range / MAX_RANGE) * 0.42) * (1 + windEdge(false));
     after(() => {
       if (!B) return;
       if (Math.random() < acc) {
@@ -357,8 +547,10 @@ function foeTurn() {
            크게 상한 배는 여기서 가라앉고 선단에서 빠진다(state.js: spreadDamage). */
         const sp = spreadDamage(dmg);
         B.you.hp = Math.max(0, B.you.hp - sp.toYou);
-        // 내포격 골조를 넣었으면 파편이 갑판까지 튀지 않는다
-        const cl = Math.round(sp.toYou * (0.1 + Math.random() * 0.12) * crewLossFactor());
+        /* 내포격 골조를 넣었으면 파편이 갑판까지 튀지 않는다.
+           그 위에 **동료 외과의**가 곱해진다(A-5 crewLossOff) — `crewLossFactor()`는
+           개장만 보는 state.js 함수라 그 안을 고치지 않고 여기서 겹친다. */
+        const cl = Math.round(sp.toYou * (0.1 + Math.random() * 0.12) * crewLossFactor() * crewLossPerk());
         B.you.crew = Math.max(0, B.you.crew - cl);
         addFx('blast', toX - 4, SEA_Y - 22, 0.5);
         B.shake = 1.1;
@@ -426,7 +618,9 @@ function makeUnits(keys, side) {
     return {
       key: k, side, name: t.name,
       hp: t.hp, maxHp: t.hp, atk: t.atk, def: t.def,
-      slot: i, pose: 'idle', poseT: 0, offset: 0,
+      /* `lunge`·`flash`·`fall`은 **1에서 0으로 닳는 연출 시계**다(초 단위는 위 상수).
+         `offset`은 그 시계에서 매 프레임 뽑아 쓰므로 여기서는 0으로 둔다. */
+      slot: i, pose: 'idle', poseT: 0, offset: 0, lunge: 0, flash: 0, fall: 0,
     };
   });
 }
@@ -470,7 +664,10 @@ function drawMelee(ctx, yourX, foeX, bobA, bobB) {
   const yH = HULLS[ship().hull], fH = HULLS[B.enemy.hull];
   const yDeck = deckOf(ship().hull, bobA);
   const fDeck = deckOf(B.enemy.hull, bobB);
-  const alive = (arr) => arr.filter((u) => u.hp > 0);
+  /* ★ 쓰러진 병사는 **제자리를 지키다가** 사라진다(`fall`이 다 닳을 때까지).
+     죽는 순간 `hp>0`으로만 걸러 내면 줄이 툭 당겨져 옆 병사가 순간이동한 것처럼 보인다 —
+     한 박자 두었다가 줄이 메워지는 편이 "하나가 쓰러지고 줄이 좁혀졌다"로 읽힌다. */
+  const alive = (arr) => arr.filter((u) => u.hp > 0 || u.fall > 0);
 
   // 병사는 적을 마주보는 현측에 늘어선다. 배마다 선체 자리와 길이가 달라
   // 시작점과 간격을 선체에서 뽑는다 — 상수로 두면 작은 배에서 뱃전 밖에 선다.
@@ -482,11 +679,42 @@ function drawMelee(ctx, yourX, foeX, bobA, bobB) {
   // 양쪽 갑판 모두 이 바다 사람들이다 — 왜구 배에 지중해 선원이 서 있었다
   const face = regionOf(state.at);
   alive(m.you).forEach((u, i) => {
-    blit(ctx, unitSprite(u.key, u.pose, null, face), yourX + yStart + i * yStep + u.offset, yDeck, 1, false);
+    drawUnit(ctx, u, yourX + yStart + i * yStep, yDeck, false, face, +1);
   });
   alive(m.foe).forEach((u, i) => {
-    blit(ctx, unitSprite(u.key, u.pose, null, face), foeX + fStart - i * fStep - u.offset, fDeck, 1, true);
+    drawUnit(ctx, u, foeX + fStart - i * fStep, fDeck, true, face, -1);
   });
+}
+
+/** 병사 하나 — 찌르기(lunge) · 피격 플래시(flash) · 쓰러짐(fall)을 한자리에서 그린다.
+    `dir`는 이 편이 나아가는 방향(우리 +1 / 적 −1)이다. */
+function drawUnit(ctx, u, baseX, baseY, flip, face, dir) {
+  const spr = unitSprite(u.key, u.pose, null, face);
+  const x = baseX + dir * Math.round(MELEE_LUNGE_PX * lungeCurve(u.lunge)) + dir * u.offset;
+
+  /* 전사 — **제 모습인 채로** 무릎이 꺾이듯 내려앉으며 어두워진다.
+     처음엔 실루엣만 단색으로 찍어 봤는데, 밝은 하늘 위에서 분홍빛 유령으로 보였다.
+     원래 스프라이트를 깔고 그 위에 어두운 색을 덧대야 "사람이 쓰러진다"로 읽힌다. */
+  if (u.hp <= 0) {
+    const v = Math.max(0, Math.min(1, u.fall));
+    const dy = Math.round((1 - v) * MELEE_FALL_PX);
+    ctx.save();
+    ctx.globalAlpha = v * 0.9;
+    blit(ctx, spr, x, baseY + dy, 1, flip);
+    ctx.globalAlpha = v * 0.62;          // 쓰러지는 순간이 가장 어둡고 그대로 옅어진다
+    blitTinted(ctx, spr, x, baseY + dy, 1, flip, FALL_COLOR);
+    ctx.restore();
+    return;
+  }
+
+  blit(ctx, spr, x, baseY, 1, flip);
+  // 맞은 순간 실루엣이 하얗게 뜬다 — 누가 맞았는지가 이 화면에서 가장 안 보이던 정보다
+  if (u.flash > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, u.flash) * 0.9;
+    blitTinted(ctx, spr, x, baseY, 1, flip, FLASH_COLOR);
+    ctx.restore();
+  }
 }
 
 function meleeRound(stance) {
@@ -517,7 +745,9 @@ function meleeRound(stance) {
     const raw = u.atk * mult * (1 + originPerk('meleeUp') + matePerk('meleeUp')) * (0.8 + Math.random() * 0.45);
     const d = Math.max(1, Math.round(raw - target.def * 0.42));
     target.hp -= d; ydmg += d;
-    u.pose = 'attack'; u.offset = 5;
+    // 연출만 — 찌르는 쪽은 앞으로 나가고 맞는 쪽은 하얗게 뜬다
+    u.pose = 'attack'; u.lunge = 1;
+    target.flash = 1;
   }
   // 적 반격 (죽은 유닛은 빠진다)
   for (const u of m.foe.filter((x) => x.hp > 0)) {
@@ -525,16 +755,25 @@ function meleeRound(stance) {
     const raw = u.atk * (0.8 + Math.random() * 0.45);
     const d = Math.max(1, Math.round(raw - target.def * 0.42 * mods.def));
     target.hp -= d; fdmg += d;
-    u.pose = 'attack'; u.offset = 5;
+    u.pose = 'attack'; u.lunge = 1;
+    target.flash = 1;
   }
-  for (const u of [...m.you, ...m.foe]) if (u.hp <= 0) u.pose = 'hit';
+  /* 이 라운드에 쓰러진 자에게 낙하 시계를 준다. 이미 쓰러져 있던(fall이 닳은) 자에게는
+     다시 안 준다 — `pose`가 이미 'hit'인지로 가른다. */
+  for (const u of [...m.you, ...m.foe]) {
+    if (u.hp <= 0 && u.pose !== 'hit') { u.pose = 'hit'; u.fall = 1; u.flash = 0; }
+  }
+  // 갑판이 한 번 울린다 — 타격이 닿은 것을 화면 전체가 받는 자리(연출만)
+  B.shake = Math.max(B.shake, 0.8);
 
   const yDead = m.you.filter((u) => u.hp <= 0).length;
   const fDead = m.foe.filter((u) => u.hp <= 0).length;
   logLine(`${mods.label} — 적에게 ${ydmg}, 아군 ${fdmg} 피해. (전사 아군 ${yDead} / 적 ${fDead})`);
 
-  // 선원 수에도 반영
-  B.you.crew = Math.max(0, B.you.crew - Math.round(fdmg / 7));
+  /* 선원 수에도 반영. 갑판에서 죽는 것도 **전투 사상**이라 동료 외과의가 여기도 걸린다
+     (A-5 crewLossOff). ⚠️ 유닛 체력에는 안 곱한다 — 그것은 이기고 지는 판정이고,
+     이 특전은 "얼마나 죽는가"이지 "이기는가"가 아니다. */
+  B.you.crew = Math.max(0, B.you.crew - Math.round((fdmg / 7) * crewLossPerk()));
   B.foe.crew = Math.max(0, B.foe.crew - Math.round(ydmg / 7));
 
   m.round++;
@@ -542,7 +781,9 @@ function meleeRound(stance) {
 
   after(() => {
     if (!B) return;
-    for (const u of [...m.you, ...m.foe]) { if (u.hp > 0) { u.pose = 'idle'; u.offset = 0; } }
+    for (const u of [...m.you, ...m.foe]) {
+      if (u.hp > 0) { u.pose = 'idle'; u.offset = 0; u.lunge = 0; u.flash = 0; }
+    }
     const yAlive = m.you.some((u) => u.hp > 0);
     const fAlive = m.foe.some((u) => u.hp > 0);
     if (!fAlive) return finish('capture');
@@ -586,7 +827,11 @@ function finish(kind) {
     /* ★ **삭은 배로 지면 가라앉는다**(C-13 N4 · `state.js: flagshipSinks`).
        판정을 선체를 되돌리기 **전에** 한다 — 되돌린 뒤에 재면 영영 안 걸린다. */
     const sinking = flagshipSinks();
-    const lostGold = Math.round(state.gold * 0.5);
+    /* ★ **상한이 붙었다** — 저쪽 갑판이 지고 갈 수 있는 만큼만 가져간다(위 `ENCOUNTER_LOSS` 주석).
+       비율(0.50)은 안 바꿨다. 초반에는 상한이 한참 위라 **한 자리도 안 달라지고**,
+       금고가 커진 뒤에야 잘린다 — 천장을 만들던 것이 바로 그 구간이다.
+       `B.foe.crew`(살아남은 적)로 재므로 갑판을 비워 놓고 지면 덜 실어 간다. */
+    const lostGold = capEncounterLoss(state.gold * ENCOUNTER_LOSS.loseShare, B.foe.crew, e.level);
     state.gold -= lostGold;
     const dumped = [];
     for (const id of Object.keys(state.cargo)) {
@@ -594,7 +839,19 @@ function finish(kind) {
       delete state.cargo[id];
     }
     state.hp = Math.max(12, Math.round(state.maxHp * 0.25));
-    state.crew = Math.max(4, Math.round(state.crew * 0.5));
+    /* ★ **선원에 바닥을 준다**(ⓒ). 잠그는 축은 금고가 아니라 **선원**이었다 —
+       선체는 `maxHp`의 25%로 되돌아갈 뿐 누적이 아닌데, 선원은 매번 반씩 누적돼
+       42→21→11→6→4로 내려간다. 그 아래에서 `oceanReady()`가 원양을 막고
+       금고가 비면 사람을 못 태워 **판이 잠긴다**(GRAND-ISSUES #6).
+       바닥은 **그 문턱 자체**로 둔다 — 새 숫자를 만들지 않고 `oceanReady`가 보는
+       `max(3, ceil(crewMin × OCEAN_CREW_MIN))`를 그대로 쓴다. 지는 것은 여전히 아프되
+       **원양이 닫히지는 않는다.**
+       ⚠️ 이미 그 밑이었다면 바닥이 사람을 **늘려서는 안 된다** — `min(지금 선원, 바닥)`. */
+    const oceanFloor = ENCOUNTER_LOSS.crewFloorOcean
+      ? Math.max(3, Math.ceil((ship().crewMin || 0) * OCEAN_CREW_MIN))
+      : 0;
+    const crewFloor = Math.min(state.crew, Math.max(ENCOUNTER_LOSS.crewFloor, oceanFloor));
+    state.crew = Math.max(crewFloor, Math.round(state.crew * ENCOUNTER_LOSS.crewShare));
     trimLoadout();
     const sank = sinking ? sinkFlagship() : null;
     /* ★ 여기는 언제나 "해적들이 화물칸을 털어갔다"였다. 그런데 이 자리에는
@@ -765,10 +1022,17 @@ function buildUI() {
         : B.turn === 'player' ? '포격전 · 우리 차례' : '포격전 · 적 차례',
   }));
 
-  // 거리 게이지
+  /* 거리 게이지 — 그 위에 **바람 한 줄**을 둔다.
+     첫 로그는 두 줄 뒤로 밀려 사라지므로, 판 내내 보이는 자리가 따로 있어야 한다. */
   if (B.phase === 'gunnery') {
     const pos = 100 - B.range;
     ui.append(el('div#range-wrap', {}, [
+      el('div', {
+        text: B.wind.mine
+          ? `${B.wind.name} →   풍상은 우리에게 있다`
+          : `←  ${B.wind.name}   풍상은 저쪽이다`,
+        style: { fontSize: '11px', color: B.wind.mine ? '#8fbf74' : '#c98a6a', marginBottom: '2px' },
+      }),
       el('div', { text: `거리 ${Math.round(B.range)} — ${rangeLabel()}` }),
       el('div#range-bar', {}, [
         el('div.zone', { style: { left: '78%', right: '0%' } }),
