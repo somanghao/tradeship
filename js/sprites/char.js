@@ -38,13 +38,20 @@ const SKINS = {
   dark:  { D: P.skin2D, M: P.skin2M, L: P.skin2L },
   amber: { D: P.skin3D, M: P.skin3M, L: P.skin3L },
   copper:{ D: P.skin4D, M: P.skin4M, L: P.skin4L },
+  pale:  { D: P.skin5D, M: P.skin5M, L: P.skin5L },
+  tan:   { D: P.skin6D, M: P.skin6M, L: P.skin6L },
+  bronze:{ D: P.skin7D, M: P.skin7M, L: P.skin7L },
+  ebony: { D: P.skin8D, M: P.skin8M, L: P.skin8L },
 };
 
-/** 그 바다의 얼굴빛 — 없으면 배색이 정한 대로 간다(지중해·대서양이 그렇다) */
+/** 그 바다의 얼굴빛 — 없으면 배색이 정한 대로 간다(지중해가 그렇다).
+    ★ 회차 22 — 넷이던 것을 **권역마다 하나**로 갈랐다. 넷일 때는 동아시아와 동남아,
+      인도양과 아메리카, 아프리카와 중동이 화면에서 같은 얼굴이었다(4배 확대 실대조). */
 export const REGION_SKIN = {
-  eastasia: 'amber', seasia: 'amber',
-  indian: 'copper', southamerica: 'copper', caribbean: 'copper',
-  africa: 'dark', mideast: 'dark',
+  atlantic: 'pale',
+  eastasia: 'amber', seasia: 'tan',
+  indian: 'copper', southamerica: 'bronze', caribbean: 'bronze',
+  africa: 'ebony', mideast: 'dark',
 };
 
 const skinOf = (s, faceKey = null) => SKINS[REGION_SKIN[faceKey]] ?? SKINS[s.skin] ?? SKINS.light;

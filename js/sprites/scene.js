@@ -214,7 +214,13 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
            대륙 둘레가 2~3px 모래띠가 됐는데, 모래색은 `check-map.py`의 `is_sea`에서 **뭍**으로
            세어진다(b > r+18이 아니다). 그래서 해변이 굵어진 만큼 항로 회랑이 좁아졌고
            파마구스타~베이루트가 50%로 반려됐다 — 그림이 아니라 판정 폭의 문제다. */
-        if (dstep(d, Math.min(w * 0.35, 1.15), 0.8, x, y) < 0) c = sand;   // 백사
+        /* ★ 회차 22 — 4배로 확대해 보니 백사가 **50% 체커로 흩어져 점선 선택영역**처럼 보였다.
+           전이폭 0.8은 첫 물칸(정방 이웃 d=1.0)을 68%, 대각 이웃(d=1.333)을 27%로 찍어
+           해안선을 따라 점이 튀었다. 전이폭을 0.34로 좁히면 정방 이웃이 거의 100% 모래가 되고
+           대각은 3%로 떨어져 **이어진 1px 백사**가 된다.
+           ⚠️ 문턱도 1.15→1.18로만 올린다 — 모래색은 `check-map.py`의 `is_sea`에서 **뭍**으로
+             세어지므로 굵어진 만큼 항로 회랑이 좁아져 반려된다(전례 있음). 총량은 +8% 안이다. */
+        if (dstep(d, Math.min(w * 0.35, 1.18), 0.34, x, y) < 0) c = sand;   // 백사
         else if (dstep(d, w, 1.1, x, y) < 0) c = depth[0];            // 여울
         else if (dstep(d, w * 2.4, 1.8, x, y) < 0) c = depth[1];      // 얕은 바다
         /* 여기부터는 거리가 아니라 **해저값**으로 끊는다(위 주석). 등심선이 섬을 복제하지 않는다.
@@ -567,6 +573,9 @@ export const STYLES = {
     sky: ['#5a86a8', '#a8bcc4', '#e4d4b8'], hill: '#4a6b3a', hillD: '#31492a',
     sea: ['#2d7f8c', '#1d5a6c', '#0f3646', '#4aa2ac'],
     tower: 'pagoda', accent: P.goldM, roofKind: 'eave',
+    /* ★ 처마지붕은 3~4px이라 **높은 벽 위에 얹으면 보이지 않는다.** 낮추지 않으면
+       회벽·격자창만 남아 현대 아파트 단지로 읽힌다(회차 22 실화면 대조). */
+    lowRise: 0.62,
   },
   // 강남·조선·일본이 함께 쓴다 — 흰 회벽에 짙은 기와, 길게 뻗은 처마, 돔이 아닌 층탑.
   // 셋의 차이는 지붕 곡선인데 400×225 원경에서는 갈리지 않아 한 화풍으로 묶었다.
@@ -575,7 +584,7 @@ export const STYLES = {
     roof: ['#4a4c52', '#33353a', '#63656d'], roofD: '#212227',
     sky: ['#4a7ba8', '#9dbdd2', '#e6dcc4'], hill: '#4a6b4a', hillD: '#2f4a33',
     sea: ['#2d7a8c', '#1d5668', '#0f3242', '#469caa'],
-    tower: 'pagoda', accent: P.redM, roofKind: 'eave',
+    tower: 'pagoda', accent: P.redM, roofKind: 'eave', lowRise: 0.58,
   },
 
   /* ── 유럽이 바다 건너에 지은 것 ───────────────────────── */
@@ -589,10 +598,45 @@ export const STYLES = {
   },
 };
 
+/* 뒷산의 세기 — 화풍마다 **배후지의 생김새**가 다르다. 0이면 안 세운다.
+   ★ 팔레트만 갈라서는 함부르크와 나가사키가 안 갈렸고 그래서 `roofKind`가 들어왔다.
+     같은 이유로 배후지도 갈라 둔다 — 북독일 평야에 알프스를 세우면 거짓말이고,
+     노르웨이 항구 뒤가 평지면 그것도 거짓말이다. */
+const RIDGE = {
+  latin: 1, hellenic: 1.05, levant: 0.55, hanseatic: 0.25, nordic: 1.25,
+  swahili: 0.7, guinea: 0.35, dravidian: 0.6, malabar: 1.2, malay: 1.15,
+  sinic: 0.8, jiangnan: 0.3, colonial: 0.85,
+};
+for (const [k, v] of Object.entries(RIDGE)) if (STYLES[k]) STYLES[k].ridge = v;
+
 /* 항구 씬 세로 배치
    0 ─ 하늘 ─ 78 ─ 구릉 ─ 132 ─ 시가지/성벽 ─ 150 ─ 정박 수면 ─ 186 ─ 부두 ─ 225 */
 const HORIZON = 150;
 const QUAY_Y = 186;
+
+/* 항구마다 **시각이 다르다**.
+   ★ 회차 22에 아홉 항구를 나란히 놓고 보니, 사람이 그린 베네치아가 특별해 보인 까닭의 절반은
+     솜씨가 아니라 **노을**이었다 — 코드판 여덟 장은 전부 같은 대낮이라 하늘이 서로 겹쳐 보였다.
+   ⚠️ 색은 배경에만 얹는다. 인물·배는 port.js가 뒤에 덧그리므로 세게 물들이면 따로 논다 —
+     그래서 `wash`는 12% 위로 올리지 않는다. */
+const PORT_MOODS = [
+  { k: 'day',  w: 42, sky: null, wash: null, lit: 0.18 },
+  { k: 'morn', w: 18, sky: ['#4d80ad', '#c9b79c', '#f4e2c4'], wash: '#ffc98c14', lit: 0.26 },
+  { k: 'dusk', w: 16, sky: ['#2f3f70', '#a2626d', '#eaa76a'], wash: '#e8823c1e', lit: 0.46 },
+  { k: 'haze', w: 14, sky: ['#6e8296', '#a9b3b9', '#ddd7c9'], wash: '#b9c1c916', lit: 0.20 },
+  { k: 'rain', w: 10, sky: ['#3f4a58', '#6c7581', '#9ba1a5'], wash: '#4a5a6e1e', lit: 0.34 },
+];
+function moodOf(r) {
+  const tot = PORT_MOODS.reduce((a, m) => a + m.w, 0);
+  let v = r() * tot;
+  for (const m of PORT_MOODS) { v -= m.w; if (v <= 0) return m; }
+  return PORT_MOODS[0];
+}
+/** 화풍에 시각을 입힌 사본 — 원본 STYLES는 건드리지 않는다. */
+function styleAtHour(S, m) {
+  if (!m.sky) return { ...S, lit: m.lit };
+  return { ...S, lit: m.lit, sky: S.sky.map((c, i) => mixHex(c, m.sky[i], 0.62)) };
+}
 
 function skyGradient(ctx, S) {
   const grad = ctx.createLinearGradient(0, 0, 0, HORIZON);
@@ -601,6 +645,51 @@ function skyGradient(ctx, S) {
   grad.addColorStop(1, S.sky[2]);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, VW, HORIZON);
+}
+
+/* 두 색을 섞는다 — 원경을 하늘 쪽으로 흐리게 만드는 데 쓴다(대기원근). */
+function mixHex(a, b, t) {
+  const p = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const [ar, ag, ab] = p(a), [br, bg, bb] = p(b);
+  const c = (u, v) => Math.round(u + (v - u) * t).toString(16).padStart(2, '0');
+  return `#${c(ar, br)}${c(ag, bg)}${c(ab, bb)}`;
+}
+
+/** 원경 산줄기 — 구릉보다 **뒤**, 하늘색에 섞어 흐리게.
+    ★ 회차 22에 아홉 항구를 실제로 열어 나란히 놓고서야 알았다: 코드판은 하늘·구릉·시가지
+      **세 띠뿐**이라 여덟 항구가 서로 구분이 안 갔다. 뒤에 능선 한 겹이 서면 같은 팔레트라도
+      "다른 데"로 읽힌다. 봉우리 자리·높이·개수는 씨앗이 정하므로 항구마다 다르다.
+    @param strength 0이면 안 그린다(삼각주·산호섬 항구) */
+function farRidge(g, S, r, strength) {
+  if (strength <= 0) return;
+  /* ★ 처음엔 하늘색에 46%만 섞고 봉우리를 포물선으로 뽑았더니 **안개 얼룩**으로 보였다
+     (회차 22 실화면 대조). 산으로 읽히려면 ① 하늘과 갈라지는 명도 ② **모난 능선** ③ 겹. */
+  const far = mixHex(S.sky[1], S.hillD, 0.62);
+  const farL = mixHex(S.sky[1], S.hillD, 0.40);
+  const near = mixHex(S.sky[1], S.hillD, 0.80);
+  const nearL = mixHex(S.sky[1], S.hillD, 0.58);
+  const snow = mixHex(S.sky[2], '#ffffff', 0.55);
+  const layer = (base, amp, col, colL, depth, capAt) => {
+    const n = 3 + Math.floor(r() * 4);
+    const peaks = Array.from({ length: n }, () => [
+      r() * (VW + 80) - 40, (14 + r() * 24) * amp, 18 + r() * 30,
+    ]);
+    for (let x = 0; x < VW; x++) {
+      let y = base;
+      for (const [px, a, wd] of peaks) {
+        const t = Math.abs(x - px) / wd;
+        if (t < 1) y -= a * (1 - t);                // 삼각 — 포물선이면 봉우리가 언덕이 된다
+      }
+      y += Math.sin(x * 0.037) * 2.2 + Math.sin(x * 0.13) * 1.1 + (x % 3 === 0 ? 0.6 : 0);
+      const yy = Math.round(y);
+      g.v(x, yy, depth, col);
+      g.px(x, yy, colL);
+      if (capAt && yy < capAt) { g.px(x, yy + 1, snow); g.px(x, yy + 2, colL); }
+    }
+  };
+  // 먼 겹(흐리고 높다) → 가까운 겹(짙고 낮다). 두 겹이라야 사이에 거리가 생긴다
+  layer(96, strength * 1.15, far, farL, 112, 96 - 30 * strength);
+  layer(104, strength * 0.72, near, nearL, 114, 0);
 }
 
 function drawHills(g, S, r) {
@@ -697,16 +786,45 @@ function building(g, S, r, x, w, groundY, hMin, hMax) {
     g.px(dx + 1, groundY - 5, S.wallD);
     return top;
   }
-  const cols = Math.max(1, Math.floor((w - 3) / 4));
-  const rows = Math.max(1, Math.floor((h - 4) / 5));
+  /* ★ **창고는 창이 없다.** 모든 건물에 같은 간격의 창을 박으면 시가지가 모눈종이가 된다 —
+       회차 22에 아홉 항구를 나란히 놓고 본 첫인상이 그것이었다. 넓은 채는 큰 문 하나와
+       도르래 들보로 대신한다(그 도시가 짐을 부리는 곳이라는 표시이기도 하다). */
+  if (w >= 19 && r() < 0.42) {
+    const dw = Math.min(9, Math.max(5, Math.round(w * 0.34)));
+    const dx = x + Math.round((w - dw) / 2);
+    g.r(dx, groundY - 11, dw, 11, '#3a2c20');
+    g.h(groundY - 11, dx, dx + dw - 1, S.wall[2]);
+    g.v(dx, groundY - 10, groundY - 1, S.wallD);
+    for (let i = 1; i < dw - 1; i += 2) g.v(dx + i, groundY - 9, groundY - 2, '#4a3a2c');
+    // 상단 하역구와 도르래 들보
+    g.r(dx + 1, top + 4, dw - 2, 4, '#3a2c20');
+    g.h(top + 3, dx + 1, dx + dw - 2, S.wall[2]);
+    g.r(dx + Math.floor(dw / 2) - 1, top + 1, 3, 2, P.woodD);
+    g.v(dx + Math.floor(dw / 2), top + 3, top + 6, '#6d5b3f');
+    return top;
+  }
+  /* 창 간격을 채마다 흔든다 — 하나로 고정하면 모든 건물이 같은 격자를 쓴다. */
+  const pw = 4 + (r() < 0.38 ? 1 : 0);
+  const ph = 5 + (r() < 0.32 ? 1 : 0);
+  const arch = r() < 0.28;                            // 아치창 — 위 한 픽셀을 벽색으로 깎는다
+  const cols = Math.max(1, Math.floor((w - 3) / pw));
+  const rows = Math.max(1, Math.floor((h - 4) / ph));
   for (let cy = 0; cy < rows; cy++) {
     for (let cx = 0; cx < cols; cx++) {
-      const wx = x + 2 + cx * 4, wy = top + 3 + cy * 5;
+      const wx = x + 2 + cx * pw, wy = top + 3 + cy * ph;
       if (wx + 1 >= x + w - 1) continue;
-      const lit = r() < 0.22;
+      const lit = r() < (S.lit ?? 0.22);        // 노을·비 오는 날엔 불 켠 창이 많다
       g.r(wx, wy, 2, 3, lit ? P.goldM : '#4a3a2e');
       if (lit) g.px(wx, wy, P.goldL);
+      if (arch) { g.px(wx, wy, wall); g.px(wx + 1, wy, wall); g.px(wx, wy + 1, lit ? P.goldL : '#4a3a2e'); }
       if (r() < 0.3) g.h(wy + 3, wx, wx + 1, S.wallD);   // 차양
+    }
+  }
+  // 지상층 아케이드 — 물가 도시의 회랑. 폭이 넉넉한 채에만
+  if (w >= 14 && r() < 0.3) {
+    for (let ax = x + 2; ax < x + w - 3; ax += 5) {
+      g.r(ax, groundY - 6, 3, 6, '#3f3126');
+      g.px(ax + 1, groundY - 6, S.wall[2]);
     }
   }
   return top;
@@ -878,26 +996,65 @@ function drawQuay(g, S, r) {
     const off = ((y - qy) / 6) % 2 ? 6 : 0;
     for (let x = off; x < VW; x += 12) g.v(x, y, y + 5, RD);
   }
-  // 계선주 + 늘어진 밧줄 — 부두 상판 위에 세운다
+  /* 계선주 + 늘어진 밧줄 — 부두 상판 위에 세운다.
+     ★ 다섯 개를 88px 간격으로 못박아 두었더니 아홉 바다 어느 부두에서나 **같은 자리**에
+       같은 밧줄이 늘어졌다. 개수와 간격을 씨앗에 맡긴다(회차 22). */
   const pz = qy + 9;                                 // 프롭이 놓이는 바닥선
-  for (let i = 0; i < 5; i++) {
-    const x = 26 + i * 88;
+  const nB = 4 + Math.floor(r() * 3);                // 계선주 4~6
+  const bxs = [];
+  for (let i = 0; i < nB; i++) bxs.push(Math.round(14 + i * ((VW - 34) / (nB - 1)) + (r() - 0.5) * 14));
+  for (let i = 0; i < bxs.length; i++) {
+    const x = bxs[i];
     g.r(x, pz - 7, 5, 8, '#4a4038');
     g.h(pz - 7, x, x + 4, '#6b5d4f');
     g.r(x - 1, pz - 8, 7, 2, '#5a4d42');
     g.px(x, pz, '#2f2a24');
-    if (i < 4) {
-      for (let k = 0; k <= 88; k++) {
-        const t = k / 88;
-        const yy = pz - 8 - Math.round(Math.sin(Math.PI * t) * 4) + 4;
+    const nx = bxs[i + 1];
+    if (nx != null && nx > x + 6) {
+      const span = nx - x;
+      const sag = 3 + Math.floor(r() * 4);           // 밧줄이 처지는 정도도 칸마다 다르다
+      for (let k = 0; k <= span; k++) {
+        const t = k / span;
+        const yy = pz - 8 - Math.round(Math.sin(Math.PI * t) * sag) + sag;
         g.px(x + 2 + k, yy, '#6d5b3f');
       }
     }
   }
-  // 화물 — 통과 나무상자
-  const props = [[52, 'crate'], [70, 'barrel'], [80, 'barrel'], [300, 'crate'],
-                 [318, 'crate'], [330, 'barrel'], [212, 'barrel']];
+  /* 화물 — 자리·종류·무리 크기를 씨앗이 정한다. 부두는 **짐이 무리 지어** 쌓여 있어야
+     일하는 자리로 보인다(고르게 흩으면 진열대가 된다). */
+  const KINDS = ['crate', 'barrel', 'barrel', 'sack', 'coil', 'net'];
+  const props = [];
+  for (let c = 0, nc = 2 + Math.floor(r() * 3); c < nc; c++) {
+    let px = 20 + Math.floor(r() * (VW - 100));
+    for (let i = 0, n = 2 + Math.floor(r() * 3); i < n; i++) {
+      props.push([px, KINDS[Math.floor(r() * KINDS.length)]]);
+      px += 9 + Math.floor(r() * 9);
+    }
+  }
   for (const [x, kind] of props) {
+    if (kind === 'sack') {                           // 곡물 자루 — 윗목을 묶어 잘록하다
+      g.poly([[x + 1, pz - 1], [x, pz - 7], [x + 3, pz - 11], [x + 7, pz - 7], [x + 8, pz - 1]], P.clothM);
+      g.poly([[x + 2, pz - 2], [x + 2, pz - 7], [x + 4, pz - 10], [x + 6, pz - 7], [x + 6, pz - 2]], P.clothL);
+      g.h(pz - 9, x + 2, x + 6, P.clothD);
+      g.px(x + 4, pz - 12, P.clothD);
+      g.h(pz, x + 1, x + 8, '#00000044');
+      continue;
+    }
+    if (kind === 'coil') {                           // 밧줄 사리
+      g.ellipse(x + 5, pz - 3, 6, 3, '#6d5b3f');
+      g.ellipse(x + 5, pz - 4, 6, 3, '#836f4e');
+      g.ellipse(x + 5, pz - 5, 4, 2, '#6d5b3f');
+      g.ellipse(x + 5, pz - 4, 2, 1, '#4a3d2a');
+      g.h(pz, x, x + 10, '#00000033');
+      continue;
+    }
+    if (kind === 'net') {                            // 널어 둔 그물 더미
+      g.poly([[x, pz - 1], [x + 2, pz - 7], [x + 9, pz - 6], [x + 11, pz - 1]], '#5f6b52');
+      for (let i = 1; i < 10; i += 2) g.v(x + i, pz - 6, pz - 2, '#7d8a68');
+      for (let yy = pz - 6; yy < pz - 1; yy += 2) g.h(yy, x + 1, x + 10, '#7d8a68');
+      g.h(pz, x, x + 11, '#00000044');
+      continue;
+    }
     if (kind === 'crate') {
       g.r(x, pz - 12, 12, 12, P.woodM);
       g.h(pz - 12, x, x + 11, P.woodL);
@@ -921,25 +1078,33 @@ function drawQuay(g, S, r) {
 export function portSprite(styleKey, seed) {
   const key = `scene:port:${styleKey}:${seed}`;
   return bake(key, VW, VH, (g, ctx) => {
-    const S = STYLES[styleKey];
+    const S0 = STYLES[styleKey];
     const r = rng(seed);
+    const mood = moodOf(r);
+    const S = styleAtHour(S0, mood);
     skyGradient(ctx, S);
 
-    // 구름
-    for (let i = 0; i < 7; i++) {
-      const cx = Math.floor(r() * VW), cy = 12 + Math.floor(r() * 46);
-      const w = 14 + Math.floor(r() * 26);
+    /* 구름 — 개수·높이대·크기를 씨앗이 정한다. 일곱 개를 늘 같은 띠에 뿌렸더니
+       여덟 항구의 하늘이 서로 겹쳐 놓은 듯 같았다(회차 22 실화면 대조). */
+    const nCloud = 3 + Math.floor(r() * 8);
+    const band = 8 + Math.floor(r() * 16), spread = 20 + Math.floor(r() * 34);
+    for (let i = 0; i < nCloud; i++) {
+      const cx = Math.floor(r() * VW), cy = band + Math.floor(r() * spread);
+      const w = 10 + Math.floor(r() * 30);
       g.ellipse(cx, cy, w, 3 + Math.floor(r() * 3), '#ffffff22');
       g.ellipse(cx - w / 3, cy - 2, w / 2, 3, '#f4ead6aa');
       g.ellipse(cx + w / 4, cy - 1, w / 3, 2, '#f4ead6cc');
     }
-    // 갈매기
-    for (let i = 0; i < 5; i++) {
-      const x = 40 + Math.floor(r() * 320), y = 20 + Math.floor(r() * 40);
+    // 갈매기 — 없는 날도 있다
+    for (let i = 0, n = Math.floor(r() * 7); i < n; i++) {
+      const x = 20 + Math.floor(r() * 360), y = 18 + Math.floor(r() * 46);
       g.px(x, y, '#2c2a30'); g.px(x + 1, y - 1, '#2c2a30'); g.px(x + 2, y, '#2c2a30');
       g.px(x + 3, y - 1, '#2c2a30'); g.px(x + 4, y, '#2c2a30');
     }
 
+    /* 뒷산 — 화풍이 정하는 상한 안에서 씨앗이 고른다. 산호섬·삼각주(`ridge: 0`)는 안 세운다. */
+    const ridgeMax = S.ridge ?? 1;
+    farRidge(g, S, r, ridgeMax * (r() < 0.25 ? 0 : 0.45 + r() * 0.55));
     drawHills(g, S, r);
 
     // 시가지 — 뒤쪽(작고 어두움) → 앞쪽(크고 밝음) 3열
@@ -951,8 +1116,17 @@ export function portSprite(styleKey, seed) {
       const hMin = Math.round((14 + row * 7) * lr), hMax = Math.round((32 + row * 13) * lr);
       let x = -4 + Math.floor(r() * 6);
       while (x < VW + 4) {
-        const w = 8 + Math.floor(r() * 16);
-        building(g, S, r, x, w, groundY, hMin, hMax);
+        /* ★ 폭을 세 갈래로 — 좁은 집·보통 집·창고. 8~23px 한 갈래로만 늘어놓으면
+           윗변이 고르게 들쭉날쭉해 **모눈종이 한 장**으로 읽힌다. */
+        const k = r();
+        const w = k < 0.24 ? 5 + Math.floor(r() * 4)
+          : k > 0.84 ? 20 + Math.floor(r() * 13)
+            : 9 + Math.floor(r() * 11);
+        /* 드물게 솟은 탑집 — 평평한 스카이라인을 깨는 데 이것 하나면 된다.
+           ★ **좁은 채에만** 준다. 넓은 채에 1.8배를 줬더니 90px짜리 판상 건물이 나와
+             부산포가 아파트 단지가 됐다(회차 22 실화면 대조). */
+        const tall = (w <= 9 && r() < 0.26) ? 1.25 + r() * 0.4 : 1;
+        building(g, S, r, x, w, groundY, hMin, Math.min(64, Math.round(hMax * tall)));
         x += w + (r() < 0.7 ? 1 : 3);
       }
       // 뒤 열은 대기원근으로 살짝 퍼뜨린다
@@ -965,26 +1139,42 @@ export function portSprite(styleKey, seed) {
       }
     }
 
-    landmark(g, S, r, 300, 134);
-    landmark(g, S, r, 54, 130);
-
-    // 해안 성벽 — 밑동이 물에 잠기도록 수면선에 걸친다
-    const [RM, RL, RD] = rampartOf(S);
-    g.r(0, 134, VW, 18, RM);
-    g.h(134, 0, VW - 1, RL);
-    g.h(135, 0, VW - 1, RL);
-    g.h(151, 0, VW - 1, RD);
-    for (let x = 0; x < VW; x += 10) {               // 총안
-      g.r(x, 130, 6, 5, RM);
-      g.h(130, x, x + 5, RL);
+    /* ★ 랜드마크 자리를 씨앗에 맡긴다. 전에는 늘 (54,130)과 (300,134) **둘 고정**이라
+       아홉 바다 어느 항구를 열어도 왼쪽과 오른쪽 같은 자리에 같은 탑이 서 있었다
+       — 여덟 항구가 한 그림으로 보이던 가장 큰 이유다(회차 22 실화면 대조). */
+    const lmN = 1 + Math.floor(r() * 3);
+    const placed = [];
+    for (let i = 0; i < lmN * 3 && placed.length < lmN; i++) {
+      const lx = 24 + Math.floor(r() * (VW - 56));
+      if (placed.some((s2) => Math.abs(s2 - lx) < 54)) continue;
+      placed.push(lx);
+      landmark(g, S, r, lx, 126 + Math.floor(r() * 10));
     }
-    for (let x = 4; x < VW; x += 16) g.r(x, 139, 2, 5, '#3c3833');
-    for (let x = 0; x < VW; x += 7) g.px(x, 148, RD);   // 이끼 낀 하부
-    // 수문 — 아치가 수면에 닿는다
-    g.r(186, 132, 28, 20, RD);
-    g.h(132, 186, 213, RL);
-    g.ellipse(200, 146, 10, 11, '#241f1c');
-    g.r(190, 146, 20, 6, '#241f1c');
+    if (!placed.length) landmark(g, S, r, 60 + Math.floor(r() * 240), 132);
+
+    /* 해안 성벽 — 밑동이 물에 잠기도록 수면선에 걸친다.
+       ★ 높이·총안 간격·수문 자리를 전부 고정값으로 두었더니 항구마다 **같은 담장**이
+         같은 자리에 같은 구멍을 뚫고 서 있었다. 셋 다 씨앗에 맡긴다. */
+    const [RM, RL, RD] = rampartOf(S);
+    const wTop = 132 + Math.floor(r() * 4);          // 132~135
+    g.r(0, wTop + 2, VW, 152 - (wTop + 2), RM);
+    g.h(wTop + 2, 0, VW - 1, RL);
+    g.h(wTop + 3, 0, VW - 1, RL);
+    g.h(151, 0, VW - 1, RD);
+    const merlon = 8 + Math.floor(r() * 8);          // 총안 간격 8~15
+    const mOff = Math.floor(r() * merlon);
+    for (let x = mOff - merlon; x < VW; x += merlon) {
+      g.r(x, wTop - 2, Math.max(4, merlon - 4), 5, RM);
+      g.h(wTop - 2, x, x + Math.max(3, merlon - 5), RL);
+    }
+    for (let x = 4 + Math.floor(r() * 8); x < VW; x += 12 + Math.floor(r() * 8)) g.r(x, 139, 2, 5, '#3c3833');
+    for (let x = 0; x < VW; x += 5 + Math.floor(r() * 5)) g.px(x, 147 + Math.floor(r() * 3), RD);  // 이끼 낀 하부
+    // 수문 — 아치가 수면에 닿는다. 자리는 씨앗이 고른다
+    const gx = 40 + Math.floor(r() * (VW - 110));
+    g.r(gx, wTop, 28, 152 - wTop, RD);
+    g.h(wTop, gx, gx + 27, RL);
+    g.ellipse(gx + 14, 146, 10, 11, '#241f1c');
+    g.r(gx + 4, 146, 20, 6, '#241f1c');
     // 각진 능보 — 요새 항구는 성벽이 아니라 요새 하나가 도시다
     if (S.fort) {
       for (const bx of [30, 340]) {
@@ -1001,8 +1191,14 @@ export function portSprite(styleKey, seed) {
         g.r(bx + 9, 132, 4, 3, '#241f1c');
       }
     }
-    // 부두로 이어지는 방파제 기둥
-    for (const bx of [96, 288]) {
+    // 부두로 이어지는 방파제 기둥 — 개수와 자리도 항구마다 다르다
+    const piers = [];
+    for (let i = 0, n = 1 + Math.floor(r() * 3); i < n; i++) {
+      const bx = 20 + Math.floor(r() * (VW - 60));
+      if (Math.abs(bx - gx) < 34 || piers.some((q) => Math.abs(q - bx) < 40)) continue;
+      piers.push(bx);
+    }
+    for (const bx of piers) {
       g.r(bx, 138, 8, 14, RM);
       g.h(138, bx, bx + 7, RL);
       g.r(bx - 1, 135, 10, 3, RL);
@@ -1010,6 +1206,8 @@ export function portSprite(styleKey, seed) {
 
     drawSeaFront(g, ctx, S, r);
     drawQuay(g, S, r);
+    // 시각의 색을 배경 전체에 얇게 한 겹 — 지붕·물·부두가 같은 빛 아래 놓인다
+    if (mood.wash) { ctx.fillStyle = mood.wash; ctx.fillRect(0, 0, VW, VH); }
   });
 }
 
@@ -1251,17 +1449,197 @@ function barrel(g, x, y, w = 13, h = 16) {
   g.h(y + h - 1, x + 1, x + w - 2, P.woodD);
 }
 
+/* 술집 벽의 재료 — 화풍이 정한다. 항구의 `roofKind`와 같은 발상이다.
+   ★ 색만 갈라서는 안 갈린다: 실내는 어두워 색차가 죽으므로 **결(줄눈·켜·격자)**이 있어야
+     다른 데로 읽힌다(회차 22 실화면 대조). */
+const TAV_HANG = {
+  latin: 'garlic', hellenic: 'garlic', levant: 'spice', hanseatic: 'fish', nordic: 'fish',
+  swahili: 'spice', guinea: 'gourd', dravidian: 'spice', malabar: 'spice',
+  malay: 'spice', sinic: 'lantern', jiangnan: 'lantern', colonial: 'garlic',
+};
+
+/** 천장 들보에 매단 것 — 바다마다 다르다. 자리는 씨앗이 흔든다. */
+function tavernHang(g, S, r, kind) {
+  const xs = [];
+  for (let i = 0, n = 3 + Math.floor(r() * 3); i < n; i++) xs.push(104 + Math.floor(r() * 78));
+  for (const x of xs) {
+    const y = 14 + Math.floor(r() * 5);
+    if (kind === 'fish') {                           // 말린 대구 — 북해의 술집
+      g.v(x, y, y + 4, '#6d5b3f');
+      const h = 12 + Math.floor(r() * 7);
+      g.poly([[x, y + 4], [x + 3, y + 6], [x + 3, y + h], [x, y + h + 3], [x - 3, y + h], [x - 3, y + 6]], '#9a8a6a');
+      g.v(x, y + 6, y + h, '#c4b48c');
+      g.poly([[x - 3, y + h + 1], [x + 3, y + h + 1], [x, y + h + 4]], '#7d6f52');
+      g.px(x - 1, y + 7, '#3a3228');
+    } else if (kind === 'spice') {                   // 향신료 다발과 고추 — 인도양·향료제도
+      g.v(x, y, y + 3, '#6d5b3f');
+      for (let k = 0; k < 5; k++) {
+        const dx = x - 3 + k, len = 7 + Math.floor(r() * 8);
+        g.v(dx, y + 3, y + 3 + len, k % 2 ? '#a8341f' : '#8a2a18');
+        g.px(dx, y + 3 + len, '#5f1c10');
+      }
+      g.h(y + 3, x - 3, x + 2, '#7d6a44');
+    } else if (kind === 'lantern') {                 // 붉은 등롱 — 명·조선·일본
+      g.v(x, y, y + 3, '#4a3a2e');
+      g.ellipse(x, y + 8, 5, 6, '#a8341f');
+      g.ellipse(x - 1, y + 7, 3, 4, '#c8543a');
+      g.h(y + 3, x - 3, x + 2, '#c8a24a');
+      g.h(y + 13, x - 3, x + 2, '#c8a24a');
+      g.v(x, y + 14, y + 17, '#c8a24a');
+    } else if (kind === 'gourd') {                   // 조롱박 물통 — 기니 만
+      g.v(x, y, y + 4, '#6d5b3f');
+      g.ellipse(x, y + 11, 5, 6, '#b09050');
+      g.ellipse(x, y + 6, 3, 3, '#93743c');
+      g.ellipse(x - 2, y + 10, 2, 2, '#c9ab6a');
+    } else {                                         // 마늘·양파 타래와 소시지 — 지중해
+      g.v(x, y, y + 3, '#6d5b3f');
+      for (let k = 0; k < 4; k++) {
+        g.ellipse(x + (k % 2 ? 2 : -2), y + 6 + k * 4, 3, 3, k % 2 ? '#d8cdb4' : '#c9bda0');
+        g.px(x + (k % 2 ? 2 : -2), y + 4 + k * 4, '#8a7f66');
+      }
+    }
+  }
+}
+
+const TAV_WALL = {
+  latin: 'stone', hellenic: 'stone', levant: 'plaster', hanseatic: 'brick', nordic: 'log',
+  swahili: 'plaster', guinea: 'weave', dravidian: 'plaster', malabar: 'timber',
+  malay: 'weave', sinic: 'brick', jiangnan: 'timber', colonial: 'plaster',
+};
+
 export function tavernSprite(styleKey = 'latin', seed = 1) {
   const key = `scene:tavern:${styleKey}:${seed}`;
   return bake(key, VW, VH, (g, ctx) => {
     const S = STYLES[styleKey];
     const r = rng(seed);
 
-    // ── 벽 ───────────────────────────────────────────────
-    // 도시 벽색을 어둡게 깔아 실내 그늘을 만든다. 밝은 회벽 그대로면 담벼락처럼 보인다.
-    g.r(0, 0, VW, TAV_FLOOR, S.wallD);
-    g.r(0, 0, VW, TAV_FLOOR, '#00000040');
-    for (let y = 0; y < TAV_FLOOR; y += 3) g.h(y, 0, VW - 1, '#00000012');
+    /* ── 벽 ───────────────────────────────────────────────
+       ★ 여기가 이 그림에서 **가장 넓은 면**이다. 예전에는 화풍과 무관하게 늘
+         `S.wallD`에 검정 40%를 얹은 한 가지 판자벽이었고, 그래서 아홉 바다 술집이
+         창밖 하늘색 말고는 완전히 같은 그림이었다(회차 22에 넷을 실제로 열어 대조).
+         재료를 화풍이 정하게 한다 — 한자는 벽돌, 노르딕은 통나무, 말레이는 대나무 엮음. */
+    /* ⚠️ 실내다 — 밝게 잡으면 재료가 아니라 **셔터·콘크리트**로 읽힌다. 실제로 반목조를
+       42%만 어둡게 했다가 회벽이 차고 문이 됐다(회차 22 실화면 대조). 어둡게 잡고
+       결(줄눈·켜)로만 재료를 말한다. */
+    const baseC = mixHex(S.wallD, '#211711', 0.52);
+    const jointC = mixHex(S.wallD, '#120c08', 0.70);
+    const litC = mixHex(S.wall[2], '#211711', 0.58);
+    /* ★ 돌·벽돌·회벽은 **그 바다의 돌색**에서 뽑는다(`S.wall`) — 지중해 석회암은 누런기,
+       스와힐리 산호석은 흰기, 레반트 회벽은 붉은 흙기다. 중성 회색으로 깔면 나무벽 칸 옆에서
+       그 칸만 죽어 보인다("몇 칸만 미완성" — PM 지적, 회차 22). 어둡게 하되 채도는 남긴다. */
+    const stoneM = mixHex(S.wall[1], '#211711', 0.46);
+    const stoneL = mixHex(S.wall[2], '#211711', 0.30);
+    const stoneD = mixHex(S.wallD, '#120c08', 0.52);
+    const kind = TAV_WALL[styleKey] || 'plank';
+    g.r(0, 0, VW, TAV_FLOOR, baseC);
+    if (kind === 'brick') {                          // 벽돌 — 켜마다 어긋나고 장마다 색이 다르다
+      for (let y = 12; y < TAV_FLOOR; y += 5) {
+        g.h(y, 0, VW - 1, stoneD);                   // 줄눈
+        let x = -Math.floor(r() * 10);
+        while (x < VW) {
+          const bw = 8 + Math.floor(r() * 5);        // 장 길이도 조금씩 다르다
+          const t = mixHex(stoneM, stoneL, 0.05 + r() * 0.55);
+          g.r(x + 1, y + 1, Math.max(1, Math.min(bw - 1, VW - x - 1)), 4, t);
+          g.h(y + 1, x + 1, x + bw - 1, mixHex(t, stoneL, 0.45));
+          g.v(x, y + 1, y + 4, stoneD);
+          x += bw;
+        }
+      }
+    } else if (kind === 'stone') {
+      /* 다듬은 돌 — **러닝 본드**(켜마다 어긋나게 쌓는다)에 돌마다 폭·밝기가 다르다.
+         ★ 같은 간격 세로선 + 가로 줄눈 한 줄이면 돌이 아니라 **창고 셔터**로 읽힌다
+           (반목조에서 한 번 밟은 것과 같은 함정 · PM 지적, 회차 22). */
+      for (let y = 12; y < TAV_FLOOR; y += 9) {
+        g.h(y, 0, VW - 1, stoneD);
+        let x = -Math.floor(r() * 26);
+        while (x < VW) {
+          const bw = 15 + Math.floor(r() * 15);
+          const t = mixHex(stoneM, stoneL, r() * 0.6);
+          const w2 = Math.max(1, Math.min(bw - 1, VW - x - 1));
+          g.r(x + 1, y + 1, w2, 7, t);
+          g.h(y + 1, x + 1, x + w2, mixHex(t, stoneL, 0.55));      // 윗면에 빛
+          g.h(y + 7, x + 1, x + w2, mixHex(t, stoneD, 0.45));      // 아랫면에 그늘
+          g.v(x, y + 1, y + 7, stoneD);
+          if (r() < 0.25) g.px(x + 3 + Math.floor(r() * (w2 - 4)), y + 4, mixHex(t, stoneD, 0.5));  // 깨진 자국
+          x += bw;
+        }
+      }
+    } else if (kind === 'log') {                     // 통나무 — 위가 밝고 아래가 어둡다
+      for (let y = 12; y < TAV_FLOOR; y += 8) {
+        g.h(y, 0, VW - 1, litC);
+        g.h(y + 6, 0, VW - 1, jointC);
+        g.h(y + 7, 0, VW - 1, jointC);
+      }
+    } else if (kind === 'weave') {                   // 대나무·야자잎 엮음 — 잔 격자
+      for (let y = 12; y < TAV_FLOOR; y += 3) {
+        for (let x = ((y / 3) | 0) % 2 * 2; x < VW; x += 4) {
+          g.h(y, x, x + 1, litC);
+          g.h(y + 1, x + 2, x + 3, jointC);
+        }
+      }
+    } else if (kind === 'timber') {
+      /* 회벽 + 나무 기둥보(반목조).
+         ★ 두 번 손봤다. ① 밝게 깔았더니 콘크리트 셔터 ② 어둡게만 했더니 이번엔 **잿빛 울타리**가
+           됐다 — 기둥이 같은 간격으로 반복되고 빗장이 모든 칸에 똑같이 들어갔기 때문이다.
+           흰 회벽을 중성 회색으로 어둡게 하면 채도가 0이 된다. **누런 흙벽 쪽으로** 어둡히고,
+           칸 너비와 빗장 유무를 씨앗에 맡긴다(PM 지적, 회차 22). */
+      /* ★ 흰 회벽(강남·조선)을 중성으로 어둡히면 **채도가 0**이 되어 잿빛 판때기가 된다.
+         실내 광원이 기름등불이므로 **등불 색 쪽으로 먼저 편향시킨 뒤** 어둡힌다. */
+      g.r(0, 12, VW, TAV_FLOOR - 12, mixHex(mixHex(S.wall[2], '#d8a86a', 0.5), '#4a3722', 0.46));
+      const post = mixHex(P.woodD, '#160f0a', 0.30);
+      const postL = mixHex(post, '#8a7052', 0.42);
+      const xs = [];
+      for (let x = -4; x < VW; ) { xs.push(x); x += 22 + Math.floor(r() * 16); }
+      for (const x of xs) {
+        const pw = 3 + (r() < 0.3 ? 1 : 0);
+        g.r(x, 12, pw, TAV_FLOOR - 12, post);
+        g.v(x, 12, TAV_FLOOR - 1, postL);
+      }
+      const rail = 52 + Math.floor(r() * 12);        // 중방 높이도 집마다 다르다
+      g.r(0, rail, VW, 4, post);
+      g.h(rail, 0, VW - 1, postL);
+      g.h(rail + 3, 0, VW - 1, '#00000040');
+      for (let i = 0; i < xs.length - 1; i++) {      // 빗장은 **어떤 칸에만** 든다
+        const a = xs[i] + 4, b = xs[i + 1] - 1;
+        if (b - a < 8) continue;
+        const k = r();
+        if (k < 0.34) { g.line(a, rail + 6, b, rail + 26, post); g.line(a, rail + 26, b, rail + 6, post); }
+        else if (k < 0.62) g.line(a, rail + 26, b, rail + 6, post);
+      }
+      // 회벽 얼룩 — 면이 고르면 다시 판때기로 보인다
+      for (let i = 0; i < 24; i++) {
+        g.ellipse(Math.floor(r() * 200), 16 + Math.floor(r() * 92), 5 + r() * 11, 3 + r() * 6, '#00000010');
+      }
+    } else if (kind === 'plaster') {                 // 석회 회벽 — 결이 없고 벽감이 하나
+      g.r(0, 12, VW, TAV_FLOOR - 12, stoneM);
+      // 얼룩 — 회벽은 고르게 마르지 않는다. 이게 없으면 종이 한 장으로 보인다
+      for (let i = 0; i < 34; i++) {
+        const cx = Math.floor(r() * 200), cy = 14 + Math.floor(r() * 96);
+        g.ellipse(cx, cy, 6 + r() * 14, 3 + r() * 8, r() < 0.5 ? '#00000012' : mixHex(stoneL, stoneM, 0.5) + '22');
+      }
+      g.r(0, 12, VW, 3, mixHex(stoneL, stoneM, 0.4));   // 천장 가까이가 조금 밝다
+      for (let i = 0; i < 26; i++) {                 // 실금 — 아주 밋밋하면 종이로 보인다
+        const cx = Math.floor(r() * 190), cy = 16 + Math.floor(r() * 90);
+        for (let k = 0, yy = cy; k < 3 + Math.floor(r() * 5); k++, yy++) g.px(cx + Math.round(k * (r() - 0.5) * 2), yy, jointC);
+      }
+      g.ellipse(168, 60, 11, 12, jointC);            // 아치 벽감
+      g.r(157, 60, 23, 22, jointC);
+      g.ellipse(168, 60, 9, 10, mixHex(baseC, '#000000', 0.35));
+      g.r(159, 60, 19, 20, mixHex(baseC, '#000000', 0.35));
+      g.r(163, 74, 4, 6, P.clothD); g.px(164, 73, P.goldM);   // 벽감에 놓인 물병
+    } else {                                         // 세로 널판 (기본)
+      for (let x = 0; x < VW; x += 7) g.v(x, 12, TAV_FLOOR - 1, jointC);
+      for (let y = 12; y < TAV_FLOOR; y += 3) g.h(y, 0, VW - 1, '#00000012');
+    }
+    g.r(0, 0, VW, TAV_FLOOR, '#00000030');           // 실내 그늘 — 재료가 뭐든 안은 어둡다
+    /* ★ **등불 빛이 벽에 닿아야 한다.** 나무벽은 결이 빛을 받아 저절로 살았는데 돌·회벽은
+       면이 고르게 균일해 등불이 걸려 있는데도 평평해 보였다(PM 지적, 회차 22).
+       벽 재료 위에 한 겹 얹는다 — 등불 스프라이트보다 **먼저**라야 벽에 스민 것으로 보인다. */
+    for (const [lx, ly] of [[52, 44], [148, 40]]) {
+      for (let i = 6; i >= 1; i--) {
+        g.ellipse(lx, ly + 10, 14 + i * 9, 10 + i * 7, `rgba(255,198,116,0.0${i > 3 ? 1 : 2})`);
+      }
+    }
 
     // ── 천장 들보 ────────────────────────────────────────
     g.r(0, 0, VW, 12, P.woodD);
@@ -1275,14 +1653,23 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
 
     // ── 창 (하나만, 왼쪽) ─────────────────────────────────
     // 실내가 어두우므로 창이 화면에서 가장 밝은 면이 된다 — 시선의 닻이다.
+    /* ★ 창밖은 **그 바다의 물빛과 그 항구의 시각**이라야 한다. 전에는 하늘만 화풍을 따르고
+       물은 어느 바다에서나 같은 `P.sea*`였다 — 아홉 술집의 유일한 차이가 하늘 3px이었다. */
+    const wm = moodOf(r);
+    const WS = styleAtHour(S, wm);
+    const WC = seaOf(S);
     const wx = 20;
     g.r(wx - 3, 28, 52, 52, P.woodD);
-    g.r(wx, 31, 46, 46, S.sky[2]);
-    g.r(wx, 31, 46, 22, S.sky[1]);
-    g.r(wx, 31, 46, 10, S.sky[0]);
-    g.r(wx, 62, 46, 15, P.seaD);
-    g.h(66, wx, wx + 45, P.seaM);
-    g.h(70, wx + 5, wx + 26, P.seaL);
+    g.r(wx, 31, 46, 46, WS.sky[2]);
+    g.r(wx, 31, 46, 22, WS.sky[1]);
+    g.r(wx, 31, 46, 10, WS.sky[0]);
+    g.r(wx, 62, 46, 15, WC[2]);
+    g.h(66, wx, wx + 45, WC[1]);
+    g.h(70, wx + 5, wx + 26, WC[3]);
+    for (let i = 0; i < 14; i++) {                   // 창밖 잔물결
+      const yy = 63 + Math.floor(r() * 13), xx = wx + Math.floor(r() * 40);
+      g.h(yy, xx, xx + 1 + Math.floor(r() * 4), yy > 70 ? WC[3] : WC[0]);
+    }
     g.r(wx + 10, 55, 18, 7, P.blackM);            // 정박한 배 실루엣
     g.v(wx + 17, 42, 55, P.blackM);
     g.poly([[wx + 18, 43], [wx + 28, 54], [wx + 18, 54]], '#2a2230');
@@ -1315,6 +1702,11 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
       g.r(cx, 92, 3, 4, P.clothD);
       g.h(96, cx, cx + 2, P.clothM);
     }
+
+    /* ── 들보에 매단 것 ──────────────────────────────────
+       ★ "이 술집이 어느 바다에 있나"를 한 줄로 말하는 자리. 벽 재료가 결을 주고,
+         여기가 **내용**을 준다. 없으면 아홉 술집이 다시 한 그림이 된다. */
+    tavernHang(g, S, r, TAV_HANG[styleKey] || 'garlic');
 
     // ── 허리 높이 목재 징두리 ─────────────────────────────
     g.r(0, 116, VW, TAV_FLOOR - 116, P.woodD);
