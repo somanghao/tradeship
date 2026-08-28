@@ -17,7 +17,7 @@ import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS, YARD, HOLDING, HOLDINGS }
 /* 공업력이 실제로 어디까지 오르나 — `state.js: industryOf`가 쓰는 그 상한을 그대로 읽는다.
    여기서 숫자를 새로 적으면 그쪽이 바뀔 때 조용히 갈라진다. */
 const YARD_CAP = YARD.cap;
-const YARD_MAX_BOOST = YARD_CAP;   // 승급은 cap까지 오른다(부두 거점 +1도 그 안이다)
+const YARD_MAX_BOOST = YARD_CAP;   // 승급은 cap까지 오른다(나라 조선소 `CIVIC`도 그 안이다)
 import { REGIONS, REGION_BY_ID, REGION_OF_CITY, isOceanLane, laneOf } from '../js/map/geo.js';
 import { state, resetGame, neighborsOf, voyageDays } from '../js/state.js';
 /* 그림 틀 목록 — 배가 실제로 그려지는지 보려면 이쪽을 읽어야 한다(규칙 파일엔 없다) */
@@ -167,7 +167,8 @@ for (const [label, entries] of [['교역품', GOODS.map((g) => [g.id, g.name])],
 /* 선종도 같은 눈으로 — 지을 수 있는 항구가 하나도 없으면 그 배는 없는 것과 같다.
 
    ⚠️ **정적 `industry`만 보면 거짓 경고가 난다.** 도시 공업력은 고정값이 아니다 —
-     부두 거점(`HOLDINGS.dock`)과 A-2 승급(`state.yards[].boost`)이 `YARD.cap`까지 올린다.
+     나라가 짓는 조선소(`state.yards[].civic` · C-18)와 A-2 승급(`state.yards[].boost`)이
+     `YARD.cap`까지 올린다.
      실제로 철갑 거북선(tier 4 · 염포 전용)이 "공업력이 닿는 항구가 없다"로 걸려 있었는데,
      염포를 **두 번 승급하면 열린다**(base 1 + boost 2 = 3 ≥ tierNeeded 3). 설계 그대로다.
    ⇒ 그래서 **올릴 수 있는 데까지 올려 놓고** 본다. 그래도 못 지으면 그건 진짜 구멍이다.

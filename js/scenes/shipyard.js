@@ -16,6 +16,8 @@ import {
 import {
   state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT, repairUnit,
   yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding, industryPathHint, regionOf,
+  /* 나라가 짓는 조선소(C-18) — 값은 `data.js: CIVIC`, 규칙은 `state.js` */
+  civicBuilding, civicProgress,
   storeCap, ownsHolding,
   gunCap, armsTotal, armsFactor, armsAimAt, zoneFactor, buyCannon, removeCannon,
   openSlots, setSlot, purchaseShip, boardShip, sellShip, resaleOf,
@@ -227,12 +229,21 @@ function yardUpgradeCard() {
   const building = yardBuilding(state.at);
   const rows = [];
 
-  if (building && yardBusy(state.at)) {
+  /* ★ C-18 — 공사 주체가 **둘**이다. 내가 건 승급(`yardBuilding`)과 관아가 놓는
+     조선소(`civicBuilding`). `yardBusy`는 둘을 합쳐 보므로, 어느 쪽인지 여기서 갈라 적는다 —
+     안 그러면 걸지도 않은 공사 때문에 배가 안 나오는 이유를 알 길이 없다. */
+  const civicB = civicBuilding(state.at);
+  const mineB = building && state.day < building.until;
+  if (mineB || (civicB && state.day < civicB.until)) {
+    const b = mineB ? building : civicB;
     rows.push(el('div.ctr-line', {
-      html: `<b>공사 중</b> — 공업력 ${building.to}까지 <b>${building.until - state.day}일</b> 남았다`,
+      html: `<b>${mineB ? '공사 중' : '관아가 조선소를 놓고 있다'}</b> — `
+          + `공업력 ${b.to}까지 <b>${b.until - state.day}일</b> 남았다`,
     }));
     rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
-      text: '그동안 이 부두는 배를 짓지도 팔지도 않는다. 그것이 이 투자의 진짜 값이다.' }));
+      text: mineB
+        ? '그동안 이 부두는 배를 짓지도 팔지도 않는다. 그것이 이 투자의 진짜 값이다.'
+        : '그동안 이 부두는 배를 짓지도 팔지도 않는다 — 내가 낸 세로 짓는 것이라 걸지도 취소할 수도 없다.' }));
   } else {
     const can = canUpgradeYard(state.at);
     const n = can.need ?? yardNext(state.at);
@@ -266,15 +277,23 @@ function yardUpgradeCard() {
       rows.push(el('div.ctr-sub', { style: { color: '#8f8878' },
         text: `공사 ${n.days}일 동안 이 부두는 배를 짓지도 팔지도 않는다 — 돈보다 그것이 크다.`,
       }));
-      /* ★ C-18 — 부두 거점이 같은 공업력을 올린다. 순서로 남은 비용이 갈린다. */
+      /* ★ C-18(2026-08-28) — 길이 **둘**이다: **내 돈으로 승급** ↔ **내 교역으로 나라 조선소**.
+         값은 `state.js: industryPathHint` 한 곳에서 온다(항구 화면 `civicCard`와 같은 수다). */
       const hint = industryPathHint(state.at);
-      if (hint) {
-        rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
-          html: `⚠️ <b>거점 「부두」도 공업력을 1 올린다</b>(지금 ${hint.dockNow.toLocaleString('ko-KR')}닢).`
-              + ` 승급을 먼저 하면 그 값이 ${hint.dockLater.toLocaleString('ko-KR')}닢`
-              + `(+${hint.dockUp.toLocaleString('ko-KR')})이 되고, 부두를 먼저 세우면 남은 승급이`
-              + ` 한 칸 위에서 시작해 자재가 ${hint.upFirst ? hint.upFirst.mats : 0}칸 →`
-              + ` ${hint.dockFirst ? hint.dockFirst.mats : 0}칸으로 는다. <b>되돌릴 수 없다.</b>`,
+      if (hint?.trade) {
+        const t = hint.trade;
+        rows.push(el('div.ctr-sub', { style: { color: '#c9b98a' },
+          html: t.building
+            ? `ⓘ <b>다른 길도 이미 돌고 있다</b> — 관아가 놓는 조선소가 ${t.building.left}일 남았다.`
+            : `ⓘ <b>돈을 안 쓰는 길도 있다</b> — 이 항구에 낸 세가`
+              + ` <b>${Math.round(t.paid).toLocaleString('ko-KR')}/${t.need.toLocaleString('ko-KR')}닢</b>이 되면`
+              + ` 관아가 스스로 조선소를 놓는다(공사 ${t.days}일 · 공업력 ${t.to}).`
+              + ` 남은 <b>${Math.round(t.left).toLocaleString('ko-KR')}닢</b>은 여기서 사고팔면 저절로 쌓인다 —`
+              + ` <b>승급은 그보다 빠른 대신 금화와 자재를 문다.</b>`,
+        }));
+      } else if (hint?.capped) {
+        rows.push(el('div.ctr-sub', { style: { opacity: 0.75 },
+          html: `ⓘ 관영 조선소는 이 항구에서 꼭대기다(나라 몫 상한 ${hint.cap}) — 여기서 더 올리는 길은 이 승급뿐이다.`,
         }));
       }
       rows.push(el('button.btn.sm', {

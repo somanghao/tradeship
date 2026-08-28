@@ -19,6 +19,9 @@ import {
   usedListings, buyUsed, buildableAt, yardCapable,
   hasOfficer, tariffRate, impactFactor, ship, encounterOdds, routeRisk, rollSeaEvent, neighborsOf, legRegion,
   flagshipSinks, sinkFlagship, liquidate, originPerk,
+  /* C-18 — 부두는 살 수 없고 나라가 짓는다 */
+  noteDues, duesOf, duesOfFlag, civicOf, civicRoom, civicBusy, civicBuilding, civicProgress, tickCivic,
+  industryPathHint, yardBusy, endingProgress,
   growKind, growStock, growCap, canBuyGrow, buyGrow, workAt, chainMargin, costFor,
   shopCut, canBuyShop, buyShop, shopTick, collectShop, consignToShop,
   canConsign, sendConsign, arriveConsign, canStartLine, startLine, stopLine, cargoCapTotal, waitDays,
@@ -59,7 +62,9 @@ import {
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, FACTION, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
-  HOLDINGS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON } from '../js/data.js';
+  HOLDINGS, HOLDING_KEYS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON,
+  /* C-18 — 나라가 짓는 조선소 */
+  CIVIC } from '../js/data.js';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
 import { huntedOnLeg, rosterOf, initWorld, npcsOnLeg, rosterClosed } from '../js/world.js';
@@ -2006,4 +2011,122 @@ resetGame();
   ok(seasonFactor('hoian', 'nagasaki', SUM) === 1
      && seasonFactor('nagasaki', 'hoian', SUM) === SEASON.offSpeed,
      '그 방향성이 일수에 실제로 곱해진다(같은 날 같은 구간인데 두 방향이 갈린다)');
+}
+
+/* ── C-18 · 부두는 살 수 없고 나라가 짓는다 (2026-08-28 설계 변경) ────
+   사용자 지시: *"부두는 거점이 될수 없고 (…) 그 국가에 이익이 쌓이면 차근차근 국가에서
+   조선소 부두를 만들고 (…) 거점은 국영말고 다른것들이 되어야지 번화가 상점 여관같은거 말야."*
+   ★ 실측이 잡아낸 옛 구멍이 이것이다 — **부산포에서 1일차에 두 클릭(200,500닢)으로 공업력 3.**
+     여기서 지키는 것은 그 두 클릭이 다시 생기지 않는 것이다. */
+{
+  resetGame('busanpo');
+  state.crew = 10;
+
+  ok(!HOLDING_KEYS.includes('dock') && !HOLDINGS.dock,
+     '거점 목록에 「부두」가 없다 — 살 수 있는 것이 아니다');
+  ok(!!HOLDINGS.slipway,
+     '조선대(slipway)는 남았다 — 내 배를 손보는 민간 시설이라 국영이 아니다');
+  ok(HOLDINGS.slipway.requires == null,
+     '조선대는 말단이다 — 부두가 사라졌으므로 뒤에 이어지는 것이 없다');
+
+  /* ① 1일차 두 클릭이 사라졌다 — 부산포는 base 2에서 안 움직인다 */
+  const before = industryOf('busanpo');
+  buyHolding('slipway', 'busanpo');       // 살 수 있는 것을 다 사도
+  ok(industryOf('busanpo') === before && before === 2,
+     `1일차에 돈으로 공업력을 못 올린다 — 부산포 ${before} 그대로 (옛 규칙은 두 클릭에 3이었다)`);
+
+  /* ② 세를 내면 쌓인다 — `noteDues`가 유일한 입구다 */
+  const p0 = civicProgress('busanpo');
+  ok(p0.need === CIVIC.dues[2] && p0.paid === 0,
+     `문턱은 지금 공업력이 정한다 — 부산포(공업력 2)는 ${p0.need.toLocaleString('en-US')}닢`);
+  noteDues('busanpo', p0.need - 1);
+  ok(!civicProgress('busanpo').ready && !civicBuilding('busanpo'),
+     '한 닢 모자라면 공사가 안 걸린다');
+  noteDues('busanpo', 1);
+  const b = civicBuilding('busanpo');
+  ok(!!b && b.to === 3, '문턱을 넘으면 나라가 **스스로** 공사를 건다 — 플레이어의 단추가 아니다');
+  ok(industryOf('busanpo') === 2,
+     '★ 즉시가 아니다 — *"차근차근"*. 공사 중에는 공업력이 그대로다');
+  ok(yardBusy('busanpo') && !sellsShip('panokseon', 'busanpo'),
+     '공사 중에는 그 항구가 배를 못 짓는다 — 내가 건 공사와 같은 대가를 문다');
+
+  /* ③ 공기가 지나면 오른다. 들르지 않아도 읽는 쪽은 참을 본다 */
+  state.day += CIVIC.days[2];
+  ok(industryOf('busanpo') === 3,
+     `공기 ${CIVIC.days[2]}일이 지나면 오른다 — 들르지 않아도 industryOf가 참을 본다`);
+  ok(civicOf('busanpo') === 1 && (state.yards.busanpo.boost ?? 0) === 0,
+     '★ 나라 몫(civic)과 내가 산 승급(boost)을 따로 센다 — 섞으면 누가 올린 칸인지 못 되묻는다');
+  tickCivic('busanpo');
+  ok(state.yards.busanpo.civic === 1 && !civicBuilding('busanpo'),
+     'tickCivic은 그것을 장부에 옮기고 로그를 띄울 뿐 — 값은 안 바뀐다');
+
+  /* ④ 나라 몫에는 상한이 있다 (옛 `HOLDING.industryCap`이 있던 자리) */
+  ok(civicRoom('busanpo') === 0 && civicProgress('busanpo').capped,
+     `나라가 올리는 것은 공업력 ${CIVIC.cap}까지다 — 그 위는 내 돈과 자재뿐이다`);
+  noteDues('busanpo', 10 ** 7);
+  ok(industryOf('busanpo') === 3,
+     '상한을 넘겨 세를 내도 더 안 오른다 — 무역만으로 꼭대기에 닿지 않는다');
+
+  /* ⑤ 세는 **항구별**이다 — 깃발로 쌓으면 한 항구 무역이 아홉을 동시에 올린다 */
+  ok(duesOf('yeompo') === 0 && industryOf('yeompo') === 1,
+     '부산포에 낸 세는 염포를 안 올린다 — 지표는 깃발이 아니라 그 항구다');
+  ok(duesOfFlag('joseon') >= duesOf('busanpo'),
+     '깃발 합계는 따로 읽을 수 있다(화면용) — 판정에는 안 쓴다');
+
+  /* ⑥ 파는 순간 실제로 쌓인다 — 배선이 `sell()`에 붙어 있나 */
+  resetGame('busanpo');
+  state.crew = 10;
+  state.gold = 200000;
+  const gid = Object.keys(state.prices[state.at])[0];
+  buy(gid, 5);
+  const d0 = duesOf('busanpo');
+  sell(gid, 5);
+  ok(duesOf('busanpo') > d0,
+     `팔면 그 자리에서 쌓인다 — ${d0} → ${duesOf('busanpo')}닢 (관세를 떼는 곳이 곧 세는 곳)`);
+
+  /* ⑦ 화면이 읽는 값은 한 곳에서 온다 */
+  const hint = industryPathHint('yeompo');
+  const prog = civicProgress('yeompo');
+  ok(hint && hint.trade && hint.trade.need === prog.need && hint.trade.left === prog.left,
+     '★ 두 화면이 같은 수를 쓴다 — industryPathHint가 civicProgress를 그대로 읽는다');
+  ok(hint.buy && hint.buy.gold > 0 && hint.trade.need > 0,
+     '길이 둘이다 — 내 돈으로 승급(금화·자재) ↔ 내 교역으로 나라 조선소(낸 세)');
+
+  /* ⑧ 조선의 끝이 막히지 않는다 — 두 길 중 어느 쪽으로든 염포 3에 닿는다 */
+  resetGame('busanpo');
+  state.crew = 10;
+  noteDues('yeompo', CIVIC.dues[1]);          // 염포 base 1 → 2
+  state.day += CIVIC.days[1];
+  noteDues('yeompo', CIVIC.dues[2]);          // 2 → 3
+  state.day += CIVIC.days[2];
+  ok(industryOf('yeompo') === 3,
+     `교역만으로 염포 공업력 3에 닿는다 — 낸 세 ${(CIVIC.dues[1] + CIVIC.dues[2]).toLocaleString('en-US')}닢 · 공사 ${CIVIC.days[1] + CIVIC.days[2]}일`);
+  ok(endingProgress().steps.find((s) => s.key === 'yards').detail.includes('염포 3/3'),
+     '끝 카드가 그것을 말한다 — ENDING 판정이 나라 조선소를 센다');
+
+  /* ⑨ 번화가 — 사용자가 콕 집은 셋째 부동산 */
+  ok(ESTATE_KEYS.includes('bazaar') && HOLDINGS.bazaar.grades.length === 3,
+     '번화가가 부동산이다 — 등급 셋(골목 행랑 · 시전 행랑 · 번화가)');
+  for (let i = 0; i < 3; i++) {
+    const b = HOLDINGS.bazaar.grades[i], sh = HOLDINGS.shop.grades[i];
+    ok(b.vacancy < sh.vacancy && b.yield < sh.yield
+       && (b.priceBase + 2 * b.priceBySize) > (sh.priceBase + 2 * sh.priceBySize),
+       `번화가 ${i + 1}급은 가게보다 **덜 비고 덜 벌고 더 비싸다** — 줄은 한둘이 비어도 굴러간다`);
+  }
+  ok(HOLDINGS.bazaar.grades[0].industry === 1,
+     '★ 번화가 1등급이 공업력 1을 요구한다 — 나라가 조선소를 올린 항구라야 줄이 선다(②↔③이 맞물린다)');
+
+  /* ⑩ 옛 세이브 — 부두를 세워 둔 판이 **공업력 한 칸도 안 움직인 채** 열린다 */
+  resetGame('busanpo');
+  state.crew = 10;
+  state.holdings.yeompo = { paid: 1, spent: 100000, slipway: true, dock: true };
+  const wasInd = 1 + 1;                       // 옛 규칙: 염포 base 1 + 부두 1
+  saveGame();
+  resetGame('busanpo');
+  loadGame();
+  ok(!state.holdings.yeompo.dock && state.yards.yeompo?.civic === 1,
+     '옛 세이브의 `holdings[].dock`이 `yards[].civic` 한 칸으로 옮겨진다');
+  ok(industryOf('yeompo') === wasInd,
+     `★ 이어한 판의 공업력이 안 움직인다 — 염포 ${industryOf('yeompo')} (옛 규칙과 같다)`);
+  clearSave();
 }

@@ -46,7 +46,32 @@ const FILL_IF_MISSING = {
      이어한 판에서도 덮친 값은 `regardOf`가 그대로 읽어 낸다). */
   regard: () => ({}),
   _regardAge: () => 0,
+  /* 그 항구에 낸 세(C-18) — 옛 판은 **아무 나라에도 세를 안 낸 것으로** 이어진다.
+     0에서 다시 쌓이지만, 옛 판이 이미 세운 부두는 아래 `migrate`가 `civic`으로 옮겨 준다. */
+  dues: () => ({}),
 };
+
+/* ── 옛 판 손보기 (C-18 · 2026-08-28) ──────────────────────────
+   ★ **부두가 거점 목록을 떠났다.** 옛 세이브에는 `holdings[cityId].dock === true`가 그대로 있고,
+     그것을 두면 이런 일이 난다:
+       ⓐ `HOLDING_KEYS`에 `dock`이 없으므로 `industryOf`가 그 칸을 **못 세고 조용히 −1** 된다.
+          염포 공업력 2로 열어 둔 판이 1로 내려앉아, 짓던 배가 사라지고 계약이 막힌다.
+       ⓑ 거점 목록 화면에 이름 없는 항목이 남는다.
+   ⇒ **버리지 않고 옮긴다** — 부두 하나 = 나라 조선소 한 칸(`yards[city].civic += 1`).
+     둘이 올리던 값이 정확히 같으므로(+1 · 상한 3) 이어한 판의 공업력이 **한 칸도 안 움직인다.**
+   ⚠️ VERSION을 올리지 않는 이유: 올리면 그 판이 통째로 버려진다. 뜻이 통하게 옮길 수 있으면
+     옮기는 쪽이 옳다(`FILL_IF_MISSING` 주석과 같은 선). */
+function migrate(st) {
+  const H = st.holdings ?? {};
+  for (const [cityId, m] of Object.entries(H)) {
+    if (!m || !m.dock) continue;
+    delete m.dock;
+    const y = (st.yards ??= {});
+    const e = (y[cityId] ??= { boost: 0, building: null });
+    e.civic = (e.civic ?? 0) + 1;
+  }
+  return st;
+}
 
 export function saveGame(slot = 'auto') {
   try {
@@ -97,6 +122,7 @@ export function loadGame(slot = 'auto') {
        (뜻이 통하지 않는 변화 — 규칙이 갈리거나 세계가 바뀌는 것 — 은 그때 VERSION을 올린다.)
        `consorts` 동행 선단: 옛 판은 아무 배도 데리고 나가지 않은 것으로 이어진다. */
     for (const [k, v] of Object.entries(FILL_IF_MISSING)) state[k] ??= v();
+    migrate(state);      // 규칙이 바뀐 자리를 옮겨 준다 (C-18: 부두 → 나라 조선소)
     return true;
   } catch { return false; }
 }

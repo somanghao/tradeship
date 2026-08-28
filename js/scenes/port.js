@@ -23,6 +23,8 @@ import {
   matesAt, crewMates, mateCount, mateCap, mateCut, mateStake, hireMate, dismissMate,
   hasHolding, ownsHolding, holdingIdle, holdingPrice, canBuyHolding, buyHolding, storeCap, storedUsed,
   industryPathHint,
+  /* 나라가 짓는 조선소(C-18) — 규칙은 `state.js`, 값은 `data.js: CIVIC`. 여기서는 **말만** 한다 */
+  civicProgress, tickCivic, duesOf, duesOfFlag, industryOf,
   storeGoods, takeGoods, holdingUpkeepDue, settleHolding, sellHolding, holdingsValue,
   /* 수익형 부동산(#5) — 등급·세·공실. 값은 `data.js: HOLDINGS[].grades·ESTATE` */
   estateGrade, estateDef, estateRent, estateUpgradeCost, vacancyOdds, canUpgradeEstate, upgradeEstate,
@@ -106,7 +108,11 @@ export const portScene = {
     /* 위탁도 **들를 때** 받는다(3단계 · §3-1) — 남의 배가 부려 놓고 간 짐이 창고에 들어온다.
        자동으로 금고에 넣지 않는 것과 같은 규약이다: 유통은 **짐만 옮기고 사고팔지 않는다.** */
     arriveConsign(city.id);
-    settleYard(city.id);     // 부두 공사가 끝났으면 여기서 올라간다
+    settleYard(city.id);     // 내가 건 부두 공사가 끝났으면 여기서 올라간다
+    /* 나라가 건 조선소도 **같은 자리**에서 장부에 옮긴다(C-18). `civicOf()`가 이미 참을 세므로
+       공업력은 들르지 않아도 맞지만, **로그는 여기서 뜬다** — 규칙이 멀쩡한데 화면이
+       말하지 않아 수백 일을 잃는 그 자리다. */
+    tickCivic(city.id);
     if (gameStarted()) autoSave();
     // 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
     // 화면을 세운 뒤에 띄워야 정산이 끝나고 닫혔을 때 뒤에 항구가 있다.
@@ -997,14 +1003,14 @@ function hegemonyCard() {
   rows.push(el('div.ctr-sub', {
     style: { marginTop: '6px', color: home.done ? '#8fbf8a' : '#c9b98a' },
     text: `${mark(home.done)} 조선 ${home.ports}항구 — 거점 ${home.holdings.have}/${home.holdings.need}`
-        + ` · 부두 ${home.docks.have}/${home.docks.need}`
+        + ` · 나라 조선소 ${home.docks.have}/${home.docks.need}`
         + ` · 공업력 ${home.yards.map((y) => `${y.name} ${y.now}/${y.need}`).join(' · ')}`,
   }));
   rows.push(el('div.ctr-sub', {
     style: { opacity: 0.75 },
     text: `   숨은 항구 ${hiddenDone}/${home.hidden.length} — `
         + home.hidden.map((x) => `${x.name} ${x.done ? '열렸다' : '부두 없음'}`).join(' · ')
-        + ' (조선대와 부두를 세우면 부두가 없던 항구가 열린다)',
+        + ' (그 항구에 세를 내면 관아가 조선소를 놓는다)',
   }));
 
   return el('div.panel', {}, [
@@ -1159,6 +1165,64 @@ function waitCard() {
 /* ── 거점 (A-1) ────────────────────────────────────────────────
    ★ **후반에 금화가 갈 곳**이자 *"짐을 쪼갠다"*를 처음 전략으로 만드는 자리다 —
    창고에 둔 짐은 시장을 누르지 않는다(`state.js: storeGoods`). 값과 효과는 `data.js: HOLDINGS`. */
+/* ── 나라가 짓는 조선소 (C-18 · 2026-08-28) ─────────────────────
+   ★ **이 카드가 이 회차에서 가장 중요한 자리다.** 규칙은 「그 항구에 낸 세가 쌓이면 나라가
+     조선소를 놓는다」인데, 화면이 그것을 말하지 않으면 플레이어에게는 *아무 일도 안 일어난다.*
+     이 저장소가 한 회차에 다섯 번 잃은 자리가 그것이다.
+   ★ 값은 **`state.js: civicProgress` 한 곳**에서 온다 — 조선소 화면과 같은 수를 쓴다.
+     두 화면이 각자 계산하면 반드시 어긋난다. */
+function civicCard() {
+  const p = civicProgress(city.id);
+  const flag = city.flag;
+  const rows = [];
+
+  // ① 공사 중 — 언제 끝나고, 그동안 무엇을 못 하나
+  if (p.building) {
+    rows.push(el('div.ctr-line', { style: { color: '#c9b98a' },
+      html: `<b>관아가 조선소를 놓고 있다</b> — 공업력 ${p.building.to}까지 `
+          + `<b>${p.building.left}일</b> 남았다`,
+    }));
+    rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
+      text: '공사가 끝날 때까지 이 항구에서는 배를 못 짓고 중고 매물도 안 걸린다.' }));
+  } else if (p.capped) {
+    // ② 나라 몫이 꼭대기 — 그 뒤는 **내 돈**뿐이라는 것을 말한다
+    rows.push(el('div.ctr-line', {
+      html: `<b>이 항구의 관영 조선소는 꼭대기다</b> (공업력 ${industryOf(city.id)} · 나라 몫 상한 ${p.cap})`,
+    }));
+    rows.push(el('div.ctr-sub', { style: { opacity: 0.8 },
+      text: '여기서 더 올리려면 조선소에서 내 돈과 자재로 승급해야 한다.' }));
+  } else {
+    // ③ 진척 — **낸 세 N닢 · 다음 조선소까지 M닢**
+    const pct = Math.min(100, Math.round((p.paid / Math.max(1, p.need)) * 100));
+    rows.push(el('div.ctr-line', {
+      html: `<b>이 항구에 낸 세 ${Math.round(p.paid).toLocaleString('ko-KR')}닢</b>`
+          + ` <span style="opacity:.7">/ ${p.need.toLocaleString('ko-KR')}닢 (${pct}%)</span>`,
+    }));
+    rows.push(el('div.ctr-sub', {
+      style: { color: p.ready ? '#8fbf8a' : '#c9b98a' },
+      text: p.ready
+        ? `문턱을 넘었다 — 곧 관아가 공사를 시작한다 (${p.days}일).`
+        : `다음 조선소까지 ${Math.round(p.left).toLocaleString('ko-KR')}닢 — `
+          + `여기서 사고팔면 그만큼 세를 내고, 그것이 쌓이면 관아가 부두를 놓는다 (공사 ${p.days}일).`,
+    }));
+    rows.push(el('div.ctr-sub', { style: { opacity: 0.75 },
+      text: `공업력 ${industryOf(city.id)} → ${p.now + 1}`
+          + ` (도시 ${p.base} + 나라 ${p.civic}`
+          + `${industryOf(city.id) - p.now ? ` + 내 승급 ${industryOf(city.id) - p.now}` : ''})`
+          + ` · 이 깃발 전체 ${Math.round(duesOfFlag(flag)).toLocaleString('ko-KR')}닢`,
+    }));
+  }
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '관영 조선소' }),
+      el('span', { text: `공업력 ${industryOf(city.id)}`,
+                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
 function holdingCard() {
   /* ★ 목록은 **소유**(`ownsHolding`)로 센다. `hasHolding`은 특전용이라 유지비가 밀려
      문을 닫은 동안 false가 되는데, 그것으로 세면 있는 거점이 화면에서 사라지고
@@ -1288,26 +1352,9 @@ function holdingCard() {
         toast(`${h.name}${josa(h.name, '을/를')} 세웠다`, 'good');
         refreshHUD(); refreshLog(); after();
       }));
-    /* ★ C-18 — **부두와 승급이 같은 값을 올리는데 순서로 남은 비용이 갈린다.**
-       되돌릴 수 없는 선택이므로 **누르기 전에** 두 길의 값을 다 적는다.
-       계산은 `state.js: industryPathHint` 한 곳이다(조선소 부두 카드와 같은 수를 쓴다). */
-    if (k === 'dock') {
-      const hint = industryPathHint(city.id);
-      if (hint && (hint.dockFirst || hint.upFirst)) {
-        rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' },
-          html: `⚠️ <b>순서로 값이 갈린다</b> — 조선소 승급도 같은 공업력을 올린다.`
-              + `<br>· <b>부두 먼저</b>: 지금 ${hint.dockNow.toLocaleString('ko-KR')}닢 · 남은 승급 `
-              + (hint.dockFirst
-                  ? `${hint.dockFirst.gold.toLocaleString('ko-KR')}닢 · 자재 ${hint.dockFirst.mats}칸 · ${hint.dockFirst.days}일`
-                  : '없다(꼭대기)')
-              + `<br>· <b>승급 먼저</b>: 승급 `
-              + (hint.upFirst
-                  ? `${hint.upFirst.gold.toLocaleString('ko-KR')}닢 · 자재 ${hint.upFirst.mats}칸 · ${hint.upFirst.days}일`
-                  : '없다')
-              + ` · 그 뒤 부두값 ${hint.dockLater.toLocaleString('ko-KR')}닢(+${hint.dockUp.toLocaleString('ko-KR')})`,
-        }));
-      }
-    }
+    /* ★ C-18(2026-08-28) — 여기 있던 「부두 먼저 vs 승급 먼저」 안내는 사라졌다.
+       **부두를 살 수 없게 됐으므로** 그 갈림길 자체가 없다. 두 길의 값은 `civicCard`와
+       조선소 화면이 함께 말하고, 계산은 여전히 `state.js: industryPathHint` 한 곳이다. */
   }
   if (!rows.length) return null;
 
@@ -1816,22 +1863,53 @@ function figureCard() {
 }
 
 /* ── 우측: 정비/조선소/출항 ─────────────────────────── */
+/* ── 사이드패널 접기 (2026-08-28 · PM 지시 ②) ───────────────────
+   ★ 실측: `#port-side`가 **clientHeight 530 / scrollHeight 3,372**이었다. 1280×720 창에서
+     「나라에 부두를 낸다」·「패권」 같은 **완주 판정 카드를 보려면 972px을 굴려야** 했다.
+     이 저장소에서 가장 비싼 실수의 자리다 — *"규칙이 멀쩡한데 화면이 말하지 않아 수백 일을 잃는다."*
+   ⇒ 고친 것은 둘이다:
+     ① **차례를 바꿨다** — 목표(관영 조선소·조선의 끝·패권)를 맨 위로, 살림살이를 아래로.
+     ② **긴 카드는 접어 둔다** — 머리말은 그대로 보이므로 *무엇이 있는지는 안 감춘다.*
+        한 번 펼치면 그 상태를 **세션 동안 기억한다**(`foldOpen`).
+   ⚠️ 접힘 상태를 `state`에 넣지 않는다 — `save.js`가 state를 통째로 싣고
+     `check-architecture`가 필드를 세므로, 화면 취향이 세이브에 섞이면 안 된다. */
+const foldOpen = new Map();      // 패널 key → 펼쳤나 (모듈 변수 · 새로고침하면 기본값으로)
+
+/** 카드 하나를 접는다. `panel`이 null이면(카드가 안 뜨는 국면) 그대로 null을 돌려준다. */
+function fold(key, panel, openDefault = false, badge = null) {
+  if (!panel) return null;
+  const open = foldOpen.has(key) ? foldOpen.get(key) : openDefault;
+  const h3 = panel.querySelector('h3');
+  if (!h3) return panel;
+  for (const c of [...panel.children]) if (c !== h3) c.style.display = open ? '' : 'none';
+  h3.style.cursor = 'pointer';
+  h3.title = open ? '접는다' : '펼친다';
+  /* 접힌 카드에도 **한 줄 요약**을 남긴다 — 접는 것과 감추는 것은 다르다 */
+  if (!open && badge) {
+    h3.append(el('span', { text: badge,
+      style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0, marginLeft: 'auto' } }));
+  }
+  h3.append(el('span', { text: open ? ' ▾' : ' ▸',
+    style: { fontSize: '11px', color: '#8f8878', marginLeft: badge && !open ? '6px' : 'auto' } }));
+  h3.addEventListener('click', () => { foldOpen.set(key, !open); buildUI(); });
+  return panel;
+}
+
 function sidePanel() {
   return el('div#port-side', {}, [
     /* ★ 바닥에서 나가는 문은 **맨 위**다(C-17). 이 카드가 뜨는 국면에서
        시장·정비·거점보다 먼저 읽히지 않으면 "출구가 없다"가 그대로 재발한다. */
     salvageCard(),
 
-    el('div.panel', {}, [
-      el('h3', {}, el('span', { text: city.name })),
-      el('div.city-card', {}, [
-        el('div', {}, [
-          el('span.cname', { text: city.name }),
-          el('span.creg', { text: city.area }),
-        ]),
-        el('div.cblurb', { text: city.blurb }),
-      ]),
-    ]),
+    /* ★ 목표가 맨 위다 — 이 셋이 972px 아래에 있었다.
+       ⓐ 「관영 조선소」와 「조선의 끝」은 **펼친 채로** 올린다(이 회차의 새 규칙과 최종 목표).
+       ⓑ 「패권」은 496px이라 그대로 올리면 정비·급여를 다시 밀어낸다 — **접고 머리말에 `n/9`**를 적는다.
+          접는 것과 감추는 것은 다르다: 몇 바다를 잡았는지는 굴리지 않고 읽힌다. */
+    civicCard(),
+    endingCard(),
+
+    /* 급여는 **때를 놓치면 사람이 떠나는 것**이라 정비보다 위다(74px밖에 안 든다) */
+    payrollCard(),
 
     el('div.panel', {}, [
       el('h3', {}, el('span', { text: '선박 정비' })),
@@ -1864,21 +1942,32 @@ function sidePanel() {
       ]),
     ]),
 
-    fleetCard(),
-    payrollCard(),
-    officerCard(),
-    contractCard(),
-    mateCard(),
-    endingCard(),
-    hegemonyCard(),
-    factionCard(),
-    waitCard(),
-    holdingCard(),
-    worksCard(),
-    lineCard(),
-    harborCard(),
+    fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
+    fold('city', el('div.panel', {}, [
+      el('h3', {}, el('span', { text: city.name })),
+      el('div.city-card', {}, [
+        el('div', {}, [
+          el('span.cname', { text: city.name }),
+          el('span.creg', { text: city.area }),
+        ]),
+        el('div.cblurb', { text: city.blurb }),
+      ]),
+    ]), false, city.area),
+    contractCard(),      // 계약은 기한이 있다 — 접지 않는다
 
-    figureCard(),
+    /* ── 아래는 살림살이 — 머리말만 보이게 접어 둔다(한 번 펼치면 세션 동안 기억한다) ── */
+    fold('fleet', fleetCard(), false, `동행 ${consortCount()}척`),
+    fold('officer', officerCard(), false, OFFICER.name),
+    fold('mate', mateCard(), false, `${mateCount()}/${mateCap()}`),
+    fold('faction', factionCard(), false, null),
+    fold('wait', waitCard(), false, `하루 ${portDayCost().toLocaleString('ko-KR')}닢`),
+    fold('holding', holdingCard(), false,
+         `${HOLDING_KEYS.filter((k) => ownsHolding(k, city.id)).length}개`),
+    fold('works', worksCard(), false, null),
+    fold('line', lineCard(), false, null),
+    fold('harbor', harborCard(), false, null),
+
+    fold('figure', figureCard(), false, null),
     /* 사람이 하나도 없으면 배는 부두에 묶여 있다.
        ★ crewMin **미달**은 막지 않는다 — 그건 속력이 떨어지는 벌칙이지 금지가 아니고,
          전투로 선원을 잃었을 때 항구에 갇히면 빠져나갈 길이 없어진다.

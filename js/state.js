@@ -7,7 +7,7 @@ import {
   /* 두 회차가 같은 줄에 이름을 더했다 — 부동산·브레이크(#5·#6)와 계절(#4). 둘 다 필요하다. */
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
   SEA_ORIGINS, seaOriginAt,
-  HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, ENDING, HEGEMONY,
+  HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, CIVIC, ENDING, HEGEMONY,
   CONSIGN, LINE, FACTION, FACTION_TIES,
   TARIFF_SCALE, SEIZURE,
   CHAIN, CHAIN_BY_ID, WORKS, WORK,
@@ -122,8 +122,14 @@ export const state = {
      `stored[cityId]  = { goodId: 수량 }` — **여기 있는 짐은 시장을 누르지 않는다.** */
   holdings: {},
   stored: {},
-  /* 공업력 승급(A-2) — `yards[cityId] = { boost, building: { to, until } }` */
+  /* 공업력 승급(A-2) — `yards[cityId] = { boost, building: { to, until }, civic, civicBuilding }`
+     ★ **`boost`(내 돈으로 산 승급)와 `civic`(나라가 지어 준 조선소)을 갈라 센다**(C-18).
+       섞으면 나중에 판정이 갈리지 않는다 — 「내가 올린 것」과 「무역이 올린 것」이
+       화면에서도 규칙에서도 다른 길이기 때문이다. `industryOf`가 둘을 더한다. */
   yards: {},
+  /* ★ **그 항구에 낸 세**(C-18) — `dues[cityId] = 누적 닢`. 나라가 조선소를 짓는 지표다.
+     사용자 원문 *"그 국가에 이익이 쌓이면"*. 새 수입원이 아니라 **이미 내던 세를 세는 것**이다. */
+  dues: {},
   /* 수직계열화 시설(A-9) — `works[cityId] = { paid, spent, missed, '<종>:<품목>': {…} }`.
      ★ **`holdings`와 갈라 둔 것이 이 필드의 존재 이유다** — `hegemonyOf`가 `holdings`를
        세므로 같은 그릇에 담으면 권역 패권 조건이 조용히 바뀐다. → `data.js: WORK` 머리주석 */
@@ -595,7 +601,8 @@ export function holdingPrice(kind, cityId = state.at) {
   const c = CITY_BY_ID[cityId];
   if (!h || !c) return Infinity;
   if (h.grades) return estatePrice(kind, estateGrade(kind, cityId) + 1, cityId);
-  if (h.priceByIndustry != null) return h.priceBase + industryOf(cityId) * h.priceByIndustry;
+  /* ⚠️ `priceByIndustry`(공업력에 비례하던 부두값) 분기는 사라졌다 — C-18에서 부두가
+     거점 목록을 떠났고, 그 값 공식을 쓰던 유일한 거점이었다. */
   return h.priceBase + (c.size ?? 1) * (h.priceBySize ?? 0);
 }
 
@@ -628,7 +635,7 @@ export function estateUpgradeCost(kind, cityId = state.at) {
 }
 
 /** 승급할 수 있나 — **공업력이 등급의 문**이다(사용자 원문: "승급은 공업력으로 올려도 되고").
-    부두(`HOLDINGS.dock`)와 A-2 승급(`YARD_UPGRADE`)으로 올린 공업력이 여기서 두 번째 쓸모를 얻는다. */
+    나라가 지은 조선소(`CIVIC`)와 A-2 승급(`YARD_UPGRADE`)으로 올린 공업력이 여기서 두 번째 쓸모를 얻는다. */
 export function canUpgradeEstate(kind, cityId = state.at) {
   const h = HOLDINGS[kind];
   if (!h?.grades) return { ok: false, reason: '등급이 없는 거점이다' };
@@ -733,11 +740,10 @@ export function canBuyHolding(kind, cityId = state.at) {
     const need = HOLDINGS[h.requires].name;
     return { ok: false, reason: `${need}${josa(need, '이/가')} 먼저다` };
   }
-  if (kind === 'dock' && industryOf(cityId) >= HOLDING.industryCap) {
-    return { ok: false, reason: `이 항구는 이미 공업력 ${HOLDING.industryCap}이다` };
-  }
-  /* 부동산 1등급도 공업력 문을 통과해야 한다(지금은 전부 0이라 어디서든 열린다 —
-     문이 있다는 사실이 규칙에 남아 있어야 등급을 조정할 때 여기만 보면 된다). */
+  /* ⚠️ 여기 있던 `dock` 분기는 사라졌다(C-18) — **부두는 살 수 있는 것이 아니다.**
+     공업력을 올리는 것은 그 항구에 낸 세이고, 규칙은 `tickCivic`이 갖는다. */
+  /* 부동산 1등급도 공업력 문을 통과해야 한다 — 「번화가」는 1등급부터 공업력 1을 요구하므로
+     **나라가 조선소를 올린 항구라야 줄이 선다**(②와 ③이 여기서 맞물린다). */
   if (h.grades) {
     const need = h.grades[0].industry ?? 0;
     if (industryOf(cityId) < need) {
@@ -1302,6 +1308,7 @@ export function shopTick(goodId, cityId = state.at) {
   const raw = Math.round(unit * sold);
   const fee = Math.round(raw * WORK.shopFee);
   const tax = Math.round(raw * baseTariff(cityId));
+  noteDues(cityId, tax);      // 판매소가 문 세도 그 항구의 몫이다 (C-18)
   w.proceeds = (w.proceeds ?? 0) + Math.max(0, raw - fee - tax);
   return sold;
 }
@@ -1794,10 +1801,14 @@ export function worksValue(cityId = null) {
 export const yardBoost = (cityId = state.at) => state.yards?.[cityId]?.boost ?? 0;
 export const yardBuilding = (cityId = state.at) => state.yards?.[cityId]?.building ?? null;
 
-/** 공사 중인가 — 그동안 그 부두는 제 일을 못 한다(신조·중고 0) */
+/** 공사 중인가 — 그동안 그 부두는 제 일을 못 한다(신조·중고 0).
+    ★ **내가 건 공사든 나라가 건 공사든 마찬가지다**(C-18) — 뜻은 「이 항구의 부두가
+      지금 제 일을 못 한다」이지 「누가 걸었나」가 아니다. `sellsShip`·`usedListings`가
+      이 함수 하나만 보므로 여기서 합쳐 두지 않으면 공사 중인 나라 조선소에서 배가 나온다. */
 export function yardBusy(cityId = state.at) {
   const b = yardBuilding(cityId);
-  return !!b && state.day < b.until;
+  if (b && state.day < b.until) return true;
+  return civicBusy(cityId);
 }
 
 /** 다음 등급과 그 값 — 더 올릴 수 없으면 null */
@@ -1809,38 +1820,159 @@ export function yardNext(cityId = state.at) {
   return { to, ...spec };
 }
 
-/* ── C-18 · 공업력을 올리는 길이 **둘**이고 순서로 값이 갈린다 ───────────────
-   ★ `HOLDINGS.dock.industryUp = 1`과 `YARD_UPGRADE`가 **같은 값을 올린다.** 그런데
-     부두값은 `priceByIndustry`로 **지금 공업력에 비례**하고, 승급값은 **올라갈 칸**으로 정해진다.
-     ⇒ 어느 것을 먼저 사느냐로 남은 비용이 통째로 달라지는데(염포 실측: 부두 먼저면 자재 760칸·360일에
-       부두값 100,000닢 · 승급 먼저면 자재 330칸·180일에 부두값 140,000닢) **화면이 그 존재를
-       말하지 않았다.** 되돌릴 수 없는 선택을 모르고 하게 두는 것은 선택이 아니다.
-   ★ 값을 두 화면이 각자 계산하면 반드시 어긋난다 — **여기 한 곳**에서 내고 둘이 읽는다.
-     (거점 카드 `scenes/port.js: holdingCard` · 부두 카드 `scenes/shipyard.js: yardUpgradeCard`) */
-export function industryPathHint(cityId = state.at) {
-  const base = industryOf(cityId);
-  const dockOwned = ownsHolding('dock', cityId);
-  if (dockOwned || base >= YARD.cap) return null;      // 갈림길이 이미 지났거나 꼭대기다
-  const d = HOLDINGS.dock;
-  const dockNow = d.priceBase + base * (d.priceByIndustry ?? 0);
-  const dockLater = d.priceBase + Math.min(YARD.cap, base + 1) * (d.priceByIndustry ?? 0);
-  /* 부두를 먼저 세우면 남은 승급이 **한 칸 위**에서 시작한다 */
-  const upNow = YARD_UPGRADE[base + 1] ?? null;        // 승급 먼저
-  const upLater = YARD_UPGRADE[base + 2] ?? null;      // 부두 먼저
-  const matSum = (u) => (u ? Object.values(u.mats).reduce((a, b) => a + b, 0) : 0);
+/* ── 나라가 짓는 조선소 (C-18 · 2026-08-28) ─────────────────────
+   ★ **부두는 더 이상 살 수 없다.** 사용자 지시로 공업력의 첫 계단이 「거점을 산다」에서
+     **「그 항구에 세를 낸다」**로 바뀌었다 — 근거·앵커·왜 항구별인가는 `data.js: CIVIC` 주석이 정본.
+
+   ── 배선 (딱 셋) ────────────────────────────────────────────
+     ① `noteDues(cityId, 닢)` — 세를 낼 때마다 `state.dues[cityId]`에 쌓는다.
+        부르는 자리는 **관세를 실제로 떼는 곳 전부**다(`sell`·`shopTick`).
+     ② `tickCivic(cityId)` — 문턱을 넘었으면 **공사를 걸고**, 공사가 끝났으면 **올린다**.
+        `noteDues` 끝과 항구 입장(`scenes/port.js`)에서 부른다.
+     ③ `civicProgress(cityId)` — 화면이 읽는 **한 곳**. 두 화면이 각자 계산하면 반드시 어긋난다.
+
+   ⚠️ `boost`(내 돈)와 `civic`(내 교역)을 **따로 센다.** 같은 칸에 더하면 "누가 올린 칸인가"를
+     나중에 되물을 수 없고, 옛 부두가 승급을 우회하던 그 자리가 이름만 바꿔 돌아온다. */
+
+/** 나라가 올려 준 칸 — ★ **공기가 지난 공사는 이미 오른 것으로 센다.**
+    실측에서 이것 없이 만들었더니 `tickCivic`이 그 항구에 다시 들를 때만 불려,
+    60항차 열 판 전부에서 **공사가 시작만 되고 한 칸도 안 올라갔다**(probe-dues).
+    ⇒ 읽는 쪽(`industryOf`·`endingProgress`·`hegemonyOf`)은 들르지 않아도 참을 봐야 한다.
+      `tickCivic`은 그것을 **장부에 옮기고 로그를 띄우는** 일만 한다(값은 안 바뀐다). */
+export function civicOf(cityId = state.at) {
+  const y = state.yards?.[cityId];
+  if (!y) return 0;
+  const b = y.civicBuilding;
+  return (y.civic ?? 0) + (b && state.day >= b.until ? 1 : 0);
+}
+export const civicBuilding = (cityId = state.at) => state.yards?.[cityId]?.civicBuilding ?? null;
+
+/** 나라 조선소 공사 중인가 — 그동안 그 항구는 배를 못 짓는다(`yardBusy`와 같은 뜻, 다른 주체) */
+export function civicBusy(cityId = state.at) {
+  const b = civicBuilding(cityId);
+  return !!b && state.day < b.until;
+}
+
+/** 이 항구에 지금까지 낸 세 */
+export const duesOf = (cityId = state.at) => state.dues?.[cityId] ?? 0;
+
+/** 그 깃발 전체에 낸 세 — 화면이 *"이 나라에"*를 함께 말할 때 쓴다(판정에는 안 쓴다) */
+export function duesOfFlag(flag) {
+  let sum = 0;
+  for (const [id, v] of Object.entries(state.dues ?? {})) {
+    if (CITY_BY_ID[id]?.flag === flag) sum += v;
+  }
+  return sum;
+}
+
+/** 나라가 더 올릴 수 있는 칸이 남았나 — 도시 `industry` + `civic`이 `CIVIC.cap`을 못 넘는다 */
+export function civicRoom(cityId = state.at) {
+  const base = CITY_BY_ID[cityId]?.industry ?? 0;
+  return Math.max(0, CIVIC.cap - base - civicOf(cityId));
+}
+
+/** 세를 냈다 — **여기 한 곳에서만** 쌓는다. 관세를 떼는 자리는 전부 이것을 부른다. */
+export function noteDues(cityId, gold) {
+  if (!cityId || !(gold > 0)) return 0;
+  const m = (state.dues ??= {});
+  m[cityId] = (m[cityId] ?? 0) + Math.round(gold);
+  tickCivic(cityId);          // 문턱을 넘은 **그 순간**에 로그가 떠야 한다
+  return m[cityId];
+}
+
+/** 화면이 읽는 한 곳 — 「이 항구에 낸 세 N닢 · 다음 조선소까지 M닢」.
+    ★ 값을 두 화면이 각자 계산하면 반드시 어긋난다(이 프로젝트에서 가장 비싼 실수의 자리). */
+export function civicProgress(cityId = state.at) {
+  const base = CITY_BY_ID[cityId]?.industry ?? 0;
+  const civic = civicOf(cityId);
+  const now = base + civic;                 // 나라 몫만 본다 — 내가 산 `boost`는 문턱과 무관하다
+  const paid = duesOf(cityId);
+  const room = civicRoom(cityId);
+  const b = civicBuilding(cityId);
+  const building = b && state.day < b.until
+    ? { to: b.to, until: b.until, left: b.until - state.day, days: b.days ?? (b.until - (b.started ?? state.day)) }
+    : null;
+  if (!room) {
+    return { cityId, base, civic, now, paid, room: 0, need: null, left: 0,
+             ready: false, days: 0, building, capped: true, cap: CIVIC.cap };
+  }
+  const need = CIVIC.dues[Math.min(now, CIVIC.dues.length - 1)];
   return {
-    base, to: base + 2 > YARD.cap ? YARD.cap : base + 2,
-    dockNow, dockLater, dockUp: dockLater - dockNow,
-    dockFirst: upLater && { gold: upLater.gold, days: upLater.days, mats: matSum(upLater) },
-    upFirst: upNow && { gold: upNow.gold, days: upNow.days, mats: matSum(upNow) },
+    cityId, base, civic, now, paid, room, need,
+    left: Math.max(0, need - paid), ready: paid >= need && !building,
+    days: CIVIC.days[Math.min(now, CIVIC.days.length - 1)],
+    building, capped: false, cap: CIVIC.cap,
+  };
+}
+
+/** 공사를 걸고, 끝났으면 올린다 — **나라가 스스로 한다**(플레이어의 단추가 아니다).
+    ★ *"차근차근"* — 문턱을 넘어도 즉시가 아니라 공사 기간이 지나야 오른다. */
+export function tickCivic(cityId = state.at) {
+  if (!cityId || !CITY_BY_ID[cityId]) return null;
+  const y = (state.yards[cityId] ??= { boost: 0, building: null });
+  const out = {};
+  const b = y.civicBuilding;
+  // ① 끝났으면 올린다
+  if (b && state.day >= b.until) {
+    y.civic = (y.civic ?? 0) + 1;
+    y.civicBuilding = null;
+    pushLog(`${CITY_BY_ID[cityId].name}에 새 조선소가 섰다 — 공업력 ${industryOf(cityId)}. `
+          + '이 항구에 낸 세가 그 값을 치렀다.', 'good');
+    out.done = true; out.industry = industryOf(cityId);
+  } else if (b) {
+    return null;                            // 아직 공사 중
+  }
+  /* ② 문턱을 넘었으면 건다.
+     ★ **①에서 돌아가지 않는다.** 한 번은 그렇게 썼는데, 오래 나갔다 온 판에서
+       「끝난 공사를 장부에 옮기고 그대로 끝」이라 **이미 세가 충분한 다음 칸이 안 걸렸다.**
+       `test-rules`의 「교역만으로 염포 공업력 3에 닿는다」가 그것을 잡았다. */
+  const p = civicProgress(cityId);
+  if (!p.capped && p.ready) {
+    y.civicBuilding = { to: p.now + 1, until: state.day + p.days, started: state.day, days: p.days };
+    pushLog(`${CITY_BY_ID[cityId].name} 관아가 조선소 부두를 놓기 시작했다 — ${p.days}일. `
+          + '그동안 이 항구에서는 배를 못 짓는다.', 'warn');
+    out.started = true; out.until = y.civicBuilding.until; out.days = p.days;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/* ── C-18 · 공업력을 올리는 길이 **둘**이다 (2026-08-28 설계 변경) ────────
+   ★ 예전 갈림길은 「부두를 먼저 사나, 승급을 먼저 하나」였다 — **둘 다 내 돈**이었고,
+     부두값이 `priceByIndustry`로 지금 공업력에 비례해 **순서로 총액이 갈렸다.**
+     지금 두 길은 성질이 다르다:
+       ① **내 돈으로 승급**(`YARD_UPGRADE`) — 금화 + **자재를 실어 와서** + 공기
+       ② **내 교역으로 나라 조선소**(`CIVIC`) — 그 항구에 낸 세 + 공기. **살 수 없다.**
+     ⇒ 되돌릴 수 없는 선택이 아니라 **나란히 가는 두 길**이다(둘 다 하면 둘 다 오른다).
+   ★ 값은 **여기 한 곳**에서 내고 두 화면이 읽는다
+     (거점 카드 `scenes/port.js: holdingCard` · 부두 카드 `scenes/shipyard.js: yardUpgradeCard`). */
+export function industryPathHint(cityId = state.at) {
+  const ind = industryOf(cityId);
+  if (ind >= YARD.cap) return null;                    // 꼭대기다
+  const up = YARD_UPGRADE[ind + 1] ?? null;            // ① 내 돈으로 승급
+  const matSum = (u) => (u ? Object.values(u.mats).reduce((a, b) => a + b, 0) : 0);
+  const civic = civicProgress(cityId);                 // ② 내 교역으로 나라 조선소
+  if (!up && civic.capped) return null;
+  return {
+    base: ind,
+    /* ① 내 돈 — 금화·자재·공기 */
+    buy: up && { to: ind + 1, gold: up.gold, days: up.days, mats: matSum(up) },
+    /* ② 내 교역 — 낸 세·남은 세·공기. 나라 몫 상한에 걸렸으면 null */
+    trade: civic.capped ? null : {
+      to: civic.now + 1, paid: civic.paid, need: civic.need, left: civic.left,
+      days: civic.days, building: civic.building, ready: civic.ready,
+    },
+    capped: civic.capped, cap: CIVIC.cap,
   };
 }
 
 /** 승급을 걸 수 있나 — 금화와 **실은 자재**를 함께 본다 */
 export function canUpgradeYard(cityId = state.at) {
   if (yardBusy(cityId)) {
-    const b = yardBuilding(cityId);
-    return { ok: false, reason: `공사 중이다 — ${b.until - state.day}일 남았다` };
+    /* 내 공사일 수도 나라 공사일 수도 있다 — **누가 걸었는지까지 말한다**(C-18) */
+    const mine = yardBuilding(cityId);
+    const b = (mine && state.day < mine.until) ? mine : civicBuilding(cityId);
+    const who = (mine && state.day < mine.until) ? '' : '관아가 놓는 ';
+    return { ok: false, reason: `${who}공사 중이다 — ${b.until - state.day}일 남았다` };
   }
   const n = yardNext(cityId);
   if (!n) return { ok: false, reason: `이 항구는 이미 꼭대기다 (공업력 ${industryOf(cityId)})` };
@@ -2062,7 +2194,9 @@ export function markNineEnded() {
 export function homelandProgress() {
   const cities = CITIES.filter((c) => c.flag === HEGEMONY.homeFlag);
   const held = cities.filter((c) => !!state.holdings?.[c.id]);
-  const docks = cities.filter((c) => hasHolding('dock', c.id));
+  /* ★ 예전에는 「거점 부두를 몇 곳에 세웠나」였다. 부두를 살 수 없게 됐으므로(C-18)
+     같은 자리를 **나라가 조선소를 올린 항구 수**로 읽는다 — 뜻은 그대로다. */
+  const docks = cities.filter((c) => civicOf(c.id) > 0);
   /* 태어날 때 부두가 없던 항구 — 여는 것이 이 목표의 이름이다 */
   const hidden = cities.filter((c) => (c.industry ?? 0) === 0).map((c) => ({
     id: c.id, name: c.name, now: industryOf(c.id), done: industryOf(c.id) > 0,
@@ -2701,6 +2835,9 @@ export function sell(goodId, qty) {
   const raw = gainFor(goodId, max);
   const tariff = Math.round(raw * tariffRate());
   const gain = raw - tariff;
+  /* ★ **낸 세를 그 항구 앞으로 적는다**(C-18) — 나라가 조선소를 짓는 지표다.
+     새 수입원이 아니라 이미 내던 것을 **세는** 것뿐이다. → `data.js: CIVIC` */
+  noteDues(state.at, tariff);
   const cost = (state.buyPrice[goodId] || 0) * max;
   state.cargo[goodId] = have - max;
   if (state.cargo[goodId] === 0) { delete state.cargo[goodId]; delete state.buyPrice[goodId]; }
@@ -4055,12 +4192,17 @@ function stowFlagship() {
    도시를 추가해도 규칙이 알아서 따라오고, "왜 여기선 못 사나"가 수치로 설명된다. */
 
 export function industryOf(cityId = state.at) {
-  /* 부두(`HOLDINGS.dock`)를 세우면 그 항구가 더 큰 배를 짓는다 — A-2 공업력의 첫 계단이다.
-     `tierNeeded`·`sellsShip`·`shipPriceAt`·`usedListings`가 전부 이 함수를 거치므로 여기 한 줄이 전부다. */
+  /* 계단이 **둘**이다(C-18) — 나라가 지은 조선소(`civic` · 그 항구에 낸 세로 오른다)와
+     내가 산 A-2 승급(`boost` · 금화 + 자재). `tierNeeded`·`sellsShip`·`shipPriceAt`·
+     `usedListings`가 전부 이 함수를 거치므로 여기 한 줄이 전부다.
+     ★ 나라 몫에만 상한이 있다(`CIVIC.cap`) — 옛 `HOLDING.industryCap`이 있던 자리다.
+       내 돈으로 올리는 `boost`는 `YARD.cap`까지 간다. */
   const base = CITY_BY_ID[cityId]?.industry ?? 0;
-  const dock = hasHolding('dock', cityId) ? (HOLDINGS.dock.industryUp ?? 0) : 0;
+  /* ⚠️ **`state.yards[].civic`을 직접 읽지 마라** — 공기가 지난 공사가 안 세어진다.
+     실제로 그렇게 썼다가 `test-rules`의 「공기가 지나면 오른다」가 잡았다. `civicOf()`가 정본이다. */
+  const civic = Math.min(Math.max(0, CIVIC.cap - base), civicOf(cityId));
   const boost = state.yards?.[cityId]?.boost ?? 0;   // A-2 승급
-  return Math.min(YARD.cap, base + Math.min(HOLDING.industryCap - base, dock) + boost);
+  return Math.min(YARD.cap, base + civic + boost);
 }
 
 /** 그 항구에서 이 배를 지으려면 필요한 공업력 — 원산국 항구는 1 낮다 */
@@ -6000,6 +6142,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     cargoCap: s.cargo,
     cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at,
     infamy: {}, holdings: {}, stored: {}, yards: {}, works: {},
+    dues: {},                    // 새 판에는 아무 나라에도 세를 안 냈다 (C-18)
     /* 3단계 — 유통. 새 판에는 묶어 둔 배도 띄워 둔 위탁도 없다 */
     lines: {}, consign: [],
     /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
