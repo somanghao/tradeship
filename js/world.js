@@ -23,6 +23,9 @@ import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
 import { seasonOf, inSeason, activeBounty, setRetireHook } from './state.js';
 import { riskKey } from './map/geo.js';
+/* ★ 상단(商團) — **지도에 안 뜨는 층**이다. `state.npcs` 정원을 한 척도 안 건드리므로
+   해적 밀도·조우 확률이 안 움직인다. 자본을 쌓고 그 자본이 물가를 누른다 → `js/npc/guild.js` */
+import { guildTick, settleGuildOffer } from './npc/guild.js';
 
 let seq = 0;
 const rnd = () => Math.random();
@@ -190,6 +193,11 @@ export function worldTick(days = 1) {
     for (const n of state.npcs) stepOne(n, news);
     raids(news);
   }
+  /* ★ 상단은 배가 아니라 **회사**다 — 위 정원 셈과 따로 돈다.
+     여기 두는 이유: 시간 진행의 입구가 하나여야 "항구에 서 있는 동안 상단이 멈춘다"가 안 난다. */
+  guildTick(days, news);
+  const paid = settleGuildOffer();
+  if (paid?.ok) news.push({ kind: 'guild-paid', who: paid.by, foe: paid.foe, fee: paid.fee });
   /* 철이 지난 배는 **항구에 있을 때만** 물러난다 — 바다 한복판에서 배가 사라지면
      플레이어가 본 것이 무엇이었는지 설명되지 않는다. 발트가 얼고 계절풍이 뒤집히면
      그 바다의 배가 한 철 통째로 자취를 감추는 것이 이 규칙의 목적이다. */
@@ -525,7 +533,14 @@ export function newsLines(news, limit = 3) {
   const here = REGION_OF_CITY[state.at];
   const mine = (e) => REGION_OF_CITY[e.at] === here || REGION_OF_CITY[e.to] === here;
   news = [...news].sort((a, b) => (mine(b) ? 1 : 0) - (mine(a) ? 1 : 0));
+  /* ★ **상단에게 자리를 한 칸 남긴다.** 습격 줄은 상한을 안 보고 밀어 넣은 뒤 끝에서 잘라내므로,
+     사건이 흔한 날에는 상단 소문이 **한 번도 안 뜬다** — 상단은 지도에 배로 안 뜨니
+     소문이 그들의 유일한 얼굴이고, 그러면 물가를 누르는 층이 통째로 안 보인다.
+     이 저장소가 다섯 번 겪은 *"규칙이 멀쩡한데 화면이 말하지 않는다"*의 자리다. */
+  const hasGuild = news.some((e) => String(e.kind).startsWith('guild-'));
+  const raidCap = hasGuild ? Math.max(1, limit - 1) : limit;
   for (const e of news) {
+    if (out.length >= raidCap) break;
     if (e.kind === 'raid') {
       out.push({
         text: `${CITY_BY_ID[e.at].name}~${CITY_BY_ID[e.to].name} 항로에서 ${e.victim}호가 ${e.who}에게 털렸다.`
@@ -535,6 +550,28 @@ export function newsLines(news, limit = 3) {
                 : ''),
         kind: 'bad',
       });
+    }
+  }
+  /* ★ **상단 소식을 습격 바로 다음에 세운다.** 상단은 화면에 배로 안 뜨므로
+     소문이 그들의 유일한 얼굴이다 — 이 줄이 없으면 물가를 누르는 층이 통째로 안 보인다. */
+  for (const e of news) {
+    if (out.length >= limit) break;
+    if (e.kind === 'guild-press') {
+      out.push({
+        text: `${CITY_BY_ID[e.city]?.name ?? e.city}에서 ${e.who}이(가) ${GOOD_BY_ID[e.goodId]?.name ?? e.goodId}을(를) `
+            + (e.corner ? '쓸어 담고 있다 — 값이 뛴다.' : '헐값에 풀고 있다 — 값이 무너진다.'),
+        kind: 'bad',
+      });
+    } else if (e.kind === 'guild-offer') {
+      out.push({
+        text: `${e.who}이(가) 사람을 찾는다 — ${CITY_BY_ID[e.city]?.name ?? e.city}의 ${e.foeName ?? e.foe}을(를) 흔들 `
+            + `${GOOD_BY_ID[e.goodId]?.name ?? e.goodId} ${e.need}개. 보수 ${e.fee.toLocaleString('en-US')}닢.`,
+        kind: '',
+      });
+    } else if (e.kind === 'guild-help') {
+      out.push({ text: `${e.who}이(가) 신용장을 끊어 주었다.`, kind: 'good' });
+    } else if (e.kind === 'guild-paid') {
+      out.push({ text: `${e.who}이(가) 셈을 치렀다 — ${e.fee.toLocaleString('en-US')}닢.`, kind: 'good' });
     }
   }
   for (const e of news) {

@@ -30,6 +30,8 @@ import {
   SPOILS_SHARE, SPOILS_TAIL, SPOILS_FLOOR, SPOILS_GOODS_PER_CREW, SPOILS_GOODS_CAP,
   /* 조우 손실 상한(2026-08-28) — 값은 data.js, 식은 이 파일 */
   ENCOUNTER_LOSS,
+  /* 상단(商團) — 자본이 물가를 누른다(회차 25) */
+  GUILD,
 } from './data.js';
 import { josa } from './josa.js';   // leaf 유틸 — 화면 헬퍼(ui.js)가 아니라 모듈 방향을 안 깬다
 
@@ -75,6 +77,21 @@ export const state = {
   loadout: ['captain', 'sailor', null, null, null, null],  // 갑판 배치 6칸
   prices: {},                // cityId -> goodId -> 단가
   impact: {},                // cityId -> goodId -> 최근 거래 압력 (날짜가 지나면 감쇠)
+  /* ── 상단(商團)이 남긴 **부호 있는** 자국 ────────────────────────
+     `impact`(위)와 헷갈리면 안 된다. 저것은 부호가 없어 사도 팔아도 「불리해질」 뿐이라
+     **아무리 날라도 물가가 안 좁혀진다.** 이쪽은 부호가 있다:
+       flow < 0  상단이 그 항구에서 **사갔다** → 값이 오른다
+       flow > 0  상단이 그 항구에 **부었다**   → 값이 내린다
+     그래서 산지와 수요지가 **서로에게 다가간다** — 실제 상단이 한 일이 그것이다.
+     `guildFactor()`가 `shockFactor` 옆에서 곱해지고 날마다 `GUILD.flowDecay`로 삭는다. */
+  guildFlow: {},             // cityId -> goodId -> 순유입(+)/순유출(-) 단위
+  /* 상단 장부 — `houseId -> { cap, fleet, legs, gain, regard, voy[], cool, seen }`.
+     `js/npc/guild.js`가 굴리고 여기(state)는 **들고만 있다**(모듈 방향: state는 world를 모른다). */
+  guilds: {},
+  /* 상단이 준 것 · 상단이 시킨 것 — **평범한 값**만 담는다. state는 상단 명부를 모른다
+     (`js/npc/guild.js`가 채우고, 여기서는 규칙이 읽기만 한다 — 모듈 방향을 안 깬다). */
+  guildBoon: null,           // { credit:{cities,off,until,by}, escort:{cities,off,until,by} }
+  guildOffer: null,          // 사주 — { by, foe, city, gid, need, done, fee, until }
   shocks: [],                // 시장 충격 — { city, good, mult, until, why }. 기근·전손 같은 **사건**이 만든다
   contract: null,            // 맡은 대형 주문 (한 번에 하나)
   officer: null,             // 부관 — { hiredDay, earned }. 오직 한 명(data.js: OFFICER)
@@ -290,6 +307,67 @@ export function activeShocks() {
    도시 사이의 값 차이는 **그 도시가 무엇을 캐고 무엇을 원하는가**라는 구조이고,
    구조는 노이즈로 뒤집히면 안 된다. 그래서 공통 성분을 크게, 도시 성분을 작게 둔다.
    (품목이 흔들리는 폭 자체는 전과 비슷하다 — 갈라 놓았을 뿐이다.) */
+/* ── 상단이 값에 남기는 것 (회차 25) ──────────────────────────────
+   ★ **이 게임에서 물가가 좁혀지는 유일한 자리다.** `MARKET.impact`는 부호가 없어
+     "많이 거래하면 불리해진다"만 하고, 산지·수요지의 **구조적 차이는 한 톨도 못 줄인다**.
+     상단이 싼 데서 사서 비싼 데로 나르면 그 차가 줄어야 세계가 산 것이다.
+
+   ⚠️ **상한(`GUILD.priceCap`)이 안전장치다.** 구조 배율(`SPREAD`가 만드는 산지↔수요지 차)은
+     이 상한보다 훨씬 크므로 **사다리가 뒤집히지 않는다** — 좁아질 뿐이다.
+     상한을 떼면 무역 게임의 몸통이 사라진다(설계 §0-2). 여기를 만지려거든
+     `node tools/sim-guild.mjs 20`을 먼저 돌려라. */
+export function guildFlowOf(cityId, goodId) {
+  return state.guildFlow?.[cityId]?.[goodId] || 0;
+}
+
+/** 상단이 그 항구에 부었거나(+) 사갔다(−). `js/npc/guild.js`만 부른다. */
+export function addGuildFlow(cityId, goodId, n) {
+  if (!n) return;
+  const c = (state.guildFlow ||= {});
+  const row = (c[cityId] ||= {});
+  row[goodId] = (row[goodId] || 0) + n;
+}
+
+/** 상단 때문에 그 항구·품목 값이 얼마나 밀렸나 (1이면 손 안 댔다) */
+export function guildFactor(cityId, goodId) {
+  if (!GUILD.enabled) return 1;
+  const f = guildFlowOf(cityId, goodId);
+  if (!f) return 1;
+  const raw = 1 - (GUILD.flowK * f) / Math.max(1, marketDepth(cityId));
+  return Math.max(1 - GUILD.priceCap, Math.min(1 + GUILD.priceCap, raw));
+}
+
+/* ── 상단이 준 것 (도움 갈래) ─────────────────────────────────
+   ⚠️ **매매 대행은 없다**(`wiki/vertical-chain.md` §8 — 자동 매매 창구를 만들면 몸통이 사라진다).
+     도움은 **할인·정보·호위**까지다. 여기 담기는 것은 그 셋뿐이다. */
+const boonLive = (b) => (b && b.until > state.day ? b : null);
+
+/** 친한 상단의 신용장 — 그 상단 상관에서 살 때 붙는 할인(0~1) */
+export function guildCredit(cityId = state.at) {
+  const b = boonLive(state.guildBoon?.credit);
+  return b && b.cities?.includes(cityId) ? (b.off ?? 0) : 0;
+}
+
+/** 친한 상단의 호위 — 그 상관을 잇는 구간의 조우 **상대 감소**(0~1) */
+export function guildEscortOff(aId, bId) {
+  const b = boonLive(state.guildBoon?.escort);
+  if (!b) return 0;
+  return (b.cities?.includes(aId) || b.cities?.includes(bId)) ? (b.off ?? 0) : 0;
+}
+
+/** 날마다 삭는다 — 상단이 그 항로를 놓으면 값이 되돌아온다 */
+export function decayGuildFlow(days = 1) {
+  const keep = GUILD.flowDecay ** days;
+  for (const cityId of Object.keys(state.guildFlow ?? {})) {
+    const row = state.guildFlow[cityId];
+    for (const gid of Object.keys(row)) {
+      row[gid] *= keep;
+      if (Math.abs(row[gid]) < 0.05) delete row[gid];
+    }
+    if (!Object.keys(row).length) delete state.guildFlow[cityId];
+  }
+}
+
 export function priceOf(cityId, goodId) {
   const city = CITY_BY_ID[cityId];
   const good = GOOD_BY_ID[goodId];
@@ -297,7 +375,10 @@ export function priceOf(cityId, goodId) {
   const mul = 1 + (raw - 1) * SPREAD;          // 차익 폭을 SPREAD로 조인다
   const trend = 0.88 + wobble('~world', goodId, state.day) * 0.24;   // 시황 ±12% (전 세계 공통)
   const local = 0.965 + wobble(cityId, goodId, state.day) * 0.07;    // 도시 사정 ±3.5%
-  return Math.max(1, Math.round(good.base * mul * trend * local * shockFactor(cityId, goodId)));
+  /* ★ `guildFactor`가 여기 곱해진다 — 상단이 나른 만큼 산지와 수요지가 서로에게 다가간다.
+     상단이 없는 판(또는 `GUILD.enabled=false`)에서는 1이라 **옛 값과 한 닢도 안 달라진다.** */
+  return Math.max(1, Math.round(good.base * mul * trend * local
+    * shockFactor(cityId, goodId) * guildFactor(cityId, goodId)));
 }
 
 export function refreshPrices() {
@@ -382,7 +463,9 @@ export function costFor(goodId, n, cityId = state.at) {
      살 때만 붙는다. 밖에서는 안 붙으므로 답은 언제나 **딴 데서 사는 것**이고,
      그 답이 곧 항로가 길어진다는 대가다. ⚠️ **수량과 무관한 상수 배율**이라
      `buy()`의 이분 탐색이 전제하는 단조 증가가 안 깨진다. */
-  const grip = 1 + gripMarkup(goodId, cityId);
+  /* ★ 세력의 웃돈(`grip`)과 **상단의 신용장**(`credit`)이 같은 자리에서 곱해진다.
+     ⚠️ 둘 다 **수량과 무관한 상수 배율**이라 `buy()`의 이분 탐색이 전제하는 단조 증가가 안 깨진다. */
+  const grip = (1 + gripMarkup(goodId, cityId)) * (1 - guildCredit(cityId));
   const restCost = rest > 0 ? unit * rest * (1 + impactFactor(cityId, goodId, rest)) : 0;
   return Math.round((ownCost + restCost) * grip);
 }
@@ -2914,6 +2997,13 @@ export function sell(goodId, qty) {
   /* ★ **낸 세를 그 항구 앞으로 적는다**(C-18) — 나라가 조선소를 짓는 지표다.
      새 수입원이 아니라 이미 내던 것을 **세는** 것뿐이다. → `data.js: CIVIC` */
   noteDues(state.at, tariff);
+  /* ★ **사주(상단이 시킨 일)의 진척은 파는 자리에서 센다** — 경쟁 상단의 상관에 그 물건을
+     부으면 그 자리가 흔들린다. 값을 치르는 것은 `js/npc/guild.js: settleGuildOffer()`다
+     (state는 상단 명부를 모른다 — 세는 곳과 치르는 곳을 갈라 모듈 방향을 지킨다). */
+  const off = state.guildOffer;
+  if (off && off.city === state.at && off.gid === goodId && off.until > state.day) {
+    off.done = (off.done ?? 0) + max;
+  }
   const cost = (state.buyPrice[goodId] || 0) * max;
   state.cargo[goodId] = have - max;
   if (state.cargo[goodId] === 0) { delete state.cargo[goodId]; delete state.buyPrice[goodId]; }
@@ -5380,7 +5470,11 @@ export function encounterOdds({ from, to, threat = 0, lure = null, day = state.d
   /* ★ **과소기** — 초무한 자가 있는 바다에서는 덜 만난다(`data.js: ROSTER.passOddsOff`).
      `infamyOdds`와 **부호만 반대인 자리**이고, 악명은 더하고 과소기는 곱해서 던다
      (악명은 "찾아온다"이고 과소기는 "그냥 지나간다"라 성질이 다르다). */
-  return raw * (1 - passOff(REGION_OF_CITY[from] ?? REGION_OF_CITY[to]));
+  /* ★ 친한 상단의 호위 — 과소기와 **같은 자리**에서 곱해서 던다(성질이 같다: "그냥 지나간다").
+     ⚠️ 상단의 **압박**은 여기에 한 톨도 안 더한다 — 조우 확률은 안 건드리고
+       *누가 오는가*만 바꾼다(`js/npc/guild.js: guildFoeOnLeg`). */
+  return raw * (1 - passOff(REGION_OF_CITY[from] ?? REGION_OF_CITY[to]))
+             * (1 - guildEscortOff(from, to));
 }
 
 /** 위험도 라벨 — 출항 카드에 띄운다. 확률이 달라져도 못 읽으면 판단이 안 생긴다. */
@@ -6030,6 +6124,7 @@ export function waitDays(n = 1) {
     }
     if (!Object.keys(row).length) delete state.impact[cityId];
   }
+  decayGuildFlow(n);              // 상단의 자국도 삭는다 — 손을 놓으면 값이 되돌아온다
   const shocks = rollShockEvents(n);
   /* ⚠️ **정기선은 여기서도 돈다.** `advanceDays`에만 걸면 *"항구에 서 있는 동안 정기선이
      멈춘다"*가 된다 — `QUICKMAP-trade.md`의 *"항구에는 시간이 없다"*가 이 층에서 절반만 참이다. */
@@ -6137,6 +6232,7 @@ export function advanceDays(n, leg = null) {
     }
     if (!Object.keys(row).length) delete state.impact[cityId];
   }
+  decayGuildFlow(n);              // 상단의 자국도 삭는다 — 손을 놓으면 값이 되돌아온다
 
   // 사건이 만든 시장 충격 — 날이 차면 걷히고, 그 사이 새 사건이 일어난다
   pruneShocks();
@@ -6387,6 +6483,9 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     refits: {}, shots: { grape: 0, chain: 0, heated: 0 },
     cargoCap: s.cargo,
     cargo: {}, buyPrice: {}, impact: {}, shocks: [], contract: null, npcs: [], at,
+    /* ★ **새 판은 상단도 처음부터다.** `??=`로만 만들면 옛 판의 자본·호감이 살아남는다
+       (`slain`·`tamed`가 명시 선언돼 있는 것과 같은 이유). */
+    guilds: {}, guildFlow: {}, guildBoon: null, guildOffer: null,
     infamy: {}, holdings: {}, stored: {}, yards: {}, works: {},
     dues: {},                    // 새 판에는 아무 나라에도 세를 안 냈다 (C-18)
     /* 3단계 — 유통. 새 판에는 묶어 둔 배도 띄워 둔 위탁도 없다 */

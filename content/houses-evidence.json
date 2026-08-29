@@ -1,0 +1,694 @@
+{
+  "note": "상단(商團) 자본·거점의 사료 근거. 코드 정본은 js/npc/houses-*.js, 검증은 node tools/check-houses.mjs.\n★ 「근거 없음」은 경고이지 실패가 아니다 — 콘텐츠를 막는 검사를 만들지 않는다(최상위 원칙).",
+  "conversion": [
+    {
+      "file": "houses-euro",
+      "rule": "이 저장소의 기준축(선원 1인 연봉 ≈ 1,100닢 · 곡물 1단위 ≈ 12닢)을 그대로 쓴다. 사료의 금화 단위(굴덴·두카트)는 이 시대 숙련공 반달치 임금에 대략 맞먹는다고 보고 1굴덴/두카트 ≈ 44닢로 통일 환산했다(예: NPC-DESIGN.md가 든 푸거 사후 200만 굴덴 ⇒ 선원 8만 명 연봉 ⇒ 약 88,000,000닢과 같은 비율). 파운드(£)·크루자두처럼 환산 근거를 확인하지 못한 곳은 굴덴 환산비를 그대로 준용해 자릿수만 맞췄다. 사료에 절대 자본이 없는 상단(조합·밀무역·지역 중개상)은 같은 바다의 소문난 상단과의 상대 서열로 추정했다 — 그 표시가 verdict: gameplay다."
+    },
+    {
+      "file": "houses-asia",
+      "rule": "게임 화폐 '닢'은 특정 실화폐가 아니다. 이 파일은 두 기준축만 쓴다 — 선원 1인 연봉 ≈ 1,100닢, 곡물 1단위 기준가 ≈ 12닢. 사료의 자본(냥·루피·굴덴·토만 등)을 '그 시대·지역에서 선원 한 사람을 몇 명 몇 년 고용할 수 있는 돈이었는가'로 환산해 닢으로 옮겼다. 원 사료의 결산 수치가 남아 있는 경우(비르지 보라·휘주 염상)는 그 수치를 그대로 밝히고 환산 과정을 적었다. 결산 자료가 없는 대다수 상단(하드라미·체티·부기스 등)은 같은 파일 안 동급 상단과의 상대 서열로 규모를 추정했다 — 절대값이 아니라 rank·fleet의 사다리가 진짜 근거다. capital의 절대값은 게임 밸런스가 아니라 서열로만 쓰인다(GUILD.capPow가 로그 압축한다)."
+    },
+    {
+      "file": "houses-newworld",
+      "rule": "기준축 둘 — 선원 1인 연봉 ≈ 1,100닢, 곡물 1단위 기준가 ≈ 12닢. 사료의 화폐를 '선원 몇 사람의 연봉인가'로 환산했다. 카레라 데 인디아스 일반 선원의 연봉을 약 37두카트로 보고(Chaunu, Séville et l'Atlantique 자료) 1두카트 ≈ 1,100÷37 ≈ 30닢으로 잡는다. 페소 데 아 오초는 두카트보다 은 함량이 조금 낮아 1페소 ≈ 27닢. 포르투갈 크루자도는 두카트와 비슷한 은 함량대라 1크루자도 ≈ 27닢으로 페소와 같게 둔다. 네덜란드 길더(굴덴)는 이 시기 환율상 두카트의 약 1/4.3이라 1길더 ≈ 7닢. 마라베디는 375마라베디=1두카트이므로 1마라베디 ≈ 0.08닢. 자료가 사료상 단일 확정 수치가 없는 상단은 동급 상단과의 상대 서열로 자본을 추정하고 verdict를 'gameplay'로 표시했다."
+    }
+  ],
+  "houses": [
+    {
+      "id": "priuli",
+      "capital": 8000000,
+      "seats": [
+        "venezia",
+        "rodos",
+        "alexandria",
+        "candia"
+      ],
+      "basis": "베네치아 파트리치 가문은 원로원의 무다 갤리에 개인 자본을 얹어 함께 실었다. 프리울리가는 실재하는 원로원급 가문이나 이 가문 하나의 절대 자본을 적은 결산 사료를 찾지 못했다 — 같은 바다의 도리아·산호상단(로멜리니)보다 크고 세력 `venezia`(원로원 자체)보다는 작은 자리로 상대 서열을 잡았다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — F. Lane, Venice: A Maritime Republic (1973)의 파트리치 자산 구조 논의를 참고한 서열 추정",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "doria",
+      "capital": 6000000,
+      "seats": [
+        "genova",
+        "napoli",
+        "marseille",
+        "lisboa"
+      ],
+      "basis": "제노바의 도리아가는 실재하는 해군-상업 가문이며(안드레아 도리아가 대표적), 카를 5세를 섬긴 뒤 에스파냐·나폴리 쪽에도 발판을 텄다. 가문 전체의 결산 자본 사료는 확인하지 못해 프리울리보다 약간 작은 서열로 두었다 — 함대(무력) 쪽 비중이 커서 fleet를 상대적으로 높였다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — T. Kirk, Genoa and the Sea (2005)의 도리아가 해군-상업 겸업 서술을 참고",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "consolatdemar",
+      "capital": 4000000,
+      "seats": [
+        "barcelona",
+        "valencia",
+        "mallorca"
+      ],
+      "basis": "콘솔라트 데 마르는 바르셀로나에서 나서 발렌시아·마요르카까지 퍼진 실재 해상법정·상인조합이다. 단일 회사가 아니라 조합이라 '자본' 개념 자체가 근사치다 — 세 항구를 아우르는 중간 규모 상단으로 상대 서열을 잡았다.",
+      "convert": "상대 서열 추정 (조합이라 근거 자본 없음)",
+      "source": "일반 서술 — 콘솔라트 데 마르 제도사(카탈루냐 해상법 성문화, 14세기~) 개관",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "hospitallerprize",
+      "capital": 3500000,
+      "seats": [
+        "malta",
+        "messina",
+        "napoli"
+      ],
+      "basis": "성 요한 기사단(몰타)은 유럽 각지 코망드리(영지) 수입과 함께 나포선 매각 수입을 가졌다 — `mediterranean/trade.js: malta`의 '부두에는 나포선이 매물로 선다'는 서술과 같은 자리다. 자본 자체 사료는 찾지 못해 콘솔라트데마르와 비슷한 중간 규모로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — 몰타 기사단의 코르소(사략) 수입 구조에 관한 통설. 이 저장소 `mediterranean/trade.js`의 malta 항목과 정합",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "lomellini",
+      "capital": 2200000,
+      "seats": [
+        "genova",
+        "tunis",
+        "algiers"
+      ],
+      "basis": "로멜리니가는 실재하는 제노바 가문으로 타바르카 섬의 산호 채취 이권을 16세기 중반부터 1741년까지 거의 두 세기 가까이 독점했다. 단일 가문의 단일 이권 사업이라 다른 지중해 상단보다 작은 규모로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — 타바르카 산호 채취 이권사(제노바 로멜리니가) 개관",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "hafsidcourt",
+      "capital": 1800000,
+      "seats": [
+        "tunis",
+        "algiers",
+        "palermo"
+      ],
+      "basis": "하프스 왕조(튀니스)는 사하라 대상로의 종착지를 쥐고 금·상아 교역에 면허(무카타아 유의 계약)를 매겼다. 왕조 자체가 오스만·에스파냐에 비해 작은 정치체였으므로 이 바다에서 가장 작은 축으로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — 하프스 왕조 사하라 교역 통설. `mediterranean/trade.js: tunis` 항목과 정합",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "mendeshouse",
+      "capital": 17600000,
+      "seats": [
+        "antwerpen",
+        "lisboa",
+        "istanbul"
+      ],
+      "basis": "1540년 기준 멘데스가(멘데스-벤베니스테 은행)의 자산이 약 40만 두카트로 추산된다는 서술이 여럿 확인된다. 1두카트 ≈ 44닢 환산비를 그대로 적용했다: 400,000 × 44 = 17,600,000.",
+      "convert": "두카트 → 선원 연봉 환산: 400,000두카트 × 44닢/두카트 = 17,600,000닢",
+      "source": "Gracia Mendes Nasi 관련 통설 — Wikipedia 'Gracia Mendes Nasi' 항목 및 HeadStuff 'Gracia Mendes Nasi, Renaissance Businesswoman' (두 출처 모두 1540년 약 40만 두카트 자산을 서술)",
+      "verdict": "probable"
+    },
+    {
+      "id": "welserhaus",
+      "capital": 26000000,
+      "seats": [
+        "antwerpen",
+        "sevilla",
+        "lisboa"
+      ],
+      "basis": "벨저가는 실재하는 아우크스부르크 은행(세력 `fugger`의 실제 경쟁사)으로 베네수엘라 식민 계약(클라인베네딕, 1528~1546)까지 손을 댔다. 이 회차에서 절대 결산 자본 사료를 확인하지 못해, 푸거(세력으로 이미 존재·설계문서 예시 88,000,000닢)보다는 작고 멘데스가보다는 큰 축의 유럽 2대 은행 서열로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음 — 세력 fugger 대비 서열만 확정)",
+      "source": "일반 서술 — 벨저가와 베네수엘라 통치 계약(1528~1546)에 관한 통설",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "marchionni",
+      "capital": 9000000,
+      "seats": [
+        "lisboa",
+        "funchal",
+        "elmina"
+      ],
+      "basis": "바르톨로메오 마르치오니는 실재하는 피렌체 출신 리스본 정착 상인-은행가로, 카브랄 함대에 자기 배를 태웠고 마데이라 설탕 농장과 기니·미나 금 무역에 자본을 댔다. 절대 자본 사료를 찾지 못해 벨저·멘데스보다 작은 개인 상관 규모로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — Bartolomeo Marchionni의 인도항로·기니 무역 투자에 관한 통설",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "merchantadventurers",
+      "capital": 12000000,
+      "seats": [
+        "london",
+        "antwerpen",
+        "bristol"
+      ],
+      "basis": "머천트 어드벤처러스는 16세기 중반 잉글랜드 대외무역의 약 4분의 3을 런던 조합원들이 쥐었다고 서술될 만큼 큰 규제회사였다. 다만 조합원 개별 자본의 합이라 단일 결산 사료는 없다 — 그 무역 점유율 서술을 근거로 이 바다에서 상위권 서열을 잡았다.",
+      "convert": "상대 서열 추정 (규제회사라 단일 결산 자본 없음)",
+      "source": "일반 서술 — Britannica 'Merchant Adventurers' 항목(16세기 중반 잉글랜드 대외무역의 다수를 이 회사 런던 조합원이 통제했다는 서술)",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "veckinchusen",
+      "capital": 2500000,
+      "seats": [
+        "lubeck",
+        "riga",
+        "reval"
+      ],
+      "basis": "힐데브란트 베킨후젠은 실재하는 뤼베크 상인으로, 노브고로드·리가에서 모피·밀랍을 사 브뤼헤에서 팔았다. 방대한 서신이 남아 있으나 절대 결산 자본 사료는 찾지 못해 개인 한자 상인 규모(콘토어 전체보다 훨씬 작은)로 두었다. 만년에 파산했다는 것도 이 상단의 서열을 낮게 잡은 이유다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — W. Stieda가 편찬한 베킨후젠 서신집에 관한 통설(한자 상인 연구의 대표 사례로 자주 인용됨)",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "muscovycompany",
+      "capital": 3000000,
+      "seats": [
+        "london",
+        "reval",
+        "novgorod"
+      ],
+      "basis": "머스코비 컴퍼니는 1555년에 세워진 잉글랜드 최초의 상시 합자회사다. 초기 자본 규모에 관한 구체적 수치를 이번 회차에서 확실히 확인하지 못해, 대륙의 대형 은행 가문들보다는 훨씬 작은 신생 합자회사 규모로 서열을 잡았다.",
+      "convert": "상대 서열 추정 (근거 자본 미확인)",
+      "source": "일반 서술 — 1555년 잉글랜드 최초 상시 합자회사 설립에 관한 통설(Britannica 'Muscovy Company' 등)",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "arguimcontrato",
+      "capital": 1200000,
+      "seats": [
+        "arguin",
+        "goree",
+        "santiago",
+        "lisboa"
+      ],
+      "basis": "아르갱 상관은 포르투갈 왕실이 계약(콘트라토)으로 상인에게 넘긴 자리였다. 계약상 개인의 절대 자본 사료는 없어, 같은 방식의 미나 계약(더 큰 금줄)보다 작은 서열로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — 포르투갈 왕실의 아르갱 무역 계약(콘트라토 지 아르귀) 통설",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "lancados",
+      "capital": 700000,
+      "seats": [
+        "santiago",
+        "cacheu",
+        "goree"
+      ],
+      "basis": "랑사두는 왕의 허가 없이 뭍에 산 밀무역상 개인·소규모 집단이다. 흩어진 소규모 자본이라 이 파일 17곳 중 가장 작은 서열로 두었다 — 면허가 없는 것 자체가 이들의 정체다.",
+      "convert": "상대 서열 추정 (밀무역이라 결산 사료 없음)",
+      "source": "일반 서술 — 카보베르데·기니 강들의 랑사두(lançado) 통설. `africa/trade.js: cacheu` 항목과 정합",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "kilwagoldbrokers",
+      "capital": 3200000,
+      "seats": [
+        "kilwa",
+        "sofala",
+        "quelimane"
+      ],
+      "basis": "포르투갈이 오기 전 킬와 술탄국은 소팔라의 금을 쥐고 인도양 교역의 맹주였다(1505년 몰락 이전). 절대 자본 사료는 없어 같은 바다의 반야니 상관과 비슷한 중간 규모로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — 킬와 술탄국의 소팔라 금 교역 장악에 관한 통설. `africa/trade.js: kilwa` 항목과 정합",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "banyanigujarat",
+      "capital": 2800000,
+      "seats": [
+        "mocambique",
+        "zanzibar",
+        "kilwa"
+      ],
+      "basis": "구자라트 반야니(바니야) 상인 공동체는 인도양을 건너와 모잠비크·잔지바르에서 환전·중개를 맡았다 — 포르투갈 문서에도 '바니아니스'로 등장한다. 절대 자본 사료는 없어 킬와 금 중개상과 비슷한 서열로 두었다.",
+      "convert": "상대 서열 추정 (근거 자본 없음)",
+      "source": "일반 서술 — 동아프리카 해안의 구자라트 상인 공동체(반야니/바니야)에 관한 통설",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "minacontrato",
+      "capital": 4500000,
+      "seats": [
+        "elmina",
+        "axim",
+        "accra",
+        "lisboa"
+      ],
+      "basis": "엘미나(상 조르즈 다 미나)는 16세기 초 해마다 금 약 680kg을 냈고 이는 당대 세계 금 공급의 약 1/10이었다(이 저장소 `africa/trade.js: elmina` 항목이 이미 채택한 수치). 왕실이 그 독점을 계약상에게 넘겨 굴렸다는 사실은 통설이나, 계약상 개인의 절대 자본 사료는 찾지 못해 이 산출 규모를 근거로 이 파일에서 아프리카 권역 최고 서열로만 잡았다.",
+      "convert": "상대 서열 추정 (엘미나 연간 금 산출량을 서열 근거로 삼되 닢 환산은 직접 계산하지 않음)",
+      "source": "이 저장소 js/regions/africa/trade.js: elmina 항목의 채택 수치(연간 금 680kg, 세계 공급 1/10) + 포르투갈 왕실의 카사 다 기네 에 미나 계약 제도에 관한 통설",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "hadrami",
+      "capital": 1200000,
+      "seats": [
+        "shihr",
+        "aden",
+        "muscat",
+        "socotra",
+        "calicut"
+      ],
+      "basis": "하드라미 디아스포라 상인망(하드라마우트 출신)은 이 시대의 개별 상가 결산 자료가 남아 있지 않다. 후대(19세기) 알카프·빈탈립 등 하드라미 상가가 동아프리카·동남아 화교 사회에서 지역 최대급 재산가로 성장한 사실이 알려져 있어, 그 이전 시기에도 아덴만~말라바르를 잇는 중견 규모의 상인망이었을 것으로 본다.",
+      "convert": "결산 자료가 없어 같은 파일의 khalijbroker(70만 닢·rank 2)보다 한 단계 위, julfahouse(600만 닢·rank 4)보다는 아래로 두었다 — 지리적으로 넓게 퍼졌으나 단일 결산 규모는 크지 않은 디아스포라망이라는 판단. 1,200,000닢 ≈ 선원 약 1,090명의 1년 치.",
+      "source": "R.B. Serjeant, 'The Hadrami Chronicles' 계열의 하드라마우트 교역사 개관 및 후대 하드라미 상가에 대한 통설. 이 시대의 결산 수치는 확보하지 못함.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "omanfleet",
+      "capital": 4500000,
+      "seats": [
+        "muscat",
+        "sur",
+        "sohar",
+        "hormuz"
+      ],
+      "basis": "17세기 중반 야아리바 왕조 시기 오만은 수르의 조선대에서 다우를 대량으로 지어 인도양 교역과 훗날 동아프리카 원정(1650년 무스카트에서 포르투갈 축출)에 투입했다. 당대 유럽 기록은 오만이 상당한 규모의 다우 선단을 운용했다고 전하나 단일 화폐 결산치는 남아 있지 않다.",
+      "convert": "선단 규모(다우 수십~수백 척 운용 기록)를 이 파일의 중견~상위권 상단과 견주어 rank 4로 두고, julfahouse(600만)보다 약간 아래인 450만 닢으로 잡았다. 4,500,000닢 ≈ 선원 약 4,090명의 1년 치.",
+      "source": "오만 야아리바 왕조의 인도양 해상력에 관한 통설(다우 선단 규모의 구체 결산 자료는 미확보).",
+      "verdict": "probable"
+    },
+    {
+      "id": "julfahouse",
+      "capital": 6000000,
+      "seats": [
+        "hormuz",
+        "basra",
+        "bahrain",
+        "isfahan"
+      ],
+      "basis": "사파비 샤 압바스 1세가 1604년 줄파의 아르메니아 상인을 이스파한 근교 신줄파로 강제 이주시켜 생사 전매 대리를 맡겼다. 17세기 아르메니아 상인 가문(셰리만 가 등)의 부유함은 여러 유럽 여행기·상관 기록에서 두드러지게 언급되며, 이후 유럽으로 이주한 일부 가문은 막대한 재산을 유지했다고 전해진다. 다만 이 시대 단일 결산 수치는 확보하지 못했다.",
+      "convert": "'생사 전매를 왕이 맡긴 상인망'이라는 지위와 여러 사료의 정성적 부유함 서술을 근거로 이 파일에서 khalijbroker보다 상위, gujaratsarraf·huizhou 같은 최상위권보다는 아래인 중상위(rank 4)로 두었다. 6,000,000닢 ≈ 선원 약 5,450명의 1년 치.",
+      "source": "사파비 신줄파 아르메니아 상인 공동체에 대한 통설(Ina Baghdiantz McCabe 등의 신줄파 무역사 연구 계열). 결산 수치는 미확보.",
+      "verdict": "probable"
+    },
+    {
+      "id": "khalijbroker",
+      "capital": 700000,
+      "seats": [
+        "basra",
+        "hormuz",
+        "gombroon",
+        "qatif"
+      ],
+      "basis": "바스라·호르무즈·반다르콩(곰브룬) 사이를 오가며 세관을 피하거나 값 차이를 노리는 중개상은 사료에 이름이 남는 대상이 아니라 항구 경제의 구조적 존재다. 결산 자료가 없다.",
+      "convert": "이 파일에서 가장 소규모인 축으로, sindtata(65만)와 비슷한 급으로 두었다 — 세관이 헐거운 자리를 옮겨 다니는 소자본 거간이라는 성격. 700,000닢 ≈ 선원 약 640명의 1년 치.",
+      "source": "결산 근거 없음. mideast/trade.js의 곰브룬(TARIFF_OVERRIDE 6%)·쿵(2%) 세율 격차에서 '세관을 피해 흐르는 짐'이라는 항구 경제의 구조만 확인.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "gujaratsarraf",
+      "capital": 290000000,
+      "seats": [
+        "cambay",
+        "surat",
+        "bharuch",
+        "diu"
+      ],
+      "basis": "17세기 수라트의 대상인 비르지 보라는 당대 영국 동인도회사 상관 기록에서 '재산이 800만 루피를 넘는다'고 묘사되며, 일부 유럽 관찰자는 그의 부가 동인도회사 자체를 능가한다고 적었다. 이 파일의 gujaratsarraf는 그를 원형으로 한 수라트 바니아 대상가 집단이다.",
+      "convert": "8,000,000루피를 이 시대 인도양 뱃사람(라스카르)의 연봉(대략 30루피 안팎으로 추정 — 확정 사료는 아님)으로 나누면 약 267,000명분의 1년 치가 된다. 이를 선원 연봉 환산축(1,100닢)에 그대로 옮겨 약 2억 9천만 닢으로 적었다 — 절대값이 크게 벌어지는 것은 의도된 것이다(§설계 문서 2-3: 서열은 유지하고 크기는 게임이 로그 압축한다). 이 파일에서 가장 큰 값이며, 그것이 '영국 동인도회사를 능가했다'는 사료의 취지를 그대로 반영한다.",
+      "source": "Ashin Das Gupta 계열의 수라트 상업사 연구 및 17세기 영국 동인도회사 상관 기록(비르지 보라 재산 관련 서술). 루피-닢 환산에 쓴 라스카르 연봉 수치는 확정 사료가 아니라 추정치.",
+      "verdict": "probable"
+    },
+    {
+      "id": "chettinad",
+      "capital": 5000000,
+      "seats": [
+        "nagapattinam",
+        "santhome",
+        "pulicat",
+        "masulipatnam",
+        "melaka"
+      ],
+      "basis": "코로만델 해안의 체티(나투코타이 체티 등) 금융상 집단은 비자야나가르·나야카 치하에서 면포 무역과 대부업을 겸한 것으로 널리 알려져 있으며, 후대(19세기)에는 동남아 전역으로 대부망을 넓힌 것으로 확인된다. 16세기 결산 자료는 확보하지 못했다.",
+      "convert": "'금융상'이라는 지위와 벵골만 건너 믈라카까지 이어지는 활동 범위를 근거로 marakkar와 비슷한 중상위권(rank 4)으로 두었다. 5,000,000닢 ≈ 선원 약 4,545명의 1년 치.",
+      "source": "코로만델 체티 상인 집단에 대한 통설(David Rudner의 나투코타이 체티 연구가 후대 사례의 주요 참고). 이 시대 결산 수치는 미확보.",
+      "verdict": "probable"
+    },
+    {
+      "id": "marakkar",
+      "capital": 3500000,
+      "seats": [
+        "calicut",
+        "cannanore",
+        "cranganore",
+        "cochin",
+        "colombo"
+      ],
+      "basis": "쿤잘리 마라카르 가문은 자모린(캘리컷 사무티리)의 해군 제독을 대대로 맡으며 무슬림 후추 상인 세력을 이끌어 포르투갈의 카르타즈 체제에 정면으로 맞섰다 — 16세기 후반 여러 차례 포르투갈 함대와 교전한 기록이 남아 있다. 단일 화폐 결산치는 없다.",
+      "basis_note": "무력과 상업을 함께 쥔 이 시대 말라바르 최대의 토착 해상 세력이라는 서술이 여러 포르투갈 측 연대기(카스타네다 등)에 반복해서 나온다.",
+      "convert": "함대를 자체 운용하며 자모린의 해군력을 대신했다는 지위를 근거로 rank 4의 상단으로 두었다 — chettinad와 비슷하되 무력 비중이 커 fleet를 더 높게(4) 잡았다. 3,500,000닢 ≈ 선원 약 3,180명의 1년 치.",
+      "source": "포르투갈 연대기(카스타네다·코레아 계열)에 기록된 쿤잘리 마라카르 가문의 대(對)포르투갈 해상전 서술. 결산 수치는 미확보.",
+      "verdict": "probable"
+    },
+    {
+      "id": "bengalhouse",
+      "capital": 2200000,
+      "seats": [
+        "hooghly",
+        "satgaon",
+        "chittagong",
+        "nagapattinam",
+        "melaka"
+      ],
+      "basis": "벵골 술탄국·이후 무굴 벵골의 항구들은 면포·설탕·초석을 수출하고 은과 조개돈(카우리)을 상시 흡수하는 구조였다(satgaon/trade.js: '은화 한 닢이 조개 1만 250개와 바뀐다'). 개별 상단명이 사료에 뚜렷이 남아 있지 않아 이 항목은 벵골 뱃상인 집단을 대표하는 구성이다.",
+      "convert": "결산 자료가 없어 같은 인도양 권역의 중견 상단(chettinad·marakkar)보다 한 단계 아래인 rank 3으로 두었다. 2,200,000닢 ≈ 선원 2,000명의 1년 치.",
+      "source": "벵골 항구 경제 구조에 대한 지역 무역사 통설. 결산 수치는 미확보.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "sindtata",
+      "capital": 650000,
+      "seats": [
+        "thatta",
+        "cambay",
+        "bharuch",
+        "diu"
+      ],
+      "basis": "타타는 인더스강 항행의 종점이자 신드의 수도로, 로히·주트르 등 신드 특산 무명을 짜서 내놓았다. 큰 숲이 없어 강선 목재·코이어를 사들여야 했던 구조가 trade.js에 남아 있다. 결산 자료는 없다.",
+      "convert": "이 파일에서 규모가 가장 작은 축으로, khalijbroker와 비슷한 급(rank 2)으로 두었다 — 배가 작고 순회로가 짧은 지역 상단이라는 성격. 650,000닢 ≈ 선원 약 590명의 1년 치.",
+      "source": "결산 근거 없음. 성격은 indian/trade.js(thatta 항목)의 서술을 그대로 따랐다.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "wajobugis",
+      "capital": 1800000,
+      "seats": [
+        "makassar",
+        "buton",
+        "banda",
+        "solor"
+      ],
+      "basis": "술라웨시 와조 출신 부기스 선주들은 프라후(범선)로 동부 군도 전역을 오가며 쌀·향목·거북등껍질 등을 실어 나른 것으로 널리 알려져 있다(본격적인 부기스 상업 팽창은 17세기 후반이 절정이나, 16세기부터 이미 도서부 해상 교역의 한 축이었다). 개별 결산 자료는 없다.",
+      "convert": "향료 산지 코앞에 앉지 않고 섬들 사이를 잇는 중개 물류의 성격을 근거로 중견(rank 3)으로 두었다. 1,800,000닢 ≈ 선원 약 1,640명의 1년 치.",
+      "source": "부기스-마카사르 해상 교역에 대한 통설(본격 절정은 17세기 후반이라는 점을 유의). 결산 수치는 미확보.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "javanorthcoast",
+      "capital": 3000000,
+      "seats": [
+        "tuban",
+        "gresik",
+        "surabaya",
+        "cirebon"
+      ],
+      "basis": "토메 피레스의 『동방제국기』(Suma Oriental, c.1515)는 그레식·투반을 자바에서 가장 부유한 상업 도시로 서술하며, 향료제도의 물산을 사들여 서쪽으로 되파는 중개 기능을 강조한다.",
+      "convert": "당대 1차 사료가 '가장 부유한 항시'로 명시한 점을 근거로 이 권역에서 상위권(rank 4)으로 두었다. 3,000,000닢 ≈ 선원 약 2,730명의 1년 치.",
+      "source": "Tomé Pires, Suma Oriental (c.1515), Armando Cortesão 영역본의 그레식·투반 관련 서술.",
+      "verdict": "probable"
+    },
+    {
+      "id": "acehsultanate",
+      "capital": 4200000,
+      "seats": [
+        "aceh",
+        "pasai",
+        "barus",
+        "jeddah"
+      ],
+      "basis": "아체 술탄국은 16세기 후반 오스만제국과 군사·통상 관계를 맺어 화포와 포수를 들여왔고, 포르투갈령 믈라카를 거치지 않고 후추를 홍해로 직송하는 왕실 주도 무역을 운영했다 — 술탄이 직접 배를 소유·파견한 국영 성격이 강하다.",
+      "convert": "왕실이 직접 함대를 통제하고 화포로 무장했다는 점에서 이 권역 최상위권(rank 4, 오만함대와 비슷한 급)으로 두었다. 4,200,000닢 ≈ 선원 약 3,820명의 1년 치.",
+      "source": "아체-오스만 관계 및 아체의 홍해 직항 후추 무역에 대한 통설(Anthony Reid의 동남아 교역사 연구 계열). 결산 수치는 미확보.",
+      "verdict": "probable"
+    },
+    {
+      "id": "malukubroker",
+      "capital": 2600000,
+      "seats": [
+        "ternate",
+        "tidore",
+        "ambon",
+        "banda"
+      ],
+      "basis": "테르나테·티도레·반다는 인구가 적은 작은 섬들이었지만 정향·육두구의 세계 유일 산지라는 지위 덕에 산지 값의 수백 배로 유럽에서 팔리는 물건을 쥐고 있었다. 다만 섬 자체는 쌀·옷감을 전량 사들여야 했던 구조라(banda/trade.js 참고) 화폐 자본의 절대 규모는 크지 않았을 것으로 본다.",
+      "convert": "'물량은 작지만 단위 가치가 세계 최고'라는 성격을 근거로 중견(rank 3)으로 두었다 — fleet는 낮게(2), capital은 중간으로. 2,600,000닢 ≈ 선원 약 2,360명의 1년 치.",
+      "source": "향료제도 정향·육두구 무역의 가치 구조에 대한 통설. 결산 수치는 미확보.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "melakaorangkaya",
+      "capital": 1900000,
+      "seats": [
+        "johor",
+        "jambi",
+        "palembang",
+        "melaka"
+      ],
+      "basis": "1511년 포르투갈에 믈라카를 잃은 술탄가는 조호르로 옮겨 갔지만, 옛 믈라카의 상인 귀족(오랑카야)층과 교역망은 상당 부분 유지되어 해협 무역에서 계속 영향력을 행사했다.",
+      "convert": "항구(정치적 거점)는 잃었으나 상업망은 유지했다는 서술을 근거로 중견(rank 3)으로 두었다. 1,900,000닢 ≈ 선원 약 1,730명의 1년 치.",
+      "source": "1511년 이후 조호르 술탄국과 옛 믈라카 상인층의 연속성에 대한 통설. 결산 수치는 미확보.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "huizhou",
+      "capital": 250000000,
+      "seats": [
+        "guangzhou",
+        "ningbo",
+        "yuegang",
+        "shanghai"
+      ],
+      "basis": "휘주(신안)상인은 명·청대 소금 전매 특권(개중법·강운법)으로 거대 자본을 축적한 뒤 생사·자기·차·전당업까지 손을 뻗은 중국 최대급 상인 집단이다. Ho Ping-ti(何炳棣)의 고전 연구는 청 중기(1740년대) 량화이 염상의 총자본을 은 수천만 냥 규모로 추산했다 — 명대 후기에도 이미 그 축적이 상당 부분 진행되어 있었다.",
+      "convert": "청대 수치를 명대 16세기에 그대로 대입할 수는 없어 한 단계 낮춰 잡되, 이 파일에서 가장 부유한 gujaratsarraf와 같은 최상위(rank 5)로 두었다 — 두 사료 모두 '동시대 최대 상업자본가'로 서술된다는 공통점을 근거로 삼았다. 2억 5천만 닢 ≈ 선원 약 227,000명의 1년 치.",
+      "source": "Ho Ping-ti, 'The Salt Merchants of Yang-Chou' (Harvard Journal of Asiatic Studies, 1954) — 량화이 염상 자본 추산. 명대 16세기로의 시점 이전은 이번 조사에서 확정하지 못해 verdict를 probable로 낮춘다.",
+      "verdict": "probable"
+    },
+    {
+      "id": "yuegangship",
+      "capital": 15000000,
+      "seats": [
+        "yuegang",
+        "quanzhou",
+        "manila",
+        "guangzhou"
+      ],
+      "basis": "1567년 융경개관 이후 월항(해징)은 사무역이 합법인 유일한 항구가 되었고, 마닐라 갈레온의 아메리카 은이 이 좁은 문으로 집중되었다 — 마닐라에서 은만 싣고 돌아온 배에 가증향을 별도로 물렸다는 기록이 그 규모를 방증한다. 학계는 이 시기 명으로 유입된 은의 총량을 상당한 규모(연간 수십만 냥 단위)로 추산하나, 월항 해상 조합 자체의 결산 자료는 없다.",
+      "convert": "이 항구가 '유일한 합법 통로'로서 은 유입의 병목이었다는 구조적 지위를 근거로 상위권(rank 4)으로 두었다 — huizhou·zhengfleet보다는 아래, chettinad·julfahouse보다는 위. 15,000,000닢 ≈ 선원 약 13,600명의 1년 치.",
+      "source": "월항 해금 해제(1567)와 가증향 관련 통설(전종한 등 명대 해외무역사 연구 계열). 조합 자체의 결산 수치는 미확보.",
+      "verdict": "probable"
+    },
+    {
+      "id": "zhengfleet",
+      "capital": 45000000,
+      "seats": [
+        "yuegang",
+        "macau",
+        "manila",
+        "nagasaki"
+      ],
+      "basis": "정지룡·정성공으로 이어지는 정씨 해상집단은 17세기 중반 명·청 교체기에 동중국해·남중국해 무역을 사실상 독점하다시피 했고, 자체 함대로 통행세를 걷는 준(準) 국가적 조직으로 성장했다 — 다만 그 정점은 이 게임이 다루는 대항해시대 초입(15세기 말~16세기)보다 다소 뒤인 17세기 사건이다.",
+      "convert": "이 파일의 규정대로 연도를 고정하지 않는 배경 설정이므로 정씨 해상집단의 절정기 규모를 이 시대 최상위권(rank 5)으로 옮겨 왔다 — 다만 시점 불일치가 있어 verdict를 gameplay로 낮춘다. huizhou·gujaratsarraf보다는 아래로 두었다(그들은 순수 상업자본인 데 비해 이쪽은 무력에 자원을 나눠 쓴다는 판단). 45,000,000닢 ≈ 선원 약 40,900명의 1년 치.",
+      "source": "정씨 해상집단(정지룡·정성공)의 동아시아 해상 패권에 대한 통설. 시점을 이 게임의 배경보다 늦춰 참조했다는 한계를 명시한다.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "itowappu",
+      "capital": 3000000,
+      "seats": [
+        "nagasaki",
+        "macau",
+        "hirado"
+      ],
+      "basis": "1604년 도쿠가와 막부가 도입한 이토와푸(糸割符) 제도는 교토·사카이·나가사키(뒤에 에도·오사카 추가) 상인 조합이 마카오발 생사 수입가를 공동으로 정해 매입하게 한 제도다 — 개별 상인의 자유 거래를 막고 조합이 가격결정권을 쥐었다는 점이 사료로 확인된다.",
+      "convert": "제도 자체가 '가격을 정하는 쪽'이라는 구조적 우위를 근거로 중견(rank 3)으로 두었다 — 물량을 직접 나르는 함대는 작지만(fleet 2) 가격결정력이 자본력을 대신한다는 성격. 3,000,000닢 ≈ 선원 약 2,730명의 1년 치.",
+      "source": "이토와푸 제도(1604)에 대한 일본 근세 경제사 통설. 조합 자체의 화폐 결산 수치는 미확보.",
+      "verdict": "probable"
+    },
+    {
+      "id": "ryukyuhouse",
+      "capital": 900000,
+      "seats": [
+        "naha",
+        "fuzhou",
+        "quanzhou",
+        "hakata"
+      ],
+      "basis": "류큐는 '만국진량(万国津梁)'을 자처하며 명에 대한 조공무역 독점권을 발판으로 명·일본·동남아를 잇는 중계무역으로 번영했다. 《역대보안》이 나하에서 출항한 진공·통상선의 기록을 다수 남기고 있으나, 왕부 무역청 자체의 화폐 결산치는 없다.",
+      "convert": "인구·영토가 작은 왕국이라는 점을 반영해 이 파일에서 하위권(rank 2)으로 두었다 — 물동량 대비 이문율은 높았으나 절대 자본 규모는 크지 않았다는 판단. 900,000닢 ≈ 선원 약 820명의 1년 치.",
+      "source": "《역대보안(歴代宝案)》에 기록된 류큐 조공·통상 무역 활동에 대한 통설. 결산 수치는 미확보.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "gyeonggang",
+      "capital": 750000,
+      "seats": [
+        "mapo",
+        "busanpo",
+        "gunsan",
+        "gangjin"
+      ],
+      "basis": "경강상인은 마포·서강·용산 등 한강 하류(경강)를 근거로 세곡 운송과 어물·인삼 유통을 장악한 조선의 사상(私商) 집단이다. 본격적인 대자본화는 18세기 이후로 알려져 있어, 16세기 시점에는 아직 초기 형태였을 것으로 본다.",
+      "convert": "사무역이 원칙적으로 금지된 조선의 특수성과 '아직 초기 형태'라는 시점을 근거로 이 파일에서 하위권(rank 2)으로 두었다. 750,000닢 ≈ 선원 약 680명의 1년 치.",
+      "source": "경강상인의 성장사에 대한 조선 후기 경제사 통설(본격 성장은 18세기 이후라는 시점차를 명시). 16세기 결산 수치는 없음.",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "cargadoresdeindias",
+      "capital": 9000000,
+      "seats": [
+        "sevilla",
+        "cadiz",
+        "havana",
+        "veracruz",
+        "cartagena"
+      ],
+      "basis": "세비야 소재 인디아스 무역상 시몽 루이스(Simón Ruiz) 상회의 정점 자본이 상업 서한 기록상 대략 30만 두카트로 추산된다. 그 자신이 '카르가도레스 아 인디아스' 전부를 대표하지는 않지만, 세비야 최상위 인디아스 상단의 자본 규모를 보여주는 가장 잘 문서화된 대리 지표라 이 상단의 기준값으로 썼다.",
+      "convert": "300,000두카트 × 30닢/두카트 = 9,000,000닢",
+      "source": "Henri Lapeyre, Une famille de marchands: Les Ruiz (1955)",
+      "verdict": "probable"
+    },
+    {
+      "id": "mexicoconsulado",
+      "capital": 9450000,
+      "seats": [
+        "veracruz",
+        "acapulco",
+        "campeche"
+      ],
+      "basis": "17세기 중반 멕시코시티 상인 엘리트 다수가 30만~50만 페소대 자산을 쌓았다는 연구를 따라, 콘술라도 유력 상단급의 대표값으로 35만 페소를 잡았다.",
+      "convert": "350,000페소 × 27닢/페소 = 9,450,000닢",
+      "source": "Louisa Schell Hoberman, Mexico's Merchant Elite, 1590–1660 (1991)",
+      "verdict": "probable"
+    },
+    {
+      "id": "cartagenaasiento",
+      "capital": 3000000,
+      "seats": [
+        "cartagena",
+        "portobelo",
+        "veracruz",
+        "havana",
+        "lisboa"
+      ],
+      "basis": "1595년 페드로 고메스 레이넬의 노예 아시엔토 계약이 9년간 약 90만 두카트의 왕실 납부 의무를 졌다는 기록을 따라, 계약상이 실제 운용해야 했던 자본 규모를 연 부담액(약 10만 두카트) 수준으로 잡았다.",
+      "convert": "100,000두카트 × 30닢/두카트 = 3,000,000닢",
+      "source": "Enriqueta Vila Vilar, Hispanoamérica y el comercio de esclavos (1977)",
+      "verdict": "probable"
+    },
+    {
+      "id": "portobeloferistas",
+      "capital": 4050000,
+      "seats": [
+        "portobelo",
+        "panama",
+        "cartagena",
+        "nombrededios"
+      ],
+      "basis": "포르토벨로 정기시 개별 중개상의 전형적 자본은 사료상 단일 확정 수치가 없다. 리마·멕시코 콘술라도(수십만 페소대)보다 한 단계 아래인 15만 페소를 상대 서열로 잡았다.",
+      "convert": "150,000페소 × 27닢/페소 = 4,050,000닢",
+      "source": "상대 서열 추정 (콘술라도 대비 한 단계 아래)",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "curacaowic",
+      "capital": 840000,
+      "seats": [
+        "curacao",
+        "riohacha",
+        "maracaibo",
+        "cartagena",
+        "amsterdam"
+      ],
+      "basis": "퀴라소 유력 밀무역 상관(세파르디 상인 가문 등)의 자본이 문헌상 대략 수만~10만 길더대로 언급되나 단일 확정 수치는 없다. 중간값인 12만 길더를 대표값으로 잡았다.",
+      "convert": "120,000길더 × 7닢/길더 = 840,000닢",
+      "source": "Wim Klooster, Illicit Riches: Dutch Trade in the Caribbean, 1648–1795 (1998) — 상대추정",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "tortugafilibusteros",
+      "capital": 378000,
+      "seats": [
+        "tortuga",
+        "jamaica",
+        "stkitts"
+      ],
+      "basis": "토르투가·자메이카 밀무역 중개인은 개별 규모가 작아 사료상 단일 수치가 없다. 합법 콘술라도의 1/20~1/25 규모인 소상인 운용자금(1.4만 페소)을 대표값으로 잡았다.",
+      "convert": "14,000페소 × 27닢/페소 = 378,000닢",
+      "source": "상대 서열 추정 (콘술라도 대비 소규모)",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "limaconsulado",
+      "capital": 5200000,
+      "seats": [
+        "callao",
+        "arica",
+        "potosi"
+      ],
+      "basis": "17세기 리마 상인 엘리트의 자산이 대체로 20만~50만 페소대로 보고되며, 그 하단에 가까운 약 19만 페소를 대표값으로 잡았다.",
+      "convert": "192,600페소 × 27닢/페소 ≈ 5,200,000닢",
+      "source": "Kenneth Andrien, Crisis and Decline: The Viceroyalty of Peru in the Seventeenth Century (1985)",
+      "verdict": "probable"
+    },
+    {
+      "id": "consorcioazoguero",
+      "capital": 40500000,
+      "seats": [
+        "potosi",
+        "huancavelica",
+        "arica",
+        "callao"
+      ],
+      "basis": "포토시 최대 광산업자 안토니오 로페스 데 키로가의 정점 순자산이 전기 연구상 약 150만 페소로 추산된다. 그는 사료상 문서화된 식민기 페루 최대의 자산가라, 아소게로(수은·정련 계약상) 컨소시엄의 상한 규모로 썼다.",
+      "convert": "1,500,000페소 × 27닢/페소 = 40,500,000닢",
+      "source": "Peter Bakewell, Silver and Entrepreneurship in Seventeenth-Century Potosí: The Life and Times of Antonio López de Quiroga (1988)",
+      "verdict": "probable"
+    },
+    {
+      "id": "buenosairesplateros",
+      "capital": 1080000,
+      "seats": [
+        "buenosaires",
+        "colonia",
+        "montevideo"
+      ],
+      "basis": "부에노스아이레스 밀무역 개별 상인의 자본은 사료상 단일 확정 수치가 없다. 라플라타 밀무역의 규모를 콜로니아 계약상단 이하로 보고 4만 페소를 대표값으로 잡았다.",
+      "convert": "40,000페소 × 27닢/페소 = 1,080,000닢",
+      "source": "Zacarías Moutoukias, Contrabando y control colonial en el siglo XVII (1988) 참고 — 상대추정",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "senhoresengenho",
+      "capital": 1620000,
+      "seats": [
+        "recife",
+        "salvador",
+        "ilheus",
+        "portoseguro",
+        "lisboa"
+      ],
+      "basis": "바이아 엔제뉴 한 곳의 사료상 가치가 대략 1만~2만 크루자도로 보고된다. 이 상단은 엔제뉴 여러 곳을 낀 계약상단이라 4곳분 규모(약 6만 크루자도)로 잡았다.",
+      "convert": "60,000크루자도 × 27닢/크루자도 = 1,620,000닢",
+      "source": "Stuart B. Schwartz, Sugar Plantations in the Formation of Brazilian Society: Bahia, 1550–1835 (1985)",
+      "verdict": "probable"
+    },
+    {
+      "id": "yerbamateros",
+      "capital": 324000,
+      "seats": [
+        "asuncion",
+        "buenosaires",
+        "montevideo"
+      ],
+      "basis": "파라과이 마테 무역상은 소규모 지역상단이 대부분이라 사료상 단일 수치가 없다. 소상인 운용자금(1.2만 페소)을 대표값으로 잡았다.",
+      "convert": "12,000페소 × 27닢/페소 = 324,000닢",
+      "source": "상대 서열 추정",
+      "verdict": "gameplay"
+    },
+    {
+      "id": "laplatacueros",
+      "capital": 594000,
+      "seats": [
+        "montevideo",
+        "colonia",
+        "buenosaires"
+      ],
+      "basis": "라플라타 가죽·우지 상인은 목장 경제 규모에 준한 중소 상단으로 보고 2.2만 페소를 대표값으로 잡았다.",
+      "convert": "22,000페소 × 27닢/페소 = 594,000닢",
+      "source": "상대 서열 추정",
+      "verdict": "gameplay"
+    }
+  ]
+}

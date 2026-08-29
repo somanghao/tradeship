@@ -61,6 +61,9 @@ import {
   vacancyOdds, estateRent, estateOccupied, holdingIncomeDue,
   netWorth, tariffScale, tariffShockFactor, baseTariff, seizureOdds, seizeCargo,
   addShock, rollShockEvents, shockFactor, priceOf,   // voyageCost는 위 C-17 줄에서 이미 온다
+  /* 상단(商團) — 회차 25. 값이 아니라 **부호**가 요점이다 */
+  guildFactor, addGuildFlow, guildFlowOf, decayGuildFlow, guildCredit, guildEscortOff,
+  refreshPrices, marketDepth,
   /* #3 조선소 교역권 사다리 · #4 계절풍 */
   yardReach, yardShortOf,
   routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
@@ -2324,4 +2327,180 @@ resetGame();
     ok(/keepAfloat/.test(battleSrc) === false || /배선하지 않/.test(battleSrc),
        '`keepAfloat`는 배선되지 않았다 — 켜도 아무 일이 안 나는 손잡이를 두지 않는다');
   }
+}
+
+/* ── 상단(商團) — 자본이 물가를 누른다 (회차 25) ───────────────────────────
+   ★ 이 절이 지키는 것은 **부호**다. 값이 아니라 방향이 틀리면 물가가 안 좁혀진다.
+   ★ **판정에 「무엇과 비교해서」를 넣는다** — 이 저장소가 「최고선 ✓」가 강등에 찍혀 있는
+     것을 겪은 뒤의 규약이다. 그래서 아래 검사는 대부분 **같은 실행 안에서 두 번 재서
+     차이를 찍는다**(성공 로그를 믿지 않는다). */
+{
+  const { GUILD } = await import('../js/data.js');
+  const { HOUSES } = await import('../js/npc/houses.js');
+  const { startCapital, fleetOf, mightOf, initGuilds, guildTick, guildRank } =
+    await import('../js/npc/guild.js');
+  const { REGIONS } = await import('../js/regions/index.js');
+  const { readFileSync: rf } = await import('node:fs');
+
+  resetGame();
+
+  /* ① 명부 — 바다마다 얼굴이 있나 */
+  const seas = REGIONS.filter((r) => (r.mod.geo.CITIES ?? []).length).map((r) => r.id);
+  const empty = seas.filter((id) => !HOUSES.some((h) => h.region === id));
+  ok(HOUSES.length >= 20 && empty.length === 0,
+     `상단 명부 ${HOUSES.length}곳 · 빈 바다 ${empty.length}개${empty.length ? ` (${empty.join(',')})` : ''}`);
+
+  /* ② **상단이 없으면 옛 값 그대로다** — 기준선이 안 움직였다는 증거 */
+  ok(guildFactor('venezia', 'grain') === 1,
+     '상단이 손 안 댄 항구·품목은 계수가 정확히 1이다 — 옛 값과 한 닢도 안 다르다');
+
+  /* ③ ★ **부호** — 사가면 오르고, 부으면 내린다. 같은 실행에서 두 번 재서 차이를 찍는다 */
+  refreshPrices();
+  const p0 = priceOf('venezia', 'grain');
+  addGuildFlow('venezia', 'grain', -marketDepth('venezia') * 0.1 / GUILD.flowK);
+  const pUp = priceOf('venezia', 'grain');
+  addGuildFlow('venezia', 'grain', +marketDepth('venezia') * 0.2 / GUILD.flowK);
+  const pDown = priceOf('venezia', 'grain');
+  ok(pUp > p0, `상단이 **사가면 값이 오른다** — ${p0} → ${pUp}닢 (flow < 0)`);
+  ok(pDown < p0, `상단이 **부으면 값이 내린다** — ${p0} → ${pDown}닢 (flow > 0)`);
+
+  /* ④ 상한이 실제로 선다 — 없으면 「어렵게」가 「불가능」이 된다 */
+  addGuildFlow('venezia', 'grain', 1e9);
+  const f = guildFactor('venezia', 'grain');
+  ok(Math.abs(f - (1 - GUILD.priceCap)) < 1e-9,
+     `아무리 부어도 ±${(GUILD.priceCap * 100).toFixed(0)}%를 못 넘는다 — 구조 사다리가 안 뒤집힌다 (계수 ${f.toFixed(3)})`);
+
+  /* ⑤ 삭는다 — 상단이 손을 놓으면 값이 되돌아온다 */
+  state.guildFlow = { venezia: { grain: 100 } };
+  decayGuildFlow(30);
+  const left = guildFlowOf('venezia', 'grain');
+  ok(left > 0 && left < 100 * 0.9,
+     `자국은 삭는다 — 30일 뒤 100 → ${left.toFixed(1)} (반감기 ≈ ${Math.round(Math.log(0.5) / Math.log(GUILD.flowDecay))}일)`);
+
+  /* ⑥ 스위치 — 끄면 세계가 상단 이전으로 돌아간다(짝지은 측정이 이것을 쓴다) */
+  state.guildFlow = { venezia: { grain: -400 } };
+  const onF = guildFactor('venezia', 'grain');
+  GUILD.enabled = false;
+  const offF = guildFactor('venezia', 'grain');
+  GUILD.enabled = true;
+  ok(onF !== 1 && offF === 1, `GUILD.enabled를 끄면 계수가 1로 돌아간다 (${onF.toFixed(3)} → ${offF})`);
+  state.guildFlow = {};
+
+  /* ⑦ ★ 자본 → 힘의 사다리가 **실제로 갈린다** — 다 같으면 "부가 힘이 된다"가 거짓말이다 */
+  const lad = HOUSES.map((h) => { const c = startCapital(h); return { c, f: fleetOf(c), m: mightOf(c) }; });
+  const fl = new Set(lad.map((x) => x.f)), mi = new Set(lad.map((x) => x.m));
+  ok(fl.size >= 2 && mi.size >= 2,
+     `자본이 힘이 된다 — 선단 ${[...fl].sort().join('/')} · 세기 ${[...mi].sort().join('/')}`
+     + ` (자본 ${Math.min(...lad.map((x) => x.c)).toLocaleString('en-US')}~${Math.max(...lad.map((x) => x.c)).toLocaleString('en-US')}닢)`);
+
+  /* ⑧ ★ **상단은 지도의 정원을 안 건드린다** — 밀도를 올려 푸는 것이 아니다(QUICKMAP-world §3) */
+  resetGame(); initWorld();
+  const npc0 = state.npcs.length;
+  guildTick(30, []);
+  ok(state.npcs.length === npc0,
+     `상단이 30일을 굴러도 지도 위 배는 ${npc0}척 그대로다 — 해적 밀도·조우 확률이 안 움직인다`);
+
+  /* ⑨ ★ 상단이 **실제로 굴렀나** — 안 구르면 위 검사 전부가 아무것도 안 지킨다.
+        (「+198칸을 여섯 번 찍고 실제로는 0이었다」를 겪은 뒤의 규약: 결과를 직접 센다) */
+  resetGame(); initGuilds();
+  for (let d = 0; d < 120; d++) { state.day++; refreshPrices(); guildTick(1, []); decayGuildFlow(1); }
+  const legs = Object.values(state.guilds).reduce((a, g) => a + g.legs, 0);
+  const marked = Object.keys(state.guildFlow).length;
+  ok(legs > 0 && marked > 0, `상단이 120일에 항차 ${legs}회 · 자국 남긴 항구 ${marked}곳`);
+  const rk = guildRank();
+  ok(rk.length === HOUSES.length && rk[0].cap >= rk.at(-1).cap,
+     `자본 서열이 선다 — 1위 ${rk[0].name} ${rk[0].cap.toLocaleString('en-US')}닢 · 꼴찌 ${rk.at(-1).cap.toLocaleString('en-US')}닢`);
+
+  /* ⑩ ⚠️ **사건이 갓 난 자리는 상단이 안 건드린다** — 큰 기회는 플레이어의 것이다 */
+  resetGame(); initGuilds();
+  const hh = HOUSES.find((h) => (h.seats ?? []).length && (h.goods ?? []).length);
+  addShock(hh.seats[0], hh.goods[0], 1.6, 90, 'famine');
+  for (let d = 0; d < GUILD.reactDays - 1; d++) { state.day++; refreshPrices(); guildTick(1, []); }
+  ok(!guildFlowOf(hh.seats[0], hh.goods[0]),
+     `사건이 난 지 ${GUILD.reactDays}일 안에는 상단이 손대지 않는다 (${hh.name} · ${hh.seats[0]})`);
+
+  /* ⑪ 도움 — 신용장이 **실제로** 매입가를 깎는다(같은 실행에서 두 번 재서 차이를 찍는다) */
+  resetGame();
+  const city = state.at, gid = Object.keys(CITY_BY_ID[city].supply ?? {})[0]
+    ?? Object.keys(CITY_BY_ID[city].demand ?? {})[0] ?? 'grain';
+  const before = costFor(gid, 10, city);
+  state.guildBoon = { credit: { cities: [city], off: GUILD.creditOff, until: state.day + 30, by: 'x' }, escort: null };
+  const after = costFor(gid, 10, city);
+  ok(guildCredit(city) === GUILD.creditOff && after < before,
+     `신용장이 매입가를 깎는다 — ${before} → ${after}닢 (−${((1 - after / before) * 100).toFixed(1)}%)`);
+  state.guildBoon = null;
+
+  /* ⑫ 도움 — 호위가 조우를 깎는다. ⚠️ **조우를 올리는 자리는 없어야 한다**(압박은 확률을 안 건드린다) */
+  const nb = neighborsOf(state.at).find((x) => routeRisk(state.at, x));
+  if (nb) {
+    const o0 = encounterOdds({ from: state.at, to: nb });
+    state.guildBoon = { credit: null, escort: { cities: [state.at], off: GUILD.escortOff, until: state.day + 30, by: 'x' } };
+    const o1 = encounterOdds({ from: state.at, to: nb });
+    state.guildBoon = null;
+    ok(o1 < o0 && Math.abs(o1 / o0 - (1 - GUILD.escortOff)) < 1e-6,
+       `호위가 조우를 깎는다 — ${(o0 * 100).toFixed(1)}% → ${(o1 * 100).toFixed(1)}%`);
+  }
+  const guildSrc = rf(new URL('../js/npc/guild.js', import.meta.url), 'utf8');
+  ok(!/encounterOdds|ODDS_BASE|SEA_EVENTS/.test(guildSrc),
+     '★ 상단은 **조우 확률을 한 줄도 안 건드린다** — 바뀌는 것은 「누가 오는가」뿐이다');
+
+  /* ⑬ ★ **세력과 겹치지 않는다**(설계 §0) — 상단은 쥔 자리의 웃돈도, 계약 가로채기도 안 한다 */
+  ok(!/gripMarkup|rollPoach|enrollOffer|convoyDue/.test(guildSrc),
+     '★ 상단은 `gripMarkup`·`rollPoach`를 쓰지 않는다 — 그 둘은 **세력**의 것이다(중복 금지)');
+
+  /* ⑭ 이용 — 사주의 진척을 `sell()`이 센다(경쟁 상단의 상관에 물건을 부으면 그 자리가 흔들린다) */
+  resetGame();
+  state.cargo = { grain: 20 }; state.buyPrice = { grain: 1 };
+  state.guildOffer = { by: 'a', foe: 'b', city: state.at, gid: 'grain', need: 30, done: 0, fee: 500, until: state.day + 30 };
+  sell('grain', 12);
+  ok(state.guildOffer.done === 12, `사주 진척을 파는 자리에서 센다 — ${state.guildOffer.done}/30`);
+
+  /* ⑮ ★ **소문에 상단 자리가 남는다** — 상단은 지도에 배로 안 뜨므로 소문이 유일한 얼굴이다.
+        습격 줄이 상한을 다 먹으면 물가를 누르는 층이 **화면에서 통째로 사라진다**
+        (이 저장소가 다섯 번 겪은 *"규칙이 멀쩡한데 화면이 말하지 않는다"*). */
+  {
+    const { newsLines } = await import('../js/world.js');
+    resetGame();
+    const flood = [];
+    for (let i = 0; i < 6; i++) {
+      flood.push({ kind: 'raid', who: '갑', victim: '을', at: 'venezia', to: 'rodos', loot: '', shocked: [] });
+    }
+    flood.push({ kind: 'guild-press', who: '아무 상단', city: 'venezia', goodId: 'grain', corner: true });
+    const lines = newsLines(flood, 3);
+    ok(lines.some((l) => /쓸어 담고|헐값에 풀고/.test(l.text)),
+       `습격 소문이 여섯 개여도 상단 줄이 항해일지에 남는다 (${lines.length}줄 중)`);
+  }
+
+  /* ⑯ 세이브 왕복 — 상단 장부가 그대로 실린다(`voy`까지 평범한 객체라 직렬화된다) */
+  resetGame(); initWorld();
+  for (let d = 0; d < 60; d++) { state.day++; refreshPrices(); guildTick(1, []); decayGuildFlow(1); }
+  const snap = JSON.stringify({
+    legs: Object.values(state.guilds).reduce((a, g) => a + g.legs, 0),
+    flows: Object.keys(state.guildFlow).length,
+  });
+  saveGame(); resetGame(); loadGame();
+  ok(JSON.stringify({
+    legs: Object.values(state.guilds ?? {}).reduce((a, g) => a + g.legs, 0),
+    flows: Object.keys(state.guildFlow ?? {}).length,
+  }) === snap, `세이브 왕복에 상단 장부가 그대로다 — ${snap}`);
+
+  /* ⑰ ★ **옛 세이브가 안 깨진다** — 상단 필드가 통째로 없는 판을 이어도 스스로 선다.
+        (`save.js`의 `FILL_IF_MISSING`에 안 넣었으므로 **여기서 지킨다**) */
+  saveGame();
+  const KEY = 'tradeship:save:v1';
+  const blob = JSON.parse(localStorage.getItem(KEY));
+  for (const k of ['guilds', 'guildFlow', 'guildBoon', 'guildOffer']) delete blob.state[k];
+  localStorage.setItem(KEY, JSON.stringify(blob));
+  const loaded = loadGame();
+  for (let d = 0; d < 20; d++) { state.day++; refreshPrices(); guildTick(1, []); decayGuildFlow(1); }
+  ok(loaded && Object.keys(state.guilds ?? {}).length === HOUSES.length,
+     `상단 필드가 없는 옛 세이브를 이어도 상단이 스스로 선다 (${Object.keys(state.guilds ?? {}).length}곳)`);
+
+  /* ⑱ 새 판은 상단도 처음부터다 — `??=`로만 만들면 옛 판의 자본·호감이 살아남는다 */
+  state.guilds = { x: { cap: 1 } }; state.guildFlow = { venezia: { grain: 9 } };
+  state.guildBoon = { credit: {} }; state.guildOffer = { by: 'a' };
+  resetGame();
+  ok(!Object.keys(state.guilds).length && !Object.keys(state.guildFlow).length
+     && !state.guildBoon && !state.guildOffer,
+     'resetGame이 상단 장부·자국·신용장·사주를 전부 비운다');
 }
