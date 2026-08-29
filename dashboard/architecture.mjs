@@ -172,6 +172,7 @@ export const LAYERS = [
       ['tools/probe-crewcut.mjs', '선원 사무역(P4-a)이 **배마다 얼마를 가져가나** — 초반 압박을 과하게 키우지 않았는지'],
       ['tools/probe-fleet.mjs', '선단 수지 — 채운 칸이 여전히 161 근처인가(적재 배수가 안 생겼는지)'],
       ['tools/probe-circuit.mjs', '회로 항구 수 → 닢/일 — 2~4항구가 여전히 마이너스인가(초반 압박 유지)'],
+      ['tools/probe-joseon-civic.mjs', '한반도 엔딩 `homelandProgress().docks` 실측(회차 24 GAME) — 조선 아홉 항구에 낸 세가 어떻게 쌓이나. `only=world`(전 세계 최적 방랑)는 3,900일에도 0/9인데 `only=homeloop`(조선+쓰시마·하카타·등주 왕복)는 700항차·1,542일에 9/9다 — 문턱이 아니라 **플레이 반경**이 갈랐다'],
       ['tools/coverage.mjs', '테스트케이스 카탈로그와 커버리지를 **코드에서 파생**시킨다 — 손으로 적으면 세계가 늘 때마다 낡는다'],
       ['tools/event-inventory.mjs', '사건이 **걸릴 자리**를 코드에서 전수로 센다 — 자리가 0이면 실클릭 이전에 결함이다'],
       ['tools/check-novel-events.mjs', '소설 소재집 §6 이벤트 72건의 근거 ↔ 코드(세율·항로위험·시세·계절·prizeYard)'],
