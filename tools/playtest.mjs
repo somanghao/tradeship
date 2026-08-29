@@ -72,6 +72,14 @@ export async function open(opts = {}) {
 
   let browser = null;
   const args = pos ? [`--window-position=${pos.x},${pos.y}`, `--window-size=${pos.w},${pos.h}`] : [];
+  /* ★ 회차 22(worktree 전용) — **러너의 크롬에 붙을 수 있게 CDP 포트를 연다.**
+     playwright 기본은 파이프라 `--remote-debugging-port`가 없고, 그래서 러너가 죽은 판의
+     `state.log`를 사후에 읽을 방법이 아예 없었다(회차 22 GRAND-ISSUES #4 — run 1의 25,000,000닢이
+     어디로 갔는지 두 시간을 되짚어야 했다). 환경변수를 준 때만 열린다 — 기본 동작은 그대로다.
+       PLAYTEST_RUNNER_CDP=9444 node .playtest/grand-run/grand-run22.mjs
+       node tools/playtest-live/play.mjs eval "…"   (PLAYTEST_CDP=9444로 붙는다) */
+  const RCDP = Number(process.env.PLAYTEST_RUNNER_CDP || 0);
+  if (RCDP > 0) args.push(`--remote-debugging-port=${RCDP}`);
   const viewport = pos ? null : { width: 1400, height: 900 };
 
   /* ★ **`userDataDir`를 주면 프로필이 남는다 — 세이브가 회차를 건너 산다.**
@@ -143,6 +151,13 @@ export async function open(opts = {}) {
     at: window.__game.state.at,
     crew: window.__game.state.crew,
     hp: window.__game.state.hp,
+    /* ★★★ 회차 23 — **이 한 줄이 두 회차를 먹었다.**
+       `maxHp`가 없어서 러너의 `if (s.hp < s.maxHp * 0.85)`가 언제나 `x < NaN` = **false**였고,
+       그래서 `repairAndRefit`의 수리 블록과 `phaseTour`의 중간 수리가 **한 번도 도지 않았다**
+       (실측: 네 판 전부 `notes[kind=repair]` **0건** · 로그에 `수리(항구)` **0회**).
+       회차 22가 「조선소 선원 탭」(#20)과 「씨」(#22)로 진단한 선체 고갈 증상의
+       마지막 뚜껍이에 이것이 있었다 — 그 둘을 고쳐도 수리는 여전히 0회였다. */
+    maxHp: window.__game.state.maxHp,
     ship: window.__game.state.shipKey,
     cargo: { ...window.__game.state.cargo },
     cargoCap: window.__game.state.cargoCap,
@@ -159,6 +174,82 @@ export async function open(opts = {}) {
          **이어하기**가 먼저 오고, 저장된 판이 있으면 첫 단추가 '이어하기'라 자동 조종이
          *다른 판*을 이어받는다. 시작 단추는 `.sea-pick`이 아닌 `.btn`이다. */
       const b = page.locator('#title-screen button.btn:not(.sea-pick)').last();
+      try { await b.waitFor({ state: 'visible', timeout: 4000 }); } catch { return false; }
+      /* ★★ 회차 24 — 하네스 H-1. **Playwright `.click()`은 `scrollIntoView`로 스크롤해서
+         눌러 준다 — 사람은 못 누르는데 자동검증은 통과한다.** 타이틀 「출항하기」가
+         **1280×720에서도 y=729**(뷰포트 밖)인 채로 **다섯 회차를 통과했다.**
+         그래서 누르기 전에 ① `getBoundingClientRect()`가 뷰포트 안인지
+         ② `document.elementFromPoint(cx,cy)`가 이 노드(또는 그 자손)를 돌려주는지 —
+         **둘 다** 확인한다. 실패하면 **`errors`에 넣어 소리를 낸다**(조용히 넘어가지 않는다 —
+         `notes`가 아니라 `errors`인 이유는 이것이 바로 `G-A1`이 다섯 회차 동안 놓친 그 결함이라서다).
+         ⚠️ 그래도 **클릭 자체는 그대로 진행한다** — 여기서 러너를 세우면 몇 시간짜리 회차가
+         첫 화면에서 끝난다. 사람이 못 누르는 자리라는 **사실만 기록**하고, 화면 고침은
+         DES-UI 소유다(GRAND은 게임 코드 0줄). */
+      /* ★★ 회차 24-b — DES-UI가 먼저 밟은 구멍: **`scrollIntoView`로 "닿나"를 재면 거짓 양성이 난다.**
+         `position:sticky`는 페인트 시점 시각 효과라 브라우저의 스크롤 계산엔 안 잡힌다 — 요소가
+         스크롤 없이 이미 뷰포트 "안"이면(그 위를 sticky 형제가 **그림으로만** 덮고 있어도)
+         `scrollIntoView`가 스크롤을 안 시킨다. 그래서 "지금 이 스크롤 위치에서 안 닿는다"만으로는
+         **영구히 막힌 것(H-1a)**과 **스크롤하면 닿는 것(H-1b — 오조작 위험이지 차단은 아니다)**을
+         못 가른다. 판정은 `scrollTop`을 0부터 `max`까지 훑어 **어느 지점에서든** `elementFromPoint`가
+         이 노드를 돌려주는지로 한다(DES-UI `_scroll-sweep.mjs`와 같은 방식). */
+      const hit = await b.evaluate((el) => {
+        const testAt = () => {
+          const r = el.getBoundingClientRect();
+          const cx = Math.round(r.left + r.width / 2), cy = Math.round(r.top + r.height / 2);
+          const inViewport = r.width > 0 && r.height > 0
+            && r.top >= 0 && r.left >= 0
+            && r.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+            && r.right <= (window.innerWidth || document.documentElement.clientWidth);
+          if (!inViewport) return { inViewport: false, hitsSelf: false, rect: r, atTag: null };
+          const atPoint = document.elementFromPoint(cx, cy);
+          const hitsSelf = !!atPoint && (atPoint === el || el.contains(atPoint));
+          return {
+            inViewport, hitsSelf, rect: r,
+            atTag: atPoint ? (atPoint.tagName + (atPoint.id ? '#' + atPoint.id : '') + (atPoint.className ? '.' + String(atPoint.className).replace(/\s+/g, '.') : '')) : null,
+          };
+        };
+        // 스크롤 가능한 조상을 찾는다(없으면 지금 자리 하나만 본다 — 타이틀은 대개 이 경로)
+        let scroller = null, n = el.parentElement;
+        while (n) {
+          const cs = getComputedStyle(n);
+          if (/(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 1) { scroller = n; break; }
+          n = n.parentElement;
+        }
+        const fmt = (res) => ({
+          inViewport: res.inViewport, hitsSelf: res.hitsSelf, atTag: res.atTag,
+          rect: { top: Math.round(res.rect.top), left: Math.round(res.rect.left), bottom: Math.round(res.rect.bottom), right: Math.round(res.rect.right) },
+          vw: window.innerWidth, vh: window.innerHeight,
+        });
+        if (!scroller) {
+          const r0 = testAt();
+          return { tier: (r0.inViewport && r0.hitsSelf) ? 'ok' : 'H-1a', ...fmt(r0) };
+        }
+        const prevTop = scroller.scrollTop;
+        const max = scroller.scrollHeight - scroller.clientHeight;
+        const step = Math.max(10, Math.round(max / 40) || 10);
+        let anyOk = false;
+        const atRest = testAt();
+        for (let s = 0; s <= max; s += step) {
+          scroller.scrollTop = s;
+          if (testAt().hitsSelf) { anyOk = true; break; }
+        }
+        scroller.scrollTop = prevTop;   // 원상복구 — 관측이 상태를 바꾸면 안 된다
+        const tier = (atRest.inViewport && atRest.hitsSelf) ? 'ok' : (anyOk ? 'H-1b' : 'H-1a');
+        return { tier, ...fmt(atRest) };
+      }).catch(() => null);
+      if (hit && hit.tier !== 'ok') {
+        const sev = hit.tier === 'H-1a' ? 'H-1a(치명 — 어떤 스크롤에서도 안 닿는다)' : 'H-1b(경고 — 스크롤하면 닿는다, 오조작 위험)';
+        const line = `[${hit.tier}] 「출항하기」 ${sev} — `
+          + `rect=${JSON.stringify(hit.rect)} viewport=${hit.vw}x${hit.vh} `
+          + `inViewport=${hit.inViewport} elementFromPoint=${hit.atTag ?? '(없음)'}`;
+        if (hit.tier === 'H-1a') {
+          if (!errors.includes(line)) errors.push(line);   // 진짜 FAIL — 조용히 안 넘어간다
+          console.warn('[playtest] ' + line);
+        } else {
+          if (!notes.includes(line)) notes.push(line);      // 경고 — 러너는 그대로 진행
+          console.warn('[playtest] ' + line);
+        }
+      }
       try { await b.click({ timeout: 4000 }); await sleep(200 + slow); return true; }
       catch { return false; }
     },
@@ -420,7 +511,30 @@ export async function open(opts = {}) {
         const m = await g.modal();
         if (m) {
           events.push(m.text.split('\n')[0]);
-          if (!(await g.modalClick())) break;
+          /* ★ 회차 22(worktree 전용) — **여기가 조우의 진짜 입구다.**
+             이름을 안 주면 `modalClick`이 `buttons[0]`를 누르는데, 조우 모달
+             「돛이 보인다」의 첫 단추는 **「전투 준비」**다(`scenes/map.js:884`).
+             그러면 12% 배삯으로 끝났을 자리가 전투가 되고, 전투 안 도주(`fleeOdds`)는
+             접근당할수록 무너져(0.53→0.13) 실패하면 **금고의 50%**를 잃는다
+             (`scenes/battle.js:589`). 실측: run 1이 조우 17회로 25,000,000 → 12늢.
+             ⇒ 「…도주」 단추가 있으면 그것을 고른다. 없으면 지금까지와 같다. */
+          /* ★ 회차 22-b — **게임이 이미 판정을 내려 준다.** `foeVersusLine`이
+             상대가 세면 「이쪽이 밀린다」를, 지면 배를 잃을 상황이면 「선체가 바닥이다」를
+             모달 본문에 적는다(`scenes/map.js:420`). 그 말이 있으면 도주(금고 12%),
+             없으면 싸운다 — 이 저장소의 원칙 「사람은 이길 수 있는 상대만 싸운다」 그대로다.
+             도주만 고르면 25,000,000닢이 751일에 0이 됐다(run 3 · gold-watch.log). */
+          const flee = (m.buttons ?? []).find((b) => /도주/.test(b));
+          const outmatched = /이쪽이 밀린다|선체가 바닥이다/.test(m.text ?? '');
+          /* ★ 회차 22 — **사냥 구간에서는 밀려도 싸운다.**
+             패권 ③은 「등급 5 격파」인데 등급 5는 hp 360·포 30·선원 130이라 게임이 언제나
+             *"이쪽이 밀린다"*고 답한다. 「사람은 이길 수 있는 상대만 싸운다」 정책을 그대로 두면
+             **조건 ③이 요구하는 싸움만 골라서 피하게 된다** — 실측: 전투 55건의 등급이
+             1~4뿐이고 5는 0건, 그런데 `foeOdds()`는 등급 5가 **25%**다(만나서 다 도망친 것).
+             그래서 러너가 사냥 중임을 알리면(`__r22_hunt`) 이 회피를 끈다. */
+          const hunting = await page.evaluate(() => !!window.__r22_hunt).catch(() => false);
+          const wantFight = !!flee && (hunting || !outmatched);
+          if (wantFight) await page.evaluate(() => { window.__r22_fight = true; }).catch(() => {});
+          if (!(await g.modalClick(wantFight ? null : (flee ?? null)))) break;
         }
       }
       return { ok: false, why: '시간 안에 못 닿았다', events, ...(await read()) };
