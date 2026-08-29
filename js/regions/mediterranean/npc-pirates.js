@@ -11,6 +11,10 @@
 //   bounty   [최소,최대] 현상금 — 잡으면 받는다
 //   circuit  순회로. 해적도 계절과 항로를 탄다
 //   season   'summer'|'winter'|null — 코르세어는 여름에 나온다(겨울 지중해는 배가 안 뜬다)
+//   sex      'f' — **여성으로 사료가 확실한 사람에게만** 적는다. 없으면 남성 바디로 그린다.
+//            ⚠️ 추측으로 배정하지 마라(「사실은 사료에 충실하게」). 지금 이 값을 가진 사람은
+//              아홉 바다 통틀어 둘이다 — `malahayati`(아체의 락사마나) · `killigrew`(레이디 킬리그루).
+//            읽는 곳: `scenes/battle.js` → `sprites/char.js: pirateSprite(id, tier, region, sex)`
 //   scope    'region' | 'ocean'
 //   blurb, lines
 //

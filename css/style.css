@@ -311,6 +311,11 @@ html, body {
 .svc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .svc-row .lbl { color: #b6ac9c; }
 .svc-row .val { color: var(--parch); font-variant-numeric: tabular-nums; }
+/* ★ 단추가 「태 / 운 / 다」로 세로로 갈라졌다 — 설명이 긴 카드(코멘다)에서 왼쪽 글이
+   자리를 다 먹고 단추만 눌려서다. 단추는 줄바꿈하지 않는다: **누르는 것의 이름**이라
+   갈라지면 무엇을 누르는지가 안 읽힌다. 대신 왼쪽 글이 줄어든다(min-width:0). */
+.svc-row > div:first-child { min-width: 0; }
+.svc-row .btn { flex: 0 0 auto; white-space: nowrap; }
 
 /* ── 전투 씬 ────────────────────────────────────────── */
 #battle-ui { position: absolute; inset: 0; }
@@ -621,18 +626,62 @@ html, body {
 .refit-row .ds { font-size: 11px; color: #6f6858; margin-top: 2px; line-height: 1.45; }
 
 /* ── 시작 화면 ──────────────────────────────────────── */
+/* ★ **「출항하기」가 뷰포트 밖이었다**(ART A-1 · 회차 23에 고침).
+     실측: 640×360에서 단추 y=560(창 360) · **1280×720에서도 y=729**로 화면 밖이었다.
+     `#title-screen`은 `overflow:hidden`인 `#stage` 안의 `position:absolute`라
+     **페이지 스크롤로도 못 닿았고**, `elementFromPoint`가 단추를 안 잡았다 —
+     즉 하네스든 사람이든 **커서로는 누를 수 없었다.** 그런데도 Playwright의 `.click()`은
+     `scrollIntoView`로 눌러 성공하므로 자동검증은 조용히 통과했다(「조용한 실패」의 반대 꼴 —
+     하네스만 성공한다). 타이틀이 안 닫히면 반투명 판이 항구를 덮어 **이후 캡쳐가 전부 무의미**해진다.
+   ⇒ 셋을 함께 고친다:
+     ① 이 판 자체를 **스크롤 컨테이너**로 만든다(`overflow-y:auto`) — 어떤 창 크기에서도 닿는다.
+     ② `justify-content: safe center` — 넘칠 때 가운데 정렬이 **위쪽을 잘라먹는** 것을 막는다
+        (안 되는 브라우저는 위의 `center`가 그대로 남는다 · 점진적 향상).
+     ③ 마지막 단추를 **바닥에 붙인다**(sticky) — 굴리지 않아도 「출항하기」는 언제나 눌린다.
+     그리고 창이 낮으면 글자·칸을 줄여 **굴릴 거리 자체**를 줄인다(아래 미디어 쿼리). */
 #title-screen {
   position: absolute; inset: 0; z-index: 50;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  justify-content: safe center;
   gap: 18px;
+  padding: 14px 10px;
+  overflow-y: auto; overscroll-behavior: contain;
   background: #0d0b11e8;
+}
+/* 이 화면에서 들어가는 유일한 문이다 — 항구의 `.btn-sail`과 같은 이유의 같은 처방 */
+#title-screen > button.btn:last-child {
+  position: sticky; bottom: 0; z-index: 2;
+  flex: 0 0 auto;
+  /* **띠**로 만든다 — 떠 있는 작은 단추는 무엇을 덮고 있는지 몰라 오히려 안 눌린다.
+     폭을 채우면 「여기가 바닥이고 이것이 문이다」가 한눈에 읽힌다(항구 `.btn-sail`과 같은 꼴). */
+  align-self: stretch; width: 100%; max-width: 560px; margin: 0 auto;
+  box-shadow: inset 0 1px 0 #fff6, 0 2px 0 #0007, 0 0 0 8px #0d0b11e8, 0 -12px 16px -6px #0d0b11;
 }
 #title-screen h1 {
   font-size: 30px; letter-spacing: .14em; color: var(--brass-l);
   text-shadow: 0 3px 0 #000, 0 0 24px #d2a52a44;
+  flex: 0 0 auto;
 }
-#title-screen .sub { color: #9a917f; font-size: 13px; letter-spacing: .05em; }
+#title-screen .sub { color: #9a917f; font-size: 13px; letter-spacing: .05em; text-align: center; }
 #title-screen .keys { color: #6f6858; font-size: 12px; line-height: 1.9; text-align: center; }
+
+/* 낮은 창에서 굴릴 거리를 줄인다 — 640×360 노트북·작은 창이 이 구간이다.
+   ⚠️ 여기서 **감추는 것은 없다.** 고르는 것(바다 아홉 · 갈래 다섯)은 전부 남고 크기만 준다. */
+@media (max-height: 560px) {
+  #title-screen { gap: 8px; padding: 8px; }
+  #title-screen h1 { font-size: 19px; letter-spacing: .10em; text-shadow: 0 2px 0 #000; }
+  #title-screen .sub { font-size: 11.5px; }
+  #title-screen .keys { font-size: 11px; line-height: 1.5; }
+  #title-screen .sea-pickers { gap: 4px; }
+  #title-screen .sea-grid { grid-template-columns: repeat(3, 150px); gap: 4px; }
+  #title-screen .sea-pick { padding: 4px 8px; line-height: 1.25; }
+  #title-screen .sea-pick b { font-size: 11.5px; }
+  #title-screen .sea-hook { font-size: 11px; min-height: 0; }
+  #title-screen > button.btn:last-child { font-size: 13px !important; padding: 8px 20px !important; }
+}
+@media (max-height: 420px) {
+  #title-screen .keys { display: none; }   /* 조작 안내는 항구에서도 읽힌다 — 고르는 칸을 살린다 */
+}
 
 /* 시작할 바다 고르기 — 아홉 칸이 한눈에 들어오게 3열로 둔다(스크롤 없이) */
 .sea-pickers { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -666,10 +715,37 @@ html, body {
 .ctr-line { font-size: 13px; color: var(--parch); line-height: 1.6; }
 .ctr-line b { color: var(--brass-l); }
 .ctr-sub { font-size: 11.5px; color: #8f8878; line-height: 1.6; }
-/* 항구의 사람들 — 얼굴 + 이름 한 줄. 초상은 24px로 눌러 담아 목록 높이를 지킨다 */
-.fig-row { display: flex; align-items: center; gap: 7px; }
-.fig-por { flex: 0 0 24px; height: 24px; display: block; overflow: hidden; }
-.fig-por canvas { image-rendering: pixelated; width: 24px; height: auto; margin-top: -2px; }
+/* `**…**` 강조가 실제로 굵게 나오는 자리(→ `ui.js` §굵게 · GRAND #14).
+   흐린 본문(#8f8878) 위에서는 굵기만으로는 안 읽혀 색을 한 칸 올린다. */
+.ctr-sub b, .svc-row .val b, #log-line b, .toast-item b { color: var(--parch); font-weight: 700; }
+/* 항구의 사람들 — 초상 + 이름/하는 일 두 줄 (ART A-5 · 2026-08-29)
+   ★ 예전에는 `flex: 0 0 24px; height: 24px`였다. 인물은 24×43으로 그려져 있으니
+     **전신을 머리만 남기고 잘라 넣은 24×24 썸네일**이었고, 얼굴은 대여섯 픽셀이라
+     *사람이 그린 PNG가 와도 이 칸에서는 안 읽힌다.* 그림보다 칸이 먼저 걸린 자리다.
+   ⇒ 3배로 구운 스프라이트(`spriteElTrim(…, 3)`)를 42×46 액자에 **가슴 위만** 담는다.
+     좌우는 `justify-content:center`가 고르게 자르고, 아래는 `align-items:flex-start`가 자른다 —
+     트림된 스프라이트는 **맨 윗줄이 곧 머리끝**이라 어느 인물이든 얼굴이 칸 안에 든다.
+     ⚠️ 그래서 `width`를 고정하지 않는다 — 인물마다 트림 폭이 달라 고정하면 얼굴이 눌린다. */
+.fig-row { display: flex; align-items: center; gap: 9px; padding: 2px 0; }
+.fig-row:hover .fig-por { border-color: var(--brass-d); }
+.fig-por {
+  /* ★ **높이는 자로 잰 값이다**(ART-ISSUES B-3 · 회차 23).
+     `poseOf('idle').headY = 0`이라 `drawHead`의 마지막 얼굴 줄은 **y=21**이고, 트림된
+     스프라이트의 윗줄(=머리끝)은 사람마다 y=3~10이다(162명 실측 · 히스토그램의 바닥이 3).
+     갓·삿갓·챙 넓은 모자를 쓴 **여덟 명이 y=3**이라 「머리끝→턱」이 19행 = **3배로 57 CSS px**다.
+     46px 액자는 그 여덟의 **얼굴을 잘랐다**(갓만 보였다). ⇒ 58px = 57 + 1px 여유.
+     ⚠️ 더 키우면(깃까지 담으려면 66px) 줄 높이가 62→70px이 되어 여섯 명 목록이 한 화면을 넘는다 —
+       이 칸이 보여 줘야 하는 것은 **얼굴**이지 옷이 아니다. */
+  flex: 0 0 42px; height: 58px;
+  display: flex; justify-content: center; align-items: flex-start;
+  overflow: hidden;
+  background: linear-gradient(#2a2534, #201b29);
+  border: 1px solid var(--line); border-radius: 2px;
+}
+.fig-por canvas { image-rendering: pixelated; flex: 0 0 auto; }
+.fig-who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.fig-who b { color: var(--parch); font-weight: 600; }
+.fig-job { color: #6f6858; font-size: 11px; }
 
 /* ══ 술집 ══════════════════════════════════════════════════════
    조선소(#yard-panel)와 같은 뼈대를 쓰되 색을 술집 쪽으로 눕힌다 —
@@ -707,6 +783,15 @@ html, body {
 .tav-card:hover { background: #ffffff0e; }
 .tav-card.taken { opacity: .45; }
 .tav-card.tav-dock { background: #00000028; border-style: dashed; }
+/* 판이 잠기는 자리의 안내 (C-17) — 항구의 「금고가 바닥이다」와 **같은 붉은색**이라야
+   두 화면이 같은 사건을 말하는 것으로 읽힌다. 벌칙이 아니라 안내다. */
+.tav-card.tav-stranded {
+  background: #3a1c1a55; border-color: #7a3a30;
+  order: -1;   /* 목록 맨 위 — 이 국면에서 무리 카드보다 먼저 읽혀야 한다 */
+}
+.tav-card.tav-stranded .tav-name b { color: #e0806e; }
+.tav-card.tav-stranded .tav-desc { color: #b0a692; }
+.tav-card.tav-stranded .tav-desc b { color: var(--parch); }
 
 .tav-row { display: flex; align-items: flex-start; gap: 8px; }
 .tav-por { flex: 0 0 auto; image-rendering: pixelated; }

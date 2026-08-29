@@ -99,7 +99,11 @@ export const PIRATES = [
        1582년에는 안주인이 직접 한자 상선에 올라탔다는 소동이 기록에 남았다.
        배 한 척에 사람 몇이라 낡은 바사로도 붙어 볼 만하다. */
   {
-    id: 'killigrew', name: '킬리그루 부인의 배', flag: 'england', ship: 'crayer',
+    /* ★ `sex` — 여성으로 사료가 확실한 사람에게만 적는다(ART-ISSUES B-4 · seasia
+       `malahayati`와 같은 규약). 레이디 킬리그루(메리 울버스턴)는 팰머스의 아르웨낙에서
+       해적질을 이끈 것이 재판 기록에까지 남은 인물이고, 이 항목의 이름 자체가 「부인의 배」다.
+       ⚠️ 확실하지 않은 사람에게 추측으로 붙이지 마라 — 없으면 기본값(남성 바디)이다. */
+    id: 'killigrew', name: '킬리그루 부인의 배', sex: 'f', flag: 'england', ship: 'crayer',
     base: 'bristol', purse: [150, 650], strength: 1, bounty: [200, 450],
     hunt: ['bordeaux|bristol', 'bristol|london', 'bergen|bristol'],
     circuit: ['bristol', 'london', 'larochelle', 'bordeaux', 'bristol'],

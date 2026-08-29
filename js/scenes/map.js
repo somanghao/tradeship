@@ -390,7 +390,9 @@ function arrive(cityId) {
   }
   if (scouted.length) {
     const names = scouted.map((id) => CITY_BY_ID[id].name).join(' · ');
-    pushLog(`부두에서 소문을 들었다 — ${names}${josa(names, '의')} 시세가 열렸다.`, 'good');
+    // '의'는 형태가 하나뿐이라 조사 함수를 부를 자리가 아니다 (GRAND #18 — `josa(names,'의')`가
+    // `잠비undefined`를 찍었다. `josa()`는 이제 짝이 아닌 인자에 경고를 내지만, 부르지 않는 것이 맞다)
+    pushLog(`부두에서 소문을 들었다 — ${names}의 시세가 열렸다.`, 'good');
   }
   for (const line of newsLines(news, 2)) pushLog(`[소문] ${line.text}`, line.kind);
   refreshHUD();

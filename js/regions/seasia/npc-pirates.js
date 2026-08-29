@@ -36,7 +36,13 @@ export const PIRATES = [
      ★ season 'summer' — 남서 계절풍(5~9월)이 인도양에서 배를 해협 어귀로 밀어 넣는다.
        사냥감이 오는 철이 사냥철이다. */
   {
-    id: 'malahayati', name: '크우말라하야티', flag: 'ottoman', ship: 'lancaran',
+    /* ★ `sex` — 이 명부에서 **여성으로 사료가 확실한 사람**에게만 적는다(ART-ISSUES B-4).
+       크우말라하야티(Keumalahayati)는 아체 술탄국의 락사마나(해군 제독)로, 남편을 잃은
+       여인들로 이농 발레(Inong Balee) 함대를 꾸렸다는 것이 아체 연대기와 네덜란드 쪽
+       기록에 함께 남아 있다. 이 한 칸이 없으면 화면은 그를 **남자로 그린다.**
+       ⚠️ 확실하지 않은 사람에게 추측으로 붙이지 마라 — 없으면 기본값(남성 바디)이다.
+         「금액·사실은 사료에 충실하게」가 그림에도 그대로 걸린다. */
+    id: 'malahayati', name: '크우말라하야티', sex: 'f', flag: 'ottoman', ship: 'lancaran',
     base: 'aceh', purse: [3600, 12000], strength: 5, bounty: [4500, 10000],
     hunt: ['aceh|melaka', 'melaka|pasai', 'aceh|pegu', 'pasai|perak'],
     circuit: ['aceh', 'pasai', 'melaka', 'pasai', 'aceh', 'pegu', 'aceh'],

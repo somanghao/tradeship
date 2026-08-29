@@ -29,11 +29,31 @@ function batchim(word) {
   return [false, false];
 }
 
+/* ── 짝이 아닌 인자를 받았을 때 ────────────────────────────────
+   ★ **`undefined`가 화면에 찍힌 자리다**(GRAND #18). `josa(names, '의')`처럼 `/`가 없는 것을
+     주면 `without`가 `undefined`가 되고, 받침 **없는** 이름으로 끝날 때만 그대로 찍힌다 —
+     `페락 · 조호르 · 잠비undefined 시세가 열렸다.` 받침이 있으면 멀쩡하니 **데이터에 따라
+     숨는 버그**였고, 실제로 믈라카 입항 로그에서 한 회차 만에 처음 드러났다.
+   ⇒ 이제 두 가지를 함께 한다: ① 화면에는 **준 것을 그대로** 쓴다(형태가 하나뿐인 '의'·'도'는
+     그것이 정답이다) ② **콘솔에 한 번 소리를 낸다** — 진짜 오타(`'이가'`)를 조용히 삼키면
+     같은 종류의 버그가 다시 숨는다. 「조용한 실패가 가장 비싸다」. */
+const warned = new Set();
+function unpaired(pair) {
+  if (!warned.has(pair)) {
+    warned.add(pair);
+    console.warn(`[josa] '${pair}'에는 '/'가 없다 — 두 형태를 적어라(예: '이/가'). 그대로 쓴다.`);
+  }
+  return pair;
+}
+
 /** 조사를 골라 준다. `${name}${josa(name, '이/가')}`
-    받침 있는 쪽을 앞에 적는다 — '이/가' · '을/를' · '은/는' · '과/와' · '으로/로' · '아/야' */
+    받침 있는 쪽을 앞에 적는다 — '이/가' · '을/를' · '은/는' · '과/와' · '으로/로' · '아/야'
+    ⚠️ **반드시 두 형태를 `/`로 적는다.** 하나만 주면 그것을 그대로 쓰고 콘솔에 경고를 남긴다. */
 export function josa(word, pair) {
+  const p = String(pair ?? '');
+  if (!p.includes('/')) return unpaired(p);
   const [hasJong, isRieul] = batchim(word);
-  const [withJong, without] = pair.split('/');
+  const [withJong, without] = p.split('/');
   // '으로'만 예외다 — ㄹ 받침은 받침이 없는 것처럼 '로'를 쓴다(‘서울로’)
   if (withJong === '으로' && isRieul) return without;
   return hasJong ? withJong : without;

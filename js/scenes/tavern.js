@@ -13,7 +13,7 @@ import { blit } from '../pixel.js';
 import { CITY_BY_ID, TROOPS, CREW_TRAITS } from '../data.js';
 import {
   state, ship, tavernCrews, recruitBand, avgCrewWage, shorthanded,
-  pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf,
+  pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf, salvage,
 } from '../state.js';
 import { el, overlay, toast, refreshHUD, refreshLog, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
@@ -102,14 +102,61 @@ function buildUI() {
     ]),
 
     el('div.tav-body', {}, [
+      strandedCard(),
       ...(crews.length ? crews.map(bandCard) : [
         el('div.tav-empty', { text: '오늘은 자리가 비었다. 며칠 뒤에 다시 와 보자.' }),
       ]),
       dockCard(),
     ]),
-  ]);
+  ].filter(Boolean));
   overlay.replaceChildren(panelEl);
   layout();
+}
+
+/* ── 여기가 잠기는 자리다 (C-17 · 화면 쪽) ──────────────────────
+   ★ **규칙이 아니라 안내다.** 이 씬은 게임에서 선장이 가장 먼저 들어가는 방이고,
+     동시에 **판이 잠기는 방**이다 — 금고가 비면 사람을 못 태우고, 사람이 없으면 배가 안 뜬다
+     (GRAND-ISSUES #6). 그런데 화면이 하는 말은 단추마다 붙은 *「N닢 모자란다」* 뿐이라,
+     실제로 완주 러너가 960일차에 그 앞에서 멈췄다. 회복 경로(짐·창고·정박선·거점을 팔고
+     마지막에 청산)는 **진작 다 있었는데 아무도 그 말을 안 했다.**
+   ★ 벌칙은 한 칸도 안 건드린다 — 값은 전부 `state.js: salvage()`가 세고, 여기서는
+     **막힌 이유와 문이 어디 있는지**만 말한다. 「파산의 긴장은 남긴다」(사용자 결정).
+   ⚠️ 뜨는 조건을 좁게 잡는다 — *사람이 필요한데 아무도 못 태우는* 국면에서만.
+     돈이 잠깐 없을 때마다 붉은 판이 뜨면 진짜 막혔을 때 아무도 안 읽는다(경보 피로). */
+function strandedCard() {
+  const room = state.crewMax - state.crew;
+  if (room <= 0) return null;                       // 자리가 없어 못 태우는 것은 다른 이야기다
+  if (!(state.crew === 0 || shorthanded())) return null;
+
+  const bands = crews.filter((b) => !state.hired.includes(b.id) && b.n <= room);
+  const cheapest = bands.length ? Math.min(...bands.map((b) => b.advance)) : null;
+  const dock = Math.min(5, room) * HIRE_UNIT;
+  const wall = Math.min(...[cheapest, dock].filter((v) => v != null));
+  if (state.gold >= wall) return null;              // 아직 태울 수 있다 — 막힌 것이 아니다
+
+  const rows = salvage(city.id);
+  const total = rows.reduce((a, r) => a + r.gold, 0);
+
+  return el('div.tav-card.tav-stranded', {}, [
+    el('div.tav-name', {}, [el('b', { text: '사람을 못 태운다' })]),
+    el('div.tav-desc', {
+      text: `금고 ${state.gold.toLocaleString('ko-KR')}닢 — 여기서 가장 싼 계약금이`
+          + ` ${wall.toLocaleString('ko-KR')}닢이다. **사람이 없으면 배는 뜨지 않는다.**`,
+    }),
+    el('div.tav-desc', {
+      style: { color: total > 0 ? '#d0a04a' : '#e0806e' },
+      text: total > 0
+        ? `항구로 나가면 지금 여기서 팔 수 있는 것이 ${total.toLocaleString('ko-KR')}닢어치 있다`
+          + ` (${rows.slice(0, 3).map((r) => r.label).join(' · ')}${rows.length > 3 ? ' …' : ''}).`
+        : '이 항구에서 팔 것은 없다. 다른 항구에 둔 배·거점이 있으면 그리로 가야 하고,'
+          + ' 없으면 남은 문은 **청산**이다 — 배를 넘기고 셈을 끝내면 판은 1일차 조건으로 다시 선다.',
+    }),
+    el('button.btn.sm', {
+      text: '항구로 — 팔 것을 본다',
+      title: '항구 오른쪽 맨 위 「금고가 바닥이다」 카드에 팔 것과 마지막 문이 모여 있다',
+      onclick: () => go('port'),
+    }),
+  ]);
 }
 
 /* 무리 한 자리 */

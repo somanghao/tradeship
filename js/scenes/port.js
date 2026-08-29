@@ -2,7 +2,10 @@
 
 import { portSprite } from '../sprites/scene.js';
 import { shipSprite, WATERLINE } from '../sprites/ship.js';
-import { unitSprite, figureSprite } from '../sprites/char.js';
+import { unitSprite, figureSprite, mateSprite } from '../sprites/char.js';
+/* 부두에 선 사람은 **작은 인물**(24×28 · 실질 키 21px)이다 — 48px 그림은 건너편에 댄 배보다
+   너무 커서 배가 장난감으로 보였다. 사이드패널의 초상은 크기가 곧 정보라 큰 그림 그대로다. */
+import { miniUnitSprite, MINI_FOOT } from '../sprites/char-mini.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING, FLAG_NAME,
          ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, FACTION, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
@@ -74,6 +77,10 @@ import { go, gameStarted } from '../main.js';
 let bg, city, dockers;
 
 /* 부두에 세워둘 NPC — 도시마다 고정되도록 seed로 뽑는다 */
+/* 부두에 선 사람의 발이 닿는 자리 — 예전 48px 그림의 `y=150 + CHAR_FOOT`과 같은 높이다.
+   `DOCKER_DX`는 스프라이트가 좁아진 만큼(48 → 24) 가운데를 맞추는 보정이다. */
+const QUAY_FEET = 195, DOCKER_DX = 13;
+
 function pickDockers(seedBase) {
   const roster = ['sailor', 'musketeer', 'pikeman', 'gunner', 'swordsman', 'corsair'];
   const out = [];
@@ -131,14 +138,16 @@ export const portScene = {
     blit(ctx, shipSprite(ship().hull, { tint: ship().tint, flag: city.flag, furl: true }),
          132, 168 - WATERLINE + bob, 1);
 
-    // 부두 위 사람들
+    /* 부두 위 사람들 — 발바닥이 닿는 자리(`QUAY_FEET`)를 기준으로 세운다.
+       48px 그림을 쓰던 시절의 `y=150`은 그 값에 큰 그림의 발밑선을 미리 뺀 것이었다. */
     for (const d of dockers) {
-      blit(ctx, unitSprite(d.key, 'idle', null, regionOf(state.at)), d.x, 150, 1, d.flip);
+      blit(ctx, miniUnitSprite(d.key, 'idle', null, regionOf(state.at)),
+           d.x + DOCKER_DX, QUAY_FEET - MINI_FOOT, 1, d.flip);
     }
 
     // 부관은 배 곁에 선다 — 사이드패널을 열지 않아도 함께 있다는 것이 보인다
     if (hasOfficer()) {
-      blit(ctx, unitSprite(OFFICER.sprite, 'idle'), 108, 150, 1);
+      blit(ctx, miniUnitSprite(OFFICER.sprite, 'idle'), 108 + DOCKER_DX, QUAY_FEET - MINI_FOOT, 1);
     }
   },
 };
@@ -442,6 +451,23 @@ function contractCard() {
    ★ **에이미와 다른 자리다.** 부관은 주어진 동행이라 카드에 단추가 없지만, 동료는 **고르는 사람**이다.
      계약 모양이 둘이고(편무 25% · 쌍무 50%+밑천) 그 고름이 이 카드의 전부다.
    ★ 이 항구에 사람이 없고 태운 사람도 없으면 **카드를 안 띄운다** — 빈 패널은 벽지다. */
+/* ── 동료의 얼굴 (ART-ISSUES B-2 · D-4) ────────────────────────
+   ★ **51명이 이름만 다른 글자 줄이었다.** 회차 23에 `sprites/char.js`가 `mateSprite`를 냈는데
+     **아무도 부르지 않아** 화면에는 한 픽셀도 안 나왔다 — 그 회차 아트 작업의 절반이
+     이 한 줄에 걸려 있었다. 「규칙이 멀쩡한데 화면이 말하지 않는다」의 그림 판이다.
+   ★ 액자는 항구 인물 패널과 **같은 것**(`.fig-por`)을 쓴다. 두 목록이 같은 종류의 사람을
+     다른 크기로 보여 주면 어느 쪽이 중요한지가 흐려진다.
+   ★ `m.sex`는 **명부에 있을 때만** 넘어간다 — 없으면 기본값(남성 바디)이다(B-4). */
+function mateHead(m, sub) {
+  return el('div.ctr-sub.fig-row', { title: m.blurb ?? '' }, [
+    el('span.fig-por', {}, spriteElTrim(mateSprite(m.id, m.role, null, m.sex), 3)),
+    el('span.fig-who', {}, [
+      el('b', { text: m.name }),
+      el('span.fig-job', { text: sub }),
+    ]),
+  ]);
+}
+
 function mateCard() {
   const here = matesAt(city.id);
   const mine = crewMates();
@@ -461,10 +487,10 @@ function mateCard() {
       style: { color: mateCut() > 0.5 ? '#c98a6a' : '#8f8878' },
     }));
     for (const m of mine) {
-      rows.push(svcRow(`${m.name} · ${m.title}`,
-        `${m.joint ? '쌍무' : '편무'} — 매매차익의 ${Math.round((m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole) * 100)}%`
+      rows.push(mateHead(m, `${m.title} · 일당 ${m.wage}닢`));
+      rows.push(svcRow(`${m.joint ? '쌍무' : '편무'} 계약`,
+        `매매차익의 ${Math.round((m.joint ? COMMENDA.cutJoint : COMMENDA.cutSole) * 100)}%`
         + (m.stake ? ` · 밑천 ${m.stake.toLocaleString('ko-KR')}닢을 댔다(내리면 돌려준다)` : '')
-        + ` · 일당 ${m.wage}닢`
         + (m.earned ? ` · 여태 ${m.earned.toLocaleString('ko-KR')}닢` : ''),
         '내린다', false, () => {
           const r = dismissMate(m.id);
@@ -477,7 +503,7 @@ function mateCard() {
   for (const m of here) {
     const stake = mateStake(m);
     const full = mateCount() >= mateCap();
-    rows.push(el('div.ctr-line', { html: `<b>${m.name}</b> · ${m.title} <span style="opacity:.7">${m.origin}</span>` }));
+    rows.push(mateHead(m, `${m.title} · ${m.origin}`));
     rows.push(el('div.ctr-sub', { text: m.blurb, style: { opacity: 0.8 } }));
     /* ★ **두 계약을 나란히 놓는다.** 초반엔 쌍무가 자본을 주고(밑천 > 계약금) 후반엔 그 절반이
        순손실이 된다 — 같은 사람이 단계마다 다른 값이라는 것이 이 장치의 전부다. */
@@ -675,7 +701,10 @@ function salvageCard() {
       html: away || holds
         ? `이 항구에서 팔 것은 없다 — 그러나 <b>다른 항구에 배 ${away}척 · 거점 ${holds}곳</b>이 있다.`
           + ' 그 항구로 가면 팔 수 있다.'
-        : '팔 것이 하나도 없다. 남은 문은 아래 둘뿐이다.',
+        /* ⚠️ **문 수를 세서 말한다.** 예전에는 「아래 둘뿐이다」로 박아 뒀는데, 대금업자는
+           항구마다 있는 것이 아니라 **없는 항구에서는 문이 하나(청산)뿐**이다 —
+           화면이 없는 문을 가리키면 사람은 그것을 찾다가 판을 접는다. */
+        : `팔 것이 하나도 없다. 남은 문은 아래 ${canLoan ? '둘' : '하나'}뿐이다.`,
       style: { color: '#d0a04a' },
     }));
   }
@@ -1849,18 +1878,28 @@ function figureCard() {
       }),
     ]),
     el('div.svc', {}, [
-      // 얼굴을 앞에 세운다 — 그림이 오면 `figure:<id>:idle`로 갈리고, 없으면 직업 실루엣이다(BRIEF-NPC §4 ②)
+      /* 얼굴을 앞에 세운다 — 그림이 오면 `figure:<id>:idle`로 갈리고, 없으면 직업 실루엣이다(BRIEF-NPC §4 ②)
+         ★ **초상 칸이 24×24 CSS px이었다**(ART A-5). 사람은 24×43으로 그려져 있는데 칸이
+           24px밖에 안 돼 **전신을 머리만 남기고 잘라 넣은 꼴**이었고, 얼굴은 대여섯 픽셀이었다.
+           사람이 그린 PNG가 와도 이 칸에서는 읽히지 않는다 — **그림보다 칸이 먼저 걸린다.**
+         ⇒ ① 2배 → **3배**로 굽고 ② 칸을 42×46으로 키워 **가슴 위(bust)**만 담는다
+           (`.fig-por`가 가운데로 모아 좌우를 자르고, 위에서부터 담아 아래를 자른다 — 트림된
+           스프라이트는 맨 윗줄이 곧 머리끝이라 어느 인물이든 얼굴이 칸 안에 든다).
+           ③ 남는 세로를 **이름 / 하는 일** 두 줄로 쓴다 — 예전에는 한 줄에 다 이어 붙여
+              긴 이름이 「…」로 잘렸다. */
       ...people.slice(0, 6).map((f) => el('div.ctr-sub.fig-row', {
         title: f.blurb ?? '',
         style: { cursor: 'pointer' },
         onclick: () => talkTo(f),
       }, [
-        el('span.fig-por', {}, spriteElTrim(figureSprite(f.id, f.job), 2)),
-        el('span', {
-          text: `${f.name}`
-              + (JOB_LABEL[f.job] ? ` (${JOB_LABEL[f.job]})` : '')
-              + (SERVICE_LABEL[f.service] ? ` — ${SERVICE_LABEL[f.service]}` : ''),
-        }),
+        el('span.fig-por', {}, spriteElTrim(figureSprite(f.id, f.job, null, f.sex), 3)),
+        el('span.fig-who', {}, [
+          el('b', { text: f.name }),
+          el('span.fig-job', {
+            text: [JOB_LABEL[f.job], SERVICE_LABEL[f.service]].filter(Boolean).join(' · ')
+                  || '이 항구 사람',
+          }),
+        ]),
       ])),
       // 잘린 줄이 있으면 잘렸다고 말한다 — 아무 말 없이 여섯에서 끊으면 그 항구가 작아 보인다
       people.length > 6
@@ -1915,9 +1954,17 @@ function sidePanel() {
     /* ★ 목표가 맨 위다 — 이 셋이 972px 아래에 있었다.
        ⓐ 「관영 조선소」와 「조선의 끝」은 **펼친 채로** 올린다(이 회차의 새 규칙과 최종 목표).
        ⓑ 「패권」은 496px이라 그대로 올리면 정비·급여를 다시 밀어낸다 — **접고 머리말에 `n/9`**를 적는다.
-          접는 것과 감추는 것은 다르다: 몇 바다를 잡았는지는 굴리지 않고 읽힌다. */
+          접는 것과 감추는 것은 다르다: 몇 바다를 잡았는지는 굴리지 않고 읽힌다.
+
+       ── 2026-08-29 (회차 23) ─────────────────────────────────
+       ★ **끝이 둘인데 한 쪽만 첫 화면에 있었다.** 회차 22가 「관영 조선소」·「조선의 끝」을
+         올리고 「패권」은 접기만 했는데, 접힌 36px짜리가 **정비(289px) 아래**에 있어
+         1280×720에서 y=773 — 여전히 굴려야 보였다(실측 `clientHeight` 625).
+         *"끝이 둘"*(claude-memory §현재 상태)인 게임에서 **완주 판정 카드 셋은 한 화면에
+         나란해야 한다.** 접힌 채로 여기 올리면 36px밖에 안 들고 `n/9`는 그대로 읽힌다. */
     civicCard(),
     endingCard(),
+    fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
 
     /* 급여는 **때를 놓치면 사람이 떠나는 것**이라 정비보다 위다(74px밖에 안 든다) */
     payrollCard(),
@@ -1953,7 +2000,6 @@ function sidePanel() {
       ]),
     ]),
 
-    fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
     fold('city', el('div.panel', {}, [
       el('h3', {}, el('span', { text: city.name })),
       el('div.city-card', {}, [
@@ -1971,7 +2017,10 @@ function sidePanel() {
     fold('officer', officerCard(), false, OFFICER.name),
     fold('mate', mateCard(), false, `${mateCount()}/${mateCap()}`),
     fold('faction', factionCard(), false, null),
-    fold('wait', waitCard(), false, `하루 ${portDayCost().toLocaleString('ko-KR')}닢`),
+    /* ⚠️ `portDayCost()`는 **갈래별 내역 객체**를 준다(state.js) — 예전에는 그것을 그대로
+       `toLocaleString`해서 접힌 「정박」 머리말에 `하루 [object Object]닢`이 찍혔다.
+       지금 나가는 몫은 `.now`다(`waitCard`의 `c3.now`·`c10.now`와 같은 갈래). */
+    fold('wait', waitCard(), false, `하루 ${portDayCost().now.toLocaleString('ko-KR')}닢`),
     fold('holding', holdingCard(), false,
          `${HOLDING_KEYS.filter((k) => ownsHolding(k, city.id)).length}개`),
     fold('works', worksCard(), false, null),

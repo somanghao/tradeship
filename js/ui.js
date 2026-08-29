@@ -10,6 +10,27 @@ import { after, speed, setSpeed, onSpeedChange, SPEED_STEPS } from './speed.js';
 export const overlay = document.getElementById('overlay');
 const toastBox = document.getElementById('toast');
 
+/* ── 굵게 (`**…**`) ──────────────────────────────────────────────
+   ★ **왜 렌더러가 이것을 알아야 하나**(GRAND #14). 문장을 쓰는 곳이 씬만이 아니다 —
+     `state.js`·`payday.js`도 `pushLog`로 문장을 쓰고, 거기에 `**…**`로 강조를 적어 왔다.
+     찍는 쪽이 그 표기를 모르니 별표가 그대로 나갔다: 코멘다 계약 카드가
+     *「**매매차익**의 25%를 가져간다」* 로 보였다 — 이 게임에서 설명이 가장 긴 카드인데
+     강조가 통째로 깨진 채였다. 실측 13곳(port 7 · state 5 · payday 1).
+   ★ **`josa.js`와 같은 이유의 같은 해법이다.** 표기 규약은 문장을 쓰는 층이 아니라
+     **찍는 층**이 안다. 문자열 열세 개를 고치는 대신 `el()` 한 곳을 고치면,
+     앞으로 누가 어느 층에서 `**`를 적어도 화면이 알아본다.
+   ⚠️ `**`가 **없는** 문자열은 한 글자도 안 건드린다 — `text:`는 여전히 textContent라
+     이스케이프가 필요한 문자열이 실수로 HTML이 되지 않는다. `**`가 있을 때만 이스케이프 후
+     `<b>`로 바꿔 innerHTML로 넣는다. */
+const BOLD_RE = /\*\*(?!\s)([^*\n]+?)(?<!\s)\*\*/g;
+const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+/** `**…**`가 들어 있나 */
+export const hasBold = (s) => typeof s === 'string' && s.includes('**');
+/** 이미 HTML인 문자열의 `**…**`만 굵게 (나머지는 그대로 둔다) */
+export const boldHtml = (s) => String(s).replace(BOLD_RE, '<b>$1</b>');
+/** 평문을 이스케이프한 뒤 `**…**`만 굵게 */
+export const boldText = (s) => boldHtml(escHtml(s));
+
 /** el('div.klass#id', {attr}, ...children) */
 export function el(spec, props = {}, ...kids) {
   const m = spec.match(/^([a-z0-9]+)?((?:[.#][\w-]+)*)$/i);
@@ -23,8 +44,11 @@ export function el(spec, props = {}, ...kids) {
   }
   for (const [k, v] of Object.entries(props)) {
     if (v == null || v === false) continue;
-    if (k === 'html') node.innerHTML = v;
-    else if (k === 'text') node.textContent = v;
+    if (k === 'html') node.innerHTML = hasBold(v) ? boldHtml(v) : v;
+    else if (k === 'text') {
+      if (hasBold(v)) node.innerHTML = boldText(v);   // 위 §굵게 — `**`가 있을 때만
+      else node.textContent = v;
+    }
     else if (k === 'style') Object.assign(node.style, v);
     else if (k.startsWith('on')) node.addEventListener(k.slice(2).toLowerCase(), v);
     else node.setAttribute(k, v === true ? '' : v);
@@ -160,7 +184,9 @@ const logModal = document.getElementById('logmodal');
 
 export function refreshLog() {
   const last = state.log[0];
-  logLine.textContent = last ? last.text : '—';
+  // 일지도 굵게를 안다 — `state.js`·`payday.js`가 `**…**`로 강조해 온 줄이 여기로 온다(§굵게)
+  if (last && hasBold(last.text)) logLine.innerHTML = boldText(last.text);
+  else logLine.textContent = last ? last.text : '—';
   logLine.className = last?.kind || '';
 }
 
