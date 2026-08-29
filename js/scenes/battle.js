@@ -3,8 +3,15 @@
 //   2단계 백병전: 접현 후 갑판 난투 (병종 상성 + 커맨드)
 
 import { VW, openSeaSprite, blastSprite, smokeSprite, splashSprite, ballSprite } from '../sprites/scene.js';
-import { shipSprite, WATERLINE, SW, HULLS } from '../sprites/ship.js';
-import { unitSprite, pirateSprite, CHAR_FOOT } from '../sprites/char.js';
+import { shipSprite, WATERLINE, SW, HULLS, railAt } from '../sprites/ship.js';
+import { unitSprite, pirateSprite, CHAR_FOOT, CW } from '../sprites/char.js';
+/* 명부(40명)를 이름으로 찾기 위한 것뿐이다 — `scenes/map.js`가 이미 같은 자리에서 가져다 쓴다.
+   ★ **해적이 어느 바다 사람인가는 명부가 정본이다**(`base` 소굴 항구 → `regions/index.js`가
+     달아 주는 `region`). 예전에는 그림 쪽(`sprites/char.js`)에 `PIRATE_SEA` 40줄이 따로 있어
+     명부가 늘 때마다 두 곳을 고쳐야 했다(ART-ISSUES B-1) — 그 표는 걷었다. */
+import { ALL_PIRATES } from '../regions/index.js';
+/** 명부 id → 정의. 40명뿐이라 한 번 만들어 두고 매 프레임 쓴다. */
+const PIRATE_DEF = new Map(ALL_PIRATES.map((d) => [d.id, d]));
 /* `blitTinted`는 실루엣만 단색으로 찍는다 — 백병전 피격 플래시·쓰러지는 병사에 쓴다.
    ⚠️ `js/pixel.js`·`js/sprites/**`는 **읽기 전용**이다(아트 테스터가 동시에 만진다).
       여기서는 부르기만 한다. 그 함수는 부를 때마다 캔버스를 새로 만드므로(bake 캐시를 안 탄다)
@@ -132,6 +139,30 @@ const MELEE_FALL_PX   = 9;      // 그동안 내려앉는 높이
 const FLASH_COLOR = '#fff2d8';  // 피격 — 등불빛에 가까운 흰색
 const FALL_COLOR  = '#3b1512';  // 전사 — 그늘로 내려앉는 어두운 핏빛
 
+/* ── 접현하면 카메라가 들어간다 (§D — 연출만) ──────────────────
+   ★ **사람이 배에 비해 너무 컸다**(사용자 지적). 실측: 사람 실질 키 40px(`char.js` 48×48·FOOT 45)에
+     캐랙 선체 124px ⇒ **배÷사람 3.1**. 실선은 캐랙 25m ÷ 1.7m ≒ **19**다. 곧 갑판에 선 것은
+     키 6~10m짜리 거인이었다.
+
+   ★ **줌인으로는 한 톨도 안 고쳐진다.** 배와 사람이 함께 커지므로 `배÷사람`은 그대로고,
+     오히려 사람이 화면의 절반을 먹어 더 나빠 보인다. 고쳐야 하는 것은 카메라가 아니라
+     **선체 배율**이다 — 접현하면 **선체만** `MELEE_HULL_SCALE`배로 그리고 **사람은 48px 그대로** 둔다.
+     배가 화면 밖으로 잘리는 것이 바로 그 효과다: 사람이 *보이는 뱃전*의 작은 일부가 된다.
+
+   ★ **포격 단계는 한 픽셀도 안 바꾼다.** 두 배 전체가 보이는 지금 구도가 포격전의 정보다
+     (거리·풍상·포문). 배율은 `B.phase === 'melee'`에서만 붙는다.
+
+   ★ 순간이동이 아니라 **밀고 들어간다** — `갈고리가 걸렸다` 로그와 함께 배율이 오른다.
+     ⚠️ 시계는 다른 백병 연출과 **같이 `dt * speed.mul`을 탄다**. 안 그러면 8배속에서 이 한 컷이
+        1:1로 돌아 러너가 멈춘 줄 안다. */
+const MELEE_HULL_SCALE = 3;     // 접현했을 때 선체 배율 — **사람에는 안 곱한다**
+const MELEE_ZOOM_SEC   = 0.62;  // 밀고 들어가는 시간
+const MELEE_DECK_Y     = 146;   // 다 들어왔을 때 갑판선이 앉는 화면 y
+const MELEE_TOUCH_PX   = -3;     // 두 뱃전 사이에 남기는 틈 — 간격은 **선체에서 뽑는다**(아래)
+const MELEE_STAND_PX   = 16;    // 병사 사이 간격 — **화면 픽셀**이라 배율을 안 탄다
+const MELEE_RAIL_BACK  = 22;    // 맞닿은 뱃전에서 이만큼 물러서서 줄이 시작한다
+const MELEE_FOOT_SINK  = 2;     // 뱃전 윗선보다 이만큼 아래에 발을 둔다 (난간 뒤에 선 느낌)
+
 /* ══════════════════════════════════════════════════════════════
    포격전의 바람 — 풍상(weather gauge) (§D)
    ══════════════════════════════════════════════════════════════
@@ -171,6 +202,43 @@ function lungeCurve(v) {
   if (u < 0.45) return 1;
   return Math.max(0, 1 - (u - 0.45) / 0.55);
 }
+
+/** 밀고 들어가는 곡선 — 처음이 빠르고 끝에서 멎는다(smoothstep). */
+const zoomCurve = (u) => u * u * (3 - 2 * u);
+
+/** 지금 백병 화면의 **카메라와 선체 배율**.
+    ★ 선체만 `k`배로 그리고 사람은 1배 그대로다 — 그것이 이 화면의 전부다(위 §D 주석).
+    ★ 두 뱃전이 맞닿는 **간격도 선체에서 뽑는다.** 상수(예전 62)로 두면 작은 배는 멀찍이
+      떨어져 물 위에서 싸우고 큰 배는 서로 파고든다. 식은 그림 배치의 역산이다 —
+      `yourX = VW/2 − gap − SW·0.62` · `foeX = VW/2 + gap − SW·0.38`이므로
+      두 선체 끝 사이 거리 = `2·gap + 1.24·SW − (내 x0+len) − (적 x0+len)`. */
+function meleeView() {
+  const y = HULLS[ship().hull], f = HULLS[B.enemy.hull];
+  const u = zoomCurve(Math.max(0, Math.min(1, B.meleeZoom ?? 1)));
+  const k = 1 + (MELEE_HULL_SCALE - 1) * u;
+  const gapTo = ((y.x0 + y.len) + (f.x0 + f.len) + MELEE_TOUCH_PX - SW * 1.24) / 2;
+  const gap0 = B.gap0 ?? gapTo;
+  /* ★ **맞닿는 자리는 화면 한가운데가 아니다.** 두 선체의 `x0+len`이 다르면 이물이 만나는
+     곳이 그 차이의 절반만큼 밀린다 — 선체 스프라이트는 176px 판 안에서 저마다 다른 자리에
+     그려지기 때문이다. 이것을 `VW/2`로 두었더니 hulk↔슈퍼프리깃에서 **우리 병사 둘이
+     상대 뱃머리 위에 섰다**(선종 훑기에서 잡았다). 그래서 월드 기준점은 실제 이물이고,
+     화면에서는 그 자리를 한가운데(`VW/2`)로 끌어온다. */
+  const CX = VW / 2 + ((y.x0 + y.len) - (f.x0 + f.len)) / 2;
+  const FX = CX + (VW / 2 - CX) * u;                   // u=0이면 지금 자리 그대로 — 튀지 않는다
+  const CY = SEA_Y - WATERLINE + (y.deck + f.deck) / 2;  // 갑판선 (흔들림은 안 넣는다)
+  const FY = CY + (MELEE_DECK_Y - CY) * u;             // u=0이면 지금까지와 같은 자리
+  return {
+    u, k, CX, CY, FX, FY,
+    gap: gap0 + (gapTo - gap0) * u,
+    sx: (x) => FX + (x - CX) * k,
+    sy: (v) => FY + (v - CY) * k,
+    /** 화면 x → 월드 x (병사가 선체 어디에 서 있나를 되짚는다) */
+    wx: (x) => CX + (x - FX) / k,
+  };
+}
+
+/** 지금 선체 배율 — **연출 검증용 읽기 창구**다(캡쳐 자막에 비율을 적는다). 게임은 안 쓴다. */
+export const meleeScaleNow = () => (B && B.phase === 'melee' ? meleeView().k : 1);
 
 /* 이름이 없는 상대의 첫마디 — 세기가 곧 성격이다.
    명부에서 온 자는 제 대사(`lines.hail`)를 쓰므로 여기까지 오지 않는다. */
@@ -241,6 +309,8 @@ export const battleScene = {
     // 백병전 연출 시계 — 대기(`after`)와 같은 배속으로 감아야 라운드와 어긋나지 않는다
     if (B.melee) {
       const ds = dt * speed.mul;
+      // 접현 카메라도 같은 배속을 탄다 — 8배속에서 이 한 컷만 1:1로 돌면 멈춘 줄 안다
+      if (B.meleeZoom < 1) B.meleeZoom = Math.min(1, B.meleeZoom + ds / MELEE_ZOOM_SEC);
       for (const u of [...B.melee.you, ...B.melee.foe]) {
         if (u.lunge > 0) u.lunge = Math.max(0, u.lunge - ds / MELEE_LUNGE_SEC);
         if (u.flash > 0) u.flash = Math.max(0, u.flash - ds / MELEE_FLASH_SEC);
@@ -265,32 +335,39 @@ export const battleScene = {
     ctx.save();
     ctx.translate(sh, Math.round(sh * 0.4));
     blit(ctx, B.bg, 0, 0, 1);
-    drawWindStreaks(ctx);      // 배보다 먼저 — 뱃전 아래 물결이라 선체를 가리지 않는다
+    /* 접현해 들어가면 수면의 바람결은 걷는다 — 그것만 배율을 안 타 뱃전 위로 흐르기 때문이다.
+       포격 단계에서는 지금까지와 완전히 같다(§D). */
+    const mv = B.phase === 'melee' ? meleeView() : null;
+    drawWindStreaks(ctx, mv ? 1 - mv.u : 1);   // 배보다 먼저 — 뱃전 아래 물결이라 선체를 가리지 않는다
 
-    // 백병전은 두 선체가 현측을 맞댄 상태로 고정한다
-    const gap = B.phase === 'melee' ? 62 : gapOf(B.range);
+    /* 백병전은 두 선체가 현측을 맞댄 상태로 고정한다.
+       ★ 간격도 배율도 **선체에서 뽑는다**(`meleeView`) — 상수로 두면 선종마다 어긋난다. */
+    const gap = mv ? mv.gap : gapOf(B.range);
+    const k = mv ? mv.k : 1;
     const bobA = Math.sin(t * 1.1) * 1.6;
     const bobB = Math.cos(t * 1.3) * 1.6;
 
     // 우리 배 (왼쪽, 오른쪽을 향함)
     const yourX = Math.round(VW / 2 - gap - SW * 0.62);
+    const yourY = SEA_Y - WATERLINE + Math.round(bobA);
     blit(ctx, shipSprite(ship().hull, {
       tint: ship().tint, flag: 'venice',
       furl: B.phase === 'melee',
       firing: B.fireFlash === 'you' ? 2 : -1,
       damaged: dmgLevel(B.you),
-    }), yourX, SEA_Y - WATERLINE + Math.round(bobA), 1);
+    }), mv ? mv.sx(yourX) : yourX, mv ? mv.sy(yourY) : yourY, k);
 
     // 적선 (오른쪽, 좌우 반전해 왼쪽을 향함)
     const foeX = Math.round(VW / 2 + gap - SW * 0.38);
+    const foeY = SEA_Y - WATERLINE + Math.round(bobB);
     blit(ctx, shipSprite(B.enemy.hull, {
       tint: B.enemy.tint, flag: B.enemy.flag,
       furl: B.phase === 'melee',
       firing: B.fireFlash === 'foe' ? 2 : -1,
       damaged: dmgLevel(B.foe),
-    }), foeX, SEA_Y - WATERLINE + Math.round(bobB), 1, true);
+    }), mv ? mv.sx(foeX) : foeX, mv ? mv.sy(foeY) : foeY, k, true);
 
-    if (B.phase === 'melee') drawMelee(ctx, yourX, foeX, bobA, bobB);
+    if (mv) drawMelee(ctx, mv, yourX, foeX, bobA, bobB);
 
     drawFx(ctx);
     ctx.restore();
@@ -306,12 +383,12 @@ function addFx(kind, x, y, life = 0.5) { fx.push({ kind, x, y, t: 0, life }); }
 
 /** 수면의 바람결 — 뱃전 아래(y 150~214)를 바람 방향으로 흐른다. **연출 전용**이다.
     자리는 인덱스에서 뽑으므로 난수를 안 쓴다(매 프레임 튀지 않는다). */
-function drawWindStreaks(ctx) {
+function drawWindStreaks(ctx, fade = 1) {
   const w = B?.wind;
-  if (!w || WIND_STREAKS <= 0) return;
+  if (!w || WIND_STREAKS <= 0 || fade <= 0.01) return;
   const span = VW + 48;
   ctx.save();
-  ctx.fillStyle = 'rgba(226,240,248,0.34)';
+  ctx.fillStyle = `rgba(226,240,248,${(0.34 * fade).toFixed(3)})`;
   for (let i = 0; i < WIND_STREAKS; i++) {
     const seed = i * 97 + 13;
     const y = 150 + ((seed * 13) % 64);
@@ -626,6 +703,10 @@ function makeUnits(keys, side) {
 }
 
 function toMelee() {
+  /* 카메라가 **지금 있던 자리에서** 밀고 들어가야 "붙었다"로 읽힌다 —
+     그래서 배율이 오르기 시작하는 간격을 포격 마지막 간격으로 잡아 둔다(§D). */
+  B.gap0 = gapOf(B.range);
+  B.meleeZoom = 0;
   B.phase = 'melee';
   B.range = 6;
   B.busy = false;
@@ -654,36 +735,48 @@ function toMelee() {
   buildUI();
 }
 
-function drawMelee(ctx, yourX, foeX, bobA, bobB) {
+function drawMelee(ctx, mv, yourX, foeX, bobA, bobB) {
   const m = B.melee;
   if (!m) return;
-  // 선종마다 건현 높이가 달라 갑판선을 선체 정의에서 직접 가져온다
-  const deckOf = (hull, bob) =>
-    SEA_Y - WATERLINE + Math.round(bob) + HULLS[hull].deck - CHAR_FOOT;
+  const yKey = ship().hull, fKey = B.enemy.hull;
 
-  const yH = HULLS[ship().hull], fH = HULLS[B.enemy.hull];
-  const yDeck = deckOf(ship().hull, bobA);
-  const fDeck = deckOf(B.enemy.hull, bobB);
   /* ★ 쓰러진 병사는 **제자리를 지키다가** 사라진다(`fall`이 다 닳을 때까지).
      죽는 순간 `hp>0`으로만 걸러 내면 줄이 툭 당겨져 옆 병사가 순간이동한 것처럼 보인다 —
      한 박자 두었다가 줄이 메워지는 편이 "하나가 쓰러지고 줄이 좁혀졌다"로 읽힌다. */
   const alive = (arr) => arr.filter((u) => u.hp > 0 || u.fall > 0);
 
-  // 병사는 적을 마주보는 현측에 늘어선다. 배마다 선체 자리와 길이가 달라
-  // 시작점과 간격을 선체에서 뽑는다 — 상수로 두면 작은 배에서 뱃전 밖에 선다.
-  const yStep = Math.max(10, Math.min(16, Math.round(yH.len * 0.13)));
-  const fStep = Math.max(10, Math.min(16, Math.round(fH.len * 0.13)));
-  const yStart = yH.x0 + Math.round(yH.len * 0.46);
-  const fStart = fH.x0 + Math.round(fH.len * 0.42);
+  /* ★ **자리는 여전히 선체에서 뽑는다** — 상수로 두면 작은 배에서 뱃전 밖에 선다.
+     달라진 것은 기준점이다. 예전에는 「선체 길이의 46%」에서 시작해 선체 비례로 벌렸는데,
+     선체가 `k`배가 되면 그 줄도 `k`배로 벌어져 화면 밖으로 흩어진다.
+     지금은 **맞닿은 뱃전**에서 시작해 뒤로 물러서고, 간격은 **화면 픽셀**이다 —
+     사람은 배율을 안 타므로 사람 사이 거리도 타면 안 된다.
+     그림으로도 이쪽이 맞다: 접현 백병은 갑판 전체가 아니라 **뱃전에 몰려서** 벌어진다.
 
+     ⓘ 줄의 기준점은 **맞닿은 자리가 화면에 놓인 곳(`mv.FX`)** 하나다. 각자 제 이물 끝에서 재면 두 뱃전이
+       겹쳐 있는 만큼 어긋나 안쪽 병사가 *상대 뱃머리 위*에 선다(hulk↔슈퍼프리깃에서 실제로 났다).
+       간격(`meleeView().gap`)이 이미 두 이물을 이 자리로 모아 주므로 여기가 곧 두 배의 이물이다.
+     ⓘ 발 높이는 **그 지점의 뱃전 윗선**(`ship.js: railAt`)에서 뽑는다. `HULLS[].deck`은 현호가 0인
+       중앙에서만 뱃전과 같아서, 상수로 쓰면 이물 쪽 병사가 선체에 파묻힌다 — 배율이 붙자 드러났다. */
   // 양쪽 갑판 모두 이 바다 사람들이다 — 왜구 배에 지중해 선원이 서 있었다
   const face = regionOf(state.at);
-  alive(m.you).forEach((u, i) => {
-    drawUnit(ctx, u, yourX + yStart + i * yStep, yDeck, false, face, +1);
-  });
-  alive(m.foe).forEach((u, i) => {
-    drawUnit(ctx, u, foeX + fStart - i * fStep, fDeck, true, face, -1);
-  });
+
+  /** 한 줄을 세운다. `dir`는 그 편이 나아가는 방향(우리 +1 / 적 −1)이다. */
+  const line = (units, dir, hullKey, hullOriginX, bob, flip) => {
+    const H = HULLS[hullKey];
+    units.forEach((u, i) => {
+      const cx = mv.FX - dir * (MELEE_RAIL_BACK + i * MELEE_STAND_PX);
+      /* 화면 자리를 선체 안 자리로 되짚어 **그 지점의 뱃전 높이**에 발을 둔다.
+         `deck`을 상수로 쓰면 현호가 올라간 뱃머리에서 사람이 선체에 파묻힌다(→ `ship.js: railAt`). */
+      const wx = mv.wx(cx);
+      const local = flip ? SW - (wx - hullOriginX) : (wx - hullOriginX);
+      const t = (local - H.x0) / H.len;
+      const footY = SEA_Y - WATERLINE + bob + railAt(hullKey, t) + MELEE_FOOT_SINK;
+      drawUnit(ctx, u, Math.round(cx - CW / 2), Math.round(mv.sy(footY)) - CHAR_FOOT, flip, face, dir);
+    });
+  };
+
+  line(alive(m.you), +1, yKey, yourX, bobA, false);
+  line(alive(m.foe), -1, fKey, foeX, bobB, true);
 }
 
 /** 병사 하나 — 찌르기(lunge) · 피격 플래시(flash) · 쓰러짐(fall)을 한자리에서 그린다.
@@ -1117,8 +1210,13 @@ function sideBar(side, name, s, color) {
     : null;
   /* 이름난 해적은 **얼굴을 내건다** — 명부의 세기·현상금이 이름표에만 있으면 좀도둑과 구분이 약하다.
      그림은 `pirate:<명부id>:idle`로 갈리고(BRIEF-NPC §4 ③), 없으면 세기에 맞는 실루엣이다. */
+  /* ★ **명부에서 읽는다 — 지금 서 있는 바다가 아니라.** 원양을 건너다 만나면 `state.at`은
+     아직 떠나온 항구라, 그것으로 얼굴빛을 정하면 바르바로사가 동아시아 사람으로 나온다.
+     `sex`도 같은 자리에서 온다 — 여성으로 사료가 확실한 사람만 명부에 `sex:'f'`가 있다. */
+  const foeDef = B.enemy.face ? PIRATE_DEF.get(B.enemy.face) : null;
   const face = side === 'right' && B.enemy.face
-    ? el('div.bar-face', {}, spriteElTrim(pirateSprite(B.enemy.face, B.enemy.level), 2))
+    ? el('div.bar-face', {}, spriteElTrim(
+        pirateSprite(B.enemy.face, B.enemy.level, foeDef?.region ?? regionOf(state.at), foeDef?.sex), 2))
     : null;
   return el(`div.bar-wrap.${side}`, {}, [
     face,

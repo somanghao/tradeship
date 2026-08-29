@@ -85,6 +85,7 @@
 <script type="module">
 import { PAL, blit, keyOf, knownKeys } from './js/pixel.js';
 import { unitSprite, UNITS, UNIT_KEYS, CW, CH } from './js/sprites/char.js';
+import { miniUnitSprite } from './js/sprites/char-mini.js';
 import { shipSprite, shipTopSprite, HULLS, HULL_KEYS, SW, SH, TOP_W, TOP_H } from './js/sprites/ship.js';
 
 function cell(parent, sprite, scale, caption, sea) {
@@ -110,6 +111,11 @@ function cell(parent, sprite, scale, caption, sea) {
 const uw = document.getElementById('units');
 for (const k of UNIT_KEYS) {
   cell(uw, unitSprite(k, 'idle'), 4, `<b>${UNITS[k].name}</b><br>${k}`);
+}
+
+// 갑판·부두에 서는 작은 인물 (24×28 · 실질 키 21px) — 조선소 갑판과 항구 부두가 이 그림을 쓴다
+for (const k of UNIT_KEYS) {
+  cell(uw, miniUnitSprite(k, 'idle'), 4, `<b>${UNITS[k].name}</b><br>작은 인물 21px`);
 }
 
 // 포즈

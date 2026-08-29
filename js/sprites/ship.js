@@ -177,6 +177,17 @@ function sheerAt(H, t) {
   const fore = H.sheerFore * Math.max(0, u) ** 1.7;
   return back + fore;
 }
+/** 선체 t(0=선미 … 1=선수) 자리의 **뱃전 윗선**(스프라이트 안 y).
+    ★ `HULLS[].deck`은 **현호가 0인 중앙**에서만 뱃전과 같다. 갑판에 사람을 세울 때
+      `deck`을 그대로 쓰면 뱃머리·고물 쪽에서 **선체에 파묻힌다** — 현호가 올라간 만큼
+      뱃전이 위에 있기 때문이다. 눈에 안 띄던 것이 백병전에서 선체를 크게 그리면서 드러났다.
+      (같은 종류의 함정: 「갑판 위 배치는 x·y 둘 다 선체에서 가져온다」 — QUICKMAP-combat §3) */
+export function railAt(hullKey, t) {
+  const H = HULLS[hullKey];
+  if (!H) return 0;
+  return H.deck - sheerAt(H, Math.max(0, Math.min(1, t)));
+}
+
 /* 용골: 중앙이 가장 깊다 */
 function keelAt(H, t) {
   const u = 2 * t - 1;

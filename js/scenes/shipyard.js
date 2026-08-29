@@ -5,8 +5,11 @@
 // 기준으로 배치하므로 창 크기가 변해도 배를 가리지 않는다.
 
 import { portSprite, cannonSprite, VH } from '../sprites/scene.js';
-import { shipSprite, shipTopSprite, HULLS, WATERLINE } from '../sprites/ship.js';
-import { unitSprite, CHAR_FOOT } from '../sprites/char.js';
+import { shipSprite, shipTopSprite, HULLS, WATERLINE, railAt } from '../sprites/ship.js';
+import { unitSprite } from '../sprites/char.js';
+/* 갑판에 서는 사람은 **작은 인물**(24×28 · 실질 키 21px)이다 — 큰 그림(48px)은 배에 비해 너무 컸다.
+   패널 목록의 아이콘은 크기가 곧 정보라 여전히 `unitSprite`(48px)를 쓴다. → `sprites/char-mini.js` */
+import { miniUnitSprite, MW as MINI_W, MINI_FOOT } from '../sprites/char-mini.js';
 import { blit } from '../pixel.js';
 import {
   SHIPS, CITY_BY_ID, GOOD_BY_ID, CANNONS, CANNON_KEYS, CANNON_REFUND,
@@ -38,6 +41,7 @@ import { go, viewport } from '../main.js';
 
 /* 배가 놓이는 자리 — 논리 좌표. 패널은 x=206부터라 겹치지 않는다. */
 const SHIP_X = 12, SEA_Y = 170;
+const DECK_SINK = 2;   // 뱃전 윗선보다 이만큼 아래에 발을 둔다 — 난간 뒤에 선 느낌
 const PANEL = { x: 206, y: 10, w: 182, h: VH - 20 };
 
 let bg, city, tab = 'ship', panelEl = null, fireT = 0, firePort = -1;
@@ -94,16 +98,20 @@ export const shipyardScene = {
     // 남의 배(미리보기)에는 우리 선원을 세우지 않는다.
     if (!mine) return;
     const H = HULLS[s.hull];
-    const deckY = shipY + H.deck - CHAR_FOOT;
     const crewList = ['captain', ...state.loadout.slice(1, openSlots() + 1).filter(Boolean)];
     // 선종마다 선체가 놓이는 자리(x0)와 길이가 달라 갑판 위치를 선체에서 가져온다.
     // 상수로 두면 작은 배에서는 선원이 뱃전 밖 허공에 선다.
-    const gap = Math.max(11, Math.min(17, Math.round(H.len * 0.15)));
+    const gap = Math.max(8, Math.min(15, Math.round(H.len * 0.10)));
     crewList.forEach((k, i) => {
-      const x = SHIP_X + H.x0 + Math.round(H.len * 0.18) + i * gap;
+      const x = SHIP_X + H.x0 + Math.round(H.len * 0.20) + i * gap;
+      /* ★ 발 높이도 **그 지점의 뱃전**에서 뽑는다(`ship.js: railAt`). `HULLS[].deck`은 현호가 0인
+         중앙에서만 뱃전과 같아서, 상수로 쓰면 고물 쪽 사람이 선체에 파묻힌다 — 사람이 21px로
+         작아지면서 그 7px가 키의 3분의 1이 되어 눈에 띄게 됐다. */
+      const t01 = (x + MINI_W / 2 - SHIP_X - H.x0) / H.len;
       const step = tab === 'crew' ? Math.round(Math.sin(t * 2 + i) * 1) : 0;
       /* ★ 갑판에 선 사람도 그 바다의 얼굴이다(C-14) — 항구·술집·전투와 같은 규약 */
-      blit(ctx, unitSprite(k, 'idle', null, regionOf(state.at)), x, deckY + step, 1, i % 2 === 1);
+      blit(ctx, miniUnitSprite(k, 'idle', null, regionOf(state.at)),
+           x, shipY + railAt(s.hull, t01) + DECK_SINK - MINI_FOOT + step, 1, i % 2 === 1);
     });
 
     if (tab === 'arms') drawBattery(ctx);
