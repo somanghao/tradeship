@@ -76,6 +76,17 @@ function fit() {
   current?.resize?.();
 }
 window.addEventListener('resize', fit);
+/* ★ **창 크기가 그대로여도 무대 크기는 바뀜다.** 좁은 창에서 상태바(`#hud`)가 두 줄로
+   접히면 `#stage`가 그만큼 줄어드는데, `resize` 이벤트는 그 전에 이미 지나간 뒤다.
+   부팅 직후가 특히 그러하다 — 실측(640×360): 캐버스 백킹스토어는 640×**289**인데
+   실제 상자는 640×**267**이라 **픽셀아트가 0.92배로 비정수 축소**되고(이 프로젝트가
+   금지한 바로 그것) `offY`도 엉뚜한 값으로 잡혀 그림이 세로로 11px 치우친다.
+   조선소·술집 패널은 살아 있는 `#overlay`를 재서 피했지만 **캐버스 그림은 못 피한다.**
+   ⇒ 무대 자체를 보게 한다. 캐버스 백킹스토어는 레이아웃에 영향을 안 주므로 되먹임이 없다.
+   (회차 25 · 조선소·여관 담당이 C-1로 올리고 항구 PM이 재현·수정 — `scripts/probe-fit.mjs`) */
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => fit()).observe(document.getElementById('stage'));
+}
 
 /** 마우스 이벤트 → 논리 좌표(400x225) */
 export function toLogical(ev) {

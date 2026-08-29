@@ -72,7 +72,7 @@ import { goodRank, goodBasis } from '../evidence.js';
    이미 부르고 있었으므로 그 단추들은 눌리는 순간 ReferenceError로 죽었다 —
    화면은 멀쩡하고 아무 일도 안 일어나는 꼴이라 버그로 안 보인다. */
 import { el, overlay, toast, refreshHUD, refreshLog, iconEl, spriteElTrim, modal, josa, npcTitle } from '../ui.js';
-import { go, gameStarted } from '../main.js';
+import { go, gameStarted, viewport } from '../main.js';
 
 let bg, city, dockers;
 
@@ -91,6 +91,132 @@ function pickDockers(seedBase) {
   }
   return out;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   무대 배치 — 배와 부두 사람을 **DOM 패널이 안 덮는 구간**에 놓는다 (회차 25 · S-5)
+   ══════════════════════════════════════════════════════════════
+   ★ 회차 24가 남긴 가장 큰 과녁이 여기였다. 항구 씬은 `main.js`의 인셋(`setInsetRight`)을
+     쓰지 않는다 — 캔버스는 늘 창 전체 폭에 가운데 정렬되고 DOM 패널이 그 위에 그냥 얹힌다.
+     그래서 배를 논리 x=132에 **못박아 두면** 창이 좁을수록 시장 패널에 물린다(실측: 800×600에서
+     352px 중 268px이 가려졌다). 그렇다고 인셋을 쓰면 400칸을 다 보여주느라 배율이 통째로
+     떨어진다(1280 창에서 2배 → 1배) — 그림이 반으로 작아지므로 **더 나쁘다.**
+   ⇒ 고른 길: **캔버스는 그대로 두고, 그림 쪽이 빈자리를 찾아간다.** 두 가지를 함께 한다.
+     ① 그리드 가운데 열의 최소폭(`--port-gap`)을 여기서 준다 — CSS가 양쪽 패널을 그만큼 좁힌다.
+     ② 그러고도 남는 틈에 맞춰 배와 사람의 논리 x를 다시 잡는다.
+   ★ **실측이 결론을 뒤집은 자리**: 배 스프라이트는 176×128이지만 **실제로 그려진(불투명) 폭은
+     100~163px**이고 좌우 여백이 선종마다 다르다(hulk 43~142 · 고속프리깃 13~175).
+     176을 요구하면 아무 데도 안 들어가는 창이 생긴다 — **요구폭은 불투명 상자로 잰다.** */
+const SHIP_CW = 176;                 // 스프라이트 캔버스 폭(굽는 규격)
+const GRP_LEFT = 21;                 // 원래 조합에서 맨 왼쪽 부두 사람의 왼쪽 끝
+let stageOx = 0;                     // 무리 전체를 옮기는 논리 x 오프셋(0이면 지금까지와 같다)
+const bboxCache = new Map();
+
+/** 배 스프라이트의 **불투명 가로 범위**(캔버스 안 좌표). 선종마다 한 번만 잰다. */
+function shipBox(sprite, key) {
+  const hit = bboxCache.get(key);
+  if (hit) return hit;
+  let lo = SHIP_CW, hi = -1;
+  try {
+    const c = document.createElement('canvas');
+    c.width = sprite.width; c.height = sprite.height;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(sprite, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    for (let y = 0; y < c.height; y++) {
+      const row = y * c.width;
+      for (let x = 0; x < c.width; x++) {
+        if (d[(row + x) * 4 + 3] > 8) { if (x < lo) lo = x; if (x > hi) hi = x; }
+      }
+    }
+  } catch { /* 캔버스를 못 읽으면 규격 그대로 쓴다 */ }
+  const box = hi < lo ? { lo: 0, hi: SHIP_CW - 1 } : { lo, hi };
+  bboxCache.set(key, box);
+  return box;
+}
+
+/** 지금 배의 불투명 상자 — 그릴 때도 배치할 때도 같은 것을 쓴다. */
+function curShipBox() {
+  const s = ship();
+  const key = `${s.hull}|${s.tint}|${city?.flag}`;
+  return shipBox(shipSprite(s.hull, { tint: s.tint, flag: city.flag, furl: true }), key);
+}
+
+function placeStage() {
+  const wrap = document.getElementById('port-wrap');
+  if (!wrap || !city) return;
+  const { offX, scale } = viewport();
+  const box = curShipBox();
+  const ow = box.hi - box.lo + 1;
+
+  /* ① 가운데 열이 요구할 최소폭. **남는 것을 넘게 요구하면 세 칸 합이 창을 넘어**
+     회차 24가 고친 결함(출항 단추가 뷰포트 밖)이 되살아난다 — 그래서 반드시 깎아서 준다. */
+  /* 인라인으로 깎아 둔 하한을 먼저 지운다 — 안 그러면 지난번에 깎은 값을 정본으로 읽는다. */
+  wrap.style.removeProperty('--mk-min');
+  wrap.style.removeProperty('--sd-min');
+  const cs = getComputedStyle(wrap);
+  const px = (v) => parseFloat(v) || 0;
+  const chrome = px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.columnGap) * 2;
+  let mkMin = px(cs.getPropertyValue('--mk-min'));
+  let sdMin = px(cs.getPropertyValue('--sd-min'));
+  /* ★ **두 하한의 합이 창을 넘으면 하한 자체를 깎는다.** 안 깎으면 그리드가 넘쳐 오른쪽 열이
+     통째로 뷰포트 밖으로 밀리고 「⚓ 출항하기」가 안 눌린다 — 회차 24가 640px에서 고친 바로 그
+     결함이 **360~480px에서 되살아나 있었다**(실측: 360×640에서 `#port-wrap` 가로 넘침 122px ·
+     출항 단추 `inVp:false, hit:false`). 문턱을 하나 더 파는 대신 **자를 창에 맞춘다** —
+     미디어쿼리 값이 어떻든 세 칸의 합이 창을 넘지 않는다. */
+  if (mkMin + sdMin + chrome > wrap.clientWidth) {
+    const k = Math.max(0.2, (wrap.clientWidth - chrome) / (mkMin + sdMin));
+    mkMin = Math.floor(mkMin * k); sdMin = Math.floor(sdMin * k);
+    wrap.style.setProperty('--mk-min', `${mkMin}px`);
+    wrap.style.setProperty('--sd-min', `${sdMin}px`);
+  }
+  const avail = wrap.clientWidth - chrome - mkMin - sdMin;
+  /* ★ **요구하는 것은 「배」뿐이다 — 부두 무리까지 요구하면 손해가 더 크다.**
+     무리까지(배 불투명폭 + 사람 띠) 요구해 봤더니 1440×900에서 시장 452→368 · 사이드
+     240→176으로 두 패널이 통째로 쪼그라들었다(실측). 사람 서넛을 더 보이자고 넓은 창의
+     패널을 깎는 것은 남는 장사가 아니다 — **넓은 창에서는 회차 24와 같은 폭(452·240)을 지킨다.**
+     ⚠️ 눈에 보이는 틈은 가운데 칸보다 넓다(양옆 거터도 비어 있다) — 그만큼 빼지 않으면
+     칸을 과하게 요구해 800×600에서 2px이 모자랐다. */
+  const want = (ow + 4) * scale - px(cs.columnGap) * 2;
+  wrap.style.setProperty('--port-gap', `${Math.max(0, Math.min(want, avail))}px`);
+
+  /* ② 패널이 자리를 잡은 뒤의 **진짜 빈 구간**을 논리 좌표로 되돌린다. */
+  const r = (id) => document.getElementById(id)?.getBoundingClientRect() || null;
+  const cr = document.getElementById('screen')?.getBoundingClientRect();
+  const mk = r('port-market'), sd = r('port-side');
+  const base = cr ? cr.left : 0;
+  const vLo = mk ? (mk.right - base - offX) / scale : 0;
+  const vHi = sd ? (sd.left - base - offX) / scale : 400;
+  const gapW = vHi - vLo;
+
+  const fullW = (132 + box.hi) - GRP_LEFT + 1;     // 부두 무리 왼끝 ~ 배 오른끝 (논리 폭)
+  let ox;
+  if (gapW >= fullW) {
+    ox = vLo + (gapW - fullW) / 2 - GRP_LEFT;      // 다 들어간다 → 무리째 가운데
+  } else if (gapW >= ow) {
+    /* 배부터 — 오른쪽에 붙이고 사람은 남는 만큼. 오른쪽 여백은 **남는 만큼만** 준다:
+       4px을 무조건 띄웠더니 여유가 2px뿐인 창에서 그만큼 왼쪽이 잘렸다(실측 800×600 · 4px). */
+    ox = vHi - Math.max(0, Math.min(3, gapW - ow)) - (132 + box.hi);
+  } else {
+    ox = vLo + (gapW - ow) / 2 - (132 + box.lo);   // 배도 안 들어간다 → 배를 가운데 두고 균등하게 잘린다
+  }
+  // 논리 캔버스(0~400) 밖으로 배를 밀어내지 않는다 — 밖은 `ctx.clip()`이 잘라 낸다
+  const min = 2 - (132 + box.lo), max = 398 - (132 + box.hi);
+  stageOx = Math.round(Math.max(Math.min(ox, max), min));
+
+  /* ③ 시장 표는 **452px이라야 한 줄도 안 접힌다**(실측 — 420px에서 4줄, 380px 아래로는 절반이
+     두 줄, 320px 아래로는 모든 줄이 두 줄이 된다). 「가로 넘침 0」은 가독성의 보증이 아니었다.
+     좁은 열에서는 글자·여백·거래칸을 한 단계 줄여 **접히는 줄 수를 줄인다**(`#port-market.tight`). */
+  const mkEl = document.getElementById('port-market');
+  if (mkEl) mkEl.classList.toggle('tight', mkEl.clientWidth < 450);
+  /* 사이드도 같은 처방 — 배에 자리를 내주느라 150px까지 좁아지는 창(≤900px)이 있다.
+     240px에서 짜 놓은 글자·여백 그대로면 카드 글이 두세 자마다 접힌다. */
+  const sdEl = document.getElementById('port-side');
+  if (sdEl) sdEl.classList.toggle('tight', sdEl.clientWidth < 200);
+}
+
+/** 검증용 — 지금 배가 실제로 어디에 그려지는지(논리 x)와 불투명 상자.
+    `.playtest/round-25/scripts/measure-port.mjs`가 이 값으로 가림 px를 잰다. */
+export const portStageDebug = () => ({ ox: stageOx, shipX: 132 + stageOx, box: curShipBox() });
 
 export const portScene = {
   enter() {
@@ -128,26 +254,32 @@ export const portScene = {
     if (paydayDue() && !paydayDeferred()) openPayday(() => after());
   },
 
+  resize() { placeStage(); },
+
   draw(ctx, t) {
     blit(ctx, bg, 0, 0, 1);
 
-    // 정박한 우리 배 — 수면선을 항구 물높이에 맞춘다.
-    // x는 좌우 UI 패널 사이의 빈 구간(논리 132~308)에 맞춘 값이다.
-    // 오른쪽에 두면 사이드패널에 가려 배가 안 보인다.
+    /* 정박한 우리 배 — 수면선을 항구 물높이에 맞춘다.
+       ★ x는 더 이상 못박은 132가 아니다(회차 25). `placeStage()`가 **DOM 패널이 안 덮는
+         구간**을 재서 무리째 옮긴다 — 넓은 창에서는 지금까지와 거의 같은 자리이고, 좁은 창에서만
+         오른쪽으로 비켜선다. 부두는 0~400 전 폭에 깔려 있어(`sprites/scene.js: drawQuay`)
+         어디에 세워도 물에 뜨거나 뭍에 오르지 않는다. */
     const bob = Math.round(Math.sin(t * 0.9) * 1.2);
     blit(ctx, shipSprite(ship().hull, { tint: ship().tint, flag: city.flag, furl: true }),
-         132, 168 - WATERLINE + bob, 1);
+         132 + stageOx, 168 - WATERLINE + bob, 1);
 
     /* 부두 위 사람들 — 발바닥이 닿는 자리(`QUAY_FEET`)를 기준으로 세운다.
-       48px 그림을 쓰던 시절의 `y=150`은 그 값에 큰 그림의 발밑선을 미리 뺀 것이었다. */
+       48px 그림을 쓰던 시절의 `y=150`은 그 값에 큰 그림의 발밑선을 미리 뺀 것이었다.
+       배와 **같은 오프셋**으로 옮긴다 — 따로 놀면 사람만 패널 뒤에 남는다. */
     for (const d of dockers) {
       blit(ctx, miniUnitSprite(d.key, 'idle', null, regionOf(state.at)),
-           d.x + DOCKER_DX, QUAY_FEET - MINI_FOOT, 1, d.flip);
+           d.x + DOCKER_DX + stageOx, QUAY_FEET - MINI_FOOT, 1, d.flip);
     }
 
     // 부관은 배 곁에 선다 — 사이드패널을 열지 않아도 함께 있다는 것이 보인다
     if (hasOfficer()) {
-      blit(ctx, miniUnitSprite(OFFICER.sprite, 'idle'), 108 + DOCKER_DX, QUAY_FEET - MINI_FOOT, 1);
+      blit(ctx, miniUnitSprite(OFFICER.sprite, 'idle'),
+           108 + DOCKER_DX + stageOx, QUAY_FEET - MINI_FOOT, 1);
     }
   },
 };
@@ -157,6 +289,9 @@ function buildUI() {
   overlay.replaceChildren(
     el('div#port-wrap', {}, [marketPanel(), sidePanel()])
   );
+  /* 패널을 다시 세울 때마다 무대도 다시 잡는다 — 탭을 바꾸면 카드가 달라지고,
+     배를 사거나 팔면 배 그림의 폭 자체가 바뀐다(불투명 폭 100~163px). */
+  placeStage();
 }
 
 function marketPanel() {
@@ -192,7 +327,9 @@ function marketTable() {
     el('th.num', { text: '시세' }),
     el('th.num', { text: '보유' }),
     el('th.num', { text: '손익' }),
-    el('th.num', { text: '거래', style: { width: '150px' } }),
+    /* 거래 칸의 폭은 **CSS가 정한다**(`.market th.tcol`) — 좁은 창에서 `#port-market.tight`가
+       한 단계 줄일 수 있어야 하는데, 인라인 style은 그것을 이긴다(회차 25). */
+    el('th.num.tcol', { text: '거래' }),
   ])));
 
   /* ★ 목록 순서 = 근거의 신뢰도 순. GOODS 정의 순서로 쌓으면

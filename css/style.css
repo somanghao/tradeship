@@ -219,6 +219,21 @@ html, body {
   position: sticky; top: 0; background: var(--panel);
 }
 .market th.num, .market td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.market th.tcol { width: 150px; }
+/* ★ 좁은 열의 시장 표(회차 25) — `scenes/port.js: placeStage()`가 열 폭 450px 미만에서 건다.
+   **「가로 넘침 0」은 가독성의 보증이 아니다**: 넘침은 0인데 품목 이름이 「말 라 게 타」로
+   네 줄에 접혔다. 452px이라야 한 줄도 안 접힌다(실측 표는 `probe-wrap.mjs`).
+   글자·여백·거래칸을 한 단계씩 줄여 **같은 폭에서 접히는 줄을 줄인다** — 없애지는 못한다. */
+#port-market.tight .market { font-size: 12px; }
+#port-market.tight .market th { padding: 4px 4px; }
+#port-market.tight .market td { padding: 3px 4px; }
+#port-market.tight .market th.tcol { width: 104px; }
+#port-market.tight .market .gname { gap: 4px; }
+#port-market.tight .market .btn.sm { padding: 3px 5px; font-size: 11px; }
+#port-market.tight .tag { font-size: 9px; padding: 0 3px; }
+/* 숫자 칸 머리글은 두 자짜리다 — 접히면 「시/세 보/유 손/익」이 되어 표 머리가 깨져 보인다.
+   실측: 열 폭 300~315px에서 머리 높이 **39 → 24px**(본문은 315px에서 접힌 줄 1 → 2로 +1). */
+#port-market.tight .market th.num { white-space: nowrap; }
 .market td { padding: 3px 8px; border-bottom: 1px solid #ffffff08; }
 .market tr:hover td { background: #ffffff08; }
 .market .gname { display: flex; align-items: center; gap: 7px; }
@@ -291,7 +306,21 @@ html, body {
      실측: 640×360~1280×720, 네 탭 전부에서 `scrollWidth > clientWidth`(가로 넘침) **0건**
      (200px까지도 0건이었다 — `.playtest/round-24/_measure-width.mjs`). 자유로워진 52px은
      가운데 열(`1fr`)로 넘어가 **배를 그리는 자리가 그만큼 넓어진다**(DES-ART S-5 배선). */
-  display: grid; grid-template-columns: 452px 1fr 240px; gap: 12px;
+  /* ★ 회차 25 — **고정 px 세 칸을 minmax로 바꿨다.** 회차 24가 남긴 S-5(배가 시장 패널에
+     물린다)의 뿌리는 "패널이 넓다"가 아니라 **가운데 열이 자기 폭을 주장하지 않는다**는 것이었다.
+     `1fr`은 남는 것만 먹으므로 창이 좁으면 0까지 줄어든다 — 그래서 800~1024px 창에서 배가
+     최대 268px 가려졌다(실측 표는 `.playtest/round-25/PORT-PM-PROGRESS.md`).
+     이제 가운데 열의 **최소폭을 `--port-gap`으로 JS가 준다**(`scenes/port.js: placeStage()` —
+     지금 배 그림이 실제로 차지하는 불투명 폭 × 배율). 그리드가 알아서 양쪽을 그만큼 좁힌다.
+     ⚠️ `--mk-min`·`--sd-min`은 **가로 넘침 실측으로 잡은 하한**이다
+     (`.playtest/round-25/scripts/probe-minwidth.mjs`: 시장 300px·사이드 150px 미만에서 넘침 시작).
+     ★ 회차 24가 넣은 「좁은 창에서 세 칸이 창을 넘지 않는다」는 성질은 그대로다 — 오히려
+       JS가 `--port-gap`을 남는 만큼으로 **깎아** 주므로 어느 폭에서도 합이 창을 안 넘는다. */
+  --mk-min: 360px; --sd-min: 168px;
+  display: grid;
+  grid-template-columns:
+    minmax(var(--mk-min), 452px) minmax(var(--port-gap, 0px), 1fr) minmax(var(--sd-min), 240px);
+  gap: 12px;
   padding: 12px;
   align-items: start;
   /* 가운데 열은 비워 둔다 — 항구 그림이 보이는 자리 */
@@ -304,8 +333,17 @@ html, body {
    (rect.right 728 > innerWidth 640) — 이 화면에서 나가는 유일한 길이 눌리지 않았다.
    ⇒ 좁은 창에서는 세 칸을 줄인다(시장 452→260 · 사이드 240→170). 시장 열은 `min-width:0`로
    그 안의 `.scroll`이 가로 스크롤을 떠안게 해 표가 깨지지 않게 한다. */
+/* 회차 25 — 같은 처방을 **하한과 여백**으로만 남긴다(칸 폭은 위 minmax가 정한다).
+   하한을 한 단계 더 낮추는 문턱은 **900px**이다. 값은 두 실측이 함께 정했다 —
+   ① `probe-minwidth.mjs`: 가로 넘침이 시작되는 하한(시장 300 · 사이드 150)
+   ② `probe-wrap.mjs`: **접히지 않는** 하한 — 보통은 452px, `.tight`를 걸면 **360px**.
+   그래서 넓은 창의 하한은 360/168, 좁은 창(≤900)은 320/152로 잡았다. 320이면 `.tight`에서
+   31줄 중 4줄만 접힌다(같은 폭에서 `.tight` 없이는 16줄). */
+@media (max-width: 900px) {
+  #port-wrap { --mk-min: 314px; --sd-min: 150px; gap: 8px; padding: 8px; }
+}
 @media (max-width: 760px) {
-  #port-wrap { grid-template-columns: 320px 1fr 160px; gap: 8px; padding: 8px; }
+  #port-wrap { gap: 6px; padding: 6px; }
 }
 #port-market {
   grid-column: 1; max-height: 100%; min-width: 0;
@@ -334,14 +372,30 @@ html, body {
   box-shadow: 0 -6px 12px -6px #14111b;
 }
 .svc { padding: 10px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
-.svc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* ★ 좁은 사이드패널(회차 25) — `placeStage()`가 폭 200px 미만에서 건다. 240px에 맞춘
+   글자·여백을 그대로 150px에 넣으면 「에스트레마 / 두라」처럼 두세 자마다 접힌다. */
+#port-side.tight .panel > h3 { font-size: 12px; padding: 6px 7px; letter-spacing: .04em; }
+#port-side.tight .svc { padding: 7px; gap: 6px; font-size: 11.5px; }
+#port-side.tight .svc-row > div:first-child { flex-basis: 108px; }
+#port-side.tight .btn.sm { padding: 3px 6px; font-size: 11px; }
+#port-side.tight .btn { font-size: 12px; padding: 5px 8px; }
+.svc-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  /* ★ 회차 25 — **줄을 접는 것은 단추가 아니라 줄 자체다.**
+     회차 24가 「단추는 줄바꿈하지 않는다」로 정한 것은 그대로 둔다(누르는 것의 이름이라
+     갈라지면 안 읽힌다). 대신 **왼쪽 글이 바닥까지 눌리는 것**을 막는다 — 실측에서 카드 줄
+     81개 중 63개가 왼쪽 폭 120px 미만이었고, 최악은 **29px에 14줄**이었다(「창고 — 24,000닢…」
+     옆에 「임차 창고가 먼저다」 124px짜리 단추). 1280·1920에서도 같았으므로 **좁은 창 문제가
+     아니라 이 줄의 구조 문제**다. 글의 기준폭을 주고 안 맞으면 단추를 아랫줄로 내린다. */
+  flex-wrap: wrap; row-gap: 6px;
+}
 .svc-row .lbl { color: #b6ac9c; }
 .svc-row .val { color: var(--parch); font-variant-numeric: tabular-nums; }
 /* ★ 단추가 「태 / 운 / 다」로 세로로 갈라졌다 — 설명이 긴 카드(코멘다)에서 왼쪽 글이
    자리를 다 먹고 단추만 눌려서다. 단추는 줄바꿈하지 않는다: **누르는 것의 이름**이라
    갈라지면 무엇을 누르는지가 안 읽힌다. 대신 왼쪽 글이 줄어든다(min-width:0). */
-.svc-row > div:first-child { min-width: 0; }
-.svc-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.svc-row > div:first-child { min-width: 0; flex: 1 1 132px; }
+.svc-row .btn { flex: 0 0 auto; white-space: nowrap; margin-left: auto; }
 
 /* ── 전투 씬 ────────────────────────────────────────── */
 #battle-ui { position: absolute; inset: 0; }
@@ -476,13 +530,24 @@ html, body {
   border-bottom: 1px solid var(--brass-d);
 }
 .yard-head h3 { font-size: 13px; letter-spacing: .08em; color: var(--brass-l); }
-.yard-head .sub { font-size: 11px; color: #a89a84; margin-top: 3px; }
+.yard-head .sub { font-size: 11px; color: #a89a84; margin-top: 3px; line-height: 1.45; }
+/* 좁은 창(scale 1)에서 「나가기」가 「나 / 가 / 기」 세 줄로 접혔다 — 단추 글자는 안 접는다 */
+.yard-head > .btn, .tav-head > .btn { flex: 0 0 auto; white-space: nowrap; }
+.yard-head > div:first-child, .tav-head > div:first-child { min-width: 0; }
+.yard-fix .btn { white-space: nowrap; }
+.yard-fix.slim b { color: var(--parch); }
+/* 값만 적힌 단추(`1,800닢` · `+ 240` · `건조`)는 접지 않는다 — 「1,800 / 닢」으로 갈라졌다.
+   산문이 들어가는 단추(`부두를 넓힌다 …`)는 그대로 접히게 둔다. */
+#yard-panel .yard-ship .acts .btn,
+#yard-panel .refit-row .btn,
+#yard-panel .arm-row .acts .btn,
+#yard-panel .shot-row .btn { white-space: nowrap; }
 
 .yard-tabs { flex: 0 0 auto; display: flex; border-bottom: 1px solid var(--line); }
 .yard-tab {
   flex: 1; font: inherit; font-size: 12.5px; font-weight: 600;
   padding: 7px 0; cursor: pointer;
-  color: #8f8878; background: #ffffff06; border: 0;
+  color: #a39885; background: #ffffff06; border: 0;   /* 탭은 길찾기다 — 대비를 4.14 → 5.3으로 */
   border-right: 1px solid var(--line);
 }
 .yard-tab:last-child { border-right: 0; }
@@ -493,10 +558,16 @@ html, body {
 }
 
 .yard-body { flex: 1 1 auto; overflow: auto; padding: 10px; min-height: 0; }
-.yard-note { font-size: 11.5px; color: #8f8878; line-height: 1.6; margin-bottom: 9px; }
+/* 「부두」 카드 머리말이 `부두리스본 · 공업력 3`으로 **붙어** 있었다 — 공용 `.panel > h3`에
+   `gap`이 없어서다. 조선소 안쪽에서만 띄운다(공용 규칙은 안 건드린다). */
+#yard-panel .panel > h3 { gap: 8px; flex-wrap: wrap; row-gap: 2px; }
+/* 한글은 낱말 안에서 끊지 않는다 — 「인원 부족(최소 5 / 명)」처럼 갈라졌다 */
+.yard-head .sub, .yard-note, .yard-ship .sp, .yard-ship .ds,
+.tav-head .sub, .tav-desc, .tav-trait { word-break: keep-all; overflow-wrap: anywhere; }
+.yard-note { font-size: 11.5px; color: #9d9381; line-height: 1.6; margin-bottom: 9px; }
 .yard-note b { color: var(--parch); }
 .yard-warn { font-size: 11.5px; color: var(--bad); margin-top: 8px; }
-.yard-body .dim { font-size: 11.5px; color: #5d5768; }
+.yard-body .dim { font-size: 11.5px; color: #9a92a8; }   /* 1.95:1 → 3.9:1 (회차 25 대비 실측) */
 
 /* 선박 탭 */
 /* ★ 좁아지면 단추를 **다음 줄로 내린다**(`wrap`). 전에는 한 줄에 묶여 있어서
@@ -515,12 +586,19 @@ html, body {
   font-size: 11px; color: var(--brass-l); margin-bottom: 6px;
   padding: 3px 7px; background: #d2a52a14; border-left: 2px solid var(--brass); border-radius: 2px;
 }
-.yard-ship .info { flex: 1 1 200px; min-width: 0; }
+/* ★ 기준폭 200px이면 좁은 패널에서 **줄이 세 층으로 접힌다**(실측 640×360: 그림 56 / 글 121 /
+   단추 16이 각자 한 줄씩 = 221px). 140px으로 낮추면 그림과 글이 한 줄에 서서 157px이 된다 —
+   스물일곱 줄이면 1,700px 차이다. 넓은 창은 어차피 한 줄이라 안 바뀐다. */
+.yard-ship .info { flex: 1 1 140px; min-width: 0; }
 .yard-ship .n { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
 /* 배 이름은 끊지 않는다 — 이름이 두 줄로 갈라지면 무슨 배인지 읽기 전에 눈이 걸린다 */
 .yard-ship .n b { color: var(--brass-l); font-size: 13px; white-space: nowrap; }
-.yard-ship .sp { font-size: 11px; color: #8f8878; margin-top: 2px; line-height: 1.45; }
-.yard-ship .ds { font-size: 11px; color: #6f6858; margin-top: 1px; }
+/* ★ 대비 실측(회차 25 · `scripts/yt-contrast.mjs`) — 어두운 회색 위 회색이었다.
+   `.ds`(배 설명)가 **2.45:1**로 이 패널에서 가장 안 읽히는 글자였다(WCAG 본문 기준 4.5).
+   층은 그대로 두고 **한 단계씩 올린다** — 이름(밝음) > 제원 > 설명 순서는 유지된다. */
+.yard-ship .sp { font-size: 11px; color: #a39885; margin-top: 2px; line-height: 1.45; }
+.yard-ship .ds { font-size: 11px; color: #9d9484; margin-top: 1px; line-height: 1.45; }
+.yard-ship .badge { color: #a39885; }
 .yard-ship .acts { flex: 0 0 auto; margin-left: auto; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
 .badge {
   font-size: 10px; padding: 1px 5px; border-radius: 2px;
@@ -549,6 +627,31 @@ html, body {
 }
 .slot .sn { font-size: 10.5px; color: #a89a84; text-align: center; white-space: nowrap; }
 .slot .sn2 { font-size: 10px; color: #6f6858; margin-top: -2px; }
+
+/* 해설 접기 — 규칙 한 줄은 위에 남고 *어떻게 생겼나*만 접힌다 */
+.yard-fold { margin: 0 0 8px; }
+.yard-fold-h {
+  font: inherit; font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  padding: 3px 7px; cursor: pointer;
+  color: #a39885; background: #ffffff08;
+  border: 1px solid var(--line); border-radius: 2px;
+}
+.yard-fold-h:hover { color: var(--parch); background: #ffffff14; }
+.yard-fold .yard-note { margin-top: 7px; margin-bottom: 0; }
+
+/* 선박 탭 목록 범위 — 백두 척을 다 펴 두면 화면 예순 장이 된다(회차 25 실측) */
+.yard-scope { display: flex; gap: 5px; margin: 4px 0 8px; }
+.yard-scope-b {
+  flex: 1 1 0; min-width: 0;
+  font: inherit; font-size: 11px; font-weight: 600; line-height: 1.3;
+  padding: 5px 6px; cursor: pointer;
+  color: #a89a84; background: #ffffff08;
+  border: 1px solid var(--line); border-radius: 2px;
+}
+.yard-scope-b:hover { color: var(--parch); background: #ffffff14; }
+.yard-scope-b.on {
+  color: var(--brass-l); background: #d2a52a1c; border-color: var(--brass-d);
+}
 
 .yard-sum {
   display: flex; gap: 5px; margin: 10px 0;
@@ -614,7 +717,7 @@ html, body {
 
 /* 선박 국적 꼬리표 */
 .yard-ship .origin {
-  font-size: 10px; color: #8f8878; letter-spacing: .04em;
+  font-size: 10px; color: #a39885; letter-spacing: .04em;
   padding: 0 4px; border-left: 2px solid #d2a52a55;
 }
 
@@ -740,7 +843,11 @@ html, body {
 /* 대형 주문 · 정박선 */
 .ctr-line { font-size: 13px; color: var(--parch); line-height: 1.6; }
 .ctr-line b { color: var(--brass-l); }
-.ctr-sub { font-size: 11.5px; color: #8f8878; line-height: 1.6; }
+/* ★ 회차 25 — `#8f8878`은 카드 바탕(`--panel-2` #262231) 위에서 **4.39:1**로 본문
+   기준(4.5:1) 바로 아래였다(조선소·여관 담당이 C-3으로 올렸고 공용 클래스라
+   내가 받았다). `#948c7c`로 한 단계 올려 **4.65:1** — 그가 `.yard-ship .ds`·`.tav-desc`에
+   쓴 것과 **같은 값**이라 두 화면의 설명글이 같은 밝기로 선다. 층(이름 밝음 > 설명)은 그대로. */
+.ctr-sub { font-size: 11.5px; color: #948c7c; line-height: 1.6; }
 /* `**…**` 강조가 실제로 굵게 나오는 자리(→ `ui.js` §굵게 · GRAND #14).
    흐린 본문(#8f8878) 위에서는 굵기만으로는 안 읽혀 색을 한 칸 올린다. */
 .ctr-sub b, .svc-row .val b, #log-line b, .toast-item b { color: var(--parch); font-weight: 700; }
@@ -826,7 +933,8 @@ html, body {
 .tav-name b { color: var(--brass-l); font-size: 12.5px; }
 .tav-n { font-size: 11px; color: var(--parch); }
 .tav-trait { font-size: 11px; color: #a89a84; margin-top: 2px; }
-.tav-desc { font-size: 11px; color: #6f6858; margin-top: 3px; line-height: 1.5; }
+/* 2.59:1이었다 — 무리 설명은 이 화면에서 고르는 근거다(회차 25 대비 실측) */
+.tav-desc { font-size: 11px; color: #9d9484; margin-top: 3px; line-height: 1.5; }
 
 .tav-cost { display: flex; gap: 7px; margin: 7px 0 6px; }
 .tav-cost-cell {
@@ -834,7 +942,7 @@ html, body {
   padding: 4px 6px; background: #00000030; border-radius: 2px;
   display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap;
 }
-.tav-cost-cell .k { font-size: 10.5px; color: #8f8878; }
+.tav-cost-cell .k { font-size: 10.5px; color: #a39885; }
 .tav-cost-cell b { font-size: 11.5px; color: var(--parch); font-variant-numeric: tabular-nums; }
 .tav-delta { font-size: 10.5px; }
 

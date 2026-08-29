@@ -46,6 +46,9 @@ const PANEL = { x: 206, y: 10, w: 182, h: VH - 20 };
 
 let bg, city, tab = 'ship', panelEl = null, fireT = 0, firePort = -1;
 let preview = null;    // 선박 탭에서 들여다보는 배 (null이면 지금 타고 있는 배)
+/* 선박 탭 목록 범위 — 'here'(내 배 + 이 바다 배 + 지금 살 수 있는 배) / 'all'(백두 척 전부).
+   ★ 모듈 변수다. 세이브(`save.js`)에 화면 취향을 섞지 않는다 — 항구 사이드패널 탭과 같은 규약. */
+let shipScope = 'here';
 let armsHilite = null; // 무장 탭에서 마우스를 올린 대포 종류 (부두의 그 대포만 밝게)
 
 /** 캔버스에 그릴 배 */
@@ -162,14 +165,37 @@ function drawBattery(ctx) {
 /* ══════════════════════════════════════════════════════════════
    레이아웃 — 패널을 논리좌표에 맞춰 무대 위에 얹는다
    ══════════════════════════════════════════════════════════════ */
+/* ★ **패널은 논리좌표에 얹되 레터박스까지 쓴다**(2026-08-29 · 회차 25 실측).
+   `PANEL.w × scale`만 쓰면 **축척이 1로 떨어지는 창(640×360)에서 패널이 182×205 CSS px**이 되는데,
+   그 안의 글자는 CSS px 고정(제목 13px · 본문 11px)이라 **축척을 따라 줄지 않는다.**
+   그래서 머리말이 여섯 줄로 접히고 본문(`.yard-body`)이 **20px**만 남았다 — 실측이다
+   (`.playtest/round-25/UI-YARD-TAVERN-PROGRESS.md` §0-2). 화면에 내용이 한 줄도 안 떴다.
+   ⇒ **왼쪽 모서리는 논리 x=206에 그대로 못박고**(그림을 절대 안 덮는다는 약속은 그대로다)
+     오른쪽·위아래로만 남는 자리를 먹는다. 640×360이면 좌우에 120px씩 검은 띠가 남아 있었다.
+   ⚠️ 최소치를 넘어서면(1280×720처럼 `scale≥2`) 계산이 예전 그대로다 — **넓은 창의 배치는 안 건드린다.** */
+const MIN_W = 300, EDGE = 4;
+
 function layout() {
   if (!panelEl) return;
-  const { offX, offY, scale } = viewport();
+  const { offX, offY, scale, w: vw, h: vh } = viewport();
+  /* ⚠️ **`viewport().h`를 상자 크기로 믿지 마라.** 그것은 `fit()`이 마지막으로 잰 캔버스 크기다.
+     640×360에서는 상태바가 두 줄로 접히며 `#stage`가 뒤늦게 줄어드는데 `fit()`이 다시 안 돌아
+     `canvas.height 289` ↔ `#stage.clientHeight 267`로 **22px이 어긋나 있었다**(실측).
+     그 값으로 높이를 잡으면 패널 밑이 잘린다 — 그래서 **지금 살아 있는 상자**(`#overlay`)를 잰다. */
+  const box = panelEl.parentElement;
+  const sw = box?.clientWidth || vw, sh = box?.clientHeight || vh;
+  const left = offX + PANEL.x * scale;
+  // 폭: 논리폭이 최소치보다 좁으면 무대 오른쪽 끝까지 늘린다(그 자리는 레터박스다)
+  const w = Math.max(PANEL.w * scale, Math.min(MIN_W, Math.max(80, sw - left - EDGE)));
+  /* 높이: **무대 세로를 다 쓴다.** 패널의 왼쪽 모서리가 논리 x=206에 못박혀 있으므로 높이를
+     아무리 늘려도 그림을 덮지 않고, 위아래는 어차피 레터박스(검은 띠)다. 1280×720에서
+     무대가 649px인데 패널이 410px이라 **239px이 그냥 비어 있었다** — 그만큼이 스크롤로 갔다.
+     항구 사이드패널(`#port-side`)이 이미 무대 세로를 다 쓰므로 화면끼리도 이쪽이 일관된다. */
+  const h = Math.max(80, sh - EDGE * 2);
+  const top = EDGE;
   Object.assign(panelEl.style, {
-    left: `${offX + PANEL.x * scale}px`,
-    top: `${offY + PANEL.y * scale}px`,
-    width: `${PANEL.w * scale}px`,
-    height: `${PANEL.h * scale}px`,
+    left: `${left}px`, top: `${top}px`,
+    width: `${w}px`, height: `${h}px`,
   });
 }
 
@@ -186,10 +212,14 @@ function buildUI() {
     el('div.yard-head', {}, [
       el('div', {}, [
         el('h3', { text: `${city.name} 조선소` }),
-        el('div.sub', { text: `${ship().name} · 선체 ${state.hp}/${state.maxHp} · 선원 ${state.crew}/${state.crewMax} · 포 ${state.guns}/${gunCap()}문` }),
+        /* ★ 머리말은 **HUD에 없는 것만** 적는다(2026-08-29 · 회차 25).
+           예전에는 `선체 50/50 · 선원 0/14 · 포 2문`을 한 줄 통째로 적었는데 **셋 다 화면 맨 위
+           상태바에 이미 있다.** 640×360(scale 1)에서 그 중복 한 줄이 여섯 줄로 접혀 머리말이
+           115px을 먹었고 본문에 20px만 남았다. 남긴 것은 상태바가 말하지 않는 것 —
+           **포문 상한**·**속력**·**인원 부족**·**정박 유지비**다. */
         el('div.sub', {
-          text: `속력 ${shipSpeed().toFixed(2)}`
-              + (shorthanded() ? ` · 인원 부족 (최소 ${ship().crewMin}명)` : '')
+          text: `${ship().name} · 속력 ${shipSpeed().toFixed(2)} · 포 ${state.guns}/${gunCap()}문`
+              + (shorthanded() ? ` · 인원 부족(최소 ${ship().crewMin}명)` : '')
               + (fleetUpkeep() ? ` · 정박 유지비 ${fleetUpkeep()}닢/일` : ''),
           style: shorthanded() ? { color: '#e0806e' } : null,
         }),
@@ -334,10 +364,71 @@ function yardUpgradeCard() {
     el('h3', {}, [
       el('span', { text: '부두' }),
       el('span', { text: `${city.name} · 공업력 ${industryOf(state.at)}`,
-                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+                   style: { fontSize: '11px', color: '#a39885', letterSpacing: 0 } }),
     ]),
     el('div.svc', {}, rows),
   ]);
+}
+
+/* ── 접기 (2026-08-29 · 회차 25) ───────────────────────────────
+   ★ 선박 탭의 **앞머리 524px**(부두 카드 322 + 설명 세 줄 202)이 배 목록보다 먼저 왔다.
+     640×360에서 본문이 115px이니 **배 한 척을 보기 전에 네 화면 반을 굴려야** 했다.
+   ⇒ 항구 사이드패널과 **같은 규약**으로 접는다 — *머리말은 그대로 보이므로 무엇이 있는지는
+     안 감춘다.* 접힌 머리에 한 줄 요약을 남기고, 한 번 펴면 세션 동안 기억한다.
+   ⚠️ 접힘 상태를 `state`에 넣지 않는다 — `save.js`가 state를 통째로 싣는다(port.js와 같은 이유). */
+const foldOpen = new Map();
+
+function fold(key, panel, openDefault = false, badge = null) {
+  if (!panel) return null;
+  const open = foldOpen.has(key) ? foldOpen.get(key) : openDefault;
+  const h3 = panel.querySelector('h3');
+  if (!h3) return panel;
+  for (const c of [...panel.children]) if (c !== h3) c.style.display = open ? '' : 'none';
+  h3.style.cursor = 'pointer';
+  h3.title = open ? '접는다' : '펼친다';
+  if (!open && badge) {
+    h3.append(el('span', { text: badge,
+      style: { fontSize: '10.5px', color: '#c9b98a', letterSpacing: 0, marginLeft: 'auto' } }));
+  }
+  h3.append(el('span', { text: open ? ' ▾' : ' ▸',
+    style: { fontSize: '11px', color: '#a39885', marginLeft: badge && !open ? '6px' : 'auto' } }));
+  h3.addEventListener('click', () => { foldOpen.set(key, !open); buildUI(); });
+  return panel;
+}
+
+/* 사다리 해설 — **규칙이 아니라 해설**이라 접어 둔다. 한 줄 요약(공업력·아는 데까지)은
+   접히지 않은 채 위에 그대로 있으므로, 접혀 있어도 *무엇을 지을 수 있나*는 화면에 있다. */
+function noteFold() {
+  const open = foldOpen.get('note') === true;
+  return el('div.yard-fold', {}, [
+    el('button.yard-fold-h', {
+      text: open ? 'ⓘ 어떻게 정해지나 ▾' : 'ⓘ 어떻게 정해지나 ▸',
+      onclick: () => { foldOpen.set('note', !open); buildUI(); },
+    }),
+    open ? el('div', {}, [
+      el('p.yard-note', {
+        html: '공업력은 <b>0=내륙 · 1=소형 · 2=대형 상선 · 3=최상급 · 4=승급한 부두</b>다. '
+            + '제 나라 배는 한 등급 쉽게 짓고, 오래 지어온 항구는 값이 싸다.',
+      }),
+      el('p.yard-note', {
+        html: '부두는 <b>제가 오가는 바다의 배</b>부터 안다 — 공업력 1이면 이 바다, '
+            + '2면 이 항구가 직접 오가는 바다, 3이면 이 바다가 닿는 바다, '
+            + '<b>4라야 온 세계의 배</b>를 짓는다.',
+      }),
+      el('p.yard-note', {
+        html: '줄을 누르면 그 배가 <b>화면에 뜬다</b>. 배는 마지막으로 내린 항구에 그대로 남고, '
+            + '갈아탈 때 자동으로 팔지 않는다.',
+      }),
+    ]) : null,
+  ].filter(Boolean));
+}
+
+/** 접힌 「부두」 머리에 남길 한 줄 — 무엇이 접혔는지 값으로 말한다 */
+function dockBadge() {
+  const b = yardBuilding(state.at) ?? civicBuilding(state.at);
+  if (b && state.day < b.until) return `공사 중 · ${b.until - state.day}일`;
+  const n = yardNext(state.at);
+  return n ? `→ ${n.to} · ${n.gold.toLocaleString('ko-KR')}닢` : '꼭대기';
 }
 
 /* ★ **이 바다의 배가 먼저 온다.**
@@ -367,11 +458,30 @@ function yardReachHere() {
           '온 세계의 배까지'][Math.min(4, ind)];
 }
 
+/* ── 목록 범위 (2026-08-29 · 회차 25 실측) ─────────────────────
+   ★ 배가 **102척**이라 선박 탭 한 장이 640×360에서 22,802px, 1280×720에서 16,461px이었다 —
+     본문 높이로 나누면 **62~166화면**이다. 눌러야 할 줄이 목록의 몇 번째에 있는지 모른 채
+     굴리는 화면이고, 「이 바다의 배가 먼저 온다」 정렬(`shipOrder`)로도 *줄 수*는 안 줄었다.
+   ⇒ **줄이는 것이 아니라 접는다** — 기본은 *지금 뜻이 있는 배*(내 배 · 이 바다에서 난 배 ·
+     지금 살 수 있는 배)만 펴고, 「전부」 단추로 백두 척을 그대로 볼 수 있게 둔다.
+     ★ 콘텐츠는 한 척도 안 지웠다(최상위 원칙) — **가려진 척수를 단추에 적어** 무엇이 접혀
+     있는지 화면이 말한다. */
+function inScopeAs(scope, key) {
+  if (scope === 'all') return true;
+  return !!state.fleet[key]                          // 내 배(정박·동행 포함)
+      || SHIPS[key].home === REGION_OF_CITY[state.at] // 이 바다에서 난 배
+      || sellsShip(key, state.at);                    // 지금 이 부두가 지어 주는 배
+}
+const inScope = (key) => inScopeAs(shipScope, key);
+
 function shipTab() {
   const upgradeCard = yardUpgradeCard();
   const rows = [];
   const seenKey = preview || state.shipKey;
-  const order = Object.keys(SHIPS).sort(shipOrder(state.at)).map((k) => [k, SHIPS[k]]);
+  const all = Object.keys(SHIPS).sort(shipOrder(state.at));
+  const shown = all.filter((k) => inScope(k) || k === seenKey);
+  const hidden = all.length - shown.length;
+  const order = shown.map((k) => [k, SHIPS[k]]);
   for (const [key, s] of order) {
     const rec = state.fleet[key];
     const aboard = state.shipKey === key;
@@ -408,7 +518,7 @@ function shipTab() {
         !rec && !sellsShip(key)
           ? el('div.ds', {
               text: whyNot(key, s),
-              style: { color: '#8a7f6a' },
+              style: { color: '#a0947f' },   /* 3.64:1이었다 — 「왜 여기선 못 짓나」는 읽혀야 뜻이 있다(회차 25) */
             })
           : null,
       ]),
@@ -417,30 +527,36 @@ function shipTab() {
   }
 
   return el('div', {}, [
-    upgradeCard,
+    fold('dock', upgradeCard, false, dockBadge()),
     /* ★ **사다리가 둘이라는 것을 화면이 말한다.** 기술(무엇을 지을 솜씨가 되나)과
        교역(어느 바다의 배를 아는가)이 나란히 걸리므로, 한쪽만 적으면 "공업력이 되는데
-       왜 안 나오나"가 설명되지 않는다. 지금 이 부두가 어디까지 아는지를 한 줄로 준다. */
+       왜 안 나오나"가 설명되지 않는다. 지금 이 부두가 어디까지 아는지를 **한 줄로** 준다 —
+       ★ 이 한 줄은 접지 않는다(회차 25). 접히는 것은 *그 사다리가 어떻게 생겼나*라는 해설뿐이다. */
     el('p.yard-note', {
-      html: `<b>${city.name}</b> 조선소 — 공업력 <b>${industryOf()}</b>`
-          + `(0=내륙 · 1=소형 · 2=대형 상선 · 3=최상급 · 4=승급한 부두). 제 나라 배는 한 등급 쉽게 짓고, `
-          + '오래 지어온 항구는 값이 싸다.',
+      html: `공업력 <b>${industryOf()}</b> · 이 부두가 아는 데까지 — <b>${yardReachHere()}</b>.`,
     }),
-    el('p.yard-note', {
-      html: '부두는 <b>제가 오가는 바다의 배</b>부터 안다 — 공업력 1이면 이 바다, '
-          + '2면 이 항구가 직접 오가는 바다, 3이면 이 바다가 닿는 바다, '
-          + '<b>4라야 온 세계의 배</b>를 짓는다. '
-          + `지금 이 부두가 아는 데까지 — <b>${yardReachHere()}</b>.`,
-    }),
-    el('p.yard-note', {
-      html: '줄을 누르면 그 배가 <b>화면에 뜬다</b>. 배는 마지막으로 내린 항구에 그대로 남고, '
-          + '갈아탈 때 자동으로 팔지 않는다.',
-    }),
+    noteFold(),
     preview && preview !== state.shipKey
       ? el('div.yard-seen', { text: `화면에 띄운 배 — ${SHIPS[preview].name} (미리보기)` })
       : null,
+    /* 범위 단추 — 무엇이 접혀 있는지 척수로 말한다 */
+    el('div.yard-scope', {}, [
+      el(`button.yard-scope-b${shipScope === 'here' ? '.on' : ''}`, {
+        text: `여기서 뜻이 있는 배 ${all.filter((k) => inScopeAs('here', k)).length}척`,
+        title: '내 배 · 이 바다에서 난 배 · 지금 이 부두가 지어 주는 배',
+        onclick: () => { shipScope = 'here'; buildUI(); },
+      }),
+      el(`button.yard-scope-b${shipScope === 'all' ? '.on' : ''}`, {
+        text: `전부 ${all.length}척`,
+        title: '아홉 바다의 배를 모두 편다 — 어느 항구에서 짓는지도 줄마다 적힌다',
+        onclick: () => { shipScope = 'all'; buildUI(); },
+      }),
+    ]),
+    hidden > 0
+      ? el('p.yard-note', { html: `다른 바다의 배 <b>${hidden}척</b>은 접어 두었다 — 「전부」를 누르면 편다.` })
+      : null,
     ...rows,
-  ]);
+  ].filter(Boolean));
 }
 
 /** 왜 여기선 못 짓는지 — 공업력이 모자란 것과 아직 안 열린 것은 다른 문제다 */
@@ -524,7 +640,15 @@ function shipActions(key, s, rec, aboard, here) {
 
   if (!rec) {
     if (!sellsShip(key)) {
-      return [el('span.dim', { text: shipLockedBy(key) ? '미해금' : `공업력 ${tierNeeded(key)}` })];
+      /* ⚠️ `tierNeeded`는 **tier 0(시중에 안 나오는 시작배)에 `Infinity`를 준다**(state.js).
+         그대로 찍어서 화면에 **「공업력 Infinity」**가 떠 있었다(회차 25 · 스크린샷으로 잡았다).
+         「몇을 올리면 되나」로 읽히는 자리라 숫자가 아니면 숫자를 적으면 안 된다. */
+      const need = tierNeeded(key);
+      return [el('span.dim', {
+        text: shipLockedBy(key) ? '미해금'
+            : Number.isFinite(need) ? `공업력 ${need}`
+            : '시중에 안 나온다',
+      })];
     }
     return [el('button.btn.sm', {
       text: '건조',
@@ -686,11 +810,24 @@ function crewTab() {
      (원양이 막히는 것은 선체가 아니라 `OCEAN_HULL_MIN`이라 화면이 말해 주지 않으면 모른다). */
 function repairBar() {
   const full = state.hp >= state.maxHp;
+  /* ★ **성한 배에는 얇은 한 줄만.** 판정 기준은 「선체가 바닥인 판으로 들어갔을 때 수리가
+     보이는가」였다(2026-08-28) — 성할 때는 고칠 것이 없으므로 단추까지 세울 이유가 없다.
+     640×360에서 이 줄이 39px을 먹었고 본문이 115px뿐이라 그 차이가 크다(회차 25 실측).
+     ⚠️ **상한 배에서는 예전 그대로 굵게 뜬다** — 되돌리는 것이 아니다. */
+  if (full) {
+    return el('div.yard-fix.slim', {
+      style: {
+        flex: '0 0 auto', padding: '4px 10px', fontSize: '11px', color: '#a39885',
+        borderBottom: '1px solid var(--line)',
+      },
+      html: `선체 <b>${state.hp}/${state.maxHp}</b> — 성하다`,
+    });
+  }
   const pct = state.maxHp ? state.hp / state.maxHp : 1;
   const need = state.maxHp - state.hp;
   const cost = Math.round(need * repairUnit());
   const low = pct <= OCEAN_HULL_MIN;
-  const color = full ? '#8f8878' : low ? '#e0806e' : '#c9b98a';
+  const color = full ? '#a39885' : low ? '#e0806e' : '#c9b98a';   /* 회차 25 대비 실측 */
   return el('div.yard-fix', {
     style: {
       flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '8px',

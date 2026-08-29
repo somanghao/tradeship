@@ -63,14 +63,28 @@ export const tavernScene = {
   },
 };
 
+/* ★ 조선소와 **같은 규칙**이다(2026-08-29 · 회차 25) — 패널은 논리좌표에 얹되 레터박스까지 쓴다.
+   `scale=1`(640×360)에서 패널이 194×209 CSS px밖에 안 되는데 안의 글자는 CSS px 고정이라,
+   머리말이 123px을 먹고 본문(`.tav-body`)에 **83px**만 남았다. 무리 카드 한 장이 272px이니
+   **카드 한 장도 안 들어갔다.** 왼쪽 모서리(논리 x=196)는 그대로 못박아 그림은 안 덮는다. */
+const MIN_W = 300, EDGE = 4;
+
 function layout() {
   if (!panelEl) return;
-  const { offX, offY, scale } = viewport();
+  const { offX, offY, scale, w: vw, h: vh } = viewport();
+  /* ⚠️ `viewport().h`는 `fit()`이 마지막으로 잰 **캔버스** 크기다 — 640×360에서 상태바가 두 줄로
+     접히면 `#stage`가 그보다 22px 작다(실측). 상자는 **지금 살아 있는 `#overlay`**를 잰다. */
+  const box = panelEl.parentElement;
+  const sw = box?.clientWidth || vw, sh = box?.clientHeight || vh;
+  const left = offX + PANEL.x * scale;
+  const w = Math.max(PANEL.w * scale, Math.min(MIN_W, Math.max(80, sw - left - EDGE)));
+  /* 높이는 무대 세로를 다 쓴다 — 왼쪽 모서리가 논리 x=196에 못박혀 있어 그림을 안 덮고,
+     위아래는 레터박스다(조선소와 같은 규칙). */
+  const h = Math.max(80, sh - EDGE * 2);
+  const top = EDGE;
   Object.assign(panelEl.style, {
-    left: `${offX + PANEL.x * scale}px`,
-    top: `${offY + PANEL.y * scale}px`,
-    width: `${PANEL.w * scale}px`,
-    height: `${PANEL.h * scale}px`,
+    left: `${left}px`, top: `${top}px`,
+    width: `${w}px`, height: `${h}px`,
   });
 }
 
@@ -83,10 +97,12 @@ function buildUI() {
     el('div.tav-head', {}, [
       el('div', {}, [
         el('h3', { text: `${city.name} 술집` }),
+        /* 선원 수는 상태바에도 있지만 **이 화면의 주제**라 남긴다 — 대신 한 줄로 줄였다.
+           (회차 25 실측: 640×360에서 머리말 123px · 본문 83px이라 카드 한 장도 안 들어갔다) */
         el('div.sub', {
           text: `선원 ${state.crew}/${state.crewMax}`
-              + (need ? ` · 이 배는 최소 ${need}명` : '')
-              + ` · 평균 일당 ${avgCrewWage().toFixed(2)}닢`,
+              + (need ? ` (최소 ${need})` : '')
+              + ` · 일당 ${avgCrewWage().toFixed(2)}닢`,
           style: short ? { color: '#e0806e' } : null,
         }),
         el('div.sub', {
