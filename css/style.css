@@ -286,18 +286,34 @@ html, body {
 /* ── 항구 씬 ────────────────────────────────────────── */
 #port-wrap {
   position: absolute; inset: 0;
-  display: grid; grid-template-columns: 452px 1fr 292px; gap: 12px;
+  /* ★ 사이드 292px → 240px(회차 24 · DES-UI). `#map-side`가 이미 240px로 같은 카드류를
+     쓰고 있었다(§지도 씬) — 검증된 폭이라 임의로 고른 값이 아니다.
+     실측: 640×360~1280×720, 네 탭 전부에서 `scrollWidth > clientWidth`(가로 넘침) **0건**
+     (200px까지도 0건이었다 — `.playtest/round-24/_measure-width.mjs`). 자유로워진 52px은
+     가운데 열(`1fr`)로 넘어가 **배를 그리는 자리가 그만큼 넓어진다**(DES-ART S-5 배선). */
+  display: grid; grid-template-columns: 452px 1fr 240px; gap: 12px;
   padding: 12px;
   align-items: start;
   /* 가운데 열은 비워 둔다 — 항구 그림이 보이는 자리 */
 }
+/* ★ 640×360 훑기(회차 24 · DES-UI 부과녁) — 고정 px 세 칸(452+240+gap24+padding24=740)이
+   640px 창에는 애초에 안 들어간다. `#port-wrap`은 `#overlay`(스테이지 전체 = 브라우저 폭)에
+   `inset:0`이라 **논리 400px이 아니라 진짜 창 폭**을 쓴다 — 그래서 240px로 줄이기 전
+   292px 시절부터(452+292+48=792) 이미 넘쳐 있었다. `elementFromPoint` 실측(`_click-probe.mjs`):
+   640×360에서 사이드 탭 「목표」·「사람」은 물론 **출항 단추(`.btn-sail`)까지 뷰포트 밖**
+   (rect.right 728 > innerWidth 640) — 이 화면에서 나가는 유일한 길이 눌리지 않았다.
+   ⇒ 좁은 창에서는 세 칸을 줄인다(시장 452→260 · 사이드 240→170). 시장 열은 `min-width:0`로
+   그 안의 `.scroll`이 가로 스크롤을 떠안게 해 표가 깨지지 않게 한다. */
+@media (max-width: 760px) {
+  #port-wrap { grid-template-columns: 320px 1fr 160px; gap: 8px; padding: 8px; }
+}
 #port-market {
-  grid-column: 1; max-height: 100%;
+  grid-column: 1; max-height: 100%; min-width: 0;
   display: flex; flex-direction: column; min-height: 0;
 }
 #port-market .scroll { overflow: auto; min-height: 0; }
 #port-side {
-  grid-column: 3;
+  grid-column: 3; min-width: 0;
   display: flex; flex-direction: column; gap: 10px;
   max-height: 100%; overflow: auto;
 }

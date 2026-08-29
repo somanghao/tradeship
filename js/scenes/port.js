@@ -1925,6 +1925,25 @@ function figureCard() {
      `check-architecture`가 필드를 세므로, 화면 취향이 세이브에 섞이면 안 된다. */
 const foldOpen = new Map();      // 패널 key → 펼쳤나 (모듈 변수 · 새로고침하면 기본값으로)
 
+/* ── 사이드패널 탭 구조 (2026-08-29 · 회차 24 · DES-UI) ───────────
+   ★ 실측(`.playtest/round-24/_measure-side.mjs`): 접기만으로는 안 끝났다.
+     새 항해(선원 0) 기준 `#port-side` **scrollHeight 1,346px**, 640×360에서
+     `clientHeight 243px` ⇒ **5.5화면**. 1280×720도 clientHeight 625 ⇒ 2.15화면.
+     큰 카드 넷(관영 조선소 227 · 나라에 부두 144 · 선박 정비 289 · 상관 게시판 197)이
+     접지 않는 카드라 접기만으로는 더 못 줄인다 — **성격이 다른 카드가 한 줄에 섞여 있었다.**
+   ⇒ 성격별로 넷으로 나눴다. **자주 쓰는 것(항해 준비)이 기본 탭**이다 —
+     항구에 들를 때마다 보는 것(정비·급여·정박)과, 어쩌다 보는 것(패권 진행도)을
+     같은 줄에 두면 자주 쓰는 쪽이 매번 스크롤 밑에 깔린다.
+     ⚠️ **바닥에서 나가는 문(`salvageCard`)과 출항 단추는 탭 밖에 그대로 둔다** — 어느 탭을
+     보고 있어도 항상 있어야 하는 자리라, 탭에 넣으면 "그 탭에서만 나갈 수 있다"가 된다. */
+const SIDE_TABS = [
+  { id: 'voyage', label: '항해' },   // 정비·급여·정박·선단 — 들를 때마다 보는 것
+  { id: 'trade', label: '거래' },    // 계약·거점·시설·물류·세력 — 사업 벌이는 화면
+  { id: 'goal', label: '목표' },     // 관영 조선소·조선의 끝·패권 — 최종 진행도
+  { id: 'people', label: '사람' },   // 도시·부관·동료·항구 인물
+];
+let sideTab = 'voyage';           // 모듈 변수 — 세이브에 안 담는다(폴드와 같은 이유)
+
 /** 카드 하나를 접는다. `panel`이 null이면(카드가 안 뜨는 국면) 그대로 null을 돌려준다. */
 function fold(key, panel, openDefault = false, badge = null) {
   if (!panel) return null;
@@ -1945,97 +1964,121 @@ function fold(key, panel, openDefault = false, badge = null) {
   return panel;
 }
 
-function sidePanel() {
-  return el('div#port-side', {}, [
-    /* ★ 바닥에서 나가는 문은 **맨 위**다(C-17). 이 카드가 뜨는 국면에서
-       시장·정비·거점보다 먼저 읽히지 않으면 "출구가 없다"가 그대로 재발한다. */
-    salvageCard(),
+/* 「선박 정비」 카드 — 항해 탭의 머리(항구에 들를 때마다 보는 것). 접지 않는다. */
+function shipCareCard() {
+  return el('div.panel', {}, [
+    el('h3', {}, el('span', { text: '선박 정비' })),
+    el('div.svc', {}, [
+      svcRow(`선체 수리 (${repairUnit()}닢/pt${repairUnit() < REPAIR_UNIT ? ' · 깎았다' : ''})`, `${state.hp}/${state.maxHp}`,
+        '전부 수리', state.hp >= state.maxHp, () => {
+          const r = repair(state.maxHp - state.hp);
+          if (!r.ok) return toast(r.reason, 'bad');
+          toast(`선체 ${r.need}pt 수리 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
+          pushLog(`${city.name}에서 선체를 수리했다.`);
+          after();
+        }),
+      /* 선원은 부두에서 버튼으로 사지 않고 술집에서 모은다.
+         "5명 고용" 버튼이던 자리다 — 값만 있고 선택이 없어서 뺐다. */
+      svcRow('선원', `${state.crew}/${state.crewMax}`
+            + (shorthanded() ? ` · 최소 ${ship().crewMin}명 미달` : ''),
+        '술집', false, () => go('tavern')),
+      svcRow('무장', `${state.guns}/${gunCap()}문`,
+        '무장 탭', false, () => go('shipyard', { tab: 'arms' })),
+      svcRow('갑판 배치', `${playerTroops().length}칸`,
+        '선원 탭', false, () => go('shipyard', { tab: 'crew' })),
+      el('button.btn.dark', {
+        text: '⚒  조선소로 간다',
+        onclick: () => go('shipyard'),
+      }),
+      el('button.btn.dark', {
+        text: '🍺  술집으로 간다',
+        onclick: () => go('tavern'),
+      }),
+    ]),
+  ]);
+}
 
-    /* ★ 목표가 맨 위다 — 이 셋이 972px 아래에 있었다.
-       ⓐ 「관영 조선소」와 「조선의 끝」은 **펼친 채로** 올린다(이 회차의 새 규칙과 최종 목표).
-       ⓑ 「패권」은 496px이라 그대로 올리면 정비·급여를 다시 밀어낸다 — **접고 머리말에 `n/9`**를 적는다.
-          접는 것과 감추는 것은 다르다: 몇 바다를 잡았는지는 굴리지 않고 읽힌다.
+function cityInfoCard() {
+  return el('div.panel', {}, [
+    el('h3', {}, el('span', { text: city.name })),
+    el('div.city-card', {}, [
+      el('div', {}, [
+        el('span.cname', { text: city.name }),
+        el('span.creg', { text: city.area }),
+      ]),
+      el('div.cblurb', { text: city.blurb }),
+    ]),
+  ]);
+}
 
-       ── 2026-08-29 (회차 23) ─────────────────────────────────
-       ★ **끝이 둘인데 한 쪽만 첫 화면에 있었다.** 회차 22가 「관영 조선소」·「조선의 끝」을
-         올리고 「패권」은 접기만 했는데, 접힌 36px짜리가 **정비(289px) 아래**에 있어
-         1280×720에서 y=773 — 여전히 굴려야 보였다(실측 `clientHeight` 625).
-         *"끝이 둘"*(claude-memory §현재 상태)인 게임에서 **완주 판정 카드 셋은 한 화면에
-         나란해야 한다.** 접힌 채로 여기 올리면 36px밖에 안 들고 `n/9`는 그대로 읽힌다. */
-    civicCard(),
-    endingCard(),
-    fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
-
+/* 탭 하나의 내용. null을 섞어 두면 `fold()`가 뜨지 않는 카드를 그대로 걸러 준다. */
+function voyageTab() {
+  return [
     /* 급여는 **때를 놓치면 사람이 떠나는 것**이라 정비보다 위다(74px밖에 안 든다) */
     payrollCard(),
-
-    el('div.panel', {}, [
-      el('h3', {}, el('span', { text: '선박 정비' })),
-      el('div.svc', {}, [
-        svcRow(`선체 수리 (${repairUnit()}닢/pt${repairUnit() < REPAIR_UNIT ? ' · 깎았다' : ''})`, `${state.hp}/${state.maxHp}`,
-          '전부 수리', state.hp >= state.maxHp, () => {
-            const r = repair(state.maxHp - state.hp);
-            if (!r.ok) return toast(r.reason, 'bad');
-            toast(`선체 ${r.need}pt 수리 · ${r.cost.toLocaleString('ko-KR')}닢`, 'good');
-            pushLog(`${city.name}에서 선체를 수리했다.`);
-            after();
-          }),
-        /* 선원은 부두에서 버튼으로 사지 않고 술집에서 모은다.
-           "5명 고용" 버튼이던 자리다 — 값만 있고 선택이 없어서 뺐다. */
-        svcRow('선원', `${state.crew}/${state.crewMax}`
-              + (shorthanded() ? ` · 최소 ${ship().crewMin}명 미달` : ''),
-          '술집', false, () => go('tavern')),
-        svcRow('무장', `${state.guns}/${gunCap()}문`,
-          '무장 탭', false, () => go('shipyard', { tab: 'arms' })),
-        svcRow('갑판 배치', `${playerTroops().length}칸`,
-          '선원 탭', false, () => go('shipyard', { tab: 'crew' })),
-        el('button.btn.dark', {
-          text: '⚒  조선소로 간다',
-          onclick: () => go('shipyard'),
-        }),
-        el('button.btn.dark', {
-          text: '🍺  술집으로 간다',
-          onclick: () => go('tavern'),
-        }),
-      ]),
-    ]),
-
-    fold('city', el('div.panel', {}, [
-      el('h3', {}, el('span', { text: city.name })),
-      el('div.city-card', {}, [
-        el('div', {}, [
-          el('span.cname', { text: city.name }),
-          el('span.creg', { text: city.area }),
-        ]),
-        el('div.cblurb', { text: city.blurb }),
-      ]),
-    ]), false, city.area),
-    contractCard(),      // 계약은 기한이 있다 — 접지 않는다
-
-    /* ── 아래는 살림살이 — 머리말만 보이게 접어 둔다(한 번 펼치면 세션 동안 기억한다) ── */
-    fold('fleet', fleetCard(), false, `동행 ${consortCount()}척`),
-    fold('officer', officerCard(), false, OFFICER.name),
-    fold('mate', mateCard(), false, `${mateCount()}/${mateCap()}`),
-    fold('faction', factionCard(), false, null),
+    shipCareCard(),
     /* ⚠️ `portDayCost()`는 **갈래별 내역 객체**를 준다(state.js) — 예전에는 그것을 그대로
        `toLocaleString`해서 접힌 「정박」 머리말에 `하루 [object Object]닢`이 찍혔다.
        지금 나가는 몫은 `.now`다(`waitCard`의 `c3.now`·`c10.now`와 같은 갈래). */
     fold('wait', waitCard(), false, `하루 ${portDayCost().now.toLocaleString('ko-KR')}닢`),
+    fold('fleet', fleetCard(), false, `동행 ${consortCount()}척`),
+  ];
+}
+
+function tradeTab() {
+  return [
+    contractCard(),      // 계약은 기한이 있다 — 접지 않는다
     fold('holding', holdingCard(), false,
          `${HOLDING_KEYS.filter((k) => ownsHolding(k, city.id)).length}개`),
     fold('works', worksCard(), false, null),
     fold('line', lineCard(), false, null),
     fold('harbor', harborCard(), false, null),
+    fold('faction', factionCard(), false, null),
+  ];
+}
 
+function goalTab() {
+  return [
+    /* ★ 목표는 이 탭 안에서는 접지 않는다 — 「관영 조선소」·「조선의 끝」은 이 회차의
+       새 규칙과 최종 목표라 펼친 채로 둔다. 「패권」만 496px이라 접고 머리말에 `n/9`. */
+    civicCard(),
+    endingCard(),
+    fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
+  ];
+}
+
+function peopleTab() {
+  return [
+    fold('city', cityInfoCard(), false, city.area),
+    fold('officer', officerCard(), false, OFFICER.name),
+    fold('mate', mateCard(), false, `${mateCount()}/${mateCap()}`),
     fold('figure', figureCard(), false, null),
+  ];
+}
+
+function sidePanel() {
+  const content = { voyage: voyageTab, trade: tradeTab, goal: goalTab, people: peopleTab }[sideTab]();
+  return el('div#port-side', {}, [
+    /* ★ 바닥에서 나가는 문은 **맨 위**다(C-17), **탭 밖**이다. 이 카드가 뜨는 국면에서
+       어느 탭을 보고 있어도 먼저 읽히지 않으면 "출구가 없다"가 그대로 재발한다. */
+    salvageCard(),
+
+    /* ── 탭 구조 (회차 24) ── 큰 카드 넷이 한 줄에 섞여 5.5화면(640×360)이었다.
+       성격별로 나누면 어느 탭도 640×360에서 2화면을 안 넘는다 — 아래 `_measure-side.mjs` 실측. */
+    el('div.yard-tabs', {}, SIDE_TABS.map((t) =>
+      el(`button.yard-tab${t.id === sideTab ? '.on' : ''}`, {
+        text: t.label,
+        onclick: () => { sideTab = t.id; buildUI(); },
+      }))),
+    ...content,
+
     /* 사람이 하나도 없으면 배는 부두에 묶여 있다.
        ★ crewMin **미달**은 막지 않는다 — 그건 속력이 떨어지는 벌칙이지 금지가 아니고,
          전투로 선원을 잃었을 때 항구에 갇히면 빠져나갈 길이 없어진다.
          0명만 막는 이유는 그 상태가 "출항"이라는 말 자체가 성립하지 않기 때문이다. */
-    /* ★ 이 단추는 패널 아래에 **붙어 있어야 한다**(`.btn-sail`의 sticky).
-       인물과 상관 게시판이 붙는 항구는 사이드패널이 길어져 단추가 화면 밖으로 밀린다 —
-       시흐르에서 y가 941px(창 900px)이라 스크롤해야만 눌렸다. 출항은 이 화면에서
-       나가는 유일한 길이라, 안 보이면 항구에 갇힌 것처럼 읽힌다. */
+    /* ★ 이 단추는 패널 아래에 **붙어 있어야 한다**(`.btn-sail`의 sticky), **탭 밖**이다.
+       탭에 넣으면 "그 탭에서만 나갈 수 있다"가 된다 — 출항은 이 화면에서 나가는 유일한 길이라,
+       어느 탭을 보고 있어도 늘 있어야 한다. */
     el('button.btn.btn-sail', {
       text: state.crew > 0 ? '⚓  출항하기' : '⚓  선원이 없다 — 술집으로',
       /* ★ 미뤄 둔 급여일은 **출항이 걷는다.** 짐을 팔 기회는 주되 회피는 안 된다 —
