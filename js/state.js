@@ -3292,6 +3292,133 @@ export function salvage(cityId = state.at) {
 export const salvageValue = (cityId = state.at) =>
   salvage(cityId).reduce((a, r) => a + r.gold, 0);
 
+/* ── 다른 항구에 남겨 둔 것 (C-17 · 회차 23) ────────────────────
+   `salvage()`는 **이 항구**만 본다. 그런데 바닥에서 실제로 막히는 자리는
+   *"여기엔 팔 것이 없다"*이고, 그때 알고 싶은 것은 **어느 항구에 무엇이 남았나**다.
+   화면은 지금 「다른 항구에 배 N척 · 거점 M곳」이라고 **세기만** 한다 — 어디인지,
+   거기까지 갈 수 있는지를 말하지 않아 플레이어가 스스로 세계를 뒤져야 한다.
+   ★ 값·거리는 규칙이 세야 한다(`resaleOf`·`HOLDING.sellBack`·`hopDays`가 화면과 갈리지 않게). */
+export function salvageElsewhere(fromId = state.at) {
+  const byCity = new Map();
+  const at = (id) => {
+    if (!byCity.has(id)) byCity.set(id, { city: id, name: CITY_BY_ID[id]?.name ?? id,
+                                          gold: 0, ships: 0, holdings: 0, stored: 0 });
+    return byCity.get(id);
+  };
+
+  // ① 정박해 둔 배 — 그 항구로 가야 판다
+  for (const key of Object.keys(state.fleet)) {
+    if (key === state.shipKey) continue;
+    const where = state.fleet[key].at;
+    if (!where || where === fromId) continue;
+    const r = at(where); r.ships++; r.gold += resaleOf(key);
+  }
+  // ② 거점 — 채권자가 못 가져가는 것이라 내가 던질 수 있다(`sellHolding`)
+  for (const id of Object.keys(state.holdings ?? {})) {
+    if (id === fromId) continue;
+    const r = at(id); r.holdings++; r.gold += holdingsValue(id);
+  }
+  // ③ 창고 짐 — 꺼내 팔려면 화물칸이 있어야 하므로 칸 수도 함께 준다
+  for (const [id, m] of Object.entries(state.stored ?? {})) {
+    if (id === fromId) continue;
+    let n = 0, v = 0;
+    for (const [gid, q] of Object.entries(m)) { if (!q) continue; n += q; v += sellNet(gid, q, id); }
+    if (n <= 0) continue;
+    const r = at(id); r.stored += n; r.gold += v;
+  }
+
+  /* 거리 — **2홉까지만 잰다**(`hopDays`가 그렇게 닫혀 있다). 더 멀면 `days: null`이고,
+     그것은 *"못 간다"*가 아니라 *"여기서는 몇 밤인지 못 셈한다"*는 뜻이다. */
+  const rows = [...byCity.values()].map((r) => ({ ...r, days: hopDays(fromId, r.city) }));
+  rows.sort((a, b) => (a.days ?? 1e9) - (b.days ?? 1e9) || b.gold - a.gold);
+  return rows;
+}
+
+/* ── ★ 「지금 이 상태에서 쓸 수 있는 회복 수단」 (C-17 · 회차 23) ────────────
+   ★ **규칙을 한 줄도 새로 만들지 않는다. 벌칙도 한 칸도 안 무르게 한다.**
+     사용자 결정이 *"파산의 긴장은 남긴다"*이고 하한 보장(`ENCOUNTER_LOSS.keepAfloat`)은
+     **채택되지 않았다.** 여기서 하는 일은 이미 있는 문들을 **한 번에 세어 돌려주는 것**뿐이다.
+
+   ── 왜 규칙 파일인가 (회차 23에 이걸 옮긴 이유) ──────────────────────
+   `scenes/port.js: salvageCard()`가 이미 같은 판정을 하고 있었다 — `stranded`·`drowning`·
+   `covered`·대금업자 유무·다른 항구의 배/거점 수. **그런데 그것이 화면 안에 있어서**
+   ① 지도(`scenes/map.js`)·급여일(`payday.js`)·전투 뒤가 같은 질문을 못 하고
+   ② 하네스·시뮬이 *"이 판은 잠겼나"*를 물을 함수가 없다.
+   회차 22의 러너가 25,000,000닢에서 12닢이 되고도 **판이 잠긴 줄 몰랐던** 자리가 그것이다.
+   ⇒ 판정은 여기, 화면은 줄로 옮기고 단추만 건다(`값은 data.js · 규칙은 state.js`).
+
+   ── 모듈 방향 ────────────────────────────────────────────────────
+   ⚠️ **대금업자가 이 항구에 있나는 여기서 못 묻는다** — `figuresAt()`은 `world.js`에 있고
+     `state`는 world를 모른다(순환 참조 방지 · 라우터 §핵심 모델). 그래서 **주입**받는다:
+     `recoveryOptions(city, { lender: figuresAt(city).find((f) => f.service === 'loan') })`.
+     안 주면 그 문은 `ok: null`(모른다)로 나오고, 화면이 그것을 채운다.
+
+   ── 돌려주는 것 ──────────────────────────────────────────────────
+     needsHelp  이 카드를 띄울 자리인가 (`stranded || drowning`)
+     stranded   여기서 **가장 싼 항차조차** 못 낸다 — 뜨는 순간 빚이 는다(출항은 안 막힌다)
+     drowning   빚이 금고보다 크다 — 급여일에 채권자가 집행한다
+     covered    금고 + 여기서 팔 것으로 그 둘을 덮는다
+     grave      못 덮는다 ← C-17이 실제로 죽은 자리
+     stuck      `nothingLeft()` — 세계 어디에도 팔 것이 없다 (남은 문은 빚과 청산뿐)
+     here/elsewhere · doors[]  (kind: sell · loan · liquidate)                              */
+export function recoveryOptions(cityId = state.at, { lender = undefined } = {}) {
+  const exit = cheapestExit(cityId);
+  const debt = debtOwed();
+  const gold = state.gold;
+
+  const here = salvage(cityId);
+  const hereValue = here.reduce((a, r) => a + r.gold, 0);
+  const elsewhere = salvageElsewhere(cityId);
+  const elsewhereValue = elsewhere.reduce((a, r) => a + r.gold, 0);
+
+  const stranded = exit != null && gold < exit;
+  const drowning = debt > 0 && gold < debt;
+  /* ★ 「덮는다」는 **여기서 지금 팔 수 있는 것**만 센다 — 사흘 걸리는 항구의 배는
+     오늘의 답이 아니다. 그것은 `elsewhere`가 따로 말한다. */
+  const covered = gold + hereValue >= (exit ?? 0) && gold + hereValue >= debt;
+
+  const doors = [];
+  if (here.length) {
+    doors.push({ kind: 'sell', ok: true, value: hereValue, rows: here,
+                 why: `여기서 다 팔면 ${hereValue.toLocaleString('ko-KR')}닢` });
+  } else if (elsewhere.length) {
+    const n = elsewhere[0];
+    doors.push({ kind: 'sell', ok: false, value: 0, rows: [], elsewhere,
+                 why: `이 항구에는 팔 것이 없다 — 가장 가까운 것은 ${n.name}`
+                    + (n.days != null ? ` (${n.days}일)` : '')
+                    + `에 ${n.gold.toLocaleString('ko-KR')}닢어치다` });
+  } else {
+    doors.push({ kind: 'sell', ok: false, value: 0, rows: [], why: '세계 어디에도 팔 것이 없다' });
+  }
+
+  /* 빚 — **파는 것이 아니라서 `salvage`에 안 담긴다.** 그리고 이미 빚이 있으면 못 빌린다. */
+  const already = !!state.boons?.loan;
+  doors.push({
+    kind: 'loan',
+    ok: already ? false : lender === undefined ? null : !!lender,
+    lender: lender ?? null,
+    rate: BOON.loanRate, days: BOON.loanDays,
+    why: already ? '이미 빌린 것이 있다'
+       : lender === undefined ? '이 항구에 대금업자가 있는지는 화면이 확인한다(world.js: figuresAt)'
+       : lender ? `${lender.name}에게 빌릴 수 있다`
+       : '이 항구에는 대금업자가 없다',
+  });
+
+  /* 청산 — **마지막 문이고 늘 열려 있다.** 감추면 "팔 것이 다 떨어진 뒤에야 알게 되는 문"이
+     되어 C-17이 그대로 재발한다. 값을 무는 문이지 막힌 문이 아니다. */
+  const keep = wreckShipOf(currentRegion()) ?? BANKRUPT.keepShip;
+  doors.push({ kind: 'liquidate', ok: true, keepShip: keep, seedGold: BANKRUPT.seedGold,
+               why: `${SHIPS[keep]?.name ?? keep} 한 척과 ${BANKRUPT.seedGold}닢으로 다시 선다`
+                  + ' — 거점 · 세력 관계 · 악명 · 아는 항구 · 해적 명부는 그대로다' });
+
+  return {
+    city: cityId, gold, exit, debt,
+    stranded, drowning, needsHelp: stranded || drowning,
+    covered, grave: !covered, stuck: nothingLeft(),
+    here, hereValue, elsewhere, elsewhereValue, doors,
+  };
+}
+
 /* ── 바닥에는 바닥의 규칙이 있다 ────────────────────────────────
    ★ 빚은 30일마다 ×1.25로 불기만 하고 **끝이 없었다.** 금고 0·화물 0이 되면 살 돈이 없어
    못 사고 실은 것이 없어 못 팔아, 실플레이에서 **36일이 그냥 비었다**(ISSUES #3).

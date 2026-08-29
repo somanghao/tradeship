@@ -41,6 +41,8 @@ import {
   storeCap, payFine, debtOwed, nothingLeft, enforceDebt, settlePayroll, resaleOf,
   /* 바닥에서 나가는 문(C-17) — 안내가 적을 값을 규칙이 센다 */
   salvage, salvageValue, sellNet, cheapestExit, voyageCost,
+  /* C-17 ② — 판정을 화면에서 규칙으로 올렸다(회차 23) */
+  recoveryOptions, salvageElsewhere,
   /* 패권이 화면에서 말을 안 하던 자리 둘(A-8c) */
   foeWealth, foeOdds, foeWealthGate, hegemonyOf,
   /* 삭은 배와 명부 사냥 */
@@ -627,6 +629,60 @@ resetGame();
     .map((to) => voyageCost(voyageDays('venezia', to), state.crew, { from: 'venezia', to }).total);
   ok(cheap === Math.min(...each),
      `여기서 가장 싼 항차 ${cheap.toLocaleString('en-US')}닢 — 이웃 ${each.length}곳 중 최솟값과 같다`);
+}
+
+/* ── C-17 ② · **판정을 화면에서 규칙으로 올렸다**(회차 23) ────────────
+   `scenes/port.js: salvageCard()`가 하던 판정(stranded·drowning·covered·다른 항구)을
+   `recoveryOptions()`가 대신 한다. 여기서 재는 것은 **그 판정이 화면과 같은 답을 내는가**와
+   ★ **벌칙이 한 칸도 무르지 않았는가**다 — 사용자 결정이 *"파산의 긴장은 남긴다"*이고
+   하한 보장(`ENCOUNTER_LOSS.keepAfloat`)은 채택되지 않았다. 이 함수는 **읽기만** 한다. */
+{
+  // ① 안내는 판을 한 칸도 안 바꾼다 — 순수 판정이어야 매 프레임 불러도 안전하다
+  resetGame('venezia');
+  state.crew = 8; state.gold = 300000;
+  buy('grain', 10); purchaseShip('cog'); buyHolding('rental', 'venezia');
+  const snap = JSON.stringify({ g: state.gold, c: state.cargo, f: state.fleet, h: state.holdings, d: state.day });
+  const r0 = recoveryOptions('venezia');
+  ok(JSON.stringify({ g: state.gold, c: state.cargo, f: state.fleet, h: state.holdings, d: state.day }) === snap,
+     '회복 안내는 판을 한 칸도 안 바꾼다 — 벌칙을 무르게 하는 것이 아니라 말해 주는 것뿐이다');
+
+  // ② `here`가 `salvage()`와 같은 표다 — 두 표가 갈리면 화면이 없는 값을 적는다
+  ok(r0.hereValue === salvageValue('venezia') && r0.here.length === salvage('venezia').length,
+     `여기서 팔 것 ${r0.hereValue.toLocaleString('en-US')}닢 — salvage()와 같은 표를 쓴다`);
+
+  // ③ 부자는 안내가 안 뜬다 — 짐을 실을 때마다 경보가 뜨면 진짜 바닥에서 아무도 안 읽는다
+  ok(!r0.needsHelp && r0.covered && !r0.stuck,
+     '금고 30만 닢에는 안내가 안 뜬다 (경보 피로를 만들지 않는다)');
+
+  // ④ **다른 항구에 남은 것을 「어디에 얼마」까지 말한다** — 세기만 하면 스스로 세계를 뒤져야 한다
+  state.fleet.cog.at = 'genova';
+  state.gold = 3;
+  const r1 = recoveryOptions('venezia');
+  const far = r1.elsewhere.find((e) => e.city === 'genova');
+  ok(r1.stranded && far && far.ships === 1 && far.gold === resaleOf('cog'),
+     `여기선 못 뜨는데 ${far?.name}에 ${far?.gold.toLocaleString('en-US')}닢어치가 있다`
+     + `${far?.days != null ? ` (${far.days}일)` : ''} — 값이 sellShip과 같은 재판매가다`);
+  ok(!r1.here.some((x) => x.kind === 'ship'),
+     '그 배는 `here`에는 안 담긴다 — 오늘 팔 수 있는 것과 가야 팔 수 있는 것을 가른다');
+
+  // ⑤ 세 문은 **언제나 셋이다** — 청산을 감추면 "다 떨어진 뒤에야 아는 문"이 되어 C-17이 재발한다
+  const kinds = r1.doors.map((d) => d.kind);
+  ok(kinds.join(',') === 'sell,loan,liquidate' && r1.doors.at(-1).ok === true,
+     '문은 늘 셋(팔기·빌리기·청산)이고 **청산은 팔 것이 남아 있어도 보인다**');
+
+  // ⑥ **대금업자는 주입받는다** — `figuresAt`은 world.js라 state가 부를 수 없다(모듈 방향)
+  ok(recoveryOptions('venezia').doors[1].ok === null,
+     '안 주면 대금업 문은 `null`(모른다) — state는 world를 모른다(순환 참조 방지)');
+  ok(recoveryOptions('venezia', { lender: null }).doors[1].ok === false
+     && recoveryOptions('venezia', { lender: { name: '아무개' } }).doors[1].ok === true,
+     '주면 그 답을 그대로 쓴다 — 화면이 `figuresAt()`으로 채운다');
+
+  // ⑦ 바닥 — `stuck`이 `nothingLeft()`와 같은 자리를 가리킨다
+  resetGame('venezia');
+  state.crew = 6; state.gold = 0;
+  const r2 = recoveryOptions('venezia');
+  ok(r2.stuck === nothingLeft() && r2.stuck && r2.grave && r2.doors[0].ok === false,
+     '팔 것이 세계 어디에도 없으면 `stuck` — 남은 문은 빚과 청산뿐이라고 말한다');
 }
 
 /* ── 패권이 화면에서 말을 안 하던 자리 둘 (A-8c) ────────────────

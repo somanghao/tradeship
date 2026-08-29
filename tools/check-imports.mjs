@@ -128,7 +128,13 @@ const problems = [];
 let checked = 0;
 
 for (const file of files) {
-  const src = readFileSync(file, 'utf8');
+  /* ★ **주석을 지우고 본다**(회차 23에 고침). `export` 쪽은 진작 `stripComments`를 지나는데
+     **`import` 쪽만 날 소스를 봤다.** 그래서 *주석 안에 적어 둔 import 예시*를 진짜 import로 읽어,
+     `js/state.js`의 안내문 한 줄(``import { capEncounterLoss } from '../state.js'``로 갈아 끼우면
+     끝난다)이 **「그 파일이 없다」 실패**를 냈다. ⚠️ 회차 22 뒤로 이 검사는 계속 exit 1이었고,
+     그동안 **진짜 깨진 import가 들어와도 구별할 수 없었다** — 늘 빨간 검사는 꺼진 검사와 같다.
+     ⓘ 이 도구가 지키는 것이 *"`check-*`가 다 통과해도 게임은 안 뜬다"*는 자리라 더더욱 그렇다. */
+  const src = stripComments(readFileSync(file, 'utf8'));
   /* import { a, b as c } from './x.js'  — 이름 있는 import만 본다.
      default·namespace(`* as`)는 이름이 없어 이 검사의 대상이 아니다. */
   for (const m of src.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g)) {
