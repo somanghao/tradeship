@@ -10,11 +10,7 @@
 - **교훈**: 그리기 코드 수정 후에는 **새로고침**. "코드를 고쳤는데 안 바뀐다"를 로직 버그로 오진하지 말 것. 외형을 바꾸는 인자는 전부 key에 포함시킨다.
 - 정본 → [pixel-pipeline.md](pixel-pipeline.md), [dev-workflow.md](dev-workflow.md)
 
-## 2. 결과 모달을 찾을 때 숨겨진 항해일지가 잡힌다
-
-- **원인**: 항해일지 모달(`#logmodal`)이 `.modal.hidden`으로 **DOM에 상주**한다. `document.querySelector('.modal')`이 이것을 먼저 잡는다.
-- **교훈**: 결과 모달 탐색은 반드시 `[...document.querySelectorAll('.modal')].find(m => m.id !== 'logmodal')`. 실제로 이걸로 "전투 결과 모달 없음"을 오판했다.
-- 정본 → [render-architecture.md](render-architecture.md), [dev-workflow.md](dev-workflow.md)
+## 2. → **engine 도메인으로 옮겼다**(`QUICKMAP-engine.md` §3 — 결과 모달 탐색은 `#logmodal`을 거른다)
 
 ## 3. → **engine 도메인으로 옮겼다**(`QUICKMAP-engine.md` §3 — CDP 스크린샷 타임아웃은 재시도)
 
@@ -23,7 +19,7 @@
 ## 5. `file://`로 열면 아무것도 안 뜬다
 
 - **원인**: 순수 ES 모듈이라 `file://`에서는 CORS로 import가 전부 막힌다.
-- **교훈**: 항상 **`python serve.py`**로 띄운다(아래 6번 — `python -m http.server`는 쓰지 않는다). 웹 출력은 claude.ai Artifact가 아니라 **로컬 HTML + 로컬 서버 + 브라우저**(사용자 지침).
+- **교훈**: 항상 **`python serve.py`**로 띄운다(아래 6번 — `python -m http.server`는 쓰지 않는다).
 - 정본 → [dev-workflow.md](dev-workflow.md)
 
 ## 6. 코드를 고쳤는데 **화면이 통째로 검다** → 낡은 모듈 캐시
@@ -34,3 +30,13 @@
 - ⚠️ **import 이름 하나로 게임이 통째로 안 뜬다** — 같은 이름이 두 번이거나(`check-dup-decl`), **없는 이름을 가져오거나**(`check-imports`). 둘 다 브라우저가 모듈 그래프를 통째로 거부해 한 줄도 안 돈다.
   ★ **`check-*`와 규칙 테스트가 전부 통과해도 그렇다** — 그것들은 `data.js`·`state.js`를 직접 부르는 도구라 `scenes/*`를 한 번도 안 거친다. 실제로 `scenes/map.js`가 `riskKey`를 잘못 가져와 **게임이 죽은 채로 회차가 돌았고**, 지도가 낡은 채 굳은 것이 그 증상이었다(`gen-map-png.mjs`는 게임을 띄워서 굽는다). 커밋 전 **둘 다** 돌린다.
 - 정본 → [dev-workflow.md](dev-workflow.md)
+
+## 7. `x < undefined`는 예외가 아니라 **조용한 false**다 — 블록이 통째로 안 돈다
+
+- 스냅샷에 `maxHp`가 없어 `if (s.hp < s.maxHp*0.85)`가 네 판 내내 false였고 **수리가 0회**였다(경고 0건).
+- **교훈**: 안 도는 블록은 로직보다 **비교에 쓴 필드가 실제로 있는지**부터 찍는다.
+
+## 8. `git stash`·`git reset --hard`는 **공용 트리 전체**를 되돌린다
+
+- 소유 파일을 나눠도 이 둘은 파일 경계를 안 본다 — 한 회차에 각각 한 번 나서 세 트랙이 날아갔다.
+- **교훈**: 되돌릴 땐 **파일 단위(`git checkout -- <내 파일만>`)**로만. 정말 가르려면 워크트리다.
