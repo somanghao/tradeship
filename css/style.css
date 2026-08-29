@@ -312,16 +312,26 @@ html, body {
   display: flex; flex-direction: column; min-height: 0;
 }
 #port-market .scroll { overflow: auto; min-height: 0; }
+/* ★ 세로 flex 두 칸(회차 24 재투입 · D-2) — 스크롤 영역과 출항 단추를 **다른 칸**으로 가른다.
+   전엔 `#port-side` 자체가 스크롤 컨테이너였고 「출항하기」가 그 안의 sticky 마지막 자식이었다 —
+   `scrollTop=0`에서 sticky가 자기 흐름 자리보다 미리 뷰포트 바닥에 박혀, 하필 그 자리에 걸린
+   카드(「전부 수리」)를 그림으로 덮고 오조작을 허용했다. 지금은 단추가 **애초에 스크롤 흐름
+   밖의 제 칸**이라 무엇을 덮을 수가 없다. */
 #port-side {
   grid-column: 3; min-width: 0;
-  display: flex; flex-direction: column; gap: 10px;
-  max-height: 100%; overflow: auto;
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 100%; overflow: hidden;
 }
-/* 출항 단추는 패널이 아무리 길어져도 아래에 붙어 있는다 — 이 화면에서 나가는 유일한 길이다 */
+#port-side-scroll {
+  flex: 1 1 auto; min-height: 0; overflow: auto;
+  display: flex; flex-direction: column; gap: 10px;
+}
+/* 출항 단추는 스크롤 영역의 형제라 패널이 아무리 길어져도 제 칸에 그대로 있는다 —
+   이 화면에서 나가는 유일한 길이다. */
 .btn-sail {
-  position: sticky; bottom: 0; z-index: 2;
+  flex: 0 0 auto;
   font-size: 14px; padding: 10px;
-  box-shadow: 0 -10px 12px -6px #14111b;
+  box-shadow: 0 -6px 12px -6px #14111b;
 }
 .svc { padding: 10px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
 .svc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
