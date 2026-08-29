@@ -21,6 +21,7 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { open } from './playtest.mjs';
+import { playwright } from './playtest-live/pw.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, '..', 'assets', 'map');
@@ -34,7 +35,33 @@ const only = argOf('--only', null);
 
 mkdirSync(OUT, { recursive: true });
 
-const g = await open({ port });
+/* ★ **--bare — 게임이 안 떠도 지도는 뽑는다**(회차 25).
+   `open()`은 `window.__game`을 기다리는데, 그것은 게임 전체(`main.js`→`world.js`→`npc/*`)가
+   멀쩡해야 생긴다. 실제로 다른 트랙이 `js/npc/houses.js`를 셋으로 쪼개는 중이라
+   `houses-euro.js`가 없어 **게임이 한 줄도 안 도는 동안 지도 파이프라인이 통째로 멈췄다.**
+   그런데 이 도구가 실제로 쓰는 것은 `sprites/scene.js`·`data.js`·`map/geo.js`뿐이다 —
+   페이지만 서버 오리진에서 열리면 동적 import로 충분하다. 그래서 __game을 안 기다리는 길을 둔다.
+   기본 동작은 그대로다(게임이 뜨는지도 함께 보는 것이 낫다). 막혔을 때만 `--bare`를 준다. */
+const bare = process.argv.includes('--bare');
+let g;
+if (bare) {
+  const { chromium } = playwright();
+  let br = null;
+  for (const t of [{ channel: 'chrome' }, { channel: 'msedge' }, {}]) {
+    try { br = await chromium.launch({ headless: true, ...t }); break; } catch { /* 다음 */ }
+  }
+  if (!br) throw new Error('브라우저를 못 띄웠다');
+  const ctx = await br.newContext();
+  const page = await ctx.newPage();
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(String(e)));
+  await page.goto(`http://localhost:${port}/index.html`, { waitUntil: 'load' });
+  console.log(`[bare] __game을 기다리지 않는다 — 지도 모듈만 직접 부른다`
+    + (errs.length ? ` (게임 쪽 오류 ${errs.length}건은 무시한다)` : ''));
+  g = { page, close: () => br.close() };
+} else {
+  g = await open({ port });
+}
 try {
   /* 브라우저 안에서 게임 모듈을 그대로 불러 굽는다 — **다시 구현하지 않는다.**
      여기서 지도를 따로 그리면 그 순간 화면과 갈라진다. */

@@ -10,6 +10,39 @@
 // 같은 색이면 "다른 바다에 왔다"는 감각이 안 산다 — 이 게임에서 그 감각은 싸게 얻을수록 좋다.
 
 import * as med from './mediterranean.js';
+import * as atl from './atlantic.js';
+import * as afr from './africa.js';
+import * as mid from './mideast.js';
+import * as ind from './indian.js';
+import * as sea from './seasia.js';
+import * as eas from './eastasia.js';
+import * as car from './caribbean.js';
+import * as sam from './southamerica.js';
+import { setLanes } from './lanes.js';
+
+/* ★ 권역마다 **손으로 그린 실루엣**(생성물)이 있으면 그것이 이긴다.
+   정본은 `assets/map-shape/<권역>.json`(해안선 다각형)이고 `tools/gen-map-spans.mjs`가 굽는다.
+   아직 안 그린 권역은 `GRID`가 없어 예전대로 `auto`(도시·항로에서 역산)로 남는다 —
+   그래서 아홉을 **한꺼번에 갈아엎지 않고 하나씩** 옮길 수 있다. */
+const HAND = {
+  mediterranean: med, atlantic: atl, africa: afr, mideast: mid, indian: ind,
+  seasia: sea, eastasia: eas, caribbean: car, southamerica: sam,
+};
+
+/* ★ **꺾인 뱃길을 등록한다**(회차 25). 두 항구를 잇는 직선이 반도를 관통할 때,
+   지금까지는 그 반도를 바다로 파냈다 — 그래서 이탈리아 장화가 삼각 파편이 됐다.
+   이제는 배가 반도를 **돌아간다**. 지형 파기(`auto.js: topology`)와 지도 그림
+   (`scenes/map.js`)이 같은 폴리라인을 본다. 항해일은 안 바뀐다 → `lanes.js` 머리주석 */
+/* 지중해 지대 경계 — 생성물(`mediterranean.js`)은 기하만 담으므로 이 표는 여기 둔다.
+   직선으로 자르면 화면을 가로지르는 띠가 되어 파형으로 흔든다. */
+const MED_ZONES = {
+  extra: (x, y) => (x > 352 && y > 116 + Math.sin(y * 0.06) * 8 ? 'desert' : null),
+  bands: [
+    [(x) => 78 + Math.sin(x * 0.024 + 1) * 12 + Math.sin(x * 0.009) * 9, 'forest'],
+    [(x) => 152 + Math.sin(x * 0.031) * 7 + Math.sin(x * 0.011 + 2) * 6, 'scrub'],
+    [Infinity, 'desert'],
+  ],
+};
 
 /* 점에서 꺾은선까지의 거리 — 강줄기 같은 **가늘고 긴 지대**를 사각형이 아니라 선으로 놓는다.
    사각형으로 놓으면 그것이 곧 디자이너가 지적한 "F-8 벽지"가 된다. */
@@ -119,7 +152,7 @@ export const CLIMATE = {
     zone: { forest: null, scrub: '#6f8347', desert: '#c9a870' },
     sea: ['#154762', '#1d5a78', '#0a2033'],
     shore: ['#e8d5a8', '#5fb3bd', '#3a86a2', '#27627f'],
-    zones: med.ZONES,
+    zones: MED_ZONES,
   },
   // 대서양·북해 — 침엽수림과 히스, 차고 탁한 바다
   cold: {
@@ -256,7 +289,8 @@ export const CLIMATE = {
 export const MAPS = {
   mediterranean: {
     climate: 'inland',
-    hand: { spans: med.SEA_SPANS, gw: 100, gh: 56, gs: 4, isles: med.ISLES, ranges: med.RANGES },
+    /* 실루엣은 아래 `HAND` 반복문이 붙인다 — 격자 규격을 여기 손으로 박아 두었다가
+       해상도를 올리는 순간 지도가 통째로 어긋난 적이 있다(회차 25). */
   },
   atlantic: {
     climate: 'cold',
@@ -450,6 +484,21 @@ export const MAPS = {
     },
   },
 };
+
+/* ★ 굽힌 실루엣과 꺾인 뱃길을 얹는다 — **`GRID`가 있는 권역만.**
+   `hand`가 있으면 `scene.js`가 그쪽을 먼저 보므로 `auto` 설정은 남겨 둬도 해가 없다
+   (되돌릴 때 지우지 않아도 된다). */
+for (const [rid, mod] of Object.entries(HAND)) {
+  if (!mod?.GRID || !mod.SEA_SPANS || !Object.keys(mod.SEA_SPANS).length) continue;
+  MAPS[rid] = {
+    ...MAPS[rid],
+    hand: {
+      spans: mod.SEA_SPANS, ...mod.GRID,
+      isles: mod.ISLES ?? [], ranges: mod.RANGES ?? [],
+    },
+  };
+  setLanes(rid, mod.LANES);
+}
 
 export const mapDefOf = (regionId) => MAPS[regionId] ?? MAPS.mediterranean;
 export const climateOf = (regionId) => CLIMATE[mapDefOf(regionId).climate] ?? CLIMATE.inland;

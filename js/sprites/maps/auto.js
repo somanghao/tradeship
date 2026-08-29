@@ -28,6 +28,9 @@
 //   검수는 `mapcheck.html`이 한다(항구가 물가인가 · 항로가 바다인가 · 이름표가 겹치는가).
 
 import { rng } from '../../pixel.js';
+/* ★ 꺾인 뱃길 — 지형을 팔 때 **직선이 아니라 폴리라인**을 따라 판다(회차 25).
+   이것이 없으면 베네치아~제노바가 이탈리아 반도를 통째로 썰어 낸다. → maps/lanes.js */
+import { laneSegs } from './lanes.js';
 
 export const VW = 400, VH = 225;
 
@@ -65,16 +68,24 @@ function distToSeg(px, py, x0, y0, x1, y1) {
 /** 도시·항로에서 선분 목록과 항구별 "바다가 열린 방향"을 뽑는다 */
 function topology(cities, routes) {
   const byId = Object.fromEntries(cities.map((c) => [c.id, c]));
+  const region = cities[0]?.region ?? null;
   const segs = [];
   const dirs = {};
   for (const c of cities) dirs[c.id] = [];
   for (const [a, b] of routes) {
     const ca = byId[a], cb = byId[b];
     if (!ca || !cb) continue;
-    segs.push([ca.x, ca.y, cb.x, cb.y]);
-    const d = Math.hypot(cb.x - ca.x, cb.y - ca.y) || 1;
-    dirs[a].push([(cb.x - ca.x) / d, (cb.y - ca.y) / d]);
-    dirs[b].push([(ca.x - cb.x) / d, (ca.y - cb.y) / d]);
+    /* ★ 꺾인 뱃길이 있으면 그 폴리라인의 선분을 전부 넣는다. 없으면 예전 그대로 직선 하나다. */
+    const ss = region ? laneSegs(region, ca, cb) : [[ca.x, ca.y, cb.x, cb.y]];
+    for (const g of ss) segs.push(g);
+    /* ★ **항구가 열리는 방향은 「첫 구간」이 정한다.** 상대 항구를 향한 직선이 아니다 —
+       꺾인 길에서는 배가 실제로 나가는 쪽이 첫 중간점 방향이고, 그것을 안 쓰면
+       앞바다를 뭍 쪽으로 파게 된다(②)·항구 뒤편을 물 쪽으로 되돌리게 된다(⑤). */
+    const a1 = ss[0], b1 = ss[ss.length - 1];
+    const da = Math.hypot(a1[2] - a1[0], a1[3] - a1[1]) || 1;
+    const db = Math.hypot(b1[0] - b1[2], b1[1] - b1[3]) || 1;
+    dirs[a].push([(a1[2] - a1[0]) / da, (a1[3] - a1[1]) / da]);
+    dirs[b].push([(b1[0] - b1[2]) / db, (b1[1] - b1[3]) / db]);
   }
   return { byId, segs, dirs };
 }
@@ -374,6 +385,23 @@ export function coastOctaves(land, opts = {}) {
   const nearLab = new Int32Array(VW * VH);
   const toLand = chamfer(land, 1, lab, nearLab);
   const toSea = chamfer(land, 0);
+  /* ★★ **덩어리 넓이로는 반도를 못 지킨다**(회차 25에서 실측했다).
+     `amp`는 연결성분의 *넓이*로 진폭을 정하는데, 이탈리아 반도는 유럽 대륙과 **한 덩어리**라
+     넓이가 수만 px이다 — 그래서 폭 20px짜리 반도가 대륙과 같은 ±9px을 양쪽에서 맞고
+     실오라기로 찢겼다. 지중해를 다시 그렸는데도 장화가 안 나온 원인이 이것이었다.
+     ⇒ 넓이가 아니라 **그 자리의 뭍 두께**로 깎는 깊이를 막는다. `toSea`(뭍 안에서 물까지의
+       거리)를 반경 `big`으로 최대필터하면 "여기 뭍이 얼마나 두꺼운가"가 나온다.
+       두꺼운 대륙은 예전처럼 마음껏 굽이치고, 얇은 반도·지협은 깎이지 않는다.
+     ※ 붙이기(양수 push)에는 손대지 않는다 — 반도가 두꺼워지는 것은 해롭지 않다. */
+  const thick = boxMax(toSea, Math.max(2, Math.round(big)));
+  /* ★★ **깎기에는 가드가 있고 붙이기에는 없었다**(회차 25 · D1 보고).
+     `push > 0`은 뭍을 바다 쪽으로 부풀리는데 진폭이 최대 ±14px이라 **좁은 물길을 통째로 메운다** —
+     보스포루스가 막혀 흑해가 닫힌 호수가 됐고 아드리아해가 실제 폭보다 절반으로 얇아졌다.
+     ⇒ **그 자리의 물 두께**로 붙이는 양을 막는다(`toLand`를 최대필터). 넓은 바다(8px 초과)는
+       예전 그대로 마음껏 붙여 해안이 굽이치고, 해협·좁은 만만 지켜진다.
+     ※ 문턱 8px은 「지켜야 할 물길」과 「그냥 바다」를 가르는 선이다 — 보스포루스가 3~4px,
+       아드리아해가 6~9px, 열린 연안이 9px 이상이다. */
+  const seaThick = boxMax(toLand, Math.max(2, Math.round(big)));
 
   const out = new Uint8Array(VW * VH);
   for (let y = 0; y < VH; y++) {
@@ -391,7 +419,42 @@ export function coastOctaves(land, opts = {}) {
       /* 붙이기도 **2.5px까지만** 허용한다. 무제한으로 붙이면 반도가 부풀어 항로 위로 올라앉고,
          그러면 회랑이 그 뭍을 가로질러 **자로 그은 수로**로 남는다(이탈리아가 그랬다). */
       if ((area[id] ?? 1e9) < growOnly) push = Math.max(0, push);
+      // 얇은 자리는 깎는 깊이를 두께의 절반으로 막는다 — 반도가 끊기지 않는다
+      if (push < 0) push = Math.max(push, -Math.max(0, thick[i] - 3) * 0.28);
+      // 좁은 물길은 메우지 않는다 — 해협이 막히면 바다가 호수가 된다
+      if (push > 0 && seaThick[i] < 8) push = Math.min(push, Math.max(0, seaThick[i] - 2) * 0.4);
       out[i] = sdf < push ? 1 : 0;
+    }
+  }
+  return out;
+}
+
+/** 분리형 최대필터 — 반경 r의 정사각 창에서 최댓값. 가로 한 번, 세로 한 번이라 싸다. */
+function boxMax(src, r) {
+  const tmp = new Float32Array(VW * VH);
+  const out = new Float32Array(VW * VH);
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      let m = 0;
+      for (let k = -r; k <= r; k++) {
+        const xx = x + k;
+        if (xx < 0 || xx >= VW) continue;
+        const v = src[y * VW + xx];
+        if (v > m) m = v;
+      }
+      tmp[y * VW + x] = m;
+    }
+  }
+  for (let y = 0; y < VH; y++) {
+    for (let x = 0; x < VW; x++) {
+      let m = 0;
+      for (let k = -r; k <= r; k++) {
+        const yy = y + k;
+        if (yy < 0 || yy >= VH) continue;
+        const v = tmp[yy * VW + x];
+        if (v > m) m = v;
+      }
+      out[y * VW + x] = m;
     }
   }
   return out;
@@ -490,7 +553,19 @@ export function carveHarbors(land, cities, routes, opts = {}) {
           const dist = Math.hypot(dx, dy);
           if (dist > bay + wob * 1.5) continue;
           const dl = dirs[c.id];
-          if (!dl.length || dist < 2) { cut = true; break; }
+          /* ★★ **뱃길이 하나도 없는 도시는 내륙 도시다 — 물을 파지 않는다**(회차 25).
+             예전에는 여기서 `!dl.length`면 둘레를 통째로 팠고, 그래서 대상로·노새길로만
+             이어진 도시(카이로·다마스쿠스·바그다드·포토시·쿠스코·의주·난징…)가
+             **동그란 웅덩이를 하나씩 이고** 앉았다. `autoLandMap`은 호출부에서 `inland` 목록을
+             받아 이것을 걸렀는데 `carveHarbors` 쪽(=`hand` 경로)에는 그 인자가 없었다.
+             ⇒ 목록을 받아 오는 대신 **여기서 판정한다.** 호출부가 넘기는 항로는 이미
+               뱃길만 걸러진 것이라(요율 `null` 제외), 그 목록에 한 번도 안 나오는 도시가 곧 내륙이다.
+             ★ 안전한가 — 아홉 권역 전수 확인: 뱃길 0인 도시는 카이로·다마스쿠스·알레포·바그다드·
+               이스파한·포토시·쿠스코·라파스·투쿠만·아순시온·우앙카벨리카·노브고로드·난징·의주·
+               오노미치·오사카·부르사·이즈니크 **열여덟 곳뿐이고 전부 내륙**이다.
+               섬 항구는 하나도 여기 안 걸린다(전부 뱃길을 가진다). */
+          if (!dl.length) continue;
+          if (dist < 2) { cut = true; break; }
           const ux = dx / dist, uy = dy / dist;
           if (dl.some(([vx, vy]) => vx * ux + vy * uy > 0)) { cut = true; break; }
         }
@@ -498,6 +573,15 @@ export function carveHarbors(land, cities, routes, opts = {}) {
       if (cut) land[y * VW + x] = 0;
     }
   }
+  /* ★ **판 자리가 웅덩이로 남는 것을 메운다**(회차 25 · D4 보고).
+     바로 위 `!dl.length`는 *"뱃길 방향이 없는 도시는 둘레를 판다"*인데, `hand` 경로에는
+     `autoLandMap`이 받는 `inland` 목록이 없다 — 그래서 **대상로·노새길로만 이어진 내륙 도시**
+     (의주·난징·오사카…)가 안데스 한복판의 호수처럼 **동그란 웅덩이를 하나씩 이고** 앉았다.
+     원인 쪽(내륙 판정)은 호출부가 `scene.js`라 여기서 못 고치므로 **결과 쪽을 지운다** —
+     가장자리에 안 닿는 작은 물웅덩이는 원인이 무엇이든 지도에 있으면 안 된다
+     (배가 못 가는 물이 보이면 플레이어가 항로를 오해한다). `smooth`가 90px 미만만 메우므로
+     진짜 만·해협은 바다와 이어져 있어 살아남는다. */
+  smooth(land);
 
 
   /* ── 2차: **아직 막힌 항로만** 더 판다 ─────────────────────

@@ -5,6 +5,10 @@
 //   (원양 항로)은 선으로 긋지 않고 **항로 목록에만** 나온다 — 그을 좌표가 없다.
 
 import { mapSprite } from '../sprites/scene.js';
+/* ★ 꺾인 뱃길 — 항로가 반도를 관통하지 않게 **배가 돌아간다**(회차 25).
+   지형 파기(`sprites/maps/auto.js`)와 이 그림이 **같은 폴리라인**을 봐야 물길과 선이 어긋나지 않는다.
+   항해일(`voyageDays`)은 여전히 두 항구의 직선거리다 — 규칙에 닿지 않는다. → sprites/maps/lanes.js */
+import { lanePath, laneAt } from '../sprites/maps/lanes.js';
 import { shipTopSprite } from '../sprites/ship.js';
 import { blit } from '../pixel.js';
 import {
@@ -33,6 +37,8 @@ import {
   pirateThreat, newsLines, pirateEnemy,
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES, LIVE_LANES } from '../regions/index.js';
+/* 상단 압박 함대 — 조우 갈래가 이것을 읽어야 화면에 나온다(G-5) → npc/guild.js */
+import { guildFoeOnLeg, addGuildRegard } from '../npc/guild.js';
 import { el, overlay, toast, modal, refreshHUD, refreshLog, josa, npcTitle } from '../ui.js';
 /* 조우 손실 — **값은 `data.js: ENCOUNTER_LOSS` 한 벌**, **식은 `scenes/battle.js` 두 함수**가 정본이다.
    패배(금고 ×0.50)와 도주(×0.12)가 같은 상수·같은 함수를 봐야 어긋나지 않는다. */
@@ -181,19 +187,25 @@ export const mapScene = {
 /* ── 그리기 ─────────────────────────────────────────── */
 function drawRoutes(ctx, t) {
   const reachable = new Set(neighborsOf(state.at));
+  const rid = curRegion();
   for (const [a, b] of viewRoutes()) {
     const A = CITY_BY_ID[a], B = CITY_BY_ID[b];
     const live = !sailing && (a === state.at || b === state.at);
     const dash = live ? 3 : 2, gap = live ? 3 : 5;
-    const n = Math.round(Math.hypot(B.x - A.x, B.y - A.y));
     const phase = live ? (t * 14) % (dash + gap) : 0;
-    for (let i = 0; i < n; i++) {
-      if (((i + phase) % (dash + gap)) >= dash) continue;
-      const u = i / n;
-      const x = Math.round(A.x + (B.x - A.x) * u);
-      const y = Math.round(A.y + (B.y - A.y) * u);
-      ctx.fillStyle = live ? '#f4dd86' : '#ffffff28';
-      ctx.fillRect(x, y, 1, 1);
+    /* ★ 꺾인 뱃길이면 폴리라인을 구간마다 찍는다 — 점선의 위상(phase)은 **이어서** 센다.
+       구간마다 0에서 다시 세면 꺾이는 자리마다 점이 뭉쳐 매듭처럼 보인다. */
+    const path = lanePath(rid, A, B);
+    let k = 0;
+    for (let s = 0; s < path.length - 1; s++) {
+      const [x0, y0] = path[s], [x1, y1] = path[s + 1];
+      const n = Math.round(Math.hypot(x1 - x0, y1 - y0));
+      for (let i = 0; i < n; i++, k++) {
+        if (((k + phase) % (dash + gap)) >= dash) continue;
+        const u = i / n;
+        ctx.fillStyle = live ? '#f4dd86' : '#ffffff28';
+        ctx.fillRect(Math.round(x0 + (x1 - x0) * u), Math.round(y0 + (y1 - y0) * u), 1, 1);
+      }
     }
   }
   void reachable;
@@ -276,16 +288,17 @@ function drawPlayer(ctx, t) {
   let x, y, ang = 0;
 
   if (sailing) {
+    /* ★ 배도 **그려 둔 뱃길 위를** 간다. 선은 반도를 돌아가는데 배만 직선으로 가로지르면
+       그림이 거짓말이 된다(꺾인 뱃길을 넣으면서 실제로 그랬다). */
+    const rid = curRegion();
     const u = ease(sailing.t);
-    x = sailing.from.x + (sailing.to.x - sailing.from.x) * u;
-    y = sailing.from.y + (sailing.to.y - sailing.from.y) * u;
-    ang = Math.atan2(sailing.to.y - sailing.from.y, sailing.to.x - sailing.from.x) + Math.PI / 2;
+    [x, y] = laneAt(rid, sailing.from, sailing.to, u);
+    const [ax, ay] = laneAt(rid, sailing.from, sailing.to, Math.min(1, u + 0.02));
+    ang = Math.atan2(ay - y, ax - x) + Math.PI / 2;
     // 항적
     ctx.fillStyle = '#ffffff30';
     for (let i = 1; i <= 9; i++) {
-      const uu = Math.max(0, u - i * 0.012);
-      const px = sailing.from.x + (sailing.to.x - sailing.from.x) * uu;
-      const py = sailing.from.y + (sailing.to.y - sailing.from.y) * uu;
+      const [px, py] = laneAt(rid, sailing.from, sailing.to, Math.max(0, u - i * 0.012));
       ctx.fillRect(Math.round(px), Math.round(py + Math.sin(t * 6 + i) * 0.6), 1, 1);
     }
   } else {
@@ -834,7 +847,12 @@ function resolveEvent(ev0, voyage) {
          그 규칙이 생기기 전에 저장된 판에는 아직 떠 있을 수 있다 — 여기서 한 번 더 거른다
          (돈을 치르고 산 약속이 세이브 하나로 깨지면 안 된다 · ISSUES #26). */
       const live = (voyage.foes ?? []).find((n) => !n.defId || !rosterClosed(n.defId));
-      const npc = live || huntedOnLeg(voyage.from.id, voyage.to.id) || null;
+      /* ★★ **압박 함대**(G-5) — 상단이 부를 쌓으면 제 자리 앞에 호위선단을 세운다.
+         규칙(`npc/guild.js: guildFoeOnLeg`)은 서 있는데 **씬이 안 읽으면 플레이어가 영영 못 만난다.**
+         이 저장소가 명부 해적에서 **984 게임일에 조우 0회**로 겪은 것과 정확히 같은 자리다.
+         ⚠️ **조우 확률은 한 톨도 안 바뀐다** — 해적 사건이 났을 때 *누가 오는가*만 바뀐다. */
+      const npc = live || huntedOnLeg(voyage.from.id, voyage.to.id)
+                      || guildFoeOnLeg(voyage.from.id, voyage.to.id) || null;
       /* ★ 원양 구간이면 **두 바다 어느 쪽 얼굴도 나온다**(C-10 · `state.js: legRegion`).
          예전에는 출발지의 표만 봐서 태평양 한복판에서 왜구가 나왔다. */
       const enemy = npc ? pirateEnemy(npc)
@@ -844,7 +862,9 @@ function resolveEvent(ev0, voyage) {
         /* `world.js`는 명부 이름 뒤에 '호'를 붙인다 — '왕직호'·'식량형제단호'가 그렇게 나왔다.
            부르는 법은 화면의 몫이므로 여기서 바로잡고, 명부의 대사도 함께 실어 보낸다
            (전투 씬이 도주·격침 순간에 그 줄을 쓴다). */
-        enemy.name = npcTitle(npc);
+        /* ★ '호'는 **명부 인물의 배**에만 붙인다. `npcTitle`은 `defId`가 없으면 무조건 붙이는데,
+           압박 함대(G-5)는 `defId`가 null이라 「…호위선단호」가 되어 버린다. 선단은 사람이 아니다. */
+        enemy.name = npc.houseId ? npc.name : npcTitle(npc);
         enemy.hail = pdef?.lines?.hail ?? null;
         enemy.spare = pdef?.lines?.spare ?? null;
         enemy.blurb = pdef?.blurb ?? null;
@@ -899,6 +919,11 @@ function resolveEvent(ev0, voyage) {
                 enemy,
                 onEnd: (result) => {
                   if (npc && result !== 'lose') removeNpc(npc.id);   // 바다에서 지운다
+                  /* ★ 상단의 배를 꺾으면 **그 상단이 더 미워한다** — 압박이 눈덩이가 된다(G-5).
+                     값은 규칙(`npc/guild.js: GUILD.regardOnSlain`)이 실어 보낸 것을 그대로 먹인다. */
+                  if (npc?.houseId && npc.guildPenalty && result !== 'lose') {
+                    addGuildRegard(npc.houseId, npc.guildPenalty);
+                  }
                   if (result === 'lose') return;      // 패배는 battle 씬이 처리
                   go('map');
                   sailing = resumeVoyage(voyage);
@@ -1255,6 +1280,20 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
         sn && !sn.open ? el('span', {
           text: ' 철 아님', style: { color: '#d98a6a', fontSize: '10.5px' },
         }) : null,
+        /* ★ **압박**(G-4) — 이 구간에 어느 상단의 호위선단이 서 있나.
+           ⚠️ **조우 확률은 안 바뀐다 — 누가 오는가만 바뀐다.** 그래서 위험 칸이 아니라
+           이름 옆에 따로 붙인다(위험 칸에 섞으면 "더 위험해졌다"로 잘못 읽힌다).
+           이 표가 없으면 압박 함대는 **규칙으로만 서 있고 플레이어는 영영 못 만난다** —
+           이 저장소가 명부 해적에서 984 게임일에 조우 0회로 겪은 그 자리다. */
+        (() => {
+          const foe = guildFoeOnLeg(state.at, id);
+          return foe ? el('span', {
+            text: ' 압박', title: `${foe.name}이 이 구간에 서 있다 — 해적 사건이 나면 그들이 온다`
+              + `
+(조우 확률은 그대로다. 오는 상대만 바뀐다)`,
+            style: { color: '#c98a6a', fontSize: '10.5px' },
+          }) : null;
+        })(),
       ].filter(Boolean)),
       el(`span.rw.${w.kind || 'calm'}`, { text: w.text }),
       el(`span.rw.${dg.kind || 'calm'}`, { text: threat ? `${dg.text}·${threat}` : dg.text }),

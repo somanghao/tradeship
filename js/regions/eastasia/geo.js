@@ -68,7 +68,7 @@ export const CITIES = [
   //   민가 일곱 채짜리 나루였고 벽란도는 고려의 항구라 이 시대에는 이미 쇠했다.
   // 조선은 사무역을 원칙적으로 금했으므로 바깥 배는 여기까지 못 온다 — 부산포에서만
   // 이어지는 **막다른 주머니**로 두고, 강 안쪽이라 바닷배를 못 짓게 industry 0으로 둔다.
-  { id: 'mapo',      name: '마포',     area: '경강',       style: 'jiangnan', x: 176, y: 34,  flag: 'joseon',      seed: 7808, size: 2, industry: 0 },
+  { id: 'mapo',      name: '마포',     area: '경강',       style: 'jiangnan', x: 182, y: 20,  flag: 'joseon',      seed: 7808, size: 2, industry: 0 },
   // 부산포 — 1426년 삼포를 열어 일본 배를 받았고 왜관이 섰다. 1510년 삼포왜란 뒤
   // 열린 항구가 줄어 결국 부산포 하나만 남는다. 조선이 바깥과 닿는 유일한 부두다.
   { id: 'busanpo',   name: '부산포',   area: '경상',       style: 'jiangnan', x: 210, y: 52,  flag: 'joseon',      seed: 7909, size: 2, industry: 2 },
@@ -159,24 +159,24 @@ export const CITIES = [
   // 의주 — 압록강. 배가 아니라 **수레가 국경을 넘는 항구**다. 중강개시(中江開市)에서
   // 조선의 은과 인삼이 나가고 명의 비단·서적이 들어왔다. 조선에서 가장 무거운 문턱이고,
   // 마포로 가는 길은 물길이 아니라 의주대로라 요율이 없다(null).
-  { id: 'uiju',        name: '의주',       area: '평안',       style: 'jiangnan', x: 154, y: 8,   flag: 'joseon', seed: 9727,  size: 2, industry: 0 },
+  { id: 'uiju',        name: '의주',       area: '평안',       style: 'jiangnan', x: 156, y: 2,   flag: 'joseon', seed: 9727,  size: 2, industry: 0 },
   // 군산창 — 조선 조운의 큰 조창 가운데 하나. 전라도 세곡이 여기 모여 **안흥량**을 돌아
   // 경강으로 올라갔다. 그 안흥량에서 조운선이 하도 가라앉아 굴포 운하를 파려다 실패한다.
-  { id: 'gunsan',      name: '군산창',     area: '전라',       style: 'jiangnan', x: 156, y: 26,  flag: 'joseon', seed: 9828,  size: 1, industry: 1 },
+  { id: 'gunsan',      name: '군산창',     area: '전라',       style: 'jiangnan', x: 170, y: 36,  flag: 'joseon', seed: 9828,  size: 1, industry: 1 },
   // 강진 — 대구소(大口所)의 청자 가마. 고려의 물건이라 이 시대에는 이미 쇠했으나,
   // 마도 앞바다에서 청자를 실은 배가 여럿 가라앉은 채로 남아 그 물길이 실재했음을 말한다.
   // (연도를 고정하지 않는다는 프로젝트 방침대로, 쇠했다고 덜어내지 않고 얕게 남긴다.)
-  { id: 'gangjin',     name: '강진',       area: '전라 남안',  style: 'jiangnan', x: 168, y: 46,  flag: 'joseon', seed: 9929,  size: 1, industry: 1 },
+  { id: 'gangjin',     name: '강진',       area: '전라 남안',  style: 'jiangnan', x: 166, y: 60,  flag: 'joseon', seed: 9929,  size: 1, industry: 1 },
   // 여수(麗水) — **전라좌수영**이 앉은 남해의 군항이다. 다른 조선 항구가 세곡이나 왜관으로
   // 정해지는 데 비해 여기는 **배를 짓는 곳**이라 성격이 다르다: 앞을 돌산도가 막아 물결이 죽고,
   // 배후 산에서 소나무가 나며, 그 소나무는 **금산(禁山)으로 묶여 민간이 못 벤다.**
   // 판옥선이 여기서 났고 뒷날 거북선도 여기서 물에 뜬다 — 그래서 조선 항구 가운데
   // **industry가 가장 높다**(2, 부산포와 같다). 물건을 사고파는 항구가 아니라 **만드는 항구**다.
   // ★ 그 대가로 시장이 얕다(size 1) — 군수품이 나가고 들어오는 자리라 사무역의 폭이 좁다.
-  { id: 'yeosu',       name: '여수',       area: '전라 좌수영', style: 'jiangnan', x: 178, y: 50,  flag: 'joseon', seed: 10333, size: 1, industry: 2 },
+  { id: 'yeosu',       name: '여수',       area: '전라 좌수영', style: 'jiangnan', x: 177, y: 58,  flag: 'joseon', seed: 10333, size: 1, industry: 2 },
   // 제주 — 원대 이래의 **국립 목마장**이다. 말과 우피가 나가고, 화산섬이라 논이 없고
   // 염전이 안 되어 곡물과 소금을 뭍에서 들여왔다. 표류선이 닿는 자리이기도 하다.
-  { id: 'jeju',        name: '제주',       area: '제주',       style: 'jiangnan', x: 188, y: 62,  flag: 'joseon', seed: 10030, size: 2, industry: 1 },
+  { id: 'jeju',        name: '제주',       area: '제주',       style: 'jiangnan', x: 188, y: 65,  flag: 'joseon', seed: 10030, size: 2, industry: 1 },
   // 내이포(제포·웅천) — 1426년에 연 삼포의 하나이고 **왜관이 가장 컸던 곳**이다.
   // 1510년 삼포왜란으로 닫히면서 왜관이 부산포 하나로 모인다.
   { id: 'naeipo',      name: '내이포',     area: '경상 남안',  style: 'jiangnan', x: 198, y: 52,  flag: 'joseon', seed: 10131, size: 1, industry: 1 },

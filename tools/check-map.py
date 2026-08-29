@@ -15,6 +15,8 @@
 """
 import re
 import sys
+import json
+import math
 from pathlib import Path
 
 # 검사 결과에 한글과 —·✅ 같은 기호를 쓰는데 Windows 콘솔 기본이 cp949라 출력에서 죽는다.
@@ -302,23 +304,56 @@ if reach:
              "(코드가 그린 판은 이 비율이 20% 안쪽이다)")
 
 # ── 5. 항로가 바다 위를 지나는가 ───────────────────────────
+# ★★ **뱃길은 직선이 아닐 수 있다**(회차 25). 두 항구를 잇는 직선이 반도를 관통할 때
+#   지금까지는 그 반도를 바다로 파냈고, 그래서 이탈리아 장화가 삼각 파편이 됐다.
+#   이제는 배가 반도를 **돌아간다** — 중간점은 `assets/map-shape/<권역>.json`의 `routeVia`가 정본이고
+#   게임(`js/sprites/maps/lanes.js`)·지형 파기(`auto.js: topology`)·이 검사기가 **같은 폴리라인**을 본다.
+#   셋 중 하나만 직선으로 재면 멀쩡한 지도가 반려된다(실제로 그랬다).
+_shape_f = ROOT / f"assets/map-shape/{REGION}.json"
+ROUTE_VIA = {}
+if _shape_f.exists():
+    ROUTE_VIA = json.loads(_shape_f.read_text(encoding="utf-8")).get("routeVia", {}) or {}
+
+
+def lane_path(ca, cb):
+    """그 항로가 실제로 지나는 폴리라인. 중간점이 없으면 직선 두 점이다."""
+    v = ROUTE_VIA.get(f'{ca["id"]}|{cb["id"]}')
+    if v is None:
+        r = ROUTE_VIA.get(f'{cb["id"]}|{ca["id"]}')
+        v = list(reversed(r)) if r else None
+    pts = [(ca["x"], ca["y"])]
+    if v:
+        pts += [(p[0], p[1]) for p in v]
+    pts.append((cb["x"], cb["y"]))
+    return pts
+
+
 blocked, grazed = [], []
 for a, b in ROUTES:
     if a not in BY or b not in BY:
         continue
     ca, cb = BY[a], BY[b]
-    n = max(abs(ca["x"] - cb["x"]), abs(ca["y"] - cb["y"])) or 1
-    on_land = 0
-    for i in range(3, n - 2):              # 접안 구간(양끝 3px)은 육지여도 정상
-        t = i / n
-        x = round(ca["x"] + (cb["x"] - ca["x"]) * t)
-        y = round(ca["y"] + (cb["y"] - ca["y"]) * t)
-        if 0 <= x < W and 0 <= y < H and not is_sea(x, y):
-            on_land += 1
+    pts = lane_path(ca, cb)
+    on_land, n = 0, 0
+    for k in range(len(pts) - 1):
+        x0, y0 = pts[k]
+        x1, y1 = pts[k + 1]
+        steps = max(abs(x1 - x0), abs(y1 - y0)) or 1
+        for i in range(steps + 1):
+            t = i / steps
+            x = round(x0 + (x1 - x0) * t)
+            y = round(y0 + (y1 - y0) * t)
+            # 접안 구간(양끝 항구에서 3.5px 안)은 육지여도 정상이다
+            if math.hypot(x - ca["x"], y - ca["y"]) < 3.5 or math.hypot(x - cb["x"], y - cb["y"]) < 3.5:
+                continue
+            n += 1
+            if 0 <= x < W and 0 <= y < H and not is_sea(x, y):
+                on_land += 1
+    n = max(1, n)
     # ★ "3px 넘으면 실패"를 **비율**로 바꿨다(`mapcheck.html`과 같은 34%).
     #   긴 항로일수록 절대 픽셀 수가 커지므로 절대값으로 재면 먼 바다가 부당하게 걸린다.
     #   좁은 해협을 스치는 것과 산맥을 관통하는 것은 다르다 — 비율이 그 차이를 본다.
-    ratio = on_land / max(1, n - 5)
+    ratio = on_land / n
     if ratio > 0.34:
         blocked.append((ca["name"], cb["name"], on_land, n, ratio))
     elif on_land > 2:
