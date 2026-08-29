@@ -3,7 +3,6 @@
 // 이 조합 방식 덕에 병종을 늘려도 실루엣과 비례가 어긋나지 않는다.
 
 import { PAL as P, G, bake, outline } from '../pixel.js';
-import { overrideFor } from '../assets.js';
 
 export const CW = 48, CH = 48;     // 스프라이트 규격
 const FOOT = 45;                   // 발바닥 기준선
@@ -25,6 +24,25 @@ export const SCHEMES = {
   // 부관 에이미 전용 — 짙은 청록에 금장. 선장(plum)과 안 겹치면서 갑판에서 눈에 띈다.
   teal:    { cD: '#1e4444', cM: '#2f7570', cL: '#54a89b', trim: P.goldM, trimD: P.goldD,
              pD: '#243a3c', pM: '#3a5c5c', skin: 'light' },
+
+  /* ── 명부 인물 전용 배색 (회차 23) ──────────────────────────────
+     ★ 위 일곱은 **병종의 정보**다 — 한 픽셀도 안 건드린다.
+     아래 여섯은 **병종이 아닌 사람**(항구 인물·동료·이름난 해적)에게만 쓴다.
+     항구에 앉은 서기와 전주가 전부 남색 선원복을 입고 있던 것을 갈랐다. */
+  earth:   { cD: '#40301f', cM: '#6b5334', cL: '#96784c', trim: P.clothD, trimD: '#7a6b54',
+             pD: '#332a1f', pM: '#4f4335', skin: 'light' },
+  olive:   { cD: '#333a1f', cM: '#5b6434', cL: '#8a9455', trim: P.woodL, trimD: P.woodD,
+             pD: '#2e3020', pM: '#4a4c33', skin: 'light' },
+  slate:   { cD: '#232a33', cM: '#3f4c5c', cL: '#69798c', trim: P.steelL, trimD: P.steelD,
+             pD: '#22262c', pM: '#3a4048', skin: 'light' },
+  wine:    { cD: '#3f1620', cM: '#6b2431', cL: '#9c3d47', trim: P.goldM, trimD: P.goldD,
+             pD: '#2b1c1e', pM: '#453032', skin: 'light' },
+  saffron: { cD: '#8a5a12', cM: '#c98f22', cL: '#eec25a', trim: '#4a1418', trimD: '#2b0e10',
+             pD: '#6b4a1c', pM: '#95702f', skin: 'light' },
+  indigo:  { cD: '#1b2440', cM: '#2f3d6b', cL: '#5464a0', trim: P.clothM, trimD: P.clothD,
+             pD: '#20243a', pM: '#363c58', skin: 'light' },
+  ivory:   { cD: '#8a8270', cM: '#c2b89e', cL: '#e8e0c8', trim: P.blueM, trimD: P.blueD,
+             pD: '#5c584f', pM: '#847e70', skin: 'light' },
 };
 
 /* ── 피부톤 넷 ────────────────────────────────────────────────────
@@ -54,7 +72,10 @@ export const REGION_SKIN = {
   africa: 'ebony', mideast: 'dark',
 };
 
-const skinOf = (s, faceKey = null) => SKINS[REGION_SKIN[faceKey]] ?? SKINS[s.skin] ?? SKINS.light;
+/** 이 사람의 살빛 세 톤 — `s`는 `SCHEMES`의 한 줄, `faceKey`는 권역 이름이다.
+    ★ export하는 이유: **작은 인물**(`char-mini.js`)이 같은 규칙을 봐야 하기 때문이다.
+      두 파일이 각자 표를 들면 바다별 얼굴빛이 큰 그림에서만 갈리는 일이 다시 생긴다(C-14). */
+export const skinOf = (s, faceKey = null) => SKINS[REGION_SKIN[faceKey]] ?? SKINS[s.skin] ?? SKINS.light;
 
 /* ── 포즈 ───────────────────────────────────────────────────────
    idle / attack / hit 세 가지. 오프셋 몇 개만 바꿔 실루엣을 흔든다. */
@@ -564,6 +585,790 @@ export const UNITS = {
   amy:       { name: '에이미',   head: 'longhair', weap: 'ledger',      armor: 'none',      scheme: 'teal', body: 'fem' },
 };
 
+/* ══ 명부 인물을 가르는 축 (회차 23) ═══════════════════════════════
+   ★ **한 그림이 아홉 바다에 그대로 쓰이는 구조**가 인물에도 있었다.
+   `figureSprite`·`pirateSprite`는 그림이 없으면 공용 병종 스프라이트로 폴백했고,
+   그때 `faceKey`를 안 넘겨 **회차 22가 판 여덟 얼굴빛이 명부 인물에는 한 번도 안 닿았다** —
+   아홉 바다 162명(항구 71 · 동료 51 · 해적 40)이 화면에서 다섯 장이었다.
+
+   그래서 얼굴빛 하나가 아니라 **여덟 축**을 판다. 전부 id에서 결정론으로 뽑으므로
+   같은 사람은 언제나 같은 얼굴이고, 명부가 늘어도 그림을 새로 안 그려도 된다:
+     ① 얼굴빛(권역)  ② 머리모양  ③ 머리색  ④ 수염  ⑤ 모자/두건(권역 문화)
+     ⑥ 옷깃          ⑦ 장신구    ⑧ 나이대  (+ 배색과 손에 든 것은 직업이 정한다)
+   ⚠️ 병종(`UNITS`·`unitSprite`)은 여전히 **한 픽셀도 안 건드린다** — 그쪽은 배색이 곧 정보다. */
+
+/** FNV-1a — id 문자열 하나에서 사람의 생김새를 뽑는 씨앗 */
+function seedOf(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h >>> 0;
+}
+
+/** 씨앗 하나에서 순서대로 골라 쓰는 선택기 (pixel.js: rng와 같은 xorshift) */
+function chooser(seed) {
+  let s = (seed >>> 0) || 1;
+  const next = () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s >>> 0; };
+  return {
+    pick: (a) => a[next() % a.length],
+    odds: (p) => (next() % 1024) / 1024 < p,
+  };
+}
+
+/* 인물 id의 권역 약자 — `npc-figures.js`·`npc-mates.js`의 규약이다(`권역약자-항구-직능`) */
+const REGION_BY_PREFIX = {
+  med: 'mediterranean', atl: 'atlantic', afr: 'africa', mid: 'mideast', ind: 'indian',
+  sea: 'seasia', eas: 'eastasia', car: 'caribbean', sam: 'southamerica',
+};
+
+/* ── 머리색 [기본, 그늘] ─────────────────────────────────────── */
+const HAIRS = {
+  black:  ['#191219', '#0c090e'],
+  jet:    ['#241a11', '#140e09'],
+  brown:  ['#4a3524', '#2f2016'],
+  chest:  ['#6b4626', '#3d2a1b'],
+  auburn: ['#7a3b22', '#4a1f12'],
+  blond:  ['#c2a06a', '#8a6a44'],
+  grey:   ['#8a8578', '#5c584f'],
+  white:  ['#cfc7b4', '#8f8878'],
+};
+
+/* ── 천 색 (모자·두건·옷깃) ──────────────────────────────────── */
+const CLOTHES = {
+  white:  { M: P.clothM,  L: P.clothL,  D: P.clothD },
+  indigo: { M: '#2f3d6b', L: '#5464a0', D: '#1b2440' },
+  saffron:{ M: '#c98f22', L: '#eec25a', D: '#8a5a12' },
+  crimson:{ M: P.redM,    L: P.redL,    D: P.redD },
+  black:  { M: '#2a2230', L: '#463c4e', D: '#17121c' },
+  earth:  { M: '#6b5334', L: '#96784c', D: '#40301f' },
+  green:  { M: P.grnM,    L: P.grnL,    D: P.grnD },
+  straw:  { M: P.sandM,   L: P.sandL,   D: P.sandD },
+};
+
+/* 두상 좌표 헬퍼 — `drawHead`와 같은 기준을 쓴다(머리 10~21 · 얼굴 x19~29) */
+const HX = (po) => Math.round(po.lean * 0.6);
+const HY = (po) => po.headY;
+
+/* ── ② 머리모양 ─────────────────────────────────────────────── */
+const HAIRSTYLES = {
+  /* 짧게 친 머리 — 병종이 쓰던 그것. 색만 사람마다 다르다 */
+  crop: (g, po, c, d) => drawHair(g, po, c, d),
+
+  /* 귀 뒤로 넘겨 목덜미까지 */
+  side: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    drawHair(g, po, c, d);
+    g.r(17 + L, 12 + Y, 2, 9, c);
+    g.v(17 + L, 14 + Y, 20 + Y, d);
+    g.px(29 + L, 14 + Y, c);
+  },
+
+  /* 어깨까지 내린 긴 머리 */
+  long: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.h(9 + Y, 21 + L, 26 + L, c);
+    g.h(10 + Y, 20 + L, 27 + L, c);
+    g.h(11 + Y, 19 + L, 28 + L, c);
+    g.h(12 + Y, 19 + L, 28 + L, c);
+    g.h(9 + Y, 22 + L, 25 + L, d);
+    g.h(13 + Y, 19 + L, 21 + L, c);
+    g.px(28 + L, 13 + Y, c);
+    g.r(17 + L, 12 + Y, 3, 13, c);
+    g.v(17 + L, 13 + Y, 24 + Y, d);
+    g.r(28 + L, 13 + Y, 2, 9, c);
+    g.px(29 + L, 15 + Y, d);
+    g.h(25 + Y, 17 + L, 19 + L, d);
+  },
+
+  /* 땋아 늘인 머리 — 등 뒤로 내려간다 */
+  queue: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    drawHair(g, po, c, d);
+    g.r(16 + L, 13 + Y, 2, 16, c);
+    g.px(16 + L, 16 + Y, d); g.px(17 + L, 20 + Y, d);
+    g.px(16 + L, 24 + Y, d); g.px(17 + L, 28 + Y, d);
+    g.h(29 + Y, 16 + L, 17 + L, d);
+  },
+
+  /* 상투 — 정수리에 틀어 올린다 */
+  topknot: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.h(10 + Y, 20 + L, 27 + L, c);
+    g.h(11 + Y, 19 + L, 28 + L, c);
+    g.h(12 + Y, 19 + L, 28 + L, c);
+    g.h(13 + Y, 19 + L, 20 + L, c);
+    g.px(28 + L, 13 + Y, c);
+    g.r(18 + L, 13 + Y, 2, 4, c);
+    g.r(22 + L, 6 + Y, 3, 3, c);        // 튼 머리
+    g.h(6 + Y, 22 + L, 24 + L, d);
+    g.v(23 + L, 9 + Y, 10 + Y, d);
+  },
+
+  /* 벗어진 머리 — 옆머리만 남는다 */
+  bald: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.r(18 + L, 13 + Y, 2, 5, c);
+    g.px(19 + L, 13 + Y, c);
+    g.h(13 + Y, 27 + L, 28 + L, c);
+    g.px(28 + L, 14 + Y, d);
+    g.px(18 + L, 17 + Y, d);
+  },
+
+  /* 곱슬 — 윤곽이 울퉁불퉁하다 */
+  curly: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.h(10 + Y, 20 + L, 27 + L, c);
+    g.h(11 + Y, 19 + L, 28 + L, c);
+    g.h(12 + Y, 18 + L, 29 + L, c);
+    g.h(13 + Y, 18 + L, 20 + L, c);
+    g.px(29 + L, 13 + Y, c);
+    g.px(20 + L, 9 + Y, c); g.px(23 + L, 8 + Y, c); g.px(26 + L, 9 + Y, c);
+    g.px(18 + L, 10 + Y, c); g.px(29 + L, 11 + Y, c);
+    g.px(22 + L, 10 + Y, d); g.px(25 + L, 11 + Y, d); g.px(19 + L, 12 + Y, d);
+    g.r(18 + L, 14 + Y, 2, 3, c);
+  },
+
+  /* 정수리를 민 삭발 — 사제 */
+  tonsure: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.h(12 + Y, 19 + L, 28 + L, c);
+    g.h(13 + Y, 19 + L, 21 + L, c);
+    g.px(28 + L, 13 + Y, c);
+    g.px(19 + L, 11 + Y, c); g.px(28 + L, 11 + Y, c);
+    g.r(18 + L, 13 + Y, 2, 5, c);
+    g.h(12 + Y, 22 + L, 25 + L, d);
+  },
+};
+
+/* ── ④ 수염 ─────────────────────────────────────────────────── */
+const BEARDS = {
+  none: () => {},
+
+  stubble: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    for (const [x, y] of [[21, 20], [23, 20], [25, 20], [27, 19], [22, 21], [25, 21], [27, 21]]) {
+      g.px(x + L, y + Y, d);
+    }
+    void c;
+  },
+
+  mustache: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.h(18 + Y, 25 + L, 28 + L, c);
+    g.px(24 + L, 18 + Y, d); g.px(28 + L, 19 + Y, d);
+  },
+
+  goatee: (g, po, c, d) => {
+    BEARDS.mustache(g, po, c, d);
+    const L = HX(po), Y = HY(po);
+    g.r(24 + L, 20 + Y, 3, 2, c);
+    g.px(25 + L, 22 + Y, c);
+    g.px(24 + L, 21 + Y, d);
+  },
+
+  short: (g, po, c, d) => {
+    const L = HX(po), Y = HY(po);
+    g.v(20 + L, 17 + Y, 19 + Y, c);
+    g.h(19 + Y, 20 + L, 28 + L, c);
+    g.h(20 + Y, 20 + L, 28 + L, c);
+    g.h(21 + Y, 22 + L, 27 + L, c);
+    g.h(18 + Y, 25 + L, 28 + L, c);
+    g.h(21 + Y, 23 + L, 26 + L, d);
+  },
+
+  full: (g, po, c, d) => {
+    BEARDS.short(g, po, c, d);
+    const L = HX(po), Y = HY(po);
+    g.v(19 + L, 16 + Y, 19 + Y, c);
+    g.h(22 + Y, 22 + L, 27 + L, c);
+    g.h(22 + Y, 23 + L, 26 + L, d);
+  },
+
+  long: (g, po, c, d) => {
+    BEARDS.full(g, po, c, d);
+    const L = HX(po), Y = HY(po);
+    g.r(23 + L, 23 + Y, 4, 3, c);
+    g.h(26 + Y, 24 + L, 26 + L, c);
+    g.h(24 + Y, 24 + L, 25 + L, d);
+    g.px(25 + L, 27 + Y, d);
+  },
+};
+
+/* ── ⑤ 모자·두건 ────────────────────────────────────────────────
+   `HEADGEAR`(병종용)에 손대지 않고 여기서만 늘린다. 다섯 가지는 그쪽을 그대로 빌려 쓰는데
+   그것들은 **머리카락을 스스로 그리므로** `HAT_DRAWS_HAIR`에 적어 두고 머리모양을 건너뛴다. */
+const HAT_DRAWS_HAIR = new Set(['tricorne', 'plumehat', 'morion', 'hood', 'bandana']);
+
+const HATS = {
+  none: () => {},
+
+  tricorne: (g, s, po) => HEADGEAR.tricorne(g, s, po),
+  plumehat: (g, s, po) => HEADGEAR.plumehat(g, s, po),
+  morion:   (g, s, po) => HEADGEAR.morion(g, s, po),
+  hood:     (g, s, po) => HEADGEAR.hood(g, s, po),
+  bandana:  (g, s, po) => HEADGEAR.bandana(g, s, po),
+
+  /* 챙 없는 납작 모자 */
+  cap: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.r(19 + L, 9 + Y, 10, 3, h.M);
+    g.h(9 + Y, 21 + L, 26 + L, h.L);
+    g.h(12 + Y, 18 + L, 30 + L, h.D);
+    g.px(30 + L, 11 + Y, h.M);
+  },
+
+  /* 베레 — 한쪽으로 흘러내린다 */
+  beret: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.ellipse(23 + L, 10 + Y, 6, 3, h.M);
+    g.h(8 + Y, 21 + L, 25 + L, h.L);
+    g.h(12 + Y, 18 + L, 28 + L, h.D);
+    g.px(30 + L, 10 + Y, h.M); g.px(29 + L, 11 + Y, h.M);
+    g.px(23 + L, 6 + Y, h.D);
+  },
+
+  /* 머릿수건 — 두상을 감싸 목까지 내려온다 */
+  coif: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.h(9 + Y, 21 + L, 26 + L, h.M);
+    g.h(10 + Y, 20 + L, 27 + L, h.M);
+    g.r(18 + L, 11 + Y, 12, 3, h.M);
+    g.r(17 + L, 12 + Y, 3, 9, h.M);
+    g.r(28 + L, 12 + Y, 2, 5, h.M);
+    g.h(9 + Y, 22 + L, 25 + L, h.L);
+    g.h(11 + Y, 20 + L, 26 + L, h.L);
+    g.v(17 + L, 14 + Y, 20 + Y, h.D);
+    g.h(21 + Y, 17 + L, 19 + L, h.D);
+    g.h(13 + Y, 18 + L, 29 + L, h.D);   // 이마를 두른 천의 가장자리 — 없으면 '머리카락'으로 읽힌다
+  },
+
+  /* 터번 — 감은 결이 보인다 */
+  turban: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.ellipse(23 + L, 10 + Y, 6, 4, h.M);
+    g.h(6 + Y, 21 + L, 26 + L, h.L);
+    g.h(12 + Y, 18 + L, 28 + L, h.D);
+    g.line(18 + L, 11 + Y, 28 + L, 8 + Y, h.D);
+    g.line(18 + L, 13 + Y, 28 + L, 10 + Y, h.D);
+    g.line(19 + L, 10 + Y, 27 + L, 7 + Y, h.L);
+    g.r(16 + L, 12 + Y, 3, 5, h.M);       // 흘러내린 자락
+    g.px(16 + L, 16 + Y, h.D);
+  },
+
+  /* 페즈(타르부시) — 술이 달린 원통 */
+  tarbush: (g, s, po) => {
+    const L = HX(po), Y = HY(po);
+    g.r(20 + L, 6 + Y, 8, 6, '#8f1f22');
+    g.h(6 + Y, 21 + L, 26 + L, P.redM);
+    g.h(7 + Y, 21 + L, 25 + L, P.redL);
+    g.h(12 + Y, 19 + L, 28 + L, '#5c1216');
+    g.v(28 + L, 6 + Y, 10 + Y, '#231d29');   // 술
+    g.px(28 + L, 11 + Y, '#463c4e');
+  },
+
+  /* 쿠피야 — 머리에 얹은 천을 검은 끈으로 눌렀다 */
+  keffiyeh: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.h(8 + Y, 21 + L, 26 + L, h.M);
+    g.r(18 + L, 9 + Y, 12, 4, h.M);
+    g.r(16 + L, 12 + Y, 3, 12, h.M);
+    g.r(29 + L, 12 + Y, 2, 8, h.M);
+    g.h(8 + Y, 22 + L, 25 + L, h.L);
+    g.v(16 + L, 14 + Y, 23 + Y, h.D);
+    g.h(24 + Y, 16 + L, 18 + L, h.D);
+    g.h(20 + Y, 29 + L, 30 + L, h.D);
+    g.h(10 + Y, 18 + L, 29 + L, '#231d29');  // 이깔
+    g.h(12 + Y, 18 + L, 29 + L, '#231d29');
+  },
+
+  /* 쿠피(둥근 챙 없는 모자) */
+  kufi: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.h(8 + Y, 21 + L, 26 + L, h.M);
+    g.r(19 + L, 9 + Y, 10, 4, h.M);
+    g.h(9 + Y, 21 + L, 26 + L, h.L);
+    g.h(13 + Y, 19 + L, 28 + L, h.D);
+    g.px(21 + L, 11 + Y, h.D); g.px(24 + L, 11 + Y, h.D); g.px(27 + L, 11 + Y, h.D);
+  },
+
+  /* 감아 두른 천 — 매듭이 한쪽에 온다 */
+  headwrap: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.r(18 + L, 9 + Y, 12, 4, h.M);
+    g.h(9 + Y, 20 + L, 26 + L, h.L);
+    g.line(18 + L, 12 + Y, 29 + L, 9 + Y, h.D);
+    g.h(13 + Y, 18 + L, 29 + L, h.D);
+    g.r(16 + L, 8 + Y, 3, 3, h.M);           // 매듭
+    g.px(16 + L, 9 + Y, h.L);
+    g.r(15 + L, 10 + Y, 2, 4, h.D);
+  },
+
+  /* 밀짚모자 — 넓은 챙 */
+  strawhat: (g, s, po) => {
+    const L = HX(po), Y = HY(po);
+    g.r(20 + L, 7 + Y, 8, 5, P.sandM);
+    g.h(7 + Y, 21 + L, 26 + L, P.sandL);
+    g.h(11 + Y, 20 + L, 27 + L, P.woodM);    // 띠
+    g.ellipse(23 + L, 12 + Y, 10, 2, P.sandM);
+    g.h(11 + Y, 15 + L, 31 + L, P.sandL);
+    g.h(13 + Y, 14 + L, 32 + L, P.sandD);
+  },
+
+  /* 삿갓 — 원뿔 */
+  conical: (g, s, po) => {
+    const L = HX(po), Y = HY(po);
+    g.poly([[23 + L, 4 + Y], [33 + L, 13 + Y], [13 + L, 13 + Y]], P.sandM);
+    g.line(23 + L, 4 + Y, 14 + L, 13 + Y, P.sandL);
+    g.line(24 + L, 5 + Y, 31 + L, 12 + Y, P.sandD);
+    g.h(13 + Y, 13 + L, 33 + L, P.sandD);
+    g.line(20 + L, 13 + Y, 22 + L, 20 + Y, '#3d2a1b');   // 턱끈
+  },
+
+  /* 갓 — 말총 원통에 넓고 얇은 챙, 망건이 이마를 두른다 */
+  gat: (g, s, po) => {
+    const L = HX(po), Y = HY(po);
+    g.r(20 + L, 4 + Y, 8, 7, '#2a2230');
+    g.h(4 + Y, 21 + L, 26 + L, '#463c4e');
+    g.h(5 + Y, 21 + L, 24 + L, '#5a5064');
+    g.h(11 + Y, 13 + L, 33 + L, '#231d29');
+    g.h(12 + Y, 15 + L, 31 + L, '#17121c');
+    g.h(13 + Y, 19 + L, 28 + L, '#17121c');              // 망건
+    g.line(21 + L, 12 + Y, 22 + L, 19 + Y, '#3a3542');   // 갓끈
+    g.px(22 + L, 20 + Y, '#3a3542');
+  },
+
+  /* 망건에 상투만 — 갓을 안 쓴 차림 */
+  topknotband: (g, s, po, h, hc) => {
+    const L = HX(po), Y = HY(po);
+    g.r(22 + L, 6 + Y, 3, 3, hc[0]);
+    g.h(6 + Y, 22 + L, 24 + L, hc[1]);
+    g.v(23 + L, 9 + Y, 10 + Y, hc[1]);
+    g.h(10 + Y, 20 + L, 27 + L, hc[0]);
+    g.h(11 + Y, 19 + L, 28 + L, hc[0]);
+    g.h(12 + Y, 19 + L, 28 + L, '#2a2230');
+    g.h(13 + Y, 19 + L, 28 + L, '#17121c');
+    g.px(21 + L, 7 + Y, P.goldM);                        // 동곳
+  },
+
+  /* 송콕 — 납작한 벨벳 모자 */
+  songkok: (g, s, po) => {
+    const L = HX(po), Y = HY(po);
+    g.r(20 + L, 7 + Y, 9, 6, '#231d29');
+    g.h(7 + Y, 21 + L, 27 + L, '#3a3542');
+    g.h(8 + Y, 21 + L, 25 + L, '#4a4358');
+    g.h(13 + Y, 19 + L, 28 + L, '#0e0a10');
+  },
+
+  /* 챙 넓은 펠트 모자 */
+  broadhat: (g, s, po, h) => {
+    const L = HX(po), Y = HY(po);
+    g.r(20 + L, 5 + Y, 9, 6, h.M);
+    g.h(5 + Y, 21 + L, 27 + L, h.L);
+    g.h(10 + Y, 20 + L, 28 + L, h.D);
+    g.h(11 + Y, 14 + L, 33 + L, h.M);
+    g.h(12 + Y, 15 + L, 32 + L, h.D);
+    g.px(14 + L, 11 + Y, h.D); g.px(33 + L, 11 + Y, h.D);
+  },
+
+  /* 모피 모자 — 북해 */
+  fur: (g, s, po) => {
+    const L = HX(po), Y = HY(po);
+    g.r(19 + L, 8 + Y, 10, 4, '#4a3524');
+    g.h(8 + Y, 21 + L, 26 + L, '#6b4626');
+    g.h(12 + Y, 18 + L, 29 + L, '#3b2a1c');
+    for (const x of [18, 20, 22, 24, 26, 28]) g.px(x + L, 13 + Y, '#6b4626');
+    for (const x of [19, 21, 23, 25, 27, 29]) g.px(x + L, 13 + Y, '#3b2a1c');
+  },
+};
+
+/* ── 긴 옷 바디 ────────────────────────────────────────────────
+   ★ **인물은 실루엣부터 갈라야 알아본다**(이 도메인의 함정). 얼굴빛·모자를 아무리 갈라도
+     162명이 전부 **무릎길이 코트에 장화**면 멀리서는 한 사람이다. 그래서 바다에 따라
+     발목까지 내려오는 긴 옷을 입힌다 — 도포·젤라바·쿠르타·바주. 48px 안에서
+     **다리가 안 보이는 것** 하나만으로 실루엣이 갈린다.
+   비례 기준선은 공용이다: 머리 10~21 · 어깨 23 · 허리 31 · 자락 끝 43 · 발 43~45. */
+function drawRobe(g, s, po) {
+  const L = po.lean;
+  // 상의 — 어깨에서 허리로 조금만 좁아진다
+  g.poly([[17 + L, 23], [31 + L, 23], [31 + L, 31], [16 + L, 31]], s.cM);
+  g.h(23, 18 + L, 30 + L, s.cL);
+  g.h(24, 17 + L, 31 + L, s.cL);
+  // 자락 — 허리에서 발치로 퍼진다(원통이면 뭉툭하다)
+  g.poly([[16 + L, 31], [31 + L, 31], [33 + L, 42], [14 + L, 42]], s.cM);
+  g.h(32, 17 + L, 30 + L, s.cL);
+  g.h(40, 15 + L, 32 + L, s.cD);
+  g.h(41, 14 + L, 33 + L, s.cD);
+  g.h(42, 14 + L, 33 + L, s.trimD);          // 밑단 — 한 줄이면 족하다
+  // 주름 — 퍼지는 방향을 따라간다
+  g.line(20 + L, 33, 17 + L, 41, s.cD);
+  g.line(24 + L, 33, 24 + L, 41, s.cD);
+  g.line(28 + L, 33, 31 + L, 41, s.cD);
+  // 목깃
+  g.r(21 + L, 22, 6, 3, P.clothM);
+  g.h(22, 21 + L, 26 + L, P.clothL);
+  // 허리띠 — 넓게 두른다
+  g.r(16 + L, 30, 16, 3, s.trimD);
+  g.h(30, 16 + L, 31 + L, s.trim);
+  g.px(24 + L, 31, s.trim); g.px(25 + L, 32, s.trimD);
+  // 앞자락 여밈
+  g.v(25 + L, 23, 29, s.cD);
+  g.v(26 + L, 23, 29, s.cL);
+}
+
+/** 긴 옷 아래로는 신발코만 나온다 */
+function drawRobeFeet(g, s, po) {
+  const sp = Math.round(po.legSpread * 0.5);
+  /* ⚠️ 자락 밑으로 나오는 것은 2px뿐이라 **어두운 색을 쓰면 아예 안 보인다**
+     (처음에 P.woodD로 그렸다가 아웃라인에 먹혀 사라졌다). 중간톤 + 윗면 빛으로 받친다. */
+  g.r(18 - sp, 43, 5, 2, P.woodM);
+  g.h(43, 18 - sp, 22 - sp, P.woodL);
+  g.h(44, 18 - sp, 22 - sp, P.woodD);
+  g.r(26 + sp, 43, 5, 2, P.woodM);
+  g.h(43, 26 + sp, 30 + sp, P.woodH);
+  g.h(44, 26 + sp, 30 + sp, P.woodD);
+}
+
+/* ── ⑥ 옷깃 ─────────────────────────────────────────────────── */
+const COLLARS = {
+  plain: () => {},
+
+  ruff: (g, s, po) => {                       // 주름깃
+    const L = po.lean;
+    g.h(21, 20 + L, 28 + L, P.clothM);
+    g.h(22, 19 + L, 29 + L, P.clothL);
+    g.h(23, 20 + L, 28 + L, P.clothM);
+    for (const x of [20, 22, 24, 26, 28]) g.px(x + L, 22, P.clothD);
+    g.px(19 + L, 21, P.clothD); g.px(29 + L, 21, P.clothD);
+  },
+
+  wide: (g, s, po) => {                       // 넓게 눕힌 흰 깃
+    const L = po.lean;
+    g.poly([[19 + L, 22], [29 + L, 22], [27 + L, 27], [21 + L, 27]], P.clothL);
+    g.h(22, 20 + L, 28 + L, P.clothM);
+    g.line(24 + L, 23, 22 + L, 27, P.clothD);
+    g.line(25 + L, 23, 27 + L, 27, P.clothD);
+    g.h(27, 21 + L, 27 + L, P.clothD);
+  },
+
+  shawl: (g, s, po, h) => {                   // 어깨에 걸친 숄
+    const L = po.lean;
+    g.h(23, 16 + L, 32 + L, h.M);
+    g.h(24, 15 + L, 33 + L, h.M);
+    g.h(25, 16 + L, 20 + L, h.M);
+    g.h(25, 28 + L, 32 + L, h.M);
+    g.h(23, 18 + L, 30 + L, h.L);
+    g.h(26, 16 + L, 19 + L, h.D);
+    g.h(26, 29 + L, 32 + L, h.D);
+  },
+
+  fur: (g, s, po) => {                        // 모피 깃
+    const L = po.lean;
+    g.h(22, 17 + L, 31 + L, '#4a3524');
+    g.h(23, 16 + L, 32 + L, '#6b4626');
+    g.h(24, 17 + L, 31 + L, '#3b2a1c');
+    for (const x of [17, 19, 21, 25, 27, 29, 31]) g.px(x + L, 24, '#6b4626');
+  },
+
+  robe: (g, s, po) => {                       // 사선 여밈
+    const L = po.lean;
+    g.line(20 + L, 23, 27 + L, 31, s.cD);
+    g.line(21 + L, 23, 28 + L, 31, s.cL);
+    g.line(22 + L, 23, 29 + L, 31, s.cD);
+    g.h(22, 21 + L, 27 + L, P.clothM);
+    g.px(21 + L, 23, P.clothL);
+  },
+
+  sash: (g, s, po, h) => {                    // 어깨에서 허리로 두른 띠
+    const L = po.lean;
+    g.line(19 + L, 23, 30 + L, 34, h.M);
+    g.line(20 + L, 23, 31 + L, 34, h.M);
+    g.line(19 + L, 24, 30 + L, 35, h.D);
+    g.px(20 + L, 23, h.L); g.px(24 + L, 28, h.L);
+  },
+
+  beads: (g, s, po) => {                      // 목걸이
+    const L = po.lean;
+    g.h(23, 21 + L, 27 + L, '#3d2a1b');
+    for (const x of [21, 23, 25, 27]) g.px(x + L, 24, P.goldM);
+    g.px(24 + L, 25, P.goldL);
+    g.px(22 + L, 24, '#8a641a'); g.px(26 + L, 24, '#8a641a');
+  },
+};
+
+/* ── ⑦ 장신구 ───────────────────────────────────────────────── */
+const ACCS = {
+  none: () => {},
+  earring: (g, po) => {
+    const L = HX(po), Y = HY(po);
+    g.px(18 + L, 18 + Y, P.goldM); g.px(18 + L, 19 + Y, P.goldD);
+  },
+  eyepatch: (g, po) => {
+    const L = HX(po), Y = HY(po);
+    g.h(15 + Y, 19 + L, 29 + L, '#17121c');
+    g.r(26 + L, 14 + Y, 3, 3, '#231d29');
+    g.px(26 + L, 14 + Y, '#3a3542');
+  },
+  scar: (g, po, sk) => {
+    const L = HX(po), Y = HY(po);
+    g.line(26 + L, 13 + Y, 28 + L, 18 + Y, sk.D);
+    g.px(27 + L, 15 + Y, '#a8544a');
+  },
+  specs: (g, po) => {
+    const L = HX(po), Y = HY(po);
+    g.box(22 + L, 15 + Y, 3, 3, P.ironM);
+    g.box(26 + L, 15 + Y, 3, 3, P.ironM);
+    g.px(25 + L, 16 + Y, P.ironL);
+    g.px(23 + L, 16 + Y, P.steelL);
+  },
+  pipe: (g, po) => {
+    const L = HX(po), Y = HY(po);
+    g.line(29 + L, 19 + Y, 33 + L, 21 + Y, '#3d2a1b');
+    g.r(33 + L, 19 + Y, 2, 3, P.woodM);
+    g.px(33 + L, 18 + Y, '#8f8878');
+  },
+};
+
+/* ── 손에 든 것 — 직업의 표시 ────────────────────────────────── */
+const PROPS = {
+  scroll: (g, s, po) => {                     // 두루마리 (학자·지도장이)
+    const L = po.lean, ay = po.armY, ax = po.armX;
+    const hx = 30 + L + ax, hy = 32 + ay;
+    g.r(hx, hy - 4, 3, 9, P.clothM);
+    g.v(hx, hy - 4, hy + 4, P.clothL);
+    g.v(hx + 2, hy - 4, hy + 4, P.clothD);
+    g.h(hy - 5, hx - 1, hx + 3, '#8a6a44');
+    g.h(hy + 5, hx - 1, hx + 3, '#8a6a44');
+  },
+  cane: (g, s, po) => {                       // 지팡이 (나이 든 사람)
+    const L = po.lean, ay = po.armY, ax = po.armX;
+    const hx = 32 + L + ax;
+    g.v(hx, 28 + ay, 45, P.woodM);
+    g.v(hx + 1, 28 + ay, 45, P.woodD);
+    g.r(hx - 1, 27 + ay, 3, 2, P.goldD);
+    g.px(hx, 27 + ay, P.goldM);
+  },
+  pouch: (g, s, po) => {                      // 돈주머니 (전주·중개인)
+    const L = po.lean, ay = po.armY, ax = po.armX;
+    const hx = 31 + L + ax, hy = 34 + ay;
+    g.ellipse(hx + 1, hy + 1, 3, 3, '#6b4626');
+    g.h(hy + 3, hx - 1, hx + 3, '#3d2a1b');
+    g.h(hy - 2, hx, hx + 2, '#8a641a');       // 조인 목
+    g.px(hx + 1, hy - 3, P.goldM);
+    g.px(hx, hy, '#8a6a44');
+  },
+  scale: (g, s, po) => {                      // 손저울 (환전·계량)
+    const L = po.lean, ay = po.armY, ax = po.armX;
+    const hx = 32 + L + ax, hy = 31 + ay;
+    g.v(hx, hy - 5, hy, P.ironM);             // 자루
+    g.h(hy - 5, hx - 4, hx + 4, P.ironM);     // 대
+    g.px(hx, hy - 6, P.ironL);
+    g.v(hx - 4, hy - 4, hy - 2, '#6d5b3f');   // 줄
+    g.v(hx + 4, hy - 4, hy - 2, '#6d5b3f');
+    g.h(hy - 1, hx - 5, hx - 3, P.goldD);     // 접시
+    g.h(hy - 1, hx + 3, hx + 5, P.goldD);
+    g.px(hx - 4, hy - 1, P.goldM); g.px(hx + 4, hy - 1, P.goldM);
+  },
+};
+
+const drawProp = (g, s, po, sk, key) => (PROPS[key] ?? WEAPONS[key] ?? WEAPONS.none)(g, s, po, sk);
+
+/* ── ⑧ 나이 ─────────────────────────────────────────────────── */
+function drawAged(g, po, sk) {
+  const L = HX(po), Y = HY(po);
+  g.h(14 + Y, 21 + L, 24 + L, sk.D);          // 이마 주름
+  g.px(26 + L, 14 + Y, sk.D);
+  g.px(22 + L, 18 + Y, sk.D);                 // 팔자
+  g.px(26 + L, 18 + Y, sk.D);
+  g.px(21 + L, 17 + Y, sk.D);                 // 눈밑
+}
+
+/* ── 바다마다 다른 차림 ──────────────────────────────────────── */
+const CULTURE = {
+  mediterranean: { hats: ['coif', 'beret', 'cap', 'none', 'hood', 'strawhat'],
+                   hair: ['crop', 'side', 'curly', 'long', 'tonsure'],
+                   hairCol: ['jet', 'brown', 'chest', 'black'],
+                   collar: ['ruff', 'wide', 'plain', 'sash'],
+                   cloth: ['white', 'crimson', 'earth', 'green', 'indigo'],
+                   scheme: ['wine', 'plum', 'earth', 'crimson', 'ivory'] },
+  atlantic:      { hats: ['cap', 'beret', 'coif', 'fur', 'tricorne', 'none'],
+                   hair: ['crop', 'side', 'long', 'bald', 'curly'],
+                   hairCol: ['brown', 'chest', 'auburn', 'blond', 'jet'],
+                   collar: ['ruff', 'wide', 'fur', 'plain'],
+                   cloth: ['black', 'earth', 'crimson', 'white'],
+                   scheme: ['slate', 'ink', 'earth', 'navy', 'ivory'] },
+  mideast:       { hats: ['turban', 'tarbush', 'keffiyeh', 'coif', 'none'],
+                   hair: ['crop', 'side', 'bald'],
+                   hairCol: ['black', 'jet'],
+                   collar: ['robe', 'sash', 'shawl', 'plain'],
+                   cloth: ['white', 'saffron', 'indigo', 'crimson', 'white'],
+                   scheme: ['sand', 'saffron', 'ivory', 'indigo', 'wine'] },
+  africa:        { hats: ['kufi', 'headwrap', 'strawhat', 'none', 'conical'],
+                   hair: ['curly', 'crop', 'bald'],
+                   hairCol: ['black', 'jet'],
+                   collar: ['beads', 'shawl', 'sash', 'plain'],
+                   cloth: ['saffron', 'indigo', 'crimson', 'white', 'green'],
+                   scheme: ['saffron', 'indigo', 'earth', 'olive', 'wine'] },
+  indian:        { hats: ['turban', 'headwrap', 'cap', 'none', 'coif'],
+                   hair: ['crop', 'side', 'bald', 'long'],
+                   hairCol: ['black', 'jet'],
+                   collar: ['shawl', 'robe', 'sash', 'plain'],
+                   cloth: ['white', 'saffron', 'crimson', 'indigo'],
+                   scheme: ['ivory', 'saffron', 'wine', 'indigo', 'earth'] },
+  seasia:        { hats: ['songkok', 'conical', 'headwrap', 'strawhat', 'none'],
+                   hair: ['crop', 'topknot', 'side', 'bald'],
+                   hairCol: ['black', 'jet'],
+                   collar: ['sash', 'robe', 'shawl', 'plain'],
+                   cloth: ['indigo', 'crimson', 'earth', 'saffron'],
+                   scheme: ['indigo', 'olive', 'earth', 'saffron', 'wine'] },
+  eastasia:      { hats: ['gat', 'conical', 'topknotband', 'cap', 'none'],
+                   hair: ['topknot', 'queue', 'crop', 'side'],
+                   hairCol: ['black', 'jet'],
+                   collar: ['robe', 'sash', 'plain'],
+                   cloth: ['indigo', 'white', 'black', 'crimson'],
+                   scheme: ['indigo', 'ink', 'ivory', 'wine', 'slate'] },
+  caribbean:     { hats: ['bandana', 'strawhat', 'tricorne', 'headwrap', 'none'],
+                   hair: ['curly', 'crop', 'long', 'bald'],
+                   hairCol: ['jet', 'black', 'brown', 'chest'],
+                   collar: ['plain', 'sash', 'wide', 'beads'],
+                   cloth: ['crimson', 'earth', 'white', 'green'],
+                   scheme: ['earth', 'crimson', 'olive', 'ivory', 'slate'] },
+  southamerica:  { hats: ['broadhat', 'morion', 'strawhat', 'cap', 'none'],
+                   hair: ['crop', 'side', 'long', 'curly'],
+                   hairCol: ['jet', 'brown', 'chest', 'black'],
+                   collar: ['ruff', 'wide', 'plain', 'sash'],
+                   cloth: ['black', 'earth', 'crimson', 'white'],
+                   scheme: ['ink', 'wine', 'earth', 'slate', 'saffron'] },
+};
+const CULT = (r) => CULTURE[r] ?? CULTURE.mediterranean;
+
+/* 그 바다에서 흔한 수염 — 얼굴빛만으로는 아홉이 안 갈린다 */
+const BEARD_POOL = {
+  mideast:  ['full', 'long', 'short', 'full', 'goatee'],
+  indian:   ['full', 'short', 'mustache', 'goatee', 'none'],
+  eastasia: ['none', 'mustache', 'goatee', 'long', 'none'],
+  africa:   ['short', 'none', 'stubble', 'goatee', 'full'],
+  seasia:   ['none', 'stubble', 'mustache', 'goatee', 'none'],
+  default:  ['none', 'stubble', 'mustache', 'goatee', 'short', 'full'],
+};
+
+/* 직업 → 배색·손에 든 것·나이. **직업이 사람의 절반**이다 */
+const JOB_LOOK = {
+  '官':          { scheme: ['plum', 'indigo', 'slate', 'wine'], prop: 'ledger', alt: 'scroll', robe: 0.8, old: 0.5 },
+  official:      { scheme: ['plum', 'indigo', 'slate', 'wine'], prop: 'ledger', alt: 'scroll', robe: 0.8, old: 0.5 },
+  harbormaster:  { scheme: ['slate', 'navy', 'indigo'], prop: 'ledger', alt: 'scale', old: 0.35 },
+  guildmaster:   { scheme: ['wine', 'plum', 'ivory'], prop: 'ledger', alt: 'pouch', robe: 0.4, old: 0.55 },
+  broker:        { scheme: ['earth', 'slate', 'ivory', 'indigo'], prop: 'ledger', alt: 'scale', old: 0.3 },
+  moneylender:   { scheme: ['ink', 'slate', 'earth', 'wine'], prop: 'ledger', alt: 'pouch', old: 0.5 },
+  scholar:       { scheme: ['ink', 'slate', 'ivory', 'olive'], prop: 'scroll', robe: 0.7, old: 0.55, acc: 'specs' },
+  cartographer:  { scheme: ['olive', 'slate', 'ivory'], prop: 'scroll', old: 0.35, acc: 'specs' },
+  priest:        { scheme: ['ink', 'ivory', 'wine'], prop: 'none', alt: 'scroll', robe: 0.9, old: 0.5 },
+  physician:     { scheme: ['ivory', 'ink', 'slate'], prop: 'scroll', alt: 'pouch', robe: 0.5, old: 0.45 },
+  interpreter:   { scheme: ['saffron', 'earth', 'indigo', 'ivory'], prop: 'scroll', alt: 'ledger', old: 0.2 },
+  shipwright:    { scheme: ['earth', 'olive', 'navy'], prop: 'none', old: 0.3 },
+  smuggler:      { scheme: ['ink', 'earth', 'olive', 'slate'], prop: 'cutlass', old: 0.15 },
+  informant:     { scheme: ['ink', 'earth', 'slate'], prop: 'none', old: 0.2 },
+  gunsmith:      { scheme: ['crimson', 'earth', 'slate'], prop: 'musket', old: 0.3 },
+  /* 동료(항해사) — `npc-mates.js: role` */
+  captain:       { scheme: ['plum', 'navy', 'crimson', 'wine'], prop: 'cutlass', old: 0.3 },
+  navigator:     { scheme: ['navy', 'indigo', 'slate'], prop: 'scroll', old: 0.25 },
+  gunner:        { scheme: ['crimson', 'earth', 'saffron'], prop: 'musket', old: 0.2 },
+  bosun:         { scheme: ['forest', 'olive', 'earth'], prop: 'none', old: 0.2 },
+  surgeon:       { scheme: ['ivory', 'ink', 'slate'], prop: 'none', old: 0.4, acc: 'specs' },
+  purser:        { scheme: ['earth', 'slate', 'ivory'], prop: 'ledger', old: 0.3 },
+};
+const JOB_DEFAULT = { scheme: ['earth', 'navy', 'olive', 'slate'], prop: 'none', old: 0.25 };
+
+/* 그 바다에서 발목까지 오는 긴 옷을 입은 사람의 비율 — **실루엣이 갈리는 자리**다.
+   배를 타는 사람(동료·해적)은 자락이 걸리므로 코트 쪽이고, 항구에 앉은 사람은 긴 옷이 흔하다. */
+const ROBE_ODDS = {
+  mideast: 0.75, indian: 0.6, eastasia: 0.65, africa: 0.55, seasia: 0.45,
+  mediterranean: 0.2, atlantic: 0.12, caribbean: 0.1, southamerica: 0.15,
+};
+
+/** id 하나에서 한 사람의 생김새를 뽑는다 — 같은 id면 언제나 같은 얼굴이다 */
+function lookOf(id, { region = null, job = null, kind = 'figure', tier = 2, sex = null } = {}) {
+  const c = chooser(seedOf(`${kind}|${id}`));
+  const cu = CULT(region);
+  const jl = JOB_LOOK[job] ?? JOB_DEFAULT;
+  const pirate = kind === 'pirate';
+
+  const age = c.odds(jl.old) ? 'old' : (c.odds(0.35) ? 'young' : 'mid');
+  let hair = c.pick(cu.hairCol);
+  if (age === 'old' && c.odds(0.65)) hair = c.odds(0.5) ? 'white' : 'grey';
+
+  /* 해적은 그 바다의 차림 위에 **자기 표식**을 얹는다 — 두건·안대·귀고리·흉터 */
+  const hats = pirate ? [...cu.hats, 'bandana', 'headwrap', 'none'] : cu.hats;
+  const hat = (tier >= 4 && c.odds(0.5)) ? c.pick(['plumehat', 'tricorne', 'turban', 'broadhat'])
+                                         : c.pick(hats);
+
+  const accPool = pirate ? ['none', 'earring', 'eyepatch', 'scar', 'earring', 'scar']
+                         : ['none', 'none', 'none', 'earring', 'scar', 'pipe'];
+  const acc = (jl.acc && c.odds(0.55)) ? jl.acc : c.pick(accPool);
+
+  const scheme = c.odds(0.45) ? c.pick(cu.scheme)
+               : (pirate ? c.pick(['ink', 'crimson', 'wine', 'sand', 'forest', 'slate', 'earth'])
+                         : c.pick(jl.scheme));
+
+  return {
+    skin: REGION_SKIN[region] ?? (SCHEMES[scheme]?.skin ?? 'light'),
+    scheme,
+    hairStyle: c.pick(cu.hair),
+    hair,
+    beard: c.pick(BEARD_POOL[region] ?? BEARD_POOL.default),
+    hat,
+    cloth: c.pick(cu.cloth),
+    collar: c.pick(cu.collar),
+    acc,
+    age,
+    /* ★ **성별은 뽑지 않는다 — 데이터가 말해 줄 때만 안다**(ART-ISSUES B-4).
+       명부의 `sex:'f'`가 있는 사람만 여성 바디로 그린다. 씨앗으로 굴려 배정하면
+       *역사 인물의 성별을 코드가 추측하는 것*이 되고, 이 저장소의 규약(「사실은 사료에
+       충실하게」)을 화면이 어긴다. 그래서 기본값은 언제나 남성 바디다. */
+    fem: sex === 'f',
+    /* 뱃사람은 자락이 걸린다 — 긴 옷은 항구에 앉은 사람 쪽이다.
+       ⚠️ 여성 바디에는 `drawRobe`의 짝(치마 실루엣과 겹친다)이 없으므로 코트로 묶는다. */
+    body: (!pirate && kind !== 'mate' && sex !== 'f'
+           && c.odds(jl.robe ?? (ROBE_ODDS[region] ?? 0.15))) ? 'robe' : 'coat',
+    prop: pirate ? (tier >= 4 ? 'scimitar' : c.pick(['cutlass', 'cutlass', 'scimitar', 'musket', 'torch']))
+                 : ((age === 'old' && jl.prop === 'none' && c.odds(0.4)) ? 'cane'
+                    : (jl.alt && c.odds(0.45)) ? jl.alt : jl.prop),
+    armor: pirate ? (tier >= 4 ? 'buffcoat' : (c.odds(0.3) ? 'bandolier' : 'none'))
+                  : (c.odds(0.12) ? 'buffcoat' : 'none'),
+  };
+}
+
+/** 그 생김새 한 사람을 그리는 붓 */
+function portraitPainter(look) {
+  return (g, ctx) => {
+    const s = SCHEMES[look.scheme] ?? SCHEMES.navy;
+    const sk = SKINS[look.skin] ?? SKINS.light;
+    const hc = HAIRS[look.hair] ?? HAIRS.brown;
+    const h = CLOTHES[look.cloth] ?? CLOTHES.white;
+    const po = poseOf('idle');
+    const robe = look.body === 'robe';
+    /* ★ 여성 바디(ART-ISSUES B-4). `drawHeadFem`은 **공용 두상 위에 이목구비만** 얹으므로
+       모자·머리모양·수염·장신구는 좌표가 그대로 맞는다 — 갈리는 것은 실루엣과 얼굴뿐이다. */
+    const fem = look.fem === true;
+    (fem ? drawArmsFem : drawArms)(g, s, po, sk);   // 뒤팔 → 몸 → 머리 → 앞팔 → 물건 (순서가 곧 z축)
+    if (robe) { drawRobe(g, s, po); drawRobeFeet(g, s, po); }
+    else if (fem) { drawLegsFem(g, s, po); drawTorsoFem(g, s, po); }
+    else { drawLegs(g, s, po); drawTorso(g, s, po); }
+    if (!robe && !fem) ARMOR[look.armor]?.(g, s, po);   // 흉갑·탄띠는 남성 몸통 기준으로 그려진다
+    if (!fem) COLLARS[look.collar]?.(g, s, po, h);      // 보디스에 레이스 깃이 이미 있다
+    (fem ? drawHeadFem : drawHead)(g, s, po, sk);
+    if (look.age === 'old') drawAged(g, po, sk);
+    if (!fem) BEARDS[look.beard]?.(g, po, hc[0], hc[1]);
+    if (!HAT_DRAWS_HAIR.has(look.hat)) HAIRSTYLES[look.hairStyle]?.(g, po, hc[0], hc[1]);
+    (HATS[look.hat] ?? HATS.none)(g, s, po, h, hc);
+    (fem ? drawFrontArmFem : drawFrontArm)(g, s, po, sk);
+    drawProp(g, s, po, sk, look.prop);
+    ACCS[look.acc]?.(g, po, sk);
+    outline(ctx, CW, CH);
+  };
+}
+
+/** 인물 id에서 권역을 읽는다 — `med-rialto-tipster` → `mediterranean` */
+export const regionOfNpcId = (id) => REGION_BY_PREFIX[String(id || '').slice(0, 3)] ?? null;
+
 /* ── 조립 ──────────────────────────────────────────────────── */
 export function unitSprite(unitKey, pose = 'idle', schemeOverride = null, faceKey = null) {
   const u = UNITS[unitKey];
@@ -600,34 +1405,39 @@ function painter(u, pose, schemeKey, faceKey = null) {
 }
 
 /* ── 초상 — 얼굴이 오면 갈아 끼울 자리 (assets/BRIEF-NPC.md §4 ②③) ──────
-   ★ **그림이 없으면 개별 키로 굽지 않는다.** 인물은 아홉 바다 합쳐 71명이고 해적도 바다마다
-     있어서, 폴백까지 각자 키로 구우면 똑같은 그림이 수십 장 캐시(6MB LRU)를 먹는다.
-     그림이 있는 사람만 자기 키를 갖고, 나머지는 공용 병종 스프라이트를 함께 쓴다. */
+   ★ 회차 22까지는 **그림이 없으면 개별 키로 굽지 않았다** — 폴백이 다 같은 그림이라
+     각자 키로 구우면 똑같은 캔버스가 수십 장 캐시(6MB LRU)를 먹어서였다.
+   ★ 회차 23에 그 전제가 깨졌다. 이제 폴백은 사람마다 **다른 그림**이다(위 `lookOf`).
+     그래서 각자 자기 키로 굽는다 — 162명이 전부 캐시에 오르면 48×48×4 = 9.2KB × 162 ≒ 1.5MB로
+     상한 6MB 안이고, 실제로는 한 화면에 대여섯 명뿐이라 LRU가 알아서 정리한다. */
 
-/** 항구에 머무는 사람(중개인·관리·정보상…) — 그림은 `figure:<인물id>:idle` */
-export function figureSprite(id, job = null) {
-  const unitKey = JOB_UNIT[job] ?? 'captain';
-  const key = `figure:${id}:idle`;
-  if (!overrideFor(key)) return unitSprite(unitKey);
-  return bake(key, CW, CH, painter(UNITS[unitKey], 'idle', UNITS[unitKey].scheme));
+/** 항구에 머무는 사람(중개인·관리·정보상…) — 그림은 `figure:<인물id>:idle`.
+    권역은 id 접두사에서 읽는다(`med-rialto-tipster`). 씬이 넘겨 주면 그쪽이 이긴다. */
+export function figureSprite(id, job = null, region = null, sex = null) {
+  const key = `figure:${id}:idle`;              // 그림이 있으면 bake가 그것을 돌려준다
+  const look = lookOf(id, { region: region ?? regionOfNpcId(id), job, kind: 'figure', sex });
+  return bake(key, CW, CH, portraitPainter(look));
 }
 
-/** 이름난 해적 — 그림은 `pirate:<해적id>:idle`. 두목급은 선장 실루엣으로 폴백한다 */
-export function pirateSprite(id, tier = 1) {
-  const unitKey = tier >= 4 ? 'captain' : 'pirate';
+/** 배에 타는 사람(동료 51명) — 그림은 `mate:<동료id>:idle`.
+    ★ 회차 23에 새로 낸 자리다. `port.js: mateCard`에는 아직 초상 칸이 없다(ART-ISSUES B-2). */
+export function mateSprite(id, role = null, region = null, sex = null) {
+  const key = `mate:${id}:idle`;
+  const look = lookOf(id, { region: region ?? regionOfNpcId(id), job: role, kind: 'mate', sex });
+  return bake(key, CW, CH, portraitPainter(look));
+}
+
+/** 이름난 해적 — 그림은 `pirate:<해적id>:idle`. 두목급(tier≥4)은 차림이 화려해진다.
+    ⚠️ **`region`은 부르는 쪽이 준다.** 해적 명부 id에는 권역 약자가 없어서(`barbarossa`)
+      한동안 이 파일에 `PIRATE_SEA` 40줄짜리 표를 임시로 뒀는데, 그 사실의 정본은
+      명부의 `base`(소굴 항구)이고 `regions/index.js`가 이미 각 항목에 `region`을 달아 준다.
+      **같은 사실이 두 곳에 있으면 갈라진다** — 명부가 늘 때마다 그림 쪽 표를 같이 고쳐야 했다.
+      ⇒ 표를 걷었다. 호출부(`scenes/battle.js`)가 명부에서 읽어 넘긴다(ART-ISSUES B-1). */
+export function pirateSprite(id, tier = 1, region = null, sex = null) {
   const key = `pirate:${id}:idle`;
-  if (!overrideFor(key)) return unitSprite(unitKey);
-  return bake(key, CW, CH, painter(UNITS[unitKey], 'idle', UNITS[unitKey].scheme));
+  const look = lookOf(id, { region, kind: 'pirate', tier, sex });
+  return bake(key, CW, CH, portraitPainter(look));
 }
-
-/* 직업 → 폴백 실루엣. 얼굴이 없는 사람도 "관리인지 뱃사람인지"는 보이게 한다.
-   값은 `js/regions/<권역>/npc-figures.js`의 `job`(라벨은 `port.js: JOB_LABEL`). 없는 직업은 선장 실루엣. */
-const JOB_UNIT = {
-  '官': 'captain', official: 'captain', harbormaster: 'captain', guildmaster: 'captain',
-  broker: 'captain', moneylender: 'captain', scholar: 'crossbow', cartographer: 'crossbow',
-  priest: 'crossbow', physician: 'crossbow', interpreter: 'sailor', shipwright: 'sailor',
-  smuggler: 'pirate', informant: 'pirate', gunsmith: 'gunner',
-};
 
 export const UNIT_KEYS = Object.keys(UNITS);
 export { FOOT as CHAR_FOOT };

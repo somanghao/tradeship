@@ -118,7 +118,7 @@ export const CLIMATE = {
     land: '#5f8043', alt: ['#4a6b34', '#6f8347', '#87995a'],
     zone: { forest: null, scrub: '#6f8347', desert: '#c9a870' },
     sea: ['#154762', '#1d5a78', '#0a2033'],
-    shore: ['#e8d5a8', '#6fc4cc', '#3f92ad', '#2c6f8c'],
+    shore: ['#e8d5a8', '#5fb3bd', '#3a86a2', '#27627f'],
     zones: med.ZONES,
   },
   // 대서양·북해 — 침엽수림과 히스, 차고 탁한 바다
@@ -126,7 +126,7 @@ export const CLIMATE = {
     land: '#4d6b45', alt: ['#3a5436', '#5c7a52', '#6b7f58'],
     zone: { forest: null, scrub: '#5f7048', desert: null, tundra: '#8a9483' },
     sea: ['#123c52', '#1a4f68', '#08192a'],
-    shore: ['#d8cfb0', '#5fb0bc', '#357f9c', '#245f7e'],
+    shore: ['#cfc7ae', '#4f8e9b', '#2e6b86', '#1d5068'],
     zones: { bands: [
       [(x) => 46 + Math.sin(x * 0.017 + 1) * 10, 'tundra'],
       [(x) => 150 + Math.sin(x * 0.02) * 14, 'forest'],
@@ -138,7 +138,7 @@ export const CLIMATE = {
     land: '#7a8a44', alt: ['#5f7036', '#8f9a52', '#a89a5c'],
     zone: { forest: '#4a6b34', scrub: null, desert: '#cdb079' },
     sea: ['#155a6b', '#1d6b7d', '#0b2a38'],
-    shore: ['#eadaa8', '#74cdd0', '#3f9aad', '#2a7288'],
+    shore: ['#e6d6a4', '#5cb2b8', '#3a91a4', '#276b80'],
     /* ★ `desertY` + `forestY`를 같이 쓰면 안 된다 — `scene.js`의 `zoneOf`가
        `y > desertY`를 **먼저** 보므로 그 선 아래가 통째로 사막이 되고 `forestY` 분기는
        영영 닿지 않는 죽은 코드가 된다. 아프리카는 **북쪽만** 마르고 적도는 밀림인데
@@ -161,7 +161,7 @@ export const CLIMATE = {
     land: '#c2a26c', alt: ['#a8874f', '#d4b47c', '#8f7648'],
     zone: { forest: null, scrub: '#9a9455', desert: null },
     sea: ['#176073', '#1f7186', '#0c2c3a'],
-    shore: ['#f0dcac', '#7ad2d4', '#43a0b0', '#2d788c'],
+    shore: ['#f0dcac', '#79d2d1', '#43a0b0', '#2d788c'],
     /* ★ 여기 있던 `scrubY: () => -1`은 "지대를 안 가른다"는 뜻으로 적혔지만 실제로는
        **모든 픽셀을 `scrub`으로 만든다**(`y > -1`은 늘 참). 그래서 의도한 사막색 `#c2a26c`가
        화면에 한 픽셀도 안 나오고 올리브 카키 `#9a9455`가 육지 전체를 덮고 있었다.
@@ -185,7 +185,7 @@ export const CLIMATE = {
     land: '#5f8a42', alt: ['#486c31', '#719a4e', '#93a45a'],
     zone: { forest: '#3f6b2e', scrub: '#8a9450', desert: null },
     sea: ['#136578', '#1b768c', '#0a2e3c'],
-    shore: ['#eedcae', '#7ed6d6', '#45a4b2', '#2f7c90'],
+    shore: ['#eedcae', '#6ec6c8', '#42a0ad', '#2c768a'],
     zones: { bands: [
       [(x) => 96 + Math.sin(x * 0.023 + 1) * 16, 'forest'],
       [Infinity, 'scrub'],
@@ -216,7 +216,7 @@ export const CLIMATE = {
     land: '#4a8040', alt: ['#356030', '#5e9449', '#8a9a52'],
     zone: { forest: null, scrub: '#8a9a52', desert: '#c4a874' },
     sea: ['#13566e', '#1c6a84', '#082836'],
-    shore: ['#ecdcb0', '#72cbd0', '#419eae', '#2b7890'],
+    shore: ['#e6d6ac', '#57a8b6', '#3892a6', '#256d86'],
     zones: { bands: [
       [(x) => 150 + Math.sin(x * 0.022) * 14, 'forest'],
       [Infinity, 'scrub'],
@@ -227,7 +227,7 @@ export const CLIMATE = {
     land: '#548049', alt: ['#3f6438', '#688f54', '#7e9a58'],
     zone: { forest: '#3f6b2e', scrub: '#7e9058', desert: '#bda874' },
     sea: ['#14556e', '#1c6683', '#092634'],
-    shore: ['#e4d4a8', '#6cc6cc', '#3f97ac', '#2a6f88'],
+    shore: ['#ded0a6', '#5fb0ba', '#3a8ea3', '#276680'],
     /* ★ `desertY`를 쓰면 안 된다 — 그 판정은 `y > desertY`, 곧 **그 선보다 남쪽 전부**가
        사막이 된다. 동아시아는 **북쪽이** 마르는 바다다(만주·화북). 그래서 26을 주었더니
        육지가 통째로 모래색이 되어 "광저우가 사막에 있다"는 말을 들었다.
