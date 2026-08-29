@@ -803,9 +803,14 @@ function building(g, S, r, x, w, groundY, hMin, hMax) {
     g.v(dx + Math.floor(dw / 2), top + 3, top + 6, '#6d5b3f');
     return top;
   }
-  /* 창 간격을 채마다 흔든다 — 하나로 고정하면 모든 건물이 같은 격자를 쓴다. */
+  /* 창 간격을 채마다 흔든다 — 하나로 고정하면 모든 건물이 같은 격자를 쓴다.
+     ★ S-4(회차 24) — `ph`(세로 간격)를 5~6에서 12~14로 벌렸다. 건물은 `BSCALE`(위 호출부)로
+       1.55배 커졌는데 창 간격이 그대로면 칸수만 늘어 "8~10단 다세대"가 그대로 남는다.
+       간격을 키가 큰 만큼보다 더 벌려야 **칸수가 줄고 한 칸이 한 층으로 읽힌다**
+       (58px·9~10단 → 90px·6단, 칸당 ≈15px). 창 자체도 3→4px로 키워 큰 벽에서 점으로
+       흩어지지 않게 한다. */
   const pw = 4 + (r() < 0.38 ? 1 : 0);
-  const ph = 5 + (r() < 0.32 ? 1 : 0);
+  const ph = 12 + (r() < 0.4 ? 2 : 0);
   const arch = r() < 0.28;                            // 아치창 — 위 한 픽셀을 벽색으로 깎는다
   const cols = Math.max(1, Math.floor((w - 3) / pw));
   const rows = Math.max(1, Math.floor((h - 4) / ph));
@@ -814,10 +819,10 @@ function building(g, S, r, x, w, groundY, hMin, hMax) {
       const wx = x + 2 + cx * pw, wy = top + 3 + cy * ph;
       if (wx + 1 >= x + w - 1) continue;
       const lit = r() < (S.lit ?? 0.22);        // 노을·비 오는 날엔 불 켠 창이 많다
-      g.r(wx, wy, 2, 3, lit ? P.goldM : '#4a3a2e');
+      g.r(wx, wy, 2, 4, lit ? P.goldM : '#4a3a2e');
       if (lit) g.px(wx, wy, P.goldL);
       if (arch) { g.px(wx, wy, wall); g.px(wx + 1, wy, wall); g.px(wx, wy + 1, lit ? P.goldL : '#4a3a2e'); }
-      if (r() < 0.3) g.h(wy + 3, wx, wx + 1, S.wallD);   // 차양
+      if (r() < 0.3) g.h(wy + 4, wx, wx + 1, S.wallD);   // 차양
     }
   }
   // 지상층 아케이드 — 물가 도시의 회랑. 폭이 넉넉한 채에만
@@ -830,10 +835,16 @@ function building(g, S, r, x, w, groundY, hMin, hMax) {
   return top;
 }
 
+/* ★ S-4(회차 24) — 랜드마크도 함께 키운다. 일반 건물을 `BSCALE`(1.55배)로 키웠는데
+   탑을 그대로 두면 종탑(62px)이 새 앞열 건물(최대 108px)보다 낮아져 "랜드마크가
+   시가지에 묻히는" 역전이 난다. 여기 쓰는 배율은 좀 더 크게 잡는다(1.35~1.4) —
+   탑 내부 장식(종실·발코니·처마)은 전부 `top`(=groundY-h) 기준 상대offset이라
+   `h`만 키우면 장식은 그대로 맨 위에 남고 그 아래 몸통(민무늬 석축)만 길어진다.
+   실제 종탑·미나레트도 장식 아래는 밋밋한 축조라 이 늘어남이 위화감이 없다(렌더로 확인). */
 function landmark(g, S, r, x, groundY) {
   switch (S.tower) {
     case 'campanile': {                              // 종탑
-      const w = 9, h = 62, top = groundY - h;
+      const w = 9, h = 84, top = groundY - h;
       g.r(x, top, w, h, S.wall[2]);
       g.v(x, top, groundY, S.wallD);
       g.v(x + w - 1, top, groundY, S.wallD);
@@ -846,7 +857,7 @@ function landmark(g, S, r, x, groundY) {
       break;
     }
     case 'dome': {                                   // 돔 성당
-      const w = 30, h = 26, top = groundY - h;
+      const w = 30, h = 36, top = groundY - h;
       g.r(x, top, w, h, S.wall[0]);
       g.h(top, x, x + w - 1, S.wall[2]);
       g.ellipse(x + w / 2, top, 13, 12, S.roof[0]);
@@ -858,12 +869,16 @@ function landmark(g, S, r, x, groundY) {
       break;
     }
     case 'minaret': {                                // 미나레트 + 돔
-      const w = 7, h = 68, top = groundY - h;
+      const w = 7, h = 92, top = groundY - h;
       g.r(x, top, w, h, S.wall[2]);
       g.v(x + w - 1, top, groundY, S.wallD);
       g.r(x - 2, top + 16, w + 4, 2, S.roof[0]);      // 발코니
       g.r(x - 2, top + 4, w + 4, 2, S.roof[0]);
       g.r(x + 1, top + 8, 2, 6, '#3f3226');
+      // ★ h를 키운 만큼(S-4) 중간에 발코니 한 단을 더 — 안 그러면 위쪽 장식과
+      //   몸통 사이가 밋밋한 장대로 길게 남는다(렌더로 대조해 추가).
+      g.r(x - 2, top + Math.round(h * 0.5), w + 4, 2, S.roof[0]);
+      g.r(x + 1, top + Math.round(h * 0.5) + 4, 2, 6, '#3f3226');
       for (let k = 0; k < 5; k++) g.h(top - k, x + k - 1, x + w - k, S.roof[1]);
       g.v(x + 3, top - 10, top - 5, P.goldM);
       g.px(x + 3, top - 11, P.goldL);
@@ -875,14 +890,18 @@ function landmark(g, S, r, x, groundY) {
       break;
     }
     case 'gable': {                                  // 벽돌 고딕 — 계단 박공과 창고 도르래
-      const w = 15, h = 44, top = groundY - h;
+      const w = 15, h = 60, top = groundY - h;
       g.r(x, top, w, h, S.wall[0]);
       g.v(x, top, groundY, S.wallD);
       g.v(x + w - 1, top, groundY, S.wallD);
-      for (let i = 0; i < 3; i++) {                  // 좁고 긴 창 — 벽돌 고딕의 인상
-        const wx = x + 2 + i * 5;
-        g.r(wx, top + 9, 2, 10, '#33262c');
-        g.h(top + 8, wx, wx + 1, S.wall[2]);
+      // ★ S-4 — h를 키운 만큼 좁고 긴 창을 세로로 두 단 반복한다(밋밋한 벽돌 벽이 안 남게).
+      for (let row2 = 0; row2 < 2; row2++) {
+        const ry = top + 9 + row2 * 22;
+        for (let i = 0; i < 3; i++) {                // 좁고 긴 창 — 벽돌 고딕의 인상
+          const wx = x + 2 + i * 5;
+          g.r(wx, ry, 2, 10, '#33262c');
+          g.h(ry - 1, wx, wx + 1, S.wall[2]);
+        }
       }
       for (let s = 0; s < 5; s++) {                  // 계단 박공
         const inset = s * 2, ww = w - inset * 2;
@@ -906,32 +925,32 @@ function landmark(g, S, r, x, groundY) {
       break;
     }
     case 'pagoda': {                                 // 층탑 — 층마다 처마가 뻗는다
-      const tiers = 5;
+      const tiers = 5, TS = 14;                       // ★ S-4 — 층 높이 10→14(층탑 전체가 84→약116)
       // 위층부터 그린다. 아래층 처마가 위층 몸통 앞으로 와야 층이 겹쳐 보인다.
       for (let t = tiers - 1; t >= 0; t--) {
-        const by = groundY - t * 10;                 // 이 층의 바닥
+        const by = groundY - t * TS;                 // 이 층의 바닥
         const bw = 17 - t * 2, rw = bw + 6;
         const hw = Math.round(bw / 2), rh = Math.round(rw / 2);
-        g.r(x - hw, by - 10, bw, 10, t % 2 ? S.wall[1] : S.wall[0]);
-        g.v(x - hw, by - 10, by - 1, S.wallD);
-        g.v(x + hw, by - 10, by - 1, S.wallD);
+        g.r(x - hw, by - TS, bw, TS, t % 2 ? S.wall[1] : S.wall[0]);
+        g.v(x - hw, by - TS, by - 1, S.wallD);
+        g.v(x + hw, by - TS, by - 1, S.wallD);
         g.r(x - 1, by - 7, 3, 5, '#3a2f24');         // 창
-        g.h(by - 10, x - rh, x + rh, S.roof[1]);     // 처마
-        g.h(by - 11, x - rh + 1, x + rh - 1, S.roof[0]);
-        g.h(by - 12, x - rh + 3, x + rh - 3, S.roof[2]);
+        g.h(by - TS, x - rh, x + rh, S.roof[1]);     // 처마
+        g.h(by - TS - 1, x - rh + 1, x + rh - 1, S.roof[0]);
+        g.h(by - TS - 2, x - rh + 3, x + rh - 3, S.roof[2]);
         for (const s of [-1, 1]) {                   // 치솟은 처마 끝
-          g.px(x + s * (rh + 1), by - 11, S.roof[0]);
-          g.px(x + s * (rh + 1), by - 12, S.roof[2]);
+          g.px(x + s * (rh + 1), by - TS - 1, S.roof[0]);
+          g.px(x + s * (rh + 1), by - TS - 2, S.roof[2]);
         }
       }
-      const ty = groundY - tiers * 10 - 12;          // 상륜
+      const ty = groundY - tiers * TS - 12;          // 상륜
       g.v(x, ty - 6, ty, P.goldM);
       g.h(ty - 4, x - 1, x + 1, P.goldD);
       g.px(x, ty - 7, P.goldL);
       break;
     }
     case 'gopuram': {                                // 탑문 — 위로 갈수록 좁아지는 조각탑
-      const h = 50, base = 26, top = groundY - h;
+      const h = 68, base = 26, top = groundY - h;
       for (let k = 0; k < h; k++) {
         const half = Math.round((base / 2) * (1 - (k / h) * 0.45));
         const band = k % 7 === 6;                    // 층 띠
@@ -1127,10 +1146,18 @@ export function portSprite(styleKey, seed) {
     // 시가지 — 뒤쪽(작고 어두움) → 앞쪽(크고 밝음) 3열
     // ★ `lowRise`가 이 바다의 취락 규모다. 기니·말레이의 이엉집을 도시 높이로 세우면
     //   진흙 마천루가 된다(실제로 그렇게 나왔다) — 절반으로 낮춰야 마을로 읽힌다.
+    /* ★★ S-4(회차 24) — 사람을 21px로 줄이고 나니 건물 축척이 드러났다: 앞열 최대 58px는
+       사람 키(실측 24px≈1.7m·§DES-ART-PROGRESS)로 재면 4.1m — **한 층도 안 된다.** 그런데
+       창은 5~6px 간격으로 촘촘히 박혀 8~10단으로 보여 "층당 0.4m 다세대"로 읽혔다.
+       ⇒ **건물 자체를 키운다**(사람·배는 그대로 — PM 지침). `BSCALE`로 앞·중·뒤열을 함께
+       올리고, 상한도 64 → 108로 푼다. 창 간격(`ph`, 아래 `building()`)도 함께 벌려야
+       칸수가 늘지 않고 "더 큰 채가 같은 층수"로 보인다 — 회차 22가 겪은 "판상 아파트"는
+       **좁은 채만** 탑집 배율을 받게 한 그 가드가 그대로 막는다. */
+    const BSCALE = 1.55;
     const lr = S.lowRise ?? 1;
     for (let row = 0; row < 3; row++) {
       const groundY = 112 + row * 10;
-      const hMin = Math.round((14 + row * 7) * lr), hMax = Math.round((32 + row * 13) * lr);
+      const hMin = Math.round((14 + row * 7) * BSCALE * lr), hMax = Math.round((32 + row * 13) * BSCALE * lr);
       let x = -4 + Math.floor(r() * 6);
       while (x < VW + 4) {
         /* ★ 폭을 세 갈래로 — 좁은 집·보통 집·창고. 8~23px 한 갈래로만 늘어놓으면
@@ -1143,7 +1170,7 @@ export function portSprite(styleKey, seed) {
            ★ **좁은 채에만** 준다. 넓은 채에 1.8배를 줬더니 90px짜리 판상 건물이 나와
              부산포가 아파트 단지가 됐다(회차 22 실화면 대조). */
         const tall = (w <= 9 && r() < 0.26) ? 1.25 + r() * 0.4 : 1;
-        building(g, S, r, x, w, groundY, hMin, Math.min(64, Math.round(hMax * tall)));
+        building(g, S, r, x, w, groundY, hMin, Math.min(108, Math.round(hMax * tall)));
         x += w + (r() < 0.7 ? 1 : 3);
       }
       // 뒤 열은 대기원근으로 살짝 퍼뜨린다

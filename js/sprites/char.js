@@ -239,6 +239,69 @@ function drawLegsFem(g, s, po) {
   g.h(44, 25 + sp, 29 + sp, '#1e1820');
 }
 
+/* ── 여성 차림 「wrap」계열(T-3) — 중동·아프리카·인도 ─────────────
+   허리를 조이지 않는 통옷(카프탄·사리 계열) + 어깨띠. 코르셋의 러프 깃·레이스 대신
+   사선 여밈과 폭넓은 띠 하나로 갈린다 — 실루엣이 곧게 떨어지는 것이 코르셋과의 차이. */
+function drawTorsoWrap(g, s, po) {
+  const L = po.lean;
+  g.r(19 + L, 23, 10, 9, s.cM);                  // 허리를 안 조인 곧은 통 상체
+  g.h(23, 20 + L, 28 + L, s.cL);
+  g.h(24, 20 + L, 28 + L, s.cL);
+  g.h(31, 19 + L, 29 + L, s.cD);
+  g.line(24 + L, 23, 21 + L, 31, s.cD);          // 사선 여밈 — 카프탄 앞섶
+  g.line(25 + L, 23, 28 + L, 31, s.cD);
+  // 어깨띠 — 코르셋의 코드 대신 이 인물의 표식
+  g.h(26, 20 + L, 28 + L, s.trim);
+  g.px(20 + L, 25, s.trimD); g.px(28 + L, 27, s.trimD);
+  // 허리띠 — 폭넓은 띠 하나로 족하다
+  g.r(19 + L, 31, 10, 2, '#3a2c22');
+  g.r(23 + L, 31, 3, 2, s.trim);
+  // 아래 자락 — 발까지 오는 긴 겉옷. A라인보다 완만하게 퍼진다(치마가 아니라 통옷 자락)
+  g.poly([[19 + L, 33], [29 + L, 33], [32 + L, 42], [16 + L, 42]], s.cM);
+  g.h(34, 19 + L, 29 + L, s.cL);
+  g.h(41, 16 + L, 32 + L, s.cD);
+  g.h(42, 16 + L, 32 + L, s.cD);
+  g.line(22 + L, 34, 18 + L, 41, s.cD);
+  g.line(27 + L, 34, 30 + L, 41, s.cD);
+  g.h(40, 18 + L, 30 + L, s.trimD);              // 밑단 금선 — 코르셋과 같은 자리, 색만 이 옷의 것
+}
+
+function drawLegsWrap(g, s, po) {
+  const sp = Math.round(po.legSpread * 0.5);     // 자락이 길어 발끝만 살짝 보인다
+  g.r(21 - sp, 42, 3, 3, P.woodD);
+  g.h(44, 21 - sp, 24 - sp, '#1e1820');
+  g.r(25 + sp, 42, 4, 3, P.woodM);
+  g.h(44, 25 + sp, 29 + sp, '#1e1820');
+}
+
+/* ── 여성 차림 「sash」계열(T-3) — 동남아·동아시아 ────────────────
+   맞춤 저고리(스탠드 칼라) + 통치마 + 매듭띠(고름/오비). wrap보다 상체는 맞고
+   치마는 사롱처럼 곧게 떨어진다 — 서구식 A라인의 퍼진 주름을 안 쓴다. */
+function drawTorsoSash(g, s, po) {
+  const L = po.lean;
+  g.poly([[20 + L, 23], [28 + L, 23], [27 + L, 30], [21 + L, 30]], s.cM);  // 맞춤 저고리
+  g.h(23, 21 + L, 27 + L, s.cL);
+  g.r(22 + L, 22, 5, 2, P.clothL);               // 스탠드 칼라 — 러프 대신 낮고 곧은 깃
+  g.px(22 + L, 22, P.clothD); g.px(26 + L, 22, P.clothD);
+  g.line(24 + L, 24, 21 + L, 30, s.cD);          // 여밈선 — 왼쪽으로 사선
+  // 허리 매듭 — 고름/오비. 이 인물의 표식이 여기 온다
+  g.r(20 + L, 29, 8, 3, s.trim);
+  g.px(23 + L, 30, s.trimD); g.px(24 + L, 31, s.trimD);
+  // 통치마 — 곧게 떨어지고 밑단만 살짝 퍼진다(사롱 실루엣)
+  g.poly([[20 + L, 32], [28 + L, 32], [30 + L, 42], [18 + L, 42]], s.cM);
+  g.h(33, 20 + L, 28 + L, s.cL);
+  g.h(41, 18 + L, 30 + L, s.cD);
+  g.h(42, 18 + L, 30 + L, s.cD);
+  g.line(23 + L, 33, 20 + L, 41, s.cD);
+  g.line(26 + L, 33, 29 + L, 41, s.cD);
+  g.h(40, 19 + L, 29 + L, s.trimD);
+}
+
+/* 계열 → 그리는 붓. `FEM_FAMILY[region]`이 고른 계열로 몸통·다리를 함께 바꾼다.
+   팔·머리·모자는 계열을 안 탄다 — 세 계열 다 어깨 너비(19~29)가 같아 소매 자리가 그대로 맞는다. */
+export const FEM_TORSO = { corset: drawTorsoFem, wrap: drawTorsoWrap, sash: drawTorsoSash };
+export const FEM_LEGS = { corset: drawLegsFem, wrap: drawLegsWrap, sash: drawLegsWrap };
+
 /* 좁아진 어깨에 맞춰 팔도 안쪽으로 당긴다 (남성 바디보다 각각 2px) */
 function drawArmsFem(g, s, po, sk) {
   const L = po.lean;
@@ -1240,6 +1303,29 @@ const CULTURE = {
 };
 const CULT = (r) => CULTURE[r] ?? CULTURE.mediterranean;
 
+/* ── 여성 차림 — 권역별(T-3, 회차 24) ────────────────────────────
+   ★ 여성 바디가 **유럽식 보디스+A라인 치마 하나뿐**이라 락사마나(아체·크우말라하야티)
+     같은 인물도 코르셋에 깃털모자로 나왔다(회차 23 ART-ISSUES T-3). 남성 쪽이 이미
+     `CULT(region).hats`로 갓·송콕·터번·모리온을 가른 것과 같은 계층으로 여성도 가른다 —
+     명부 162명 중 성별이 확실한 둘(말라하야티·킬리그루)과 씨앗으로 굴리지 않는 동료 51명
+     **전원이 이 표를 본다.**
+   ★ 아홉 권역을 **세 계열**로 묶었다(13 건축양식이 6 랜드마크 모양을 나눠 쓰는 것과 같은 이유 —
+     400×225 원경에서 이웃 문화의 옷깃 차이는 안 갈린다):
+     `corset`(서구 코르셋+치마, 기존) · `wrap`(허리를 안 조이는 통옷+어깨띠 — 중동·아프리카·인도) ·
+     `sash`(맞춤 저고리+통치마+매듭띠 — 동남아·동아시아). */
+const FEM_FAMILY = {
+  mediterranean: 'corset', atlantic: 'corset', caribbean: 'corset', southamerica: 'corset',
+  mideast: 'wrap', africa: 'wrap', indian: 'wrap',
+  seasia: 'sash', eastasia: 'sash',
+};
+/* tier 4 이상(제독·명사)의 「인상적인 모자」 뽑기 — 예전엔 이 표 하나뿐이라 어느 바다든
+   깃털모자·삼각모로 나왔다. 계열별로 그 바다에서 실재했을 법한 쪽으로 가른다. */
+const FEM_GRAND_HAT = {
+  corset: ['plumehat', 'tricorne', 'broadhat'],
+  wrap: ['headwrap', 'turban'],
+  sash: ['headwrap', 'conical'],
+};
+
 /* 그 바다에서 흔한 수염 — 얼굴빛만으로는 아홉이 안 갈린다 */
 const BEARD_POOL = {
   mideast:  ['full', 'long', 'short', 'full', 'goatee'],
@@ -1297,7 +1383,12 @@ function lookOf(id, { region = null, job = null, kind = 'figure', tier = 2, sex 
 
   /* 해적은 그 바다의 차림 위에 **자기 표식**을 얹는다 — 두건·안대·귀고리·흉터 */
   const hats = pirate ? [...cu.hats, 'bandana', 'headwrap', 'none'] : cu.hats;
-  const hat = (tier >= 4 && c.odds(0.5)) ? c.pick(['plumehat', 'tricorne', 'turban', 'broadhat'])
+  /* ★ T-3(회차 24) — tier 4 이상의 「인상적인 모자」가 예전엔 서구식 넷뿐이라
+     명부의 여성 제독·명사도 어느 바다든 깃털모자·삼각모로 나왔다(ART-ISSUES T-3).
+     여성이면 `FEM_GRAND_HAT[family]`(그 계열에서 실재했을 법한 것)로 가른다. */
+  const family = sex === 'f' ? (FEM_FAMILY[region] ?? 'corset') : null;
+  const grandHats = family ? FEM_GRAND_HAT[family] : ['plumehat', 'tricorne', 'turban', 'broadhat'];
+  const hat = (tier >= 4 && c.odds(0.5)) ? c.pick(grandHats)
                                          : c.pick(hats);
 
   const accPool = pirate ? ['none', 'earring', 'eyepatch', 'scar', 'earring', 'scar']
@@ -1324,6 +1415,7 @@ function lookOf(id, { region = null, job = null, kind = 'figure', tier = 2, sex 
        *역사 인물의 성별을 코드가 추측하는 것*이 되고, 이 저장소의 규약(「사실은 사료에
        충실하게」)을 화면이 어긴다. 그래서 기본값은 언제나 남성 바디다. */
     fem: sex === 'f',
+    family,                                     // T-3 — `FEM_TORSO`/`FEM_LEGS`가 이 계열을 본다
     /* 뱃사람은 자락이 걸린다 — 긴 옷은 항구에 앉은 사람 쪽이다.
        ⚠️ 여성 바디에는 `drawRobe`의 짝(치마 실루엣과 겹친다)이 없으므로 코트로 묶는다. */
     body: (!pirate && kind !== 'mate' && sex !== 'f'
@@ -1345,12 +1437,16 @@ function portraitPainter(look) {
     const h = CLOTHES[look.cloth] ?? CLOTHES.white;
     const po = poseOf('idle');
     const robe = look.body === 'robe';
-    /* ★ 여성 바디(ART-ISSUES B-4). `drawHeadFem`은 **공용 두상 위에 이목구비만** 얹으므로
-       모자·머리모양·수염·장신구는 좌표가 그대로 맞는다 — 갈리는 것은 실루엣과 얼굴뿐이다. */
+    /* ★ 여성 바디(ART-ISSUES B-4·T-3). `drawHeadFem`은 **공용 두상 위에 이목구비만** 얹으므로
+       모자·머리모양·수염·장신구는 좌표가 그대로 맞는다 — 갈리는 것은 실루엣과 얼굴뿐이다.
+       ★ T-3 — 실루엣도 이제 하나가 아니다. `look.family`(권역계열)로 `FEM_TORSO`/`FEM_LEGS`에서 고른다. */
     const fem = look.fem === true;
+    const famKey = look.family || 'corset';
+    const torsoFn = FEM_TORSO[famKey] ?? drawTorsoFem;
+    const legsFn = FEM_LEGS[famKey] ?? drawLegsFem;
     (fem ? drawArmsFem : drawArms)(g, s, po, sk);   // 뒤팔 → 몸 → 머리 → 앞팔 → 물건 (순서가 곧 z축)
     if (robe) { drawRobe(g, s, po); drawRobeFeet(g, s, po); }
-    else if (fem) { drawLegsFem(g, s, po); drawTorsoFem(g, s, po); }
+    else if (fem) { legsFn(g, s, po); torsoFn(g, s, po); }
     else { drawLegs(g, s, po); drawTorso(g, s, po); }
     if (!robe && !fem) ARMOR[look.armor]?.(g, s, po);   // 흉갑·탄띠는 남성 몸통 기준으로 그려진다
     if (!fem) COLLARS[look.collar]?.(g, s, po, h);      // 보디스에 레이스 깃이 이미 있다
