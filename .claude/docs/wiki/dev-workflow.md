@@ -164,3 +164,8 @@ await page.evaluate(async () => (await import('./js/state.js')).state.gold = 400
 백병전 라운드/전사 처리 · 나포 승리 전리품 · 패배 나포 처리 · 항구 복귀.
 
 관련 함정은 [gotchas.md](gotchas.md) 참조 — 특히 모달 셀렉터와 스크린샷 타임아웃.
+
+## 화면이 통째로 검을 때 — 판별과 실제 사례 (`gotchas.md` #6에서 이관)
+
+- **판별**: 서버 로그가 `index.html`·`main.js`만 200이고 나머지 모듈 요청이 **아예 없으면** 캐시에서 쓴 것이다. 콘솔엔 `does not provide an export named ...`.
+  ★ **`check-*`와 규칙 테스트가 전부 통과해도 그렇다** — 그것들은 `data.js`·`state.js`를 직접 부르는 도구라 `scenes/*`를 한 번도 안 거친다. 실제로 `scenes/map.js`가 `riskKey`를 잘못 가져와 **게임이 죽은 채로 회차가 돌았고**, 지도가 낡은 채 굳은 것이 그 증상이었다(`gen-map-png.mjs`는 게임을 띄워서 굽는다). 커밋 전 **둘 다** 돌린다.

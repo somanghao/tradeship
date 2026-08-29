@@ -4,11 +4,7 @@
 > **도메인 전용 함정은 각 `QUICKMAP-<도메인>.md` §3**(art/trade/combat/engine)에 있고, 그 도메인 작업이면 라우팅 체인이 반드시 도달시킨다.
 > 자체 상한 **≤4KB** — 넘으면 축약이 아니라 도메인 §3으로 이관.
 
-## 1. 에셋·지형을 고쳤는데 화면이 그대로다 → `bake` 캐시
-
-- **원인**: 모든 스프라이트는 `bake(key, w, h, draw)`로 캐시된다. 같은 key면 그리기 코드를 고쳐도 이미 만들어진 캔버스가 재사용된다.
-- **교훈**: 그리기 코드 수정 후에는 **새로고침**. "코드를 고쳤는데 안 바뀐다"를 로직 버그로 오진하지 말 것. 외형을 바꾸는 인자는 전부 key에 포함시킨다.
-- 정본 → [pixel-pipeline.md](pixel-pipeline.md), [dev-workflow.md](dev-workflow.md)
+## 1. → **art 도메인으로 옮겼다**(`QUICKMAP-art.md` §3 — 고쳤는데 화면이 그대로면 `bake` 캐시)
 
 ## 2. → **engine 도메인으로 옮겼다**(`QUICKMAP-engine.md` §3 — 결과 모달 탐색은 `#logmodal`을 거른다)
 
@@ -24,12 +20,10 @@
 
 ## 6. 코드를 고쳤는데 **화면이 통째로 검다** → 낡은 모듈 캐시
 
-- **원인**: `python -m http.server`는 `Cache-Control`을 안 보내 브라우저가 .js를 휴리스틱 캐시한다. 새 `index.html`·`main.js`에 **낡은 `state.js`가 섞이면** 새 export를 못 찾아 import가 링크 단계에서 실패하고, 스크립트가 한 줄도 안 돌아 화면이 검게 남는다.
-- **판별**: 서버 로그가 `index.html`·`main.js`만 200이고 나머지 모듈 요청이 **아예 없으면** 캐시에서 쓴 것이다. 콘솔엔 `does not provide an export named ...`.
-- **교훈**: `serve.py`(no-store)로 띄운다. 이미 물린 탭은 `Ctrl+Shift+R`, 확실히 하려면 **다른 포트로**(포트가 다르면 캐시가 분리된다). **코드 버그로 오진하지 말 것** — 새 프로필로 열어 정상이면 캐시다.
-- ⚠️ **import 이름 하나로 게임이 통째로 안 뜬다** — 같은 이름이 두 번이거나(`check-dup-decl`), **없는 이름을 가져오거나**(`check-imports`). 둘 다 브라우저가 모듈 그래프를 통째로 거부해 한 줄도 안 돈다.
-  ★ **`check-*`와 규칙 테스트가 전부 통과해도 그렇다** — 그것들은 `data.js`·`state.js`를 직접 부르는 도구라 `scenes/*`를 한 번도 안 거친다. 실제로 `scenes/map.js`가 `riskKey`를 잘못 가져와 **게임이 죽은 채로 회차가 돌았고**, 지도가 낡은 채 굳은 것이 그 증상이었다(`gen-map-png.mjs`는 게임을 띄워서 굽는다). 커밋 전 **둘 다** 돌린다.
-- 정본 → [dev-workflow.md](dev-workflow.md)
+- **원인**: `python -m http.server`는 `Cache-Control`을 안 보내 브라우저가 .js를 휴리스틱 캐시한다. 낡은 모듈이 섞이면 import가 링크 단계에서 실패해 **한 줄도 안 돈다.**
+- **교훈**: `serve.py`(no-store)로 띄운다. 이미 물린 탭은 `Ctrl+Shift+R`, 확실히 하려면 **다른 포트로**. **코드 버그로 오진하지 말 것** — 새 프로필로 열어 정상이면 캐시다.
+- ⚠️ **import 이름 하나로도 똑같이 안 뜬다** — 중복 선언(`check-dup-decl`)이나 없는 이름(`check-imports`). ★ **`check-*`와 규칙 테스트가 전부 통과해도 그렇다**(그것들은 `scenes/*`를 안 거친다) — 커밋 전 **스모크까지** 돌린다.
+- 판별법·실제 사례 → [dev-workflow.md](dev-workflow.md)
 
 ## 7. `x < undefined`는 예외가 아니라 **조용한 false**다 — 블록이 통째로 안 돈다
 
@@ -48,9 +42,4 @@
 - **교훈**: 새 모듈은 **참조 대상이 다 존재할 때 트리에 올린다**(그때까지는 파일을 만들지 않거나 import를 안 건다).
   검증이 갑자기 무너지면 **내 변경보다 `git status`의 남의 새 파일부터** 본다. 오래 도는 트랙은 워크트리로 가른다.
 
-## 10. **CDP로 붙은 창에 `browser.close()`를 부르면 남의 창이 죽는다**
-
-- Playwright `connectOverCDP`로 붙은 뒤 `close()`를 부르면 `Browser.close`가 나가 **띄워 둔 창이 통째로 죽는다.**
-  창을 여럿 띄워 나눠 쓰는 구조에서는 **남의 검증 창까지** 죽인다(회차 25에 실제로 났다).
-- **교훈**: 붙어서 쓰는 측정 스크립트는 **`process.exit(0)`으로 끝낸다.** `close()`는 내가 띄운 창에만.
-
+## 10. → **engine 도메인으로 옮겼다**(`QUICKMAP-engine.md` §3 — CDP로 붙은 창에 `close()`를 부르면 남의 창이 죽는다)
