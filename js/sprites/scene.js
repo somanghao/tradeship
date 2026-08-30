@@ -176,6 +176,22 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
     const sea = distField(land, 1, lab);        // 바다 픽셀 → 가장 가까운 뭍까지 거리 + 그 덩어리
     const inl = distField(land, 0, null);       // 뭍 픽셀 → 가장 가까운 바다까지 거리
 
+    /* ── 좁은 물길의 띠를 깎는다 (회차 26 · 홍해·페르시아만) ─────────────────
+       `shoreW`는 **뭍 덩어리의 넓이**만 본다 — 대륙 사이에 낀 폭 30px 물길도 양쪽에서 7px짜리
+       띠를 받아 **가운데가 통째로 여울**이 된다(홍해 평균밝기 143.6 · 페르시아만 얕은두단 100%).
+       여기서 그 자리 물의 **반폭**(`halfW`)으로 한 번 더 깎는다.
+       ⚠️ **백사(1px)와 분위수 표본(`far`)은 원래 `shoreW`를 그대로 쓴다.**
+         ① 백사를 깎으면 해안선이 끊기고 `check-map`의 항로 회랑 폭 판정이 흔들린다.
+         ② 표본을 바꾸면 `cMid q0.34`·`cDeep q0.67`의 **값 자체**가 움직여 아홉 장이 함께 바뀐다 —
+            그건 이 회차에 안 하기로 한 화풍 결정이다. 그래서 **칠하는 데만** 쓴다. */
+    const halfW = boxMaxSep(sea.d, NARROW_R);
+    /** 그 자리에서 실제로 쓸 띠 폭 — 원래 폭과 「반폭 × K」 중 작은 것(하한 `NARROW_MIN`) */
+    const wAt = (i) => {
+      const w0 = shoreW[sea.lb[i]] ?? 3;
+      const wn = Math.max(NARROW_MIN, Math.round(halfW[i] * NARROW_K));
+      return wn < w0 ? wn : w0;
+    };
+
     /* 4) 바다 — 수심 다섯 단. 단 사이는 Bayer 4×4로 섞어 띠 자국을 없앤다.
        양끝(여울·심해)은 그 기후가 이미 갖고 있던 색이라 바다마다의 인상은 그대로 남는다. */
     const sand = clim.shore[0];
@@ -207,7 +223,8 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
       for (let x = 0; x < VW; x++) {
         if (land[y * VW + x]) continue;
         const i = y * VW + x;
-        const w = shoreW[sea.lb[i]] ?? 3;
+        const w = shoreW[sea.lb[i]] ?? 3;   // 백사 전용 — 좁은 물길에서도 해안선은 끊지 않는다
+        const wn = wAt(i);                  // 여울·얕은바다 전용 — 좁은 물길에서 깎인다
         const d = sea.d[i];
         let c;
         /* 백사는 **1px대로 묶는다**(`min(…, 1.15)`). 폭을 덩어리 크기에 비례시켰더니
@@ -221,8 +238,8 @@ export function mapSprite(regionId = 'mediterranean', cities = [], routes = []) 
            ⚠️ 문턱도 1.15→1.18로만 올린다 — 모래색은 `check-map.py`의 `is_sea`에서 **뭍**으로
              세어지므로 굵어진 만큼 항로 회랑이 좁아져 반려된다(전례 있음). 총량은 +8% 안이다. */
         if (dstep(d, Math.min(w * 0.35, 1.18), 0.34, x, y) < 0) c = sand;   // 백사
-        else if (dstep(d, w, 1.1, x, y) < 0) c = depth[0];            // 여울
-        else if (dstep(d, w * 2.4, 1.8, x, y) < 0) c = depth[1];      // 얕은 바다
+        else if (dstep(d, wn, 1.1, x, y) < 0) c = depth[0];           // 여울
+        else if (dstep(d, wn * 2.4, 1.8, x, y) < 0) c = depth[1];     // 얕은 바다
         /* 여기부터는 거리가 아니라 **해저값**으로 끊는다(위 주석). 등심선이 섬을 복제하지 않는다.
            전이대는 해저값 단위라 0.03~0.05 — 잡음이 저주파라 이 폭이면 화면에서 2~4px이 된다. */
         else {
@@ -425,6 +442,57 @@ function distField(mask, want, labels) {
   }
   for (let i = 0; i < d.length; i++) d[i] /= 3;
   return { d, lb };
+}
+
+/* ── 국소 물폭 (회차 26 · R-홍해) ──────────────────────────────
+   ★ **왜 필요한가**: 해안 띠 폭(`shoreW`)은 **뭍 덩어리의 넓이**로만 정해져 있었다. 그래서
+     아라비아·아프리카처럼 수만 px짜리 대륙 사이에 낀 **폭 30px 물길**(홍해·페르시아만)은
+     양쪽에서 상한 7px짜리 띠를 받아 **가운데에 심해색이 들어설 자리가 없었다** —
+     실측(회차 26 지도 트랙): 홍해 평균밝기 **143.6** vs 아라비아해 **90.0**,
+     페르시아만은 **얕은 두 단이 100.0%**. 넓혀서 푸는 길은 도시 좌표가 막고 있다.
+   ⇒ 띠 폭을 **그 자리 물의 넓이**로도 깎는다. 그 「넓이」가 이 함수가 내는 값이다:
+     `sea.d`(뭍까지 거리)의 **국소 최대** = 그 물길의 반폭(半幅).
+   ⚠️ **반경이 작으면 열린 연안까지 좁게 잰다.** 열린 바다의 물가 픽셀(d=1)도 반경 안에
+     깊은 물이 없으면 「좁은 물길」로 읽힌다 — 그러면 아홉 장의 해안 띠가 통째로 얇아진다.
+     그래서 반경은 **홍해 반폭(15px)보다 훨씬 크게** 잡는다(아래 `NARROW_R`).
+   ⚠️ 반대로 너무 크면 좁은 물길이 **옆 넓은 바다의 값을 받아** 가드가 풀린다(지도 트랙이
+     회차 26에 최대필터 반경으로 같은 함정을 겪었다). 두 실패 사이를 실측으로 잡았다. */
+/* 손잡이 셋 — **스윕으로 잡았다**(전체 표는 `.playtest/round-26/A-PROGRESS.md` 바퀴 6).
+   ★★ **불변식: `NARROW_R × NARROW_K ≥ 7`(=`shoreW` 상한).** 이걸 지키면 **열린 바다에서는
+     아무 일도 안 일어난다** — 반폭이 R에서 포화하므로 `round(halfW·K) ≥ 7 ≥ shoreW`가 되어
+     원래 띠가 그대로 남는다. 깨뜨리면(예: R30·K0.20 = 6.0) **아홉 장의 연안 띠가 통째로 7→6px**로
+     얇아진다. 실측으로 확인했다 — 대조군(아라비아해 열린 바다) 평균밝기:
+       기준선 90.0 · **R32·K0.22(7.04) → 90.0** · R30·K0.20(6.0) → 89.9 · R48·K0.16(7.7이지만
+       화면 안 물이 R보다 좁아 포화가 안 된다) → 86.4.
+     ⇒ **R은 「화면 안에서 열린 바다가 실제로 확보하는 반폭」보다 크면 안 된다.**
+   ⚠️ 셋 다 **아홉 장 공통**이다. 하나를 만지면 여덟이 같이 바뀐다 — 고쳤으면 아홉 장을 다시 굽고
+     ① 바다%가 그대로인지(백사를 안 건드렸으니 그대로여야 한다) ② 대조군 밝기가 안 움직였는지
+     ③ `check-map.py`가 아홉 장 통과인지를 **모두** 본다. */
+const NARROW_R = 32;      // 반폭을 재는 반경(px). 작으면 열린 연안까지 좁게 읽고, 크면 옆 바다가 샌다
+const NARROW_K = 0.22;    // 반폭의 이 비율까지만 띠로 쓴다 (여울+얕은바다는 그 2.4배까지)
+const NARROW_MIN = 3;     // 이보다 얇게는 안 깎는다 — 반폭 7px 이하 물길은 통째로 여울이 맞다
+
+function boxMaxSep(src, r) {
+  const tmp = new Float32Array(src.length);
+  const out = new Float32Array(src.length);
+  for (let y = 0; y < VH; y++) {                 // 가로
+    const row = y * VW;
+    for (let x = 0; x < VW; x++) {
+      let m = 0;
+      const a0 = Math.max(0, x - r), a1 = Math.min(VW - 1, x + r);
+      for (let k = a0; k <= a1; k++) if (src[row + k] > m) m = src[row + k];
+      tmp[row + x] = m;
+    }
+  }
+  for (let x = 0; x < VW; x++) {                 // 세로
+    for (let y = 0; y < VH; y++) {
+      let m = 0;
+      const a0 = Math.max(0, y - r), a1 = Math.min(VH - 1, y + r);
+      for (let k = a0; k <= a1; k++) { const v = tmp[k * VW + x]; if (v > m) m = v; }
+      out[y * VW + x] = m;
+    }
+  }
+  return out;
 }
 
 /* Bayer 4×4 정렬 디더. 논리 1px이 화면 3px이라 **백색잡음은 사포가 되고 정렬 디더는 무늬가 된다** —
