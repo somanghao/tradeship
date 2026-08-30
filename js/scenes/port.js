@@ -8,7 +8,9 @@ import { unitSprite, figureSprite, mateSprite } from '../sprites/char.js';
 import { miniUnitSprite, MINI_FOOT } from '../sprites/char-mini.js';
 import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING, FLAG_NAME,
-         ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, FACTION, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY } from '../data.js';
+         ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, FACTION, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY,
+         /* 상단 — 세 갈래의 문턱(`pressAt`·`helpAt`)과 사주 보상을 화면 말로 옮길 때만 읽는다 */
+         GUILD } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -60,6 +62,8 @@ import {
   salvage, cheapestExit, debtOwed, sellShip, liquidate,
   /* 패권이 화면에서 말을 안 하던 자리 둘(A-8c) — 표는 state가 정본, 여기서는 읽기만 한다 */
   foeWealth, foeOdds, foeWealthGate,
+  /* 상단이 값에 남긴 것과 상단이 준 것(회차 26 · G-6·G-3) — **읽기만 한다** */
+  guildFactor, guildCredit, guildEscortOff,
 } from '../state.js';
 import { openPayday } from '../payday.js';
 import { openFactions } from '../factions.js';
@@ -67,6 +71,11 @@ import { autoSave } from '../save.js';
 /* 해적 명부(`rosterOf`)는 규칙이 `world.js`에 있다 — 후보에서 빼는 규칙(`pickDef`)과
    같은 자리라야 카드와 세계가 갈리지 않는다. 여기서는 **세어 보여주기만** 한다. */
 import { npcsAtPort, figuresAt, rosterOf } from '../world.js';
+/* ★ 상단(商團) — 회차 25가 규칙·데이터를 다 세워 두고도 **화면이 안 읽어서** 플레이어가
+   존재를 몰랐다(회차 26 주과녁 G-1·G-2·G-3·G-6). 여기서는 **읽기만 한다** —
+   `js/npc/*`는 경제 트랙 소유라 한 줄도 고치지 않는다. */
+import { guildsAtCity, guildRank, guildRegard, guildOfferAt, initGuilds } from '../npc/guild.js';
+import { HOUSE_BY_ID } from '../npc/houses.js';
 import { goodRank, goodBasis } from '../evidence.js';
 /* ★ `refreshLog`가 **import에 빠져 있었다.** 정박 카드(기다린다·선원을 내린다)와 거점 카드가
    이미 부르고 있었으므로 그 단추들은 눌리는 순간 ReferenceError로 죽었다 —
@@ -246,6 +255,13 @@ export const portScene = {
        공업력은 들르지 않아도 맞지만, **로그는 여기서 뜬다** — 규칙이 멀쩡한데 화면이
        말하지 않아 수백 일을 잃는 그 자리다. */
     tickCivic(city.id);
+    /* ★★ **새 판의 첫 항구에는 상단 장부가 아직 없다.** `resetGame`이 `state.guilds = {}`로
+       비우고, 그것을 채우는 `initGuilds()`는 **`guildTick` 안에서만** 불린다 —
+       곧 첫 출항 전까지 `guildRank()`가 빈 배열이라 **상단 카드가 통째로 안 뜬다**(실측으로 잡았다).
+       이 화면이 상단을 처음 보여 주는 자리인데 하필 **처음 켠 사람에게만 안 보이는** 꼴이다.
+       ⚠️ **비어 있을 때만** 부른다 — `initGuilds()`는 장부를 통째로 새로 만든다.
+       (제자리는 `world.js: initWorld()`다. 그 파일은 경제 트랙 소유라 A-ISSUES X-5로 넘긴다.) */
+    if (!state.guilds || !Object.keys(state.guilds).length) initGuilds();
     if (gameStarted()) autoSave();
     // 급여일은 **항구에서만** 온다 — 바다에서는 돈을 줄 데가 없다.
     // 화면을 세운 뒤에 띄워야 정산이 끝나고 닫혔을 때 뒤에 항구가 있다.
@@ -403,6 +419,22 @@ function marketTable() {
           text: ` ∓${Math.round(press * 100)}%`,
           title: '최근 이 항구에서 많이 거래해 값이 불리해졌다. 날이 지나면 회복한다.',
         }) : null,
+        /* ★ G-6 — **이 값이 왜 이런가**를 한 조각으로. 상단이 이 항구에 부으면(−) 값이 내리고
+           사가면(+) 오른다(`state.js: guildFactor`). 회차 25가 세운 층이 값에 실제로 남긴
+           자국인데 화면 어디에도 안 나와 있었다 — 위 `∓`(내 거래 압력)와 **다른 것**이라
+           딱지를 갈라 붙인다. 툴팁이 아니라 **조각 자체**가 뜻을 지녀야 읽힌다. */
+        (() => {
+          const gp = (guildFactor(city.id, g.id) - 1) * 100;
+          if (Math.abs(gp) < 0.5) return null;
+          return el(`span.gpush.${gp > 0 ? 'up' : 'dn'}`, {
+            /* 부호는 화면 전체와 같은 활자를 쓴다 — ASCII `-`는 이 글꼴에서 가늘어 안 보인다 */
+            text: ` ${gp > 0 ? '+' : '−'}${Math.abs(gp).toFixed(1)}%(상단)`,
+            title: (gp > 0
+              ? '상단이 이 항구에서 이 물건을 사갔다 — 그만큼 값이 올라 있다.'
+              : '상단이 이 항구에 이 물건을 부었다 — 그만큼 값이 내려 있다.')
+              + ' 상단이 손을 놓으면 며칠에 걸쳐 되돌아온다.',
+          });
+        })(),
       ].filter(Boolean)),
       el('td.num', {}, have ? el('span.qty', { text: have }) : el('span', {
         text: '—', style: { color: '#5d5768' },
@@ -1274,6 +1306,256 @@ function factionCard() {
       el('button.btn.sm.dark', { text: '관계도를 편다  (F)', onclick: () => openFactions(city.id) }),
     ].filter(Boolean)),
   ]);
+}
+
+/* ══ 상단(商團) — 회차 26 · G-1·G-2·G-3 ═══════════════════════════
+   ★ **이 저장소가 가장 비싸게 배운 것이 이 자리다** — 회차 25가 상단 49곳을 규칙·데이터로
+     다 세우고 시뮬로 검증까지 마쳤는데, **항구 화면이 한 줄도 안 읽어서** 플레이어에게는
+     그 층이 없는 것과 같았다(`grep guild js/scenes/port.js` → 0건이었다).
+     *"규칙이 멀쩡한데 화면이 말하지 않아 수백 일을 잃는다."*
+
+   ⚠️ **여기서는 읽기만 한다.** 규칙·값은 전부 `js/npc/guild.js`·`js/state.js`·`js/data.js: GUILD`에
+     있고 이 파일은 한 톨도 계산하지 않는다 — 두 곳이 각자 셈하면 반드시 어긋난다
+     (`civicCard`가 `civicProgress` 하나만 보는 것과 같은 규약). */
+
+/* 상관 여덟(리스본)을 다 펴 볼까 — 접힘과 같은 자리라 **모듈 변수**다(세이브에 안 담는다) */
+let guildAllHouses = false;
+
+/** 호감 한 조각 — 세 갈래(괴롭힘·이용·도움)의 문턱은 `GUILD.pressAt`·`helpAt`이 정본이다 */
+function guildRegardWord(r) {
+  if (r <= GUILD.pressAt) return { word: '눌러 온다', color: 'var(--bad)' };
+  if (r >= GUILD.helpAt) return { word: '돕는다', color: 'var(--good)' };
+  return { word: '지켜본다', color: '#948c7c' };
+}
+
+/** 자본을 짧게 — 사이드패널이 150px까지 좁아지므로 자릿수를 그대로 적으면 줄이 접힌다.
+    ⚠️ 「천」이 아니라 **「만」**이다 — 3,073천닢은 한국어로 안 읽힌다(첫 판을 눈으로 보고 잡았다). */
+const guildCap = (n) => (n >= 10000
+  ? `${(n / 10000).toFixed(n >= 1000000 ? 0 : 1).replace(/\.0$/, '')}만닢`
+  : `${Math.round(n).toLocaleString('ko-KR')}닢`);
+
+/* ── G-1 「상단」 카드 ─────────────────────────────────────────
+   이 항구에 **상관을 둔** 상단 · 자본 서열 · 선단/세기 · 나를 어떻게 보는가.
+   ★ 상관이 하나도 없는 항구에서도 **이 바다의 큰 상단 셋**은 보여 준다 — 안 그러면
+     상단이 없는 항구에서 시작한 사람은 그런 층이 있다는 것조차 모른다(그것이 회차 25의 결함이었다). */
+function guildCard() {
+  const reg = guildRank(city.region);
+  if (!reg.length) return null;
+  const all = guildRank();
+  const seated = guildsAtCity(city.id);
+  const rankOf = (id) => reg.find((r) => r.id === id) || all.find((r) => r.id === id);
+  /* 상관 수의 폴백 — 장부가 아직 `seats`를 안 실어 오는 판(옛 세이브)에서는 명부를 센다 */
+  const seatsCount = (h) => (h.seats ?? []).length;
+  const localRank = (id) => reg.findIndex((r) => r.id === id) + 1;
+
+  /* ★ **리스본에는 상관이 여덟이다**(실측 — 130개 항구 중 8곳이 상관 하나, 최대가 리스본 8).
+     여덟을 다 펴면 카드 하나가 스물네 줄이 되어 「사이드 몇 화면」이 통째로 무너진다.
+     조선소 선박 탭이 회차 25에 쓴 규약과 같은 것을 쓴다 — **넷까지 펴고, 나머지는 단추로**.
+     한 곳도 지우지 않는다. */
+  const CAP = 4;
+  const shown = guildAllHouses ? seated : seated.slice(0, CAP);
+  const rows = [];
+  for (const { house, ledger } of shown) {
+    const r = rankOf(house.id);
+    if (!r) continue;
+    const regard = guildRegard(house);
+    const w = guildRegardWord(regard);
+    const lr = localRank(house.id);
+    /* 압박은 **여기 서 있는 동안 일어나는 일**이라 그 상단 줄에 붙인다
+       (바다 위에서 누가 오는가는 지도 트랙의 G-4·G-5가 말한다). */
+    const press = ledger?.press && ledger.press.until > state.day ? ledger.press : null;
+    rows.push(el('div.gh-row', {
+      title: `${house.blurb ?? ''}\n${house.lines?.greet ?? ''}`
+           + `\n\n자본 ${Math.round(r.cap).toLocaleString('ko-KR')}닢 · 항차 ${r.legs}회`
+           + `\n호감 ${regard >= 0 ? '+' : ''}${regard} — ${GUILD.pressAt} 이하면 눌러 오고 ${GUILD.helpAt} 이상이면 돕는다`,
+    }, [
+      el('div.ctr-line.gh-name', {}, [
+        el('span', { text: house.name }),
+        el('span.gh-rank', { text: lr > 0 ? `이 바다 ${lr}위` : '먼 바다의 상단' }),
+      ]),
+      el('div.ctr-sub', {}, [
+        /* 240px 칸에 들어가야 한다 — 「자본」·「척」을 빼면 한 줄이 줄어든다(실측) */
+        el('span', { text: `${guildCap(Math.round(r.cap))} · 선단 ${r.fleet} · 세기 ${r.might} · ` }),
+        /* ⚠️ `nowrap` — 안 주면 「−22 / 눌러 온다」로 **숫자와 말이 갈려** 접힌다(실화면에서 봤다) */
+        el('span.gh-regard', { style: { color: w.color },
+          text: `${regard >= 0 ? '+' : '−'}${Math.abs(regard)} ${w.word}` }),
+      ]),
+      /* ★ **흥망은 회차 26에 경제 트랙이 짓고 있다**(`guildRank()`가 `seats`·`took`·`lost`를
+         내기 시작했다). 여기서는 **있으면 보여 주고 없으면 아무것도 안 그린다** — 필드가
+         바뀌어도 카드가 안 깨지게 전부 `??`로 연다. 상관을 뺏고 뺏기는 이야기가
+         화면에 한 줄도 없으면 그 규칙 역시 「없는 것」이 된다. */
+      (r.took ?? 0) || (r.lost ?? 0) ? el('div.ctr-sub.gh-far', {
+        text: `상관 ${r.seats ?? seatsCount(house)}곳`
+            + ((r.took ?? 0) ? ` · 인수 ${r.took}` : '')
+            + ((r.lost ?? 0) ? ` · 잃음 ${r.lost}` : ''),
+      }) : null,
+      press ? el('div.ctr-sub.gh-press', {
+        text: `압박 — ${CITY_BY_ID[press.city]?.name ?? press.city} 언저리에 호위선단을 세웠다`
+            + ` (${Math.max(0, press.until - state.day)}일)`,
+      }) : null,
+    ].filter(Boolean)));
+  }
+
+  if (rows.length && seated.length > shown.length) {
+    rows.push(el('button.btn.sm.dark', {
+      text: `전부 ${seated.length}곳을 편다`,
+      onclick: () => { guildAllHouses = true; buildUI(); },
+    }));
+  } else if (rows.length && guildAllHouses && seated.length > CAP) {
+    rows.push(el('button.btn.sm.dark', {
+      text: `${CAP}곳만 보인다`,
+      onclick: () => { guildAllHouses = false; buildUI(); },
+    }));
+  }
+
+  if (!rows.length) {
+    rows.push(el('div.ctr-sub', { text: '이 항구에 상관을 둔 상단은 없다. 이 바다를 쥔 쪽은 —' }));
+    for (const r of reg.slice(0, 3)) {
+      /* ⚠️ 낱말 안에서 끊긴다 — 「선단 4 / 척」. 숫자와 단위는 한 덩어리로 묶는다
+         (조선소가 회차 25에 `word-break: keep-all`로 고친 것과 같은 자리다). */
+      rows.push(el('div.ctr-sub.gh-far', {}, [
+        el('span', { text: `${r.rank}. ${r.name} — ` }),
+        el('span.gh-nw', { text: `${guildCap(r.cap)} · 선단 ${r.fleet}척` }),
+      ]));
+    }
+  }
+
+  /* ★ **상단이 지금 이 항구의 값을 얼마나 밀고 있나**를 한 줄로 잇는다 — 시세 칸의
+     `(상단)` 조각(G-6)과 같은 값을 쓴다. 두 자리가 다른 수를 말하면 안 읽힌다. */
+  const touched = GOODS.filter((g) => Math.abs(guildFactor(city.id, g.id) - 1) >= 0.005);
+  if (touched.length) {
+    const top = touched
+      .map((g) => ({ g, p: (guildFactor(city.id, g.id) - 1) * 100 }))
+      .sort((a, b) => Math.abs(b.p) - Math.abs(a.p))[0];
+    rows.push(el('div.ctr-sub.gh-push', {
+      title: '상단이 이 항구에 부으면(−) 값이 내리고 사가면(+) 값이 오른다.\n시세 칸의 (상단) 조각과 같은 값이다.',
+      text: `이 항구 ${touched.length}품목의 값을 밀고 있다 — 가장 큰 것은 `
+          + `${top.g.name} ${top.p >= 0 ? '+' : '−'}${Math.abs(top.p).toFixed(1)}%`,
+    }));
+  }
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '상단' }),
+      el('span', { text: seated.length ? `상관 ${seated.length}곳` : `이 바다 ${reg.length}곳`,
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, rows),
+  ]);
+}
+
+/* ── G-2 「사주」 — 상관 게시판의 또 한 줄 ──────────────────────
+   *"A가 B의 상관 C에 이 물건 N개를 부어 달라."* 주인공이 남의 싸움의 도구가 되는 자리다.
+   ★ 진척(`done`)은 **그 항구에서 파는 순간** `state.js: sell()`이 센다. 값을 치르는 것은
+     `npc/guild.js: settleGuildOffer()`이고 그것은 **날이 갈 때** 돈다 — 그래서 다 채워도
+     그 자리에서 금화가 들어오지 않는다. 화면이 그것을 말하지 않으면 "고장 났다"로 읽힌다. */
+function guildOfferCard() {
+  const o = state.guildOffer;
+  if (!o || o.until <= state.day) return null;
+  const here = guildOfferAt(city.id);
+  const left = o.until - state.day;
+  const done = o.done ?? 0;
+  const have = state.cargo[o.gid] || 0;
+  const pct = Math.min(100, Math.round((done / Math.max(1, o.need)) * 100));
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '상관 게시판 · 사주' }),
+      el('span', { text: `기한 ${left}일`,
+        style: { fontSize: '11px', color: left <= 5 ? '#d05a4a' : '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.svc', {}, [
+      el('div.ctr-line', {
+        html: `<b>${o.byName}</b>${josa(o.byName, '이/가')} <b>${o.foeName}</b>의 상관`
+            + ` <b>${CITY_BY_ID[o.city]?.name ?? o.city}</b>에`
+            + ` <b>${GOOD_BY_ID[o.gid]?.name ?? o.gid} ${o.need}개</b>를 부어 달라 한다`,
+      }),
+      o.line ? el('div.ctr-sub.gh-line', { text: o.line }) : null,
+      el('div.gh-bar', { title: `진척 ${done}/${o.need}개` },
+        el('div.gh-bar-in', { style: { width: `${pct}%` } })),
+      el('div.ctr-sub', {
+        text: `보수 ${o.fee.toLocaleString('ko-KR')}닢 · 진척 ${done}/${o.need}개 (${pct}%)`
+            + (have ? ` · 싣고 있는 것 ${have}개` : ''),
+      }),
+      /* ⚠️ **설명을 두 줄로 나누지 않는다.** 640×360의 사이드는 151×201px이라 한 줄이 늘 때마다
+         탭이 0.15화면씩 길어진다. 상단 이름도 다시 적지 않는다(위에 이미 있고, 「브라질 설탕
+         엔제뉴 계약상단(세뇨르 데 엔제뉴)」처럼 길다) — 역할로만 부른다. */
+      el('div.ctr-sub', {
+        style: here ? { color: 'var(--good)' } : null,
+        text: (here
+          ? '여기가 그 상관이다 — 이 항구에서 파는 만큼 찬다'
+          : `${CITY_BY_ID[o.city]?.name ?? o.city}에서 팔아야 찬다 (여기서 판 것은 안 센다)`)
+          + ` · 마치면 호감 +${GUILD.regardUse}/−${GUILD.regardUse} · 셈은 날이 갈 때`,
+      }),
+    ].filter(Boolean)),
+  ]);
+}
+
+/* ── G-3 「신용장·호위」 배너 ────────────────────────────────────
+   ★ **탭 밖**이다(`salvageCard`·「출항하기」와 같은 규약) — 지금 나를 돕거나 누르는 상단은
+     어느 탭을 보고 있어도 보여야 한다. 아무 일도 없으면 아무것도 안 그린다(빈 띠는 벽지다). */
+function guildBanner() {
+  const lines = [];
+  const b = state.guildBoon;
+  /* ⚠️ 배너에서는 **이름을 짧게** 쓴다 — 「경강상인(京江商人)」처럼 한자 주석이 붙은 이름이
+     151px 칸에서 한 줄을 통째로 먹어 띠가 세 줄이 된다(실측: 640×360에서 배너만으로 +0.69화면).
+     주석은 카드(`guildCard`)가 온전한 이름으로 보여 주므로 여기서는 앞머리만 쓴다. */
+  const nameOf = (id) => (HOUSE_BY_ID[id]?.name ?? id).replace(/\s*[（(][^)）]*[)）]\s*$/, '');
+  const cr = b?.credit && b.credit.until > state.day ? b.credit : null;
+  const es = b?.escort && b.escort.until > state.day ? b.escort : null;
+  /* ⚠️ **이모지를 쓰지 않는다.** 📜🛡⚔은 이 PC의 본문 글꼴(맑은 고딕)에 없어서
+     ○·×짜리 대체 글리프로 떨어졌다(첫 판을 눈으로 보고 잡았다 — `a-shots/g1-side-amsterdam.png`).
+     ⚓·⚒처럼 이미 쓰는 것은 딩뱃이라 나오지만 이 셋은 아니다. 말머리는 **말로** 적는다. */
+  /** 상관 목록을 짧게 — 240px 칸에 네 도시를 그대로 적으면 세 줄이 된다 */
+  const seatWord = (ids) => {
+    const names = ids.map((c) => CITY_BY_ID[c]?.name ?? c);
+    return names.length <= 2 ? names.join('·') : `${names[0]} 등 ${names.length}곳`;
+  };
+  if (cr) {
+    const off = Math.round(guildCredit(city.id) * 100);
+    lines.push({
+      cls: 'good', label: '신용장',
+      text: `${nameOf(cr.by)} — `
+          + (off > 0 ? `여기서 매입 −${off}%`
+                     : `${seatWord(cr.cities ?? [])}에서 매입 −${Math.round((cr.off ?? 0) * 100)}%`)
+          + ` · ${Math.max(0, cr.until - state.day)}일`,
+      title: '친한 상단이 낸 신용장이다. 그 상단의 상관에서 살 때만 붙는다(state.js: guildCredit).'
+           + `
+상관 — ${(cr.cities ?? []).map((c) => CITY_BY_ID[c]?.name ?? c).join(' · ')}`,
+    });
+  }
+  if (es) {
+    /* 호위는 **구간**에 붙는다 — 지금 항구에서 나가는 길 가운데 실제로 덮이는 곳을 센다 */
+    const covered = neighborsOf(city.id).filter((n) => guildEscortOff(city.id, n) > 0);
+    lines.push({
+      cls: 'good', label: '호위',
+      text: `${nameOf(es.by)} — 조우 −${Math.round((es.off ?? 0) * 100)}%`
+          + (covered.length ? ` · 여기서 ${covered.length}갈래` : ` · ${seatWord(es.cities ?? [])} 언저리`)
+          + ` · ${Math.max(0, es.until - state.day)}일`,
+      title: '그 상단의 상관을 잇는 구간에서 조우 확률이 상대적으로 줄어든다(state.js: guildEscortOff).'
+           + `
+상관 — ${(es.cities ?? []).map((c) => CITY_BY_ID[c]?.name ?? c).join(' · ')}`,
+    });
+  }
+  /* 누르는 쪽도 같은 띠에 둔다 — "지금 상단이 나에게 하고 있는 일"이 이 배너의 뜻이다 */
+  for (const { house, ledger } of guildsAtCity(city.id)) {
+    const p = ledger?.press;
+    if (!p || p.until <= state.day) continue;
+    lines.push({
+      cls: 'bad', label: '압박',
+      text: (() => {
+        const pn = CITY_BY_ID[p.city]?.name ?? p.city;
+        return `${house.name} — ${pn}${josa(pn, '을/를')} 누른다 · `;
+      })()
+          + `세기 ${p.might} 호위선단 · ${Math.max(0, p.until - state.day)}일`,
+      title: (house.lines?.press ?? '') + '\n\n조우 확률은 안 오른다 — 해적이 났을 때 누가 오는가만 바뀐다.',
+    });
+  }
+  if (!lines.length) return null;
+  return el('div#port-guild-banner', {}, lines.map((l) =>
+    el(`div.gb-line.${l.cls}`, { title: l.title }, [
+      el('span.gb-tag', { text: l.label }),
+      el('span', { text: l.text }),
+    ])));
 }
 
 /* ── 정박 (A-1b) ───────────────────────────────────────────────
@@ -2165,6 +2447,13 @@ function voyageTab() {
 function tradeTab() {
   return [
     contractCard(),      // 계약은 기한이 있다 — 접지 않는다
+    /* ★ 사주도 **기한이 있는 일감**이라 계약과 같은 줄에 두고 접지 않는다(G-2).
+       상관 게시판의 또 한 줄이라는 것이 이 자리의 뜻이다. */
+    guildOfferCard(),
+    /* ★ **상단은 펼친 채로 둔다**(G-1). 회차 25가 세운 층이 화면에 처음 나오는 자리라
+       접어 두면 "머리말만 있고 아무도 안 펴는 카드"가 된다 — 그것이 이 회차의 과녁이다.
+       한 번 접으면 그 상태는 `foldOpen`이 세션 동안 기억한다. */
+    fold('guild', guildCard(), true, null),
     fold('holding', holdingCard(), false,
          `${HOLDING_KEYS.filter((k) => ownsHolding(k, city.id)).length}개`),
     fold('works', worksCard(), false, null),
@@ -2211,13 +2500,28 @@ function sidePanel() {
          어느 탭을 보고 있어도 먼저 읽히지 않으면 "출구가 없다"가 그대로 재발한다. */
       salvageCard(),
 
+      /* ★ **상단이 지금 나에게 하고 있는 일**은 탭 밖이다(G-3) — 신용장·호위는 사는 날이
+         정해져 있고 압박은 그 자리를 뜨면 끝난다. 어느 탭을 보고 있어도 보여야 한다.
+         아무 일도 없으면 `guildBanner()`가 null을 주고 띠 자체가 안 그려진다. */
+      guildBanner(),
+
       /* ── 탭 구조 (회차 24) ── 큰 카드 넷이 한 줄에 섞여 5.5화면(640×360)이었다.
          성격별로 나누면 어느 탭도 640×360에서 2화면을 안 넘는다 — 아래 `_measure-side.mjs` 실측. */
-      el('div.yard-tabs', {}, SIDE_TABS.map((t) =>
-        el(`button.yard-tab${t.id === sideTab ? '.on' : ''}`, {
-          text: t.label,
+      /* ★ **기본 탭은 「항해」다 — 「거래」를 한 번도 안 누르는 판이 있다.**
+         사주는 기한이 있는 일감이라 못 보고 지나면 그걸로 끝난다(계약과 같은 성질인데
+         계약은 이미 이 탭 안이다). 탭에 **점 하나**를 찍어 「저기 뭔가 있다」만 말한다 —
+         이 저장소가 다섯 번 잃은 자리가 *"규칙은 서 있는데 화면이 말하지 않는다"*이다.
+         ⚠️ 숫자를 적지 않는다. 탭은 34px이라 숫자를 넣으면 라벨이 접힌다. */
+      el('div.yard-tabs', {}, SIDE_TABS.map((t) => {
+        const dot = t.id === 'trade' && state.guildOffer && state.guildOffer.until > state.day;
+        return el(`button.yard-tab${t.id === sideTab ? '.on' : ''}`, {
+          title: dot ? '상단이 낸 사주가 걸려 있다 — 기한이 있다' : null,
           onclick: () => { sideTab = t.id; buildUI(); },
-        }))),
+        }, [
+          el('span', { text: t.label }),
+          dot ? el('span.tab-dot', { text: '•' }) : null,
+        ]);
+      })),
       ...content,
     ]),
 
