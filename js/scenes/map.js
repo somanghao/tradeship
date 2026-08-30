@@ -23,6 +23,10 @@ import {
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   /* 입항세를 **운영비용으로 보여 주는** 자리(#6) · 관선 임검 */
   tariffRate, seizeCargo,
+  /* 보험이 실제로 무는 몫 — 화면이 보험료만 적어 오던 자리(회차 28 다-1) */
+  insureCover,
+  /* 입항세의 셋째 겹 — 화면이 결과 %만 적어 오던 자리(회차 28 다-1) */
+  tariffScale,
   fleeOdds, fleeWord, oceanReady, capLoot, addInfamy, consortCount, flagshipSinks, bondPenalty,
   totalLossOdds, totalLoss,
   /* 입장권 체크리스트가 쓰는 것 — **판정을 여기서 새로 만들지 않는다.**
@@ -1431,12 +1435,27 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
            + (cost.fleet ? ` · 선단 ${cost.fleet}` : '')
            + (cost.insurance ? ` · 적하보험 ${cost.insurance}` : '')
            + (cost.officer ? ` · ${OFFICER.name} ${cost.officer}` : '') + `닢`
+           /* ★★ **보험료만 적고 보상률은 한 번도 안 적었다**(회차 28 다-1). `insureCover`가
+              구간마다 다르게 나오는데(실측 `u-probe-insure.mjs`: 근해 7,616구간에서
+              **38.8% ~ 95.0%** · 중앙 71.2%) 화면에는 **내는 값만** 있었다.
+              곧 보험이 「선택」이 아니라 「세금」으로 읽힌다 — 무엇을 사는지 모르니까.
+              ⚠️ 규칙은 안 건드린다. 이미 있는 값을 **제 줄로** 옮길 뿐이다
+              (비용 줄 안에 끼우면 `적하보험 150`의 「닢」이 떨어져 나간다 — 실측으로 되돌렸다). */
+           + (cost.insurance
+               ? `\n이 구간의 적하보험은 손해의 `
+                 + `${Math.round(insureCover(state.at, id) * 100)}%를 문다 (구간마다 다르다)`
+               : '')
            /* ★ 입항세도 운영비용이다(#6 · 사용자 원문). 여기 안 적으면 후반에 세가
               무거워져도 플레이어가 그것을 "비용"으로 읽을 데가 없다. */
            + (cost.tariff
                ? `\n입항세 ${cost.tariff.toLocaleString('ko-KR')}닢 (저기서 팔면 · 세율 ${(tariffRate(id) * 100).toFixed(1)}%)`
                  + ` → 합 ${cost.withTariff.toLocaleString('ko-KR')}닢`
                : `\n입항세율 ${(tariffRate(id) * 100).toFixed(1)}% (파는 값에서 뗀다)`)
+           /* ★ **세의 셋째 겹**(총자산 누진 · 회차 28 다-1). 여기 안 적으면 후반에 아홉 항구가
+              한꺼번에 무거워진 것을 「이 항구가 비싸다」로 읽는다 — 원인은 항구가 아니라 내 자산이다.
+              항구마다 달라지는 값이 아니므로 **한 번만** 적는다(줄이 길어지지 않게). */
+           + (tariffScale() > 1.005
+               ? ` — 그중 자산 누진 ×${tariffScale().toFixed(2)} (내 총자산이 올린 몫이다)` : '')
            + `\n해적 조우 ${Math.round(dg.odds * 100)}%`
            + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
            + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')'

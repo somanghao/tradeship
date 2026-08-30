@@ -10,11 +10,17 @@ import { blit } from '../pixel.js';
 import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDING_KEYS, HOLDING, FLAG_NAME,
          ESTATE_KEYS, WORK, WORKS, CONSIGN, LINE, FACTIONS, FACTION, REGARD, ROSTER, COMMENDA, BANKRUPT, BOON, HEGEMONY,
          /* 상단 — 세 갈래의 문턱(`pressAt`·`helpAt`)과 사주 보상을 화면 말로 옮길 때만 읽는다 */
-         GUILD } from '../data.js';
+         GUILD,
+         /* 입항세 셋째 겹(총자산 누진)을 화면 말로 옮길 때만 읽는다 — 회차 28 다-1 */
+         TARIFF_SCALE } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
   impactFactor, costFor, tariffRate, shorthanded,
+  /* 세력이 쥔 자리인가 — 「독점이 자본을 밀어낸다」를 화면 말로 옮길 때만 읽는다(회차 28 다-1) */
+  gripHeld,
+  /* ★ 입항세는 세 겹이다 — 화면이 결과 %만 적어 오던 셋째 겹(총자산 누진)을 조각으로 가른다 */
+  tariffScale, netWorth,
   contractOffer, acceptContract, deliverContract, abandonContract,
   /* 바닥의 문 — **판정은 규칙이 한 벌로 갖고 있다**(지도 `brokeCard`와 같은 표를 본다).
      ★ 문이 넷이 됐다(계약 선금) — 지도가 그것을 가리키는데 항구에 없으면 **가리킨 곳이 빈다.** */
@@ -483,13 +489,34 @@ function marketTable() {
   /* ★ 위에 붙인다(`bottom`이었다). 품목이 20줄을 넘는 항구에서는 맨 아래 안내가
      스크롤 밖으로 밀려, 처음 켠 사람은 한 번 누를 때 몇 개가 실리는지 모른 채 누른다 —
      실제 플레이에서 세 번 눌러 18개가 실리고 금고가 바닥났다. → wiki/playtest-log.md §3-2 */
+  /* ★★ **입항세의 셋째 겹을 화면이 한 번도 말한 적이 없다**(회차 28 다-1).
+     `baseTariff`는 `TARIFF` + `CITY_TARIFF` + **총자산 누진**(`tariffScale` ×1.00→×2.40)인데,
+     화면은 `tariffRate()`의 **결과 %만** 적어 왔다. 실측(`u-probe-silent.mjs`):
+     부산포가 가난할 때 3.30% → 총자산 9만닢에서 **7.92%**로 같은 모양의 숫자만 바뀐다.
+     후반 브레이크(`data.js: TARIFF_SCALE`)는 **읽혀야 브레이크**다 — 이유를 안 적으면
+     플레이어는 성장할수록 무거워지는 세를 「항구가 비싸다」로 오독한다.
+     ⚠️ 세를 **안 바꾼다**. 이미 있는 값을 조각으로 갈라 붙일 뿐이다.
+     ★ 소수 한 자리로 내린다 — `Math.round(…*100)`이면 3.30%와 3.44%가 같은 「3%」였다. */
+  const tScale = tariffScale();
   tbl.append(el('caption', {
-    text: `기본 10개 단위 · Shift=전량 · Ctrl=1개 · 한 번에 많이 거래할수록 단가가 불리해진다 · 입항세 ${Math.round(tariffRate(city.id) * 100)}%`,
     style: {
       captionSide: 'top', fontSize: '11px', color: '#6f6858',
       padding: '6px 8px', textAlign: 'left',
     },
-  }));
+  }, [
+    el('span', {
+      text: `기본 10개 단위 · Shift=전량 · Ctrl=1개 · 한 번에 많이 거래할수록 단가가 불리해진다`
+          + ` · 입항세 ${(tariffRate(city.id) * 100).toFixed(1)}%`,
+    }),
+    tScale > 1.005 ? el('span', {
+      text: ` (자산 누진 ×${tScale.toFixed(2)})`,
+      style: { color: '#c98a5a' },
+      title: `총자산 ${Math.round(netWorth()).toLocaleString('ko-KR')}닢 — `
+           + `${TARIFF_SCALE.from.toLocaleString('ko-KR')}닢을 넘으면 관이 더 뜯는다.\n`
+           + `${TARIFF_SCALE.per.toLocaleString('ko-KR')}닢 늘 때마다 원래 세율의 +${Math.round(TARIFF_SCALE.step * 100)}%,`
+           + ` 최대 ×${TARIFF_SCALE.cap}까지. 배·거점·시설도 자산에 든다.`,
+    }) : null,
+  ].filter(Boolean)));
   return tbl;
 }
 
@@ -1371,10 +1398,35 @@ function factionCard() {
         const bites = (f.grip.goods ?? [])
           .map((g) => ({ g, up: gripMarkup(g, city.id) }))
           .filter((x) => x.up > 0);
-        return bites.length ? el('div.ctr-sub', { style: { color: '#c98a6a' },
-          html: `쥔 자리라 웃돈이 붙는다 — `
-              + bites.map((x) => `${GOOD_BY_ID[x.g].name} +${Math.round(x.up * 100)}%`).join(' · ')
-              + `<br><span style="opacity:.8">밖의 항구에서는 안 붙는다. 딴 데서 사면 된다 — 대신 항로가 길어진다.</span>`,
+        /* ★★ **독점이 자본을 밀어낸다**(회차 27 다-4 · `FACTION.gripBlocksGuild`) — 규칙은 섰는데
+           화면이 한 마디도 안 하던 자리다(회차 28 다-1). 쥔 항구·품목에서는 **상단이 물가를
+           좁히는 힘이 그만큼 덜 먹는다**. 실측(`u-probe-silent2.mjs`): 제노바·명반에 상단이
+           같은 양을 부어도 **+1.46% ↔ 안 쥐었다면 +3.25%**다.
+           ⇒ 「딴 데서 사면 된다」의 반쪽이 여기 있다 — *기다려도 값이 안 내려온다*.
+           ⚠️ **줄을 새로 쌓지 않는다**(회차 27 B2-5: 알리는 카드가 고르는 카드를 가렸다).
+              이미 있는 둘째 줄에 문장 하나를 잇는다. */
+        const blockPct = Math.round((FACTION.gripBlocksGuild ?? 0) * 100);
+        const held = (f.grip.goods ?? []).filter((g) => gripHeld(g, city.id));
+        const guildLine = (blockPct > 0 && held.length)
+          ? ` 상단이 값을 좁혀 주지도 않는다 — 쥔 자리에서는 그 힘이 ${blockPct}% 덜 먹는다.` : '';
+        return (bites.length || held.length) ? el('div.ctr-sub', { style: { color: '#c98a6a' },
+          title: guildLine
+            ? `${held.map((g) => GOOD_BY_ID[g]?.name ?? g).join(' · ')} — 이 항구에서는 상단이 값을 밀어도`
+              + `
+${100 - blockPct}%만 먹는다(state.js: guildFactor · data.js: FACTION.gripBlocksGuild).`
+              + `
+곧 여기서는 값이 스스로 내려오기를 기다릴 수 없다.` : null,
+          html: (bites.length
+                  ? `쥔 자리라 웃돈이 붙는다 — `
+                    + bites.map((x) => `${GOOD_BY_ID[x.g].name} +${Math.round(x.up * 100)}%`).join(' · ')
+                  /* 웃돈이 아직 0이어도(호감이 나쁘지 않을 때) **쥐고 있다는 사실**은 말한다 */
+                  : `이 항구·품목을 쥐고 있다 — `
+                    + held.map((g) => GOOD_BY_ID[g]?.name ?? g).join(' · '))
+              /* 웃돈이 0인데 「밖의 항구에서는 안 붙는다」를 적으면 없는 웃돈을 있는 것처럼 말한다 */
+              + `<br><span style="opacity:.8">`
+              + (bites.length ? `밖의 항구에서는 안 붙는다. 딴 데서 사면 된다 — 대신 항로가 길어진다.`
+                              : `지금은 웃돈을 안 문다 — 눈총을 받으면 그때부터 문다.`)
+              + `${guildLine}</span>`,
         }) : null;
       })(),
       (() => {

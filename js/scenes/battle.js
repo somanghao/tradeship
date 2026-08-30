@@ -19,7 +19,7 @@ const PIRATE_DEF = new Map(ALL_PIRATES.map((d) => [d.id, d]));
 import { blit, blitTinted } from '../pixel.js';
 /* 조우 손실의 몫·상한·선원 바닥은 **`data.js: ENCOUNTER_LOSS` 한 벌이 정본**이다.
    `scenes/map.js`(도주)가 이 파일의 두 함수를 그대로 불러 **같은 값을 본다**. */
-import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS, ENCOUNTER_LOSS } from '../data.js';
+import { TROOPS, GOOD_BY_ID, SHOTS, SHOT_KEYS, SHIPS, ENCOUNTER_LOSS, PRIZE_SCRAP } from '../data.js';
 import {
   state, ship, playerTroops, pushLog, cargoFree, armsFactor, armsAimAt, trimLoadout,
   shotStock, useShot, fleeBonus, fleeOdds, fleeWord, crewLossFactor, shipSpeed, captureShip, PRIZE_HULL, regionOf,
@@ -33,6 +33,11 @@ import {
   flagshipSinks, sinkFlagship,
   /* 세력 — 함대를 꺾으면 그 집 장부에 이름이 붉게 적힌다(−4) */
   fleetSlain,
+  /* ★★ **나포의 둘째 문턱은 선원이다**(회차 28 다-1 · `data.js: PRIZE_CREW`).
+     `captureShip`은 `spareCrew() < prizeCrewNeed(key)`면 **말없이 해체**로 간다(`why:'crew'`).
+     화면은 그동안 `state.fleet[prizeKey]`(같은 선종 보유)만 보고 「예인하면 선단에 들어온다」고
+     적었다 — 규칙이 서 있는데 화면이 딴 말을 하던 자리다. 여기서 둘 다 본다. */
+  spareCrew, prizeCrewNeed, capSpoils,
   /* 패배가 **원양을 막지 않게** 하는 선원 바닥이 이 문턱을 정본으로 쓴다(ⓒ) */
   OCEAN_CREW_MIN,
 } from '../state.js';
@@ -1012,6 +1017,16 @@ function finish(kind) {
   // 나포한 배는 선단에 끌고 갈 수 있다 — 아르고노트가 센츄리온이 된 것처럼
   const prizeKey = kind === 'capture' ? e.prize : null;
   const prize = prizeKey ? SHIPS[prizeKey] : null;
+  /* ★★ **끌고 갈 손이 있느냐** — `captureShip`이 실제로 보는 두 문턱을 화면도 그대로 본다.
+     실측(회차 28 `u-probe-silent2.mjs`): 코카로 갈레아스를 끌려면 선원을 **정원의 100%**로
+     태워야 하고 갈레온은 **정원을 다 채워도 불가**다. 그런데 이 모달은 방금 싸움이 끝난
+     자리라 선원이 가장 적을 때다 — 여기서 「예인한다」만 적으면 눌러 보고서야 해체된다. */
+  const prizeNeed = prizeKey ? prizeCrewNeed(prizeKey) : 0;
+  const prizeSpare = spareCrew();
+  const prizeDup = prizeKey ? !!state.fleet[prizeKey] : false;
+  const prizeShort = !!prizeKey && !prizeDup && prizeSpare < prizeNeed;
+  /* 해체값도 규칙에서 받아 온다 — 화면이 제 손으로 세면 `capSpoils` 상한과 갈라진다 */
+  const prizeScrap = prize ? capSpoils(prize.price * PRIZE_SCRAP) : 0;
 
   const rows = el('div.result-list', {}, [
     el('div.result-row', {}, [el('span', { text: '노획 금화' }), el('b', { text: coin.toLocaleString('ko-KR') + '닢' })]),
@@ -1022,7 +1037,17 @@ function finish(kind) {
     gained.length && el('div.result-row', {}, [el('span', { text: '노획 화물' }), el('b', { text: gained.join(', ') })]),
     prize && el('div.result-row', {}, [
       el('span', { text: '적선' }),
-      el('b', { text: state.fleet[prizeKey] ? `${prize.name} — 이미 같은 배가 있다 (해체 가능)` : `${prize.name} — 예인 가능` }),
+      el('b', {
+        text: prizeDup ? `${prize.name} — 이미 같은 배가 있다 (해체 가능)`
+            : prizeShort ? `${prize.name} — 끌고 갈 손이 ${prizeNeed - prizeSpare}명 모자란다 (해체만)`
+            : `${prize.name} — 예인 가능`,
+        style: prizeShort ? { color: '#c98a5a' } : null,
+      }),
+    ]),
+    /* 모자랄 때만 **얼마나** 모자란지를 수로 남긴다 — 다음 항차에 몇을 더 태울지가 판단이 된다 */
+    prizeShort && el('div.result-row', {}, [
+      el('span', { text: '여유 선원' }),
+      el('b', { text: `${prizeSpare}명 / 필요 ${prizeNeed}명 (최소 인원 ${ship().crewMin}명은 내 배에 남는다)` }),
     ]),
     el('div.result-row', {}, [el('span', { text: '선체' }), el('b', { text: `${state.hp}/${state.maxHp}` })]),
     el('div.result-row', {}, [el('span', { text: '생존 선원' }), el('b', { text: `${state.crew}명` })]),
@@ -1071,15 +1096,25 @@ function finish(kind) {
       }) : null,
       rows,
       prize ? el('p', {
-        style: { marginTop: '6px', color: '#9a927f', fontSize: '12px' },
-        text: state.fleet[prizeKey]
+        style: { marginTop: '6px', color: prizeShort ? '#c98a5a' : '#9a927f', fontSize: '12px' },
+        html: prizeDup
           ? `같은 선종을 이미 가지고 있다. 끌고 갈 선원이 없으니 해체해 자재로 팔 수 있다.`
-          : `${prize.name}${josa(prize.name, '은/는')} 선체가 ${Math.round(PRIZE_HULL * 100)}%만 남았다. 다음 입항지까지 예인하면 선단에 들어온다.`,
+          : prizeShort
+            /* ★ 「무엇이 막나 · 얼마가 필요한가 · 대신 무엇이 되나」 셋을 한 상자에.
+                 값을 숨기면 선택이 아니라 도박이 된다(계약 조달비·해적 조우 카드와 같은 원칙). */
+            ? `${prize.name}${josa(prize.name, '을/를')} 끌고 가려면 <b>여유 선원 ${prizeNeed}명</b>이 있어야 한다`
+              + ` — 지금은 ${prizeSpare}명뿐이다(최소 인원 ${ship().crewMin}명은 내 배에 남겨야 한다).`
+              + `<br>이대로 손을 대면 <b>해체해 자재로 판다 — ${prizeScrap.toLocaleString('ko-KR')}닢</b>.`
+              + ` 큰 배를 끌고 오려면 술집에서 사람을 더 태우고 나와야 한다.`
+            : `${prize.name}${josa(prize.name, '은/는')} 선체가 ${Math.round(PRIZE_HULL * 100)}%만 남았다. 다음 입항지까지 예인하면 선단에 들어온다.`
+              + ` (여유 선원 ${prizeSpare}명 · 이 배를 끌려면 ${prizeNeed}명)`,
       }) : null,
     ].filter(Boolean)),
     actions: [
       prize && {
-        label: state.fleet[prizeKey] ? '해체해서 판다' : `${prize.name}을 예인한다`,
+        /* ★ 단추의 말이 곧 일어날 일이어야 한다 — 선원이 모자라면 눌러도 해체다 */
+        label: (prizeDup || prizeShort) ? `해체해서 판다 (+${prizeScrap.toLocaleString('ko-KR')}닢)`
+                                        : `${prize.name}${josa(prize.name, '을/를')} 예인한다`,
         onClick: takePrize,
       },
       {
