@@ -1137,18 +1137,101 @@ function drawSeaFront(g, ctx, S, r) {
   }
 }
 
-function drawQuay(g, S, r) {
-  const [RM, RL, RD] = rampartOf(S);
+/* ── 부두 포장 (회차 27 · F-5 코드판) ─────────────────────────────
+   ★ **가장 가까운 평면이 가장 똑같았다.** 실측(같은 화풍 · 씨앗 여덟 짝지어 픽셀 거리):
+     화면 전체 23.3~27.0 ↔ **부두 띠 7.9~10.4** — 카메라에 제일 가까운 39px이
+     나머지보다 **세 배 덜 다르다.** 원인은 계선주·화물이 아니라(그건 회차 26이 씨앗에 맡겼다)
+     **포장 자체**였다: 12px 격자 · 6px 켜가 아홉 바다에서 한 글자도 안 달랐고, 갈리는 것은
+     `rampartOf(S)` 색 셋뿐이었다.
+   ⇒ 재료를 화풍이 정하게 한다(술집 벽에 쓴 것과 같은 처방). 색은 여전히 `rampartOf` 셋 안이다 —
+     팔레트를 늘리면 아홉 바다의 색 규약이 흔들린다. */
+const QUAY_PAVE = {
+  latin: 'flag', hellenic: 'flag', levant: 'flag', colonial: 'flag', dravidian: 'flag',
+  hanseatic: 'plank', nordic: 'plank',
+  sinic: 'slab', jiangnan: 'slab',
+  swahili: 'earth', guinea: 'earth', malay: 'earth', malabar: 'earth',
+};
+
+function drawQuay(g, S, r, styleKey = 'latin') {
+  const pave = QUAY_PAVE[styleKey] || 'flag';
+  /* ★ **널판 부두만 색을 나무 쪽으로 민다.** `rampartOf(S)`는 성벽 돌색이라 그대로 쓰면
+     브뤼헤의 나무 잔교가 **잿빛 돌판**으로 나온다(실화면 대조). 새 팔레트를 만들지 않고
+     그 세 톤을 나무 쪽으로 섞기만 한다 — 화풍의 색 규약은 그대로 산다. */
+  const R0 = rampartOf(S);
+  const [RM, RL, RD] = pave === 'plank'
+    ? [mixHex(R0[0], P.woodM, 0.55), mixHex(R0[1], P.woodL, 0.55), mixHex(R0[2], P.woodD, 0.55)]
+    : R0;
   const qy = QUAY_Y;                                 // 부두 상판
   g.r(0, qy, VW, VH - qy, RM);
   g.h(qy, 0, VW - 1, RL);
   g.h(qy + 1, 0, VW - 1, RL);
   g.h(qy + 2, 0, VW - 1, RD);
-  // 석재(또는 널판) 이음
-  for (let y = qy + 4; y < VH; y += 6) {
-    g.h(y, 0, VW - 1, RD);
-    const off = ((y - qy) / 6) % 2 ? 6 : 0;
-    for (let x = off; x < VW; x += 12) g.v(x, y, y + 5, RD);
+
+  if (pave === 'plank') {
+    /* 널판 부두 — 북쪽 바다. 결이 **가로로** 길고 이음매가 줄마다 어긋난다. */
+    for (let y = qy + 4; y < VH; y += 5) {
+      g.h(y, 0, VW - 1, RD);
+      let x = -Math.floor(r() * 60);
+      while (x < VW) {                               // 널 마구리 — 드물고 어긋난다
+        x += 46 + Math.floor(r() * 54);
+        if (x > 0 && x < VW) g.v(x, y + 1, y + 4, RD);
+      }
+      for (let i = 0, n = 2 + Math.floor(r() * 3); i < n; i++) {  // 나뭇결
+        const gx = Math.floor(r() * VW);
+        g.h(y + 2, gx, gx + 3 + Math.floor(r() * 7), mixHex(RM, RD, 0.35));
+      }
+    }
+  } else if (pave === 'slab') {
+    /* 장대석 — 명·조선의 부두. 돌이 길고 켜가 넓어 이음매가 드물다. */
+    for (let y = qy + 4; y < VH; y += 9) {
+      g.h(y, 0, VW - 1, RD);
+      let x = -Math.floor(r() * 30);
+      while (x < VW) {
+        const w = 34 + Math.floor(r() * 16);
+        if (x > 0) g.v(x, y, y + 8, RD);
+        g.h(y + 1, Math.max(0, x + 1), Math.min(VW - 1, x + w - 1), mixHex(RM, RL, 0.35));
+        x += w;
+      }
+    }
+  } else if (pave === 'earth') {
+    /* 다진 흙 — 이음매가 없다. 결 대신 **자갈과 얼룩**으로 면을 만든다.
+       ⚠️ 아무것도 안 그리면 갈색 판때기가 된다(술집 회벽에서 밟은 그 함정). */
+    for (let i = 0; i < 90; i++) {                   // 얼룩
+      g.ellipse(Math.floor(r() * VW), qy + 5 + Math.floor(r() * (VH - qy - 6)),
+        3 + r() * 10, 1 + r() * 3, r() < 0.5 ? '#00000012' : mixHex(RL, RM, 0.5) + '20');
+    }
+    for (let i = 0; i < 70; i++) {                   // 자갈
+      const gx = Math.floor(r() * VW), gy = qy + 5 + Math.floor(r() * (VH - qy - 6));
+      g.h(gy, gx, gx + (r() < 0.4 ? 1 : 0), r() < 0.5 ? RL : RD);
+    }
+    for (let i = 0, n = 2 + Math.floor(r() * 3); i < n; i++) {   // 수레바퀴 자국
+      const gy = qy + 8 + Math.floor(r() * (VH - qy - 12));
+      const gx = Math.floor(r() * (VW - 80));
+      g.h(gy, gx, gx + 40 + Math.floor(r() * 60), '#00000018');
+    }
+  } else {
+    /* 불규칙 판석 — 지중해·대서양·인도. 돌마다 폭과 밝기가 다르고 켜마다 어긋난다.
+       ★ 같은 간격 12px 격자가 **셔터**로 읽히던 자리다(술집 돌벽과 같은 판정). */
+    for (let y = qy + 4; y < VH; y += 7) {
+      g.h(y, 0, VW - 1, RD);
+      let x = -Math.floor(r() * 18);
+      while (x < VW) {
+        const w = 10 + Math.floor(r() * 13);
+        if (x > 0) g.v(x, y, y + 6, RD);
+        if (r() < 0.45) {                            // 돌마다 조금씩 밝기가 다르다
+          g.r(Math.max(0, x + 1), y + 1, Math.min(w - 1, VW - x - 1), 5,
+            mixHex(RM, r() < 0.5 ? RL : RD, 0.10 + r() * 0.14));
+        }
+        x += w;
+      }
+    }
+  }
+  /* 젖은 자리 — 어느 포장에서나. 부두는 물가라 늘 얼룩이 있고, 이 한 겹이 없으면
+     포장이 아무리 갈려도 **면이 고르게 말라** 종이로 보인다. */
+  for (let i = 0, n = 1 + Math.floor(r() * 4); i < n; i++) {
+    const px0 = Math.floor(r() * VW), py = qy + 6 + Math.floor(r() * (VH - qy - 10));
+    g.ellipse(px0, py, 6 + r() * 16, 2 + r() * 4, '#0a141a1c');
+    g.ellipse(px0 - 2, py - 1, 3 + r() * 6, 1 + r() * 2, '#8fb4d814');
   }
   /* 계선주 + 늘어진 밧줄 — 부두 상판 위에 세운다.
      ★ 다섯 개를 88px 간격으로 못박아 두었더니 아홉 바다 어느 부두에서나 **같은 자리**에
@@ -1407,7 +1490,7 @@ export function portSprite(styleKey, seed) {
     }
 
     drawSeaFront(g, ctx, S, r);
-    drawQuay(g, S, r);
+    drawQuay(g, S, r, styleKey);
     // 시각의 색을 배경 전체에 얇게 한 겹 — 지붕·물·부두가 같은 빛 아래 놓인다
     if (mood.wash) { ctx.fillStyle = mood.wash; ctx.fillRect(0, 0, VW, VH); }
   });
@@ -1873,7 +1956,10 @@ function tavDoor(g, S, r, x, C) {
      있는데 그 아래에 술을 내주는 자리가 없으니 방이 창고로 읽힌다. 선반 **바로 아래**에
      두면 「위에 통, 아래에 카운터」가 한 덩어리로 읽힌다.
    ⚠️ 그릴 수 있는 폭은 논리 x < 196이다(그 오른쪽은 DOM 패널이 덮는다). */
-const TAV_BAR = { x: 96, w: 100, h: 26 };
+/* ★ **R-4에서 왼쪽으로 옮겼다**(x 96 → 4). 술통 선반이 창 아래(x 22~94)로 내려갔으므로
+   카운터도 그 아래여야 「위에 통, 아래에 카운터」 한 덩어리가 산다. 그 대신 오른쪽 100px이
+   통째로 비어 **화풍 물건 하나**(굴뚝·항아리·그물·게시판·문)가 처음으로 화면에 든다. */
+const TAV_BAR = { x: 4, w: 90, h: 26 };
 function tavCounter(g, S, r) {
   const { x, w, h } = TAV_BAR;
   const y = TAV_FLOOR;
@@ -1898,9 +1984,11 @@ function tavCounter(g, S, r) {
   g.px(x + 53, y - 9, P.goldL);
   g.r(x + 57, y - 6, 2, 3, P.goldD);
   g.ellipse(x + 90, y - 3, 4, 3, P.woodD);        // 접시 하나
-  // 카운터 옆에 기대 세운 통 하나 — 왼쪽 끝이 허전하다
-  barrel(g, x - 14, y - 2, 13, 15);
-  g.h(y + 14, x - 20, x - 1, '#00000040');
+  /* 카운터 옆에 기대 세운 통 하나 — ★ R-4에서 **오른쪽 끝**으로 옮겼다.
+     카운터가 x4로 가면서 왼쪽은 화면 모서리라 허전하지 않고, 대신 카운터와 오른쪽 칸
+     사이(x 97~110)가 벌어진다. */
+  barrel(g, x + w + 3, y - 2, 13, 15);
+  g.h(y + 14, x + w + 1, x + w + 18, '#00000040');
 }
 
 /** 바닥 물건 — 통 더미와 궤짝. 벽만 채우면 방이 납작하다 */
@@ -1911,7 +1999,9 @@ function tavFloorProps(g, S, r, kind, x) {
     barrel(g, x + 12, 126, 20, 23);             // 위에 하나 얹는다
     g.h(174, x - 2, x + 48, '#00000040');       // 바닥 그림자
   } else {
-    for (let i = 0, cx = x; i < 3; i++) {       // 궤짝 세 짝
+    /* ⚠️ **세 짝은 이제 못 놓는다** — 궤짝 셋은 최대 100px이라 보이는 폭(196) 안에서
+       카운터나 벽 물건을 파고든다. 옛 자리(x 236)는 패널 뒤라 폭을 아무도 안 쟀다. 두 짝이다. */
+    for (let i = 0, cx = x; i < 2; i++) {       // 궤짝 두 짝
       const w = 20 + Math.floor(r() * 12), h = 16 + Math.floor(r() * 8);
       const y = 174 - h;
       g.r(cx, y, w, h, P.woodM);
@@ -1922,7 +2012,7 @@ function tavFloorProps(g, S, r, kind, x) {
       g.v(cx + w - 3, y, y + h - 1, P.woodD);
       cx += w + 2;
     }
-    g.h(174, x - 2, x + 76, '#00000040');
+    g.h(174, x - 2, x + 52, '#00000040');
   }
 }
 
@@ -2060,8 +2150,10 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
       /* 아치 벽감 — ⚠️ **자리를 두 번 옮겼다(R-3).** ① 원래 자리(y 60~82)는 방을 낮추자
          술통 선반의 통과 겹쳐 **검은 상자**가 됐다(레반트·스와힐리에서 눈으로 잡았다).
          ② 창 아래(y 74~96)로 내렸더니 이번엔 징두리에 닿아 **검은 구멍**이 됐다.
-         ⇒ 통 **위**의 빈 벽(x 157~180 · y 36~58)이 어느 화풍에서도 비어 있는 유일한 자리다. */
-      const ny = TAV_CEIL + 24, nx = 168;
+         ③ **R-4에서 세 번째로 옮겼다** — 그 자리(x 157~180)는 이제 화풍 물건 한 칸의
+            한가운데다. 방을 다시 짜며 생긴 **창과 오른쪽 칸 사이의 빈 기둥**(x 76~97)이
+            지금 어느 화풍에서도 비어 있는 유일한 자리다. */
+      const ny = TAV_CEIL + 10, nx = 86;
       g.ellipse(nx, ny, 11, 12, jointC);
       g.r(nx - 11, ny, 23, 22, jointC);
       g.ellipse(nx, ny, 9, 10, mixHex(baseC, '#000000', 0.35));
@@ -2075,7 +2167,7 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
     /* ★ **등불 빛이 벽에 닿아야 한다.** 나무벽은 결이 빛을 받아 저절로 살았는데 돌·회벽은
        면이 고르게 균일해 등불이 걸려 있는데도 평평해 보였다(PM 지적, 회차 22).
        벽 재료 위에 한 겹 얹는다 — 등불 스프라이트보다 **먼저**라야 벽에 스민 것으로 보인다. */
-    for (const [lx, ly] of [[52, 44], [148, 40]]) {
+    for (const [lx, ly] of [[52, 44], [150, 40]]) {
       for (let i = 6; i >= 1; i--) {
         g.ellipse(lx, ly + 10, 14 + i * 9, 10 + i * 7, `rgba(255,198,116,0.0${i > 3 ? 1 : 2})`);
       }
@@ -2098,7 +2190,7 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
     const wm = moodOf(r);
     const WS = styleAtHour(S, wm);
     const WC = seaOf(S);
-    const wx = 20, wy = 28 + TAV_DECOR_DY;        // ★ 창은 한 벌로 올린다 (R-3)
+    const wx = 24, wy = 28 + TAV_DECOR_DY;        // ★ 창은 한 벌로 올린다 (R-3) · x는 R-4에서 4 밀었다
     g.r(wx - 3, wy, 52, 52, P.woodD);
     g.r(wx, wy + 3, 46, 46, WS.sky[2]);
     g.r(wx, wy + 3, 46, 22, WS.sky[1]);
@@ -2117,47 +2209,63 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
     g.h(wy + 25, wx, wx + 45, P.woodM);
     g.box(wx - 3, wy, 52, 52, P.out2);
 
-    // ── 벽에 걸린 노 ─────────────────────────────────────
-    // 여기 오는 사람들이 뭘 하는 사람인지 한 줄로 말한다.
-    // 자루를 가늘게 뽑고 날을 작게 두면 빗자루로 보인다 — 날은 넓고 길어야 노다.
-    const oy = TAV_DECOR_DY;                       // ★ 노도 같은 만큼 (R-3)
-    g.r(83, 30 + oy, 4, 44, P.woodM);
-    g.v(83, 30 + oy, 73 + oy, P.woodL);
-    g.v(86, 30 + oy, 73 + oy, P.woodD);
-    g.r(82, 30 + oy, 6, 3, P.woodH);               // 손잡이 마구리
-    g.poly([[79, 72 + oy], [91, 72 + oy], [92, 92 + oy], [85, 100 + oy], [78, 92 + oy]], P.woodL);   // 날
-    g.poly([[81, 74 + oy], [89, 74 + oy], [89, 90 + oy], [85, 96 + oy], [81, 90 + oy]], P.woodH);
-    g.v(85, 74 + oy, 95 + oy, P.woodM);            // 날 가운데 능선
-    g.line(79, 72 + oy, 78, 92 + oy, P.woodD);
-    g.line(91, 72 + oy, 92, 92 + oy, P.woodD);
+    /* ── 벽에 걸린 노 ─────────────────────────────────────
+       여기 오는 사람들이 뭘 하는 사람인지 한 줄로 말한다.
+       자루를 가늘게 뽑고 날을 작게 두면 빗자루로 보인다 — 날은 넓고 길어야 노다.
+       ★ **R-4에서 왼쪽 끝으로 옮겼다**(자루 83 → 7). 회차 26이 잰 「남은 가장 넓은 빈 기둥
+         17px(x 0~16)」이 바로 이 자리이고, 노는 폭 14px이라 **거기 들어가는 유일한 물건**이다.
+         노를 여기로 밀어야 x 76~96이 비고, 그 빈칸이 아래 오른쪽 칸을 성립시킨다. */
+    const oy = TAV_DECOR_DY, ox = -76;             // ★ 노만 x를 민다 (R-4)
+    g.r(83 + ox, 30 + oy, 4, 44, P.woodM);
+    g.v(83 + ox, 30 + oy, 73 + oy, P.woodL);
+    g.v(86 + ox, 30 + oy, 73 + oy, P.woodD);
+    g.r(82 + ox, 30 + oy, 6, 3, P.woodH);          // 손잡이 마구리
+    g.poly([[79 + ox, 72 + oy], [91 + ox, 72 + oy], [92 + ox, 92 + oy], [85 + ox, 100 + oy], [78 + ox, 92 + oy]], P.woodL);   // 날
+    g.poly([[81 + ox, 74 + oy], [89 + ox, 74 + oy], [89 + ox, 90 + oy], [85 + ox, 96 + oy], [81 + ox, 90 + oy]], P.woodH);
+    g.v(85 + ox, 74 + oy, 95 + oy, P.woodM);       // 날 가운데 능선
+    g.line(79 + ox, 72 + oy, 78 + ox, 92 + oy, P.woodD);
+    g.line(91 + ox, 72 + oy, 92 + ox, 92 + oy, P.woodD);
 
-    // ── 술통 선반 ────────────────────────────────────────
-    const sy = TAV_DECOR_DY;                       // ★ 선반과 술통도 같은 만큼 (R-3)
-    g.r(100, 88 + sy, 88, 3, P.woodM);
-    g.h(88 + sy, 100, 187, P.woodL);
-    barrel(g, 104, 72 + sy, 15, 16);
-    barrel(g, 124, 74 + sy, 13, 14);
-    barrel(g, 144, 72 + sy, 15, 16);
-    barrel(g, 166, 75 + sy, 12, 13);
+    /* ── 술통 선반 ────────────────────────────────────────
+       ★ **R-4에서 창 아래로 내렸다**(x 100~188 · y 60~84 → x 22~94 · y 74~92).
+         이 선반이 보이는 폭의 절반(88px)을 벽 한가운데에서 차지하고 있었고, 그것이
+         「굴뚝·항아리·그물·게시판·문을 한 개도 못 들여놓는」 이유였다(회차 26 견적).
+         내려 놓으면 **창 아래 빈 벽**(전에는 아무것도 없던 자리)이 차고, 위쪽 x 96~195가
+         통째로 비어 **화풍 물건이 들어갈 100px 한 칸**이 생긴다.
+       ★ 카운터도 함께 왼쪽으로 옮겼다 — *"위에 통, 아래에 카운터"*가 한 덩어리라 갈라 두면
+         선반이 벽에 뜬 널빤지가 된다(`TAV_BAR`). */
+    const sy = 0;
+    g.r(22, 90 + sy, 72, 3, P.woodM);
+    g.h(90 + sy, 22, 93, P.woodL);
+    barrel(g, 24, 74 + sy, 15, 16);
+    barrel(g, 43, 76 + sy, 13, 14);
+    barrel(g, 60, 74 + sy, 15, 16);
+    barrel(g, 79, 77 + sy, 12, 13);
     // 선반 아래 매달린 컵들
-    for (const cx of [108, 120, 152, 174]) {
-      g.r(cx, 92 + sy, 3, 4, P.clothD);
-      g.h(96 + sy, cx, cx + 2, P.clothM);
+    for (const cx of [28, 44, 68, 86]) {
+      g.r(cx, 93 + sy, 3, 4, P.clothD);
+      g.h(97 + sy, cx, cx + 2, P.clothM);
     }
 
-    /* ── 들보에 매단 것 ──────────────────────────────────
-       ★ "이 술집이 어느 바다에 있나"를 한 줄로 말하는 자리. 벽 재료가 결을 주고,
-         여기가 **내용**을 준다. 없으면 아홉 술집이 다시 한 그림이 된다. */
-    tavernHang(g, S, r, TAV_HANG[styleKey] || 'garlic');
-
-    /* ── 오른쪽 절반 ─────────────────────────────────────
-       벽 물건 둘을 고른다. 하나는 화풍이 먼저 미는 것, 하나는 나머지에서. */
+    /* ── 오른쪽 칸 — 이 바다의 물건 하나 ───────────────────
+       ★★ **회차 27의 과녁이 여기다.** 전에는 벽 물건을 **둘** 골라 논리 x 212·300에 두었는데
+         `scenes/tavern.js: PANEL.x = 196`이 그 전부를 덮어 **게임에서 한 픽셀도 보인 적이 없다**
+         (회차 26 A-ISSUES E-1). 견적도 거기 있다 — 보이는 폭에 남은 빈 기둥이 17px인데
+         옮길 물건이 50~74px이라 **한 개도 안 들어갔다.**
+       ⇒ 방을 다시 짰다. 노를 왼쪽 끝(17px 기둥)으로, 술통 선반을 창 아래로 내리자
+         **x 96~195 × y 12~98 (100×86)** 한 칸이 통째로 비었다. 다섯 중 무엇이든 들어간다
+         (굴뚝 62 · 항아리 75 · 그물 68 · 게시판 70 · 문 50).
+       ⚠️ **둘에서 하나로 줄었다.** 100px에 둘은 못 들어간다(68+70=138). 대신 그 하나가
+         이제 **실제로 보이므로** 화면에 나타나는 화풍 물건은 0개 → 1개다.
+       ⚠️ y는 안 건드렸다 — 다섯은 옛 방 높이에 맞춰 그려져 있고 `TAV_RIGHT_DY`가 통째로
+         올려 준다(정수 이동이라 픽셀이 안 어긋난다). x 슬롯만 바꾼다. */
     const pool = TAV_RIGHT[styleKey] || ['board', 'net', 'jars'];
-    const wallA = r() < 0.72 ? pool[0] : pool[1];
-    const rest = pool.filter((k) => k !== wallA).concat(['door']);
-    const wallB = rest[Math.floor(r() * rest.length)];
+    /* 문도 후보에 남긴다 — *"사람이 드나드는 자리가 있어야 방이 닫히지 않는다."*
+       다만 화풍이 미는 물건이 먼저다 — ⚠️ **0.25로 뒀더니 seed 3에서 열셋 중 여섯이 문이었다**
+       (문은 화풍을 안 가려 아홉 바다가 다시 한 그림이 된다). 0.18로 낮췄다. */
+    const wallA = r() < 0.18 ? 'door' : (r() < 0.72 ? pool[0] : pool[1]);
     const stoneC = [stoneM, stoneL, stoneD];
-    const slot = [212, 300];                      // 두 자리 — 자리 안에서 조금씩 흔든다
+    const slotX = 100 + Math.floor(r() * 8);      // 자리 안에서 조금씩 흔든다
     const place = (kind, sx) => {
       if (kind === 'hearth') tavHearth(g, S, r, sx, stoneC);
       else if (kind === 'jars') tavJars(g, S, r, sx + 4);
@@ -2165,31 +2273,37 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
       else if (kind === 'door') tavDoor(g, S, r, sx + 10, stoneC);
       else tavBoard(g, S, r, sx + 4);
     };
-    /* ★ 이 다섯(굴뚝·항아리·그물·게시판·문)은 **옛 방 높이(바닥선 166)에 맞춰 그려져 있다** —
-       방을 낮춘 뒤 그대로 두면 징두리가 아궁이를 덮고 문이 바닥을 뚫는다.
-       y 좌표를 예순 군데 고치는 대신 **캔버스를 옮겨서** 통째로 올린다(정수 이동이라
-       픽셀이 어긋나지 않는다 — `pixel.js: G`가 `fillRect`를 `|0`으로 찍는다).
-       ⚠️ 이 자리(논리 x≥212)는 **DOM 패널이 덮어 게임에서는 한 픽셀도 안 보인다** —
-         발견 경위와 제안은 `A-ISSUES.md` E-1. 그래도 어긋난 채로 두지는 않는다. */
     ctx.save();
     ctx.translate(0, TAV_RIGHT_DY);
-    place(wallA, slot[0] + Math.floor(r() * 10));
-    place(wallB, slot[1] + Math.floor(r() * 10));
+    place(wallA, slotX);
     ctx.restore();
+
+    /* ── 들보에 매단 것 ──────────────────────────────────
+       ★ "이 술집이 어느 바다에 있나"를 한 줄로 말하는 자리. 벽 재료가 결을 주고,
+         여기가 **내용**을 준다. 없으면 아홉 술집이 다시 한 그림이 된다.
+       ★ **벽 물건 뒤가 아니라 앞에 그린다**(R-4). 들보에 매단 것은 벽보다 앞에 있는
+         물건이고, 그래야 같은 100px 칸을 벽 물건과 나눠 쓸 수 있다 — 뒤에 그리면
+         그물·게시판이 마늘 타래를 지우고, 자리를 갈라 두려면 칸이 다시 모자란다. */
+    tavernHang(g, S, r, TAV_HANG[styleKey] || 'garlic');
 
     // ── 허리 높이 목재 징두리 ─────────────────────────────
     g.r(0, TAV_WAINSCOT, VW, TAV_FLOOR - TAV_WAINSCOT, P.woodD);
     g.h(TAV_WAINSCOT, 0, VW - 1, P.woodM);
     g.h(TAV_WAINSCOT + 1, 0, VW - 1, P.woodL);
     for (let x = 0; x < 200; x += 13) g.v(x, TAV_WAINSCOT + 2, TAV_FLOOR - 1, '#00000038');
-    // 문은 바닥까지 내려온다 — 징두리가 덮으면 벽에 그린 그림이 된다
-    if (wallA === 'door' || wallB === 'door') {
-      /* ⚠️ 이 자리는 `TAV_RIGHT_DY` **밖**이다 — 문의 아랫도리는 징두리·바닥 상수로 직접 그린다
-         (문은 바닥까지 내려와야 하고, 그 바닥은 이제 `TAV_FLOOR`다). */
-      const dx = (wallA === 'door' ? slot[0] : slot[1]) + 10;
+    /* 바닥까지 내려오는 것은 징두리 **뒤**에 다시 그린다 — 안 그리면 벽에 붙인 그림이 된다.
+       ⚠️ 이 자리는 `TAV_RIGHT_DY` **밖**이다(징두리·바닥 상수로 직접 그린다). */
+    if (wallA === 'door') {
+      const dx = slotX + 10;
       g.r(dx, TAV_WAINSCOT, 44, TAV_FLOOR - TAV_WAINSCOT, mixHex(P.woodD, '#211711', 0.25));
       g.r(dx + 44, TAV_WAINSCOT, 3, TAV_FLOOR - TAV_WAINSCOT, '#f4e2c41e');
       g.r(dx - 3, TAV_WAINSCOT, 3, TAV_FLOOR - TAV_WAINSCOT, stoneD);
+    } else if (wallA === 'hearth') {
+      /* ★ 굴뚝은 **바닥에 서는 물건**인데 몸통이 y96에서 끝나 징두리 위에 얹힌 꼴이었다
+         (오른쪽 칸이 안 보이던 동안에는 아무도 못 봤다). 노변석을 바닥까지 잇는다. */
+      g.r(slotX, TAV_WAINSCOT, 62, TAV_FLOOR - TAV_WAINSCOT, stoneD);
+      g.h(TAV_WAINSCOT, slotX, slotX + 61, stoneM);
+      for (let bx = slotX + 9; bx < slotX + 62; bx += 18) g.v(bx, TAV_WAINSCOT + 1, TAV_FLOOR - 1, mixHex(stoneD, '#000000', 0.4));
     }
 
     // ── 바닥 ────────────────────────────────────────────
@@ -2203,27 +2317,27 @@ export function tavernSprite(styleKey = 'latin', seed = 1) {
       const off = Math.floor(r() * 46);
       for (let x = off; x < VW; x += 68) g.v(x, y - 2, Math.min(VH - 1, y + 3), '#00000030');
     }
-    /* ★ **카운터** — 방을 낮추며 늘어난 바닥을 채운다(R-3). 술통 선반 바로 아래다. */
+    /* ★ **카운터** — 방을 낮추며 늘어난 바닥을 채운다(R-3). 술통 선반 바로 아래다
+       (R-4에서 선반과 함께 왼쪽으로 옮겼다 — `TAV_BAR`). */
     tavCounter(g, S, r);
-    /* ★ 왼쪽 바닥에도 하나 — 지금까지 바닥 물건은 **x 236**에만 있었고 그 자리는
-       DOM 패널 뒤라 한 번도 보인 적이 없다(A-ISSUES E-1). 보이는 쪽에 한 무리를 더 둔다. */
-    /* ⚠️ 궤짝(`crates`)은 폭이 최대 108px이라 x=6에 두면 카운터(x 96~)를 파고든다 —
-       보이는 쪽은 통(`casks` · 폭 48)으로 고정한다. 궤짝은 오른쪽(넓은 자리)에 그대로 둔다. */
-    tavFloorProps(g, S, r, 'casks', 6 + Math.floor(r() * 8));
-    // 오른쪽 바닥에도 물건을 둔다 — 벽만 채우면 방이 납작하다
-    tavFloorProps(g, S, r, r() < 0.5 ? 'casks' : 'crates', 236 + Math.floor(r() * 40));
+    /* 오른쪽 바닥 — 벽만 채우면 방이 납작하다.
+       ⚠️ **굴뚝·문일 때는 두지 않는다.** 둘 다 바닥까지 내려오는 물건이라 통 더미가
+          아궁이 앞이나 문지방에 쌓인다. 전에는 이 자리(x 236~)가 패널 뒤라 뭘 두든
+          안 보였고, 그래서 이 충돌이 한 번도 드러나지 않았다. */
+    if (wallA !== 'hearth' && wallA !== 'door') {
+      tavFloorProps(g, S, r, r() < 0.5 ? 'casks' : 'crates', 134 + Math.floor(r() * 8));
+    }
 
     // 앞으로 갈수록 어둡게 — 바닥이 눕는 느낌
     for (let y = VH - 22; y < VH; y++) g.h(y, 0, VW - 1, '#0000000a');
 
-    // ── 등불과 빛 ───────────────────────────────────────
-    const lx3 = 268 + Math.floor(r() * 60);       // 오른쪽에도 등이 하나 — 없으면 그쪽만 어둡다
+    /* ── 등불과 빛 ───────────────────────────────────────
+       ★ **셋에서 둘로 줄였다**(R-4). 셋째 등은 x 268~328에 걸려 있었다 — 패널 뒤라
+         한 번도 켜진 적이 없다. 남은 둘이 보이는 폭(196) 좌·우를 갈라 맡는다. */
     lampGlow(g, 52, 44, 84);
-    lampGlow(g, 148, 40, 76);
-    lampGlow(g, lx3, 36, 70);
+    lampGlow(g, 150, 40, 78);
     tavernLamp(g, 52, 44);
-    tavernLamp(g, 148, 40);
-    tavernLamp(g, lx3, 36);
+    tavernLamp(g, 150, 40);
 
     // ── 구석 그늘 ───────────────────────────────────────
     for (let i = 0; i < 22; i++) {

@@ -13,7 +13,7 @@ import { blit } from '../pixel.js';
 import { CITY_BY_ID, TROOPS, CREW_TRAITS } from '../data.js';
 import {
   state, ship, tavernCrews, recruitBand, avgCrewWage, shorthanded,
-  pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf, salvage,
+  pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf, salvage, salvageElsewhere,
 } from '../state.js';
 import { el, overlay, toast, refreshHUD, refreshLog, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
@@ -152,6 +152,10 @@ function strandedCard() {
 
   const rows = salvage(city.id);
   const total = rows.reduce((a, r) => a + r.gold, 0);
+  /* ★ 2026-08-30 — 「다른 항구에 둔 배·거점이 있으면」이라고 **가정법**으로 적고 있었다.
+     규칙은 그것이 어디에 얼마나 있는지 이미 안다(`salvageElsewhere`) — 물어봐서 말한다. */
+  const away = salvageElsewhere(city.id);
+  const awayTotal = away.reduce((a, r) => a + r.gold, 0);
 
   return el('div.tav-card.tav-stranded', {}, [
     el('div.tav-name', {}, [el('b', { text: '사람을 못 태운다' })]),
@@ -164,8 +168,14 @@ function strandedCard() {
       text: total > 0
         ? `항구로 나가면 지금 여기서 팔 수 있는 것이 ${total.toLocaleString('ko-KR')}닢어치 있다`
           + ` (${rows.slice(0, 3).map((r) => r.label).join(' · ')}${rows.length > 3 ? ' …' : ''}).`
-        : '이 항구에서 팔 것은 없다. 다른 항구에 둔 배·거점이 있으면 그리로 가야 하고,'
-          + ' 없으면 남은 문은 **청산**이다 — 배를 넘기고 셈을 끝내면 판은 1일차 조건으로 다시 선다.',
+        : away.length
+          ? `이 항구에서 팔 것은 없다. 그러나 **${away[0].name}**`
+            + `${away[0].days != null ? `(${away[0].days}일)` : ''}에 `
+            + `${away[0].gold.toLocaleString('ko-KR')}닢어치가 있다`
+            + (away.length > 1 ? ` (다 합치면 ${awayTotal.toLocaleString('ko-KR')}닢).` : '.')
+            + ' 출항은 막히지 않는다 — 못 낸 몫이 빚으로 남을 뿐이다.'
+          : '이 항구에서 팔 것은 없고 다른 항구에 둔 것도 없다.'
+            + ' 남은 문은 **청산**이다 — 배를 넘기고 셈을 끝내면 판은 1일차 조건으로 다시 선다.',
     }),
     el('button.btn.sm', {
       text: '항구로 — 팔 것을 본다',

@@ -31,10 +31,15 @@ import {
   /* 계절풍 — **규칙만 있고 화면이 침묵하면 없는 것과 같다.** 한 회차에 다섯 번 나온 교훈이라
      철을 넣은 커밋에서 항로 카드가 그것을 말하게 한다. 판정은 `state.js` 한 벌이다. */
   routeSeasonLabel, seasonOf,
+  /* ★ 바닥에서 나가는 문(C-17) — **판정은 규칙이 한 벌로 갖고 있다**(`state.js: recoveryOptions`).
+     지도가 그 질문을 못 해서 실플레이 러너가 이 화면에서 근해를 왕복하다 멈췄다. */
+  recoveryOptions,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
   pirateThreat, newsLines, pirateEnemy, npcHeading,
+  /* 대금업자가 이 항구에 있나 — `state`는 world를 모른다(순환 참조 방지). 그래서 **주입**한다. */
+  figuresAt,
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES, LIVE_LANES } from '../regions/index.js';
 /* 상단 압박 함대 — 조우 갈래가 이것을 읽어야 화면에 나온다(G-5) → npc/guild.js */
@@ -1143,11 +1148,135 @@ function oceanGateRows(costCell) {
       el('span.rw', { text: rg?.name ?? '', style: { color: '#8fb4d8' } }),
       el(`span.rw.${short.length ? 'bad' : 'good'}`, { text: status }),
       here ? costCell(d, cost)
-           : el('span.rd', { text: `${course.legs}구간 ${course.days}일 · 원양 ${lane.days}일` }),
+      /* ★ 문이 남의 항구에 있으면 **항해비를 안 적는다**(남의 항구에서 잰 값은 거짓말이다).
+         그런데 그 침묵이 금고 0에서 거짓 신호가 됐다 — 근해 다섯 줄이 다 붉은데 원양 줄만
+         멀쩡해 **저기는 갈 수 있는 것처럼 읽힌다**(실측 `u-shots/u-ra1-before-map.png`).
+         값은 여전히 안 적고, **첫 구간조차 못 내면** 그 사실만 색과 툴팁으로 말한다. */
+           : (() => {
+               const nx = course.next;
+               const nd = voyageDays(state.at, nx);
+               const nc = voyageCost(nd, state.crew, { from: state.at, to: nx });
+               const now = nc.supplies + nc.fleet + nc.hull + nc.arms + nc.insurance;
+               const short0 = now > state.gold;
+               return el(`span.rd${short0 ? '.short' : ''}`, {
+                 text: `${course.legs}구간 ${course.days}일 · 원양 ${lane.days}일`,
+                 style: short0 ? { color: '#d98a6a' } : null,
+                 title: short0
+                   ? `금고 ${state.gold.toLocaleString('ko-KR')}닢으로는 첫 구간`
+                     + `(${CITY_BY_ID[nx]?.name ?? nx})조차 못 낸다 — 출항하며 나갈 몫이 `
+                     + `${now.toLocaleString('ko-KR')}닢이다`
+                   : '',
+               });
+             })(),
     ]);
   });
 
   return { rows, total: gates.filter((g) => g.gate).length, ticket };
+}
+
+/* ── 바닥에서 나가는 문 · 지도 쪽 (C-17) ───────────────────────
+   ★ **규칙은 한 줄도 새로 만들지 않는다.** 판정도 값도 `state.js: recoveryOptions()` 한 벌이고
+     여기서는 **줄로 옮기고 단추 하나만** 건다(항구 `salvageCard`와 같은 규약).
+   ★ **왜 지도인가** — C-17이 실제로 죽은 화면이 여기다. 완주 러너는 960일차에 금고가 0이 되자
+     *이 목록*에서 근해를 왕복하다 멈췄다. 항구에는 「금고가 바닥이다」 카드가 진작 있었는데,
+     지도에서는 항로값 다섯 줄이 붉어질 뿐 **무엇을 하면 되는지는 아무 데도 없었다**
+     (실측 2026-08-30 · `u-shots/u-ra1-before-map.png` — 원양 줄은 붉지도 않았다).
+     `state.js: recoveryOptions`의 머리주석이 *"지도·급여일·전투 뒤가 같은 질문을 못 한다"*고
+     적어 둔 그 자리다.
+   ★ **경보와 안내를 가른다**(항구와 같은 기준) — 여기서 팔 것으로 한 항차를 덮으면 놋빛 안내,
+     못 덮으면 붉은 경보다. 무역선은 짐을 싣는 순간이 늘 가장 가난해서, 그때마다 붉으면
+     진짜 바닥일 때 아무도 안 읽는다. */
+function brokeCard() {
+  const r = recoveryOptions(state.at, {
+    lender: figuresAt(state.at).find((f) => f.service === 'loan'),
+  });
+  if (!r.needsHelp) return null;
+
+  const near = r.elsewhere[0];
+  const loan = r.doors.find((d) => d.kind === 'loan');
+  /* ★ 「여기」만 세고 말하면 거짓말이 된다 — 하루 거리 항구에 창고 짐이 있는 판에서
+     *"다 팔아도 못 채운다"*가 뜬다(항구 카드와 같은 정정 · 2026-08-30 실측). */
+  const awayCovers = r.grave && r.elsewhere.length
+    && r.gold + r.hereValue + r.elsewhereValue >= (r.exit ?? 0)
+    && r.gold + r.hereValue + r.elsewhereValue >= r.debt;
+  const alarm = r.grave && !awayCovers;
+  const lines = [];
+
+  lines.push(el('div', {
+    style: { fontSize: '11.5px', lineHeight: 1.7 },
+    html: `금고 <b>${r.gold.toLocaleString('ko-KR')}닢</b>`
+        + (r.exit != null ? ` · 여기서 가장 싼 항차 <b>${r.exit.toLocaleString('ko-KR')}닢</b>` : '')
+        + (r.debt ? ` · 빚 <span style="color:#d05a4a">${r.debt.toLocaleString('ko-KR')}닢</span>` : ''),
+  }));
+  lines.push(el('div.cblurb', {
+    html: !r.grave
+      ? '이대로 뜨면 <b>못 낸 몫이 빚으로 남는다</b>. 항구로 돌아가 팔면 채워진다.'
+      : awayCovers
+        ? '<b>여기서는 못 채운다 — 그러나 막힌 것은 아니다.</b> 출항은 막히지 않으므로'
+          + ' 아래 항구까지 가서 팔면 갚는다(못 낸 몫은 빚으로 남는다).'
+        : '<b>여기서 팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 뜨면 못 낸 몫이 빚으로 남는다.',
+    style: { color: alarm ? '#e0a08e' : '#d0a04a' },
+  }));
+
+  /* 무엇을 팔 수 있나 — **여기 / 다른 항구**를 갈라 말한다.
+     ⚠️ "다른 항구에 배 N척"까지만 세면 사람이 세계를 스스로 뒤져야 한다. 규칙이 이미
+        이름·거리·값을 갖고 있으므로(`salvageElsewhere`) 그것을 그대로 편다. */
+  if (r.here.length) {
+    lines.push(el('div.cblurb', {
+      style: { color: '#e6c96a' },
+      html: `여기서 다 팔면 <b>${r.hereValue.toLocaleString('ko-KR')}닢</b> — `
+          + r.here.slice(0, 3).map((x) => x.label).join(' · ')
+          + (r.here.length > 3 ? ' …' : ''),
+    }));
+  } else if (near) {
+    lines.push(el('div.cblurb', {
+      style: { color: '#e6c96a' },
+      html: `이 항구에는 팔 것이 없다 — 가장 가까운 것은 <b>${near.name}</b>`
+          + (near.days != null ? ` (${near.days}일)` : '')
+          + `에 ${near.gold.toLocaleString('ko-KR')}닢어치다`
+          + (near.ships ? ` · 배 ${near.ships}척` : '')
+          + (near.holdings ? ` · 거점 ${near.holdings}곳` : '')
+          + (near.stored ? ` · 창고 ${near.stored}칸` : ''),
+    }));
+  } else {
+    lines.push(el('div.cblurb', {
+      style: { color: '#e0806e' },
+      /* ⚠️ **없는 문을 세지 않는다.** 대금업자는 항구마다 있는 것이 아니라 없는 항구에서는
+         문이 하나뿐인데, 「둘 다」라고 적으면 사람은 없는 문을 찾다가 판을 접는다
+         (항구 카드가 회차 23에 같은 자리를 이미 고쳤다). */
+      html: '세계 어디에도 팔 것이 없다. 남은 문은 '
+          + (loan?.ok ? '<b>빌리는 것</b>과 <b>청산</b>이다 — 둘 다' : '<b>청산</b>뿐이다 —')
+          + ' 항구 안에 있다.',
+    }));
+  }
+
+  /* ★ 문은 **항구에 모아 둔다.** 여기에 청산 단추를 하나 더 두면 같은 규칙이 두 화면에
+     따로 살게 되고, 바다 한가운데에서 배를 넘기는 그림이 된다. 지도는 **가리키기만** 한다. */
+  lines.push(el('button.btn.sm.dark', {
+    text: `${CITY_BY_ID[state.at]?.name ?? '항구'}로 — 팔 것과 마지막 문을 본다`,
+    title: '항구 오른쪽 맨 위 「금고가 바닥이다」 카드에 팔 것과 마지막 문이 모여 있다',
+    onclick: () => go('port'),
+    style: { marginTop: '4px' },
+  }));
+
+  return el('div.panel', { style: { borderColor: alarm ? '#8f2f26' : '#6f5214' } }, [
+    el('h3', {
+      style: alarm ? { background: 'linear-gradient(#4a2018, #331610)', color: '#f0b8a6' } : null,
+    }, [
+      el('span', {
+        text: !r.grave ? '금고가 비었다 — 팔면 채워진다'
+            : awayCovers ? '금고가 비었다 — 팔 것은 다른 항구에'
+            : '금고가 바닥이다',
+      }),
+      el('span', {
+        text: r.here.length ? `팔 것 ${r.here.length}가지 · ${r.hereValue.toLocaleString('ko-KR')}닢`
+            : r.elsewhere.length ? `다른 항구에 ${r.elsewhereValue.toLocaleString('ko-KR')}닢`
+            : '여기엔 팔 것이 없다',
+        style: { fontSize: '11px', color: alarm ? '#d09080' : '#8f8878', letterSpacing: 0 },
+      }),
+    ]),
+    el('div.city-card', {}, lines),
+  ]);
 }
 
 function routeCards() {
@@ -1356,6 +1485,7 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
   ]));
 
   const cards = [
+    brokeCard(),
     el('div.panel', {}, [
       el('h3', {}, [
         el('span', { text: '현재 위치' }),

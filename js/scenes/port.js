@@ -59,7 +59,7 @@ import {
      여기서는 **이 항구의 임자 한 줄**만 보여주고 나머지는 관계도 모달이 편다. */
   factionOfCity, factionsOfCity, regardOf, regardBand, infamyWeight,
   /* 바닥에서 나가는 문(C-17) — 값은 전부 `state.js`가 센다. 여기서는 줄로 옮기고 단추만 건다. */
-  salvage, cheapestExit, debtOwed, sellShip, liquidate,
+  salvage, salvageElsewhere, cheapestExit, debtOwed, sellShip, liquidate,
   /* 패권이 화면에서 말을 안 하던 자리 둘(A-8c) — 표는 state가 정본, 여기서는 읽기만 한다 */
   foeWealth, foeOdds, foeWealthGate,
   /* 상단이 값에 남긴 것과 상단이 준 것(회차 26 · G-6·G-3) — **읽기만 한다** */
@@ -835,6 +835,18 @@ function salvageCard() {
   const covered = total + state.gold >= (exit ?? 0) && total + state.gold >= debt;
   const grave = !covered;
 
+  /* ★★ 2026-08-30 실측이 문구를 뒤집었다 — **「여기」만 세고 말하면 거짓말이 된다.**
+     금고 0 · 이 항구에 팔 것 0인 판에서 카드가 *"팔 것을 다 팔아도 한 항차를 못 채운다"*라고
+     적었는데, 실제로는 **하루 거리 내이포에 창고 짐 203닢**이 있었다(가장 싼 항차는 45닢).
+     출항은 막히지 않으므로(못 낸 몫은 빚) **가서 파는 것이 그 판의 답**인데 화면이 그것을
+     막다른 골목처럼 말한 것이다. `covered`는 규칙이 정한 대로 「여기」만 세되(사흘 걸리는
+     항구의 배는 오늘의 답이 아니다), **문장은 밖에 있는 것까지 보고** 고른다. */
+  const away = salvageElsewhere(city.id);
+  const awayTotal = away.reduce((a, r) => a + r.gold, 0);
+  const awayCovers = grave && away.length
+    && state.gold + total + awayTotal >= (exit ?? 0)
+    && state.gold + total + awayTotal >= debt;
+
   const lines = [];
   lines.push(el('div.ctr-line', {
     html: `금고 <b>${state.gold.toLocaleString('ko-KR')}닢</b>`
@@ -847,8 +859,12 @@ function salvageCard() {
       : covered
         ? '이대로 뜨면 <b>못 낸 몫이 빚으로 남는다</b>(급여일에 이자와 함께 걷힌다).'
           + ' 아래를 팔면 채워진다 — 뜨기 전에 정하면 된다.'
-        : '<b>팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 나가면 빚만 는다 —'
-          + ' 아래 문 가운데 하나를 골라야 한다.',
+        : awayCovers
+          ? '<b>여기서는 못 채운다 — 그러나 막힌 것은 아니다.</b>'
+            + ` 아래 항구로 가면 팔 것이 있다(${(away[0].days != null ? `${away[0].days}일 거리` : '이 바다 안')}).`
+            + ' 출항은 막히지 않는다 — 못 낸 몫이 빚으로 남을 뿐이고, 가서 팔면 갚는다.'
+          : '<b>팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 나가면 빚만 는다 —'
+            + ' 아래 문 가운데 하나를 골라야 한다.',
   }));
 
   if (rows.length) {
@@ -863,19 +879,43 @@ function salvageCard() {
     }
   } else {
     /* ★ 빈 상태에도 말을 시킨다. "목록이 없다"가 아니라 **"이 항구에는 없다"**여야
-       다른 항구에 둔 배·거점을 떠올릴 수 있다. */
-    const away = Object.keys(state.fleet).filter((k) => k !== state.shipKey).length;
-    const holds = Object.keys(state.holdings ?? {}).length;
-    lines.push(el('div.ctr-sub', {
-      html: away || holds
-        ? `이 항구에서 팔 것은 없다 — 그러나 <b>다른 항구에 배 ${away}척 · 거점 ${holds}곳</b>이 있다.`
-          + ' 그 항구로 가면 팔 수 있다.'
-        /* ⚠️ **문 수를 세서 말한다.** 예전에는 「아래 둘뿐이다」로 박아 뒀는데, 대금업자는
-           항구마다 있는 것이 아니라 **없는 항구에서는 문이 하나(청산)뿐**이다 —
-           화면이 없는 문을 가리키면 사람은 그것을 찾다가 판을 접는다. */
-        : `팔 것이 하나도 없다. 남은 문은 아래 ${canLoan ? '둘' : '하나'}뿐이다.`,
-      style: { color: '#d0a04a' },
-    }));
+       다른 항구에 둔 배·거점을 떠올릴 수 있다.
+       ★★ 2026-08-30 — **세기만 하던 것을 이름으로 바꿨다.** 예전 줄은
+          「다른 항구에 배 2척 · 거점 1곳」까지였는데, 그것으로는 *어느* 항구인지도
+          *거기까지 며칠*인지도 알 수 없어 플레이어가 세계를 스스로 뒤져야 했다
+          (`state.js: salvageElsewhere`의 머리주석이 이 자리를 그대로 적어 두고 있다).
+          값·거리는 규칙이 세고(`resaleOf`·`HOLDING.sellBack`·`hopDays`) 화면은 편다.
+          ⚠️ `days: null`은 *"못 간다"*가 아니라 **"2홉으로는 못 셈한다"**는 뜻이라
+             일수를 안 적고 이름만 적는다. */
+    if (away.length) {
+      lines.push(el('div.ctr-sub', {
+        html: `이 항구에서 팔 것은 없다 — 그러나 <b>다른 항구에 ${awayTotal.toLocaleString('ko-KR')}닢</b>어치가 있다.`,
+        style: { color: '#d0a04a' },
+      }));
+      for (const r of away.slice(0, 3)) {
+        const what = [r.ships ? `배 ${r.ships}척` : null,
+                      r.holdings ? `거점 ${r.holdings}곳` : null,
+                      r.stored ? `창고 ${r.stored}칸` : null].filter(Boolean).join(' · ');
+        lines.push(el('div.ctr-sub', {
+          html: `· <b>${r.name}</b>${r.days != null ? ` (${r.days}일)` : ''}`
+              + ` — ${what} · ${r.gold.toLocaleString('ko-KR')}닢`,
+          style: { color: '#c8bfa8' },
+        }));
+      }
+      if (away.length > 3) {
+        lines.push(el('div.ctr-sub', {
+          text: `그 밖에 ${away.length - 3}곳에 더 있다.`, style: { color: '#8f8878' },
+        }));
+      }
+    } else {
+      /* ⚠️ **문 수를 세서 말한다.** 예전에는 「아래 둘뿐이다」로 박아 뒀는데, 대금업자는
+         항구마다 있는 것이 아니라 **없는 항구에서는 문이 하나(청산)뿐**이다 —
+         화면이 없는 문을 가리키면 사람은 그것을 찾다가 판을 접는다. */
+      lines.push(el('div.ctr-sub', {
+        text: `팔 것이 하나도 없다. 남은 문은 아래 ${canLoan ? '둘' : '하나'}뿐이다.`,
+        style: { color: '#d0a04a' },
+      }));
+    }
   }
 
   const acts = [];
@@ -896,16 +936,24 @@ function salvageCard() {
     `${SHIPS[BANKRUPT.keepShip].name} 한 척과 ${BANKRUPT.seedGold}닢으로 다시 시작한다`,
     '청산', false, () => askLiquidate()));
 
-  return el('div.panel', { style: { borderColor: grave ? '#8f2f26' : '#6f5214' } }, [
+  /* ⚠️ **머리말이 몸통과 반대말을 하면 안 된다.** 딱지가 「팔 것이 없다」인데 본문이
+     「다른 항구에 2,733닢어치가 있다」였다(2026-08-30 실측). 딱지도 밖에 있는 것을 센다. */
+  return el('div.panel', { style: { borderColor: grave && !awayCovers ? '#8f2f26' : '#6f5214' } }, [
     el('h3', {
-      style: grave
+      style: grave && !awayCovers
         ? { background: 'linear-gradient(#4a2018, #331610)', color: '#f0b8a6' }
         : null,
     }, [
-      el('span', { text: grave ? '금고가 바닥이다' : '금고가 비었다 — 팔면 채워진다' }),
       el('span', {
-        text: rows.length ? `팔 것 ${rows.length}가지 · ${total.toLocaleString('ko-KR')}닢` : '팔 것이 없다',
-        style: { fontSize: '11px', color: grave ? '#d09080' : '#8f8878', letterSpacing: 0 },
+        text: !grave ? '금고가 비었다 — 팔면 채워진다'
+            : awayCovers ? '금고가 비었다 — 팔 것은 다른 항구에 있다'
+            : '금고가 바닥이다',
+      }),
+      el('span', {
+        text: rows.length ? `팔 것 ${rows.length}가지 · ${total.toLocaleString('ko-KR')}닢`
+            : away.length ? `여기엔 없다 · 다른 항구에 ${awayTotal.toLocaleString('ko-KR')}닢`
+            : '팔 것이 없다',
+        style: { fontSize: '11px', color: grave && !awayCovers ? '#d09080' : '#8f8878', letterSpacing: 0 },
       }),
     ]),
     el('div.svc', {}, [...lines, ...acts]),
