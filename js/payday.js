@@ -20,6 +20,11 @@ import {
   /* C-8 — 급여일에 선택이 있으려면 **팔 것이 이 화면에 닿아야** 한다.
      값 계산은 전부 `state.js: salvage`(C-17과 같은 표)이고 여기서는 줄로 옮기고 단추만 건다. */
   salvage, sell, sellShip, sellHolding, sellMill, takeGoods, storedUsed, buyService,
+  /* 부관 급여 유예(다-2 · 회차 27) — **규칙은 전부 state.js에 서 있다.** 이 화면이 하는 일은
+     ① 단추를 그릴지 묻고(`canDeferOfficer`) ② 액수를 읽고(`officerDeferAmount`·`officerDeferred`)
+     ③ **무는 값을 그 자리에서 말한 뒤**(`officerCut` + `OFFICER.defer`) ④ 인자 하나를 넘기는 것뿐이다.
+     ⚠️ 성과급은 반드시 `officerCut()`으로 읽는다 — `OFFICER.cut` 상수는 지분을 내준 뒤에도 11%다. */
+  canDeferOfficer, officerDeferAmount, officerDeferred, officerCut,
 } from './state.js';
 import { figuresAt } from './world.js';
 import { el, modal, refreshHUD, refreshLog, iconEl, josa, toast } from './ui.js';
@@ -77,6 +82,9 @@ export function openPayday(onDone) {
   const rows = short ? salvage(state.at) : [];
   const redraw = () => { refreshHUD(); refreshLog(); openPayday(onDone); };
   const sellPane = short && (rows.length || lenderHere()) ? salvagePane(rows, redraw) : null;
+  /* ★ **유예 단추는 모자랄 때만 그린다.** 다 낼 수 있는데 미루는 것은 판단이 아니라
+     이자와 지분을 그냥 버리는 것이다(「안 주는 단추」와 같은 기준). */
+  const deferPane = short && canDeferOfficer() ? officerDeferPane(owed, onDone) : null;
 
   const m = modal({
     title: `급여일 — ${state.day}일차 · ${CITY_BY_ID[state.at].name}`,
@@ -87,12 +95,19 @@ export function openPayday(onDone) {
             + ` · 금고 <b>${won(state.gold)}닢</b>`
             + (short ? ` · <span class="pay-warn">${won(short)}닢 모자란다</span>` : ''),
       }),
+      /* ★ **미뤄 둔 삯은 청구에 이미 섞여 있다** — 그 사실을 안 적으면 「청구」가 갑자기
+         불어난 것으로만 보인다(유예는 면제가 아니라 다음 달로 미는 것이다 · `payrollOwed`). */
+      officerDeferred() ? el('div.pay-lead.pay-defer-note', {
+        html: `그 가운데 <b>${won(officerDeferred())}닢</b>은 지난 달 미뤄 둔 ${OFFICER.name}의 삯이다`
+            + `(${state.payroll.deferMonths || 1}달째 · 달마다 ×${OFFICER.defer?.rate ?? 1}로 분다).`,
+      }) : null,
       short ? el('div.pay-danger', {
         html: '모자란 만큼은 <b>밀린 삯</b>으로 남는다. 불만이 오르고, 참다 못한 무리는 '
             + '<b>돈 되는 짐을 들고</b> 배를 떠난다.',
       }) : null,
       box,
       sellPane,
+      deferPane,
       unrestPane(),
     ].filter(Boolean)),
     closable: false,      // 급여일은 넘길 수 없다 — 안 주는 것도 선택이지 회피가 아니다
@@ -176,6 +191,77 @@ function salvagePane(rows, redraw) {
     text: '판 돈은 그 자리에서 금고에 들어간다 — 팔고 나서 다시 「급여를 치른다」를 누르면 된다.',
   }));
   return el('div.pay-sellpane', {}, kids);
+}
+
+/* ── 부관 급여 유예 (다-2 · 2026-08-30 · 회차 27) ───────────────
+   ★ **이것은 「공짜로 넘기는 단추」가 아니다.** 규칙 쪽이 값을 네 번 다시 잡은 이유가 그것이고
+     (`data.js: OFFICER.defer`의 실측표 — 1차는 *안 미룰 이유가 없는 단추*, 2차는 *미룰 이유가
+     없는 단추*, 3차는 *횟수 제한이 제한이 아니었다*), 화면이 대가를 안 적으면 그 네 번이
+     통째로 무의미해진다. 그래서 단추만 두지 않고 **얻는 것과 무는 것을 한 상자에** 적는다.
+   ★ **얻는 것은 돈이 아니라 「갑판이 흩어지지 않는 것」**이다 — 급여일의 벌은 *못 준 비율*로
+     매겨지는데(`settlePayroll: ratio`), 떠날 수 없는 사람(에이미)의 몫이 그 분모에 섞여 있었다.
+     유예는 그 몫을 분모에서 뺀다. 그래서 화면도 **비율의 전→후**를 적는다.
+   ⚠️ 여기서 규칙을 다시 구현하지 않는다 — 액수는 `officerDeferAmount()`, 성과급은
+     `officerCut()`, 이자·지분은 `OFFICER.defer`가 정본이고 이 함수는 그것을 **뺄셈 한 번**으로
+     보여 줄 뿐이다(`settlePayroll`이 쓰는 `min(payrollOwed, deferAmount)`과 같은 식). */
+function officerDeferPane(owed, onDone) {
+  const D = OFFICER.defer ?? {};
+  const amount = Math.min(owed, officerDeferAmount());
+  const after = Math.max(0, owed - amount);
+  const missBefore = Math.max(0, owed - state.gold);
+  const missAfter = Math.max(0, after - state.gold);
+  const pct = (m, o) => (o > 0 ? Math.round((m / o) * 100) : 0);
+  const cut = officerCut();
+  const cutNext = Math.min(OFFICER.cut + (D.shareMax ?? 0), cut + (D.share ?? 0));
+  // 「평생 두 번」이 실제로 몇 번 남았나 — 문지기는 횟수가 아니라 **지분 상한**이다
+  const left = (D.share ?? 0) > 0
+    ? Math.max(0, Math.round((((D.shareMax ?? 0) - (state.officer?.share || 0)) / D.share) * 10) / 10)
+    : 0;
+
+  /* ⚠️ **상자 하나가 세로 100px을 먹으면 급여일의 단추 줄이 화면 밖으로 밀린다**
+     (`.modal-box`는 `max-height:80vh; overflow:auto` — 실측에서 「급여를 치른다」가 접혔다).
+     그래서 두 문단을 **두 줄 + 오른쪽 단추 한 칸**으로 눕힌다. 말은 안 줄이고 자리만 줄인다. */
+  return el('div.pay-sellpane.pay-deferpane', {}, [
+    /* ★ 「얻는 것은 돈이 아니라 사람이다」는 **머리줄**이 진다 — 아래 두 줄은 숫자만 진다.
+       한 상자에 문장과 숫자를 다 넣으면 네 줄이 되고, 네 줄이면 급여일의 단추가 밀린다. */
+    el('div.pay-sub', {
+      text: `${OFFICER.name}에게 빌린다 — 그의 삯만 미룬다. 얻는 것은 돈이 아니라 사람이다`,
+    }),
+    el('div.pay-defer-body', {}, [
+      el('div', {}, [
+        el('div.pay-defer-gain', {
+          html: `청구 <b>${won(owed)} → ${won(after)}닢</b> · 못 주는 몫`
+              + ` <b>${won(missBefore)} → ${won(missAfter)}닢</b>`
+              + ` (<b>${pct(missBefore, owed)}% → ${pct(missAfter, after)}%</b>) —`
+              + ' 이 비율이 불만과 이탈을 정한다',
+        }),
+        /* ⚠️ **무는 값이 단추 옆에 없으면 이 규칙은 「공짜 단추」로 읽힌다**(규칙 PM의 인계 문구). */
+        el('div.pay-defer-cost', {
+          html: `<b>무는 값</b> — ${won(amount)}닢이 다음 달`
+              + ` <b>${won(Math.round(amount * (D.rate ?? 1)))}닢</b>으로(×${D.rate ?? 1}) ·`
+              + ` ${OFFICER.name} 몫 <b>${(cut * 100).toFixed(1)}% → ${(cutNext * 100).toFixed(1)}%</b>`
+              + ' <b>영구</b>, 되돌릴 수 없다'
+              + (left > 0 ? ` · 남은 유예 <b>${left}번</b>` : ''),
+        }),
+      ]),
+      el('button.btn.sm.dark', {
+        text: `삯 ${won(amount)}닢을 미룬다`,
+      title: `미룬 삯은 다음 급여일에 ${won(Math.round(amount * (D.rate ?? 1)))}닢으로 걷힌다`
+           + ` · 성과급 ${(cut * 100).toFixed(1)}% → ${(cutNext * 100).toFixed(1)}% (영구)`,
+      /* ⚠️ **이 단추는 모달의 `actions`가 아니라 몸통 안에 있다** — 대가를 단추 옆에 두려면
+         그래야 하는데, 그 대신 **스스로 닫지 않는다**(`ui.js: modal`은 `actions`의 단추만
+         누르면 제 wrap을 지운다). 실측에서 정산이 끝난 뒤에도 급여일 판이 그대로 남아
+         결과 모달과 겹쳤다 — 자동 조종도 사람도 앞의 것(옛 값)을 먼저 잡는다.
+         파는 단추들은 `redraw()`가 `openPayday()`를 다시 불러 지워 주지만 이쪽은 흐름이
+         여기서 끝나므로 **직접 지운다**(이 파일 머리의 `openModal` 주석이 적어 둔 그 함정). */
+      onclick: () => {
+        openModal?.remove();
+        openModal = null;
+        report(settlePayroll(Math.random, { deferOfficer: true }), onDone);
+      },
+      }),
+    ]),
+  ]);
 }
 
 /** 줄 하나를 실제로 판다 — 규칙은 전부 `state.js`, 여기서는 부르고 알릴 뿐이다 */
@@ -349,6 +435,16 @@ function report(r, onDone, refused = false) {
   onDone?.();
 
   const lines = [];
+  /* ★ **미룬 것은 결과 화면에도 남는다.** 항해일지에만 적으면 "왜 다음 달 청구가 늘었나"와
+     "언제 몫이 올랐나"를 모달에서 못 읽는다 — 대가를 무는 순간이 여기이기 때문이다. */
+  if (r.deferred > 0) {
+    lines.push(el('p.pay-warn', {
+      html: `${OFFICER.name}의 삯 <b>${won(r.deferred)}닢</b>을 미뤘다 —`
+          + ` 다음 급여일에 <b>${won(r.officerDefer)}닢</b>으로 걷힌다.`
+          + ` 대신 그의 몫이 <b>${(officerCut() * 100).toFixed(1)}%</b>가 됐다. 되돌리는 길은 없다.`
+          + (r.deferMonths > 1 ? ` (${r.deferMonths}달째)` : ''),
+    }));
+  }
   if (r.missed > 0) {
     /* ★ "0닢을 치렀다"는 문장이 실제로 떴다. 금고가 비어 **한 푼도 못 준** 달이
        "얼마를 냈다"는 말투로 보고되면, 이 게임에서 가장 나쁜 소식이 회계 항목이 된다. */

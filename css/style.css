@@ -1007,6 +1007,16 @@ html, body {
   background: #3a1c1a55; border-color: #7a3a30;
   order: -1;   /* 목록 맨 위 — 이 국면에서 무리 카드보다 먼저 읽혀야 한다 */
 }
+/* 소문난 배 (다-3) — **경보가 아니라 사실 통지**다. 자국이 깊어질수록 색이 붉어지되
+   「사람을 못 태운다」(붉은 경보)보다는 늘 한 단계 아래여야 한다 — 둘이 같은 색이면
+   진짜 막힌 판과 값이 좀 비싼 판이 구별되지 않는다. */
+.tav-card.tav-rep { background: #d2a52a10; border-color: #6f5214; }
+.tav-card.tav-rep.t1 { background: #c8863020; border-color: #8a5a24; }
+.tav-card.tav-rep.t2 { background: #a0483020; border-color: #94432e; }
+.tav-card.tav-rep .tav-name b { color: #d0a04a; }
+.tav-card.tav-rep.t2 .tav-name b { color: #e0906e; }
+.tav-card.tav-rep .tav-rep-line { color: #c8bfa8; font-size: 11.5px; }
+
 .tav-card.tav-stranded .tav-name b { color: #e0806e; }
 .tav-card.tav-stranded .tav-desc { color: #b0a692; }
 .tav-card.tav-stranded .tav-desc b { color: var(--parch); }
@@ -1092,6 +1102,27 @@ html, body {
 }
 .pay-sell .k { color: var(--parch); font-variant-numeric: tabular-nums; }
 .pay-sell .n { font-size: 11px; color: #8f8878; text-align: right; }
+
+/* 부관 급여 유예 (다-2) — 파는 상자와 **같은 폭·같은 자리**이되 색이 다르다.
+   파는 것은 붉은 다급함이고 이쪽은 **거래**다(놋빛). ★ 단추 위에 「얻는 것」과 「무는 값」이
+   반드시 함께 놓여야 한다 — 무는 값이 안 보이면 이 규칙은 「공짜 단추」로 읽힌다. */
+.pay-deferpane {
+  background: #d2a52a12; border-left-color: var(--brass-l);
+  margin-top: 9px; padding: 6px 9px;
+}
+.pay-deferpane .pay-sub { margin: 0 0 4px; }
+/* 두 줄 글 + 오른쪽 단추 한 칸. 상자를 세로로 쌓으면 급여일 모달이 `max-height:80vh`를 넘어
+   **「급여를 치른다」 줄이 화면 밖으로 밀린다**(실측). 말은 안 줄이고 자리만 눕힌다. */
+.pay-defer-body { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.pay-defer-body > .btn { flex: 0 0 auto; white-space: nowrap; }
+.pay-defer-gain { font-size: 11.5px; color: #b6ac9c; line-height: 1.6; margin: 2px 0 5px; }
+.pay-defer-gain b { color: var(--brass-l); }
+.pay-defer-cost {
+  font-size: 11px; color: #c8a86a; line-height: 1.6;
+  padding: 5px 7px; background: #00000030; border-radius: 2px;
+}
+.pay-defer-cost b { color: #e0a86a; }
+.pay-defer-note { font-size: 11.5px; color: #a89a84; margin: -4px 0 8px; }
 
 .pay-hold {
   display: flex; align-items: center; gap: 6px;

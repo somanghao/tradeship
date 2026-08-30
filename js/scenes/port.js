@@ -16,7 +16,13 @@ import {
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
   impactFactor, costFor, tariffRate, shorthanded,
   contractOffer, acceptContract, deliverContract, abandonContract,
+  /* 바닥의 문 — **판정은 규칙이 한 벌로 갖고 있다**(지도 `brokeCard`와 같은 표를 본다).
+     ★ 문이 넷이 됐다(계약 선금) — 지도가 그것을 가리키는데 항구에 없으면 **가리킨 곳이 빈다.** */
+  recoveryOptions,
   hasOfficer, paydayDue, paydayDeferred, daysToPayday, payrollOwed, regionOf,
+  /* ⚠️ 성과급은 **함수로 읽는다** — `OFFICER.cut`은 상수라 급여를 미뤄 지분을 내준 뒤에도
+     11%라고 말한다(회차 27 · 규칙 PM이 잡아 넘긴 자리). `officerCut()`이 정본이다. */
+  officerCut, officerDeferred,
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   /* 세력 2단계 — 웃돈·자격·선단 달력 */
@@ -697,8 +703,14 @@ function mateCard() {
   return el('div.panel', {}, [
     el('h3', {}, [
       el('span', { text: '동료' }),
-      el('span', { text: `${mateCount()}/${mateCap()}`,
-                   style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+      /* ★ **접혀 있을 때 이 딱지가 이 카드의 전부다.** 「0/8」만 적으면 *자리가 비었다*는 말이라
+         이 항구에 사람이 기다린다는 사실이 사라진다 — 등용은 항구를 골라 다니는 일인데
+         화면이 그것을 안 말하면 51명이 있어도 지나친다(2026-08-30 육안 판정 · ⓓ).
+         ⚠️ `fold`의 badge와 **같은 값을 두 번** 그리고 있었다(접힌 머리에 `0/8 0/8`) —
+            badge는 `peopleTab`에서 `null`로 바꿨고 세는 자리는 여기 하나다. */
+      el('span', { text: `${mateCount()}/${mateCap()}`
+                       + (here.length ? ` · 이 항구에 ${here.length}명` : ''),
+                   style: { fontSize: '11px', color: here.length ? '#c8a86a' : '#8f8878', letterSpacing: 0 } }),
     ]),
     el('div.svc', {}, rows),
   ]);
@@ -731,8 +743,17 @@ function officerCard() {
           }),
           el('div.ctr-sub', {
             html: `급여 <b>${OFFICER.wage}닢/일</b>`
-                + ` · 성과급 <b>이익의 ${Math.round(OFFICER.cut * 100)}%</b>`,
+                + ` · 성과급 <b>이익의 ${(officerCut() * 100).toFixed(1)}%</b>`
+                + (state.officer.share
+                    ? ` <span style="color:#c8a86a">(삯을 미뤄 ${(OFFICER.cut * 100).toFixed(0)}%에서 올랐다)</span>`
+                    : ''),
           }),
+          /* 미뤄 둔 삯이 있으면 그것도 이 카드가 말한다 — 급여일에만 보이면 「왜 청구가 늘었나」를
+             달이 바뀌기 전에는 어디서도 못 읽는다(`payday.js`의 머리줄과 같은 값). */
+          officerDeferred() ? el('div.ctr-sub', {
+            html: `<span style="color:#d0a04a">미뤄 둔 삯 `
+                + `<b>${officerDeferred().toLocaleString('ko-KR')}닢</b> — 다음 급여일에 걷힌다.</span>`,
+          }) : null,
           el('div.ctr-sub', {
             html: `<span style="color:#6f6858">지금까지 급여 `
                 + `${state.officer.paid.toLocaleString('ko-KR')} · 성과급 `
@@ -790,6 +811,13 @@ function payrollCard() {
         html: `쌓인 삯 <b>${owed.toLocaleString('ko-KR')}닢</b>`
             + ` · 선원 ${state.crew}명 · 금고 ${state.gold.toLocaleString('ko-KR')}닢`,
       }),
+      /* ★ **「쌓인 삯」에는 미뤄 둔 부관 몫이 섞여 있다**(`payrollOwed`가 그것을 더한다) —
+         안 적으면 어느 달 갑자기 청구가 뛴 것으로만 보인다. 부관 카드는 다른 탭(사람)에 있어
+         이 화면에서는 그 이유에 닿지 않는다. 유예는 면제가 아니라 **다음 달로 미는 것**이다. */
+      officerDeferred() ? el('div.ctr-sub', {
+        html: `<span style="color:#d0a04a">그 가운데 <b>${officerDeferred().toLocaleString('ko-KR')}닢</b>은`
+            + ` 미뤄 둔 ${OFFICER.name}의 삯이다(${state.payroll.deferMonths || 1}달째).</span>`,
+      }) : null,
       state.payroll.arrears
         ? el('div.ctr-sub', {
             html: `<span style="color:#d05a4a">밀린 삯 ${state.payroll.arrears.toLocaleString('ko-KR')}닢 — `
@@ -827,6 +855,8 @@ function salvageCard() {
   const total = rows.reduce((a, r) => a + r.gold, 0);
   const lender = figuresAt(city.id).find((f) => f.service === 'loan');
   const canLoan = lender && !state.boons?.loan;
+  /* ⚠️ **`kind`로 찾는다 — 개수·순서로 읽지 않는다.** 문이 또 늘면 그 화면이 죽는다. */
+  const adv = recoveryOptions(city.id, { lender }).doors.find((d) => d.kind === 'advance');
 
   /* ★ **경보와 안내를 가른다.** 무역선은 짐을 싣는 순간이 늘 가장 가난하다 —
      그때마다 붉은 「금고가 바닥이다」가 뜨면 진짜 바닥일 때 아무도 안 읽는다(경보 피로).
@@ -911,8 +941,11 @@ function salvageCard() {
       /* ⚠️ **문 수를 세서 말한다.** 예전에는 「아래 둘뿐이다」로 박아 뒀는데, 대금업자는
          항구마다 있는 것이 아니라 **없는 항구에서는 문이 하나(청산)뿐**이다 —
          화면이 없는 문을 가리키면 사람은 그것을 찾다가 판을 접는다. */
+      /* ★ 문 수는 **세어서** 말한다 — 선금이 넷째 문으로 들어왔다(회차 27). 「하나뿐」이라고
+         적는 동안 규칙에 선금 124닢이 서 있으면, 화면이 사람을 가장 비싼 문(청산)으로 보낸다. */
+      const doorN = 1 + (canLoan ? 1 : 0) + (adv?.ok ? 1 : 0);
       lines.push(el('div.ctr-sub', {
-        text: `팔 것이 하나도 없다. 남은 문은 아래 ${canLoan ? '둘' : '하나'}뿐이다.`,
+        text: `팔 것이 하나도 없다. 남은 문은 아래 ${['하나', '둘', '셋'][doorN - 1]}뿐이다.`,
         style: { color: '#d0a04a' },
       }));
     }
@@ -929,6 +962,24 @@ function salvageCard() {
         refreshHUD(); refreshLog(); after();
       }));
   }
+  /* ── 계약 선금 (X-3 · 회차 27) ─────────────────────────────
+     ★ **지도가 가리키는 곳이 여기다.** 지도의 「금고가 바닥이다」가 *"남은 문은 계약 선금과
+       청산"*이라고 적고 항구로 보내는데, 그 항구에 선금 줄이 없으면 사람은 **교역 탭을
+       스스로 뒤져야** 한다 — C-17이 죽은 방식이 정확히 그것이다(있는데 아무도 안 말한다).
+     ⚠️ **「돈이 생긴다」로 적지 않는다.** 선금은 갚는 돈이고(납품이 갚는 길이다) 못 지키면
+       위약금 ×1.25가 빚으로 남는다. 들어오는 값과 무는 값을 **같은 줄에** 둔다. */
+  if (adv?.ok) {
+    acts.push(svcRow(`계약 선금 ${adv.value.toLocaleString('ko-KR')}닢 — 상관 게시판의 일감`,
+      `${CITY_BY_ID[adv.to]?.name ?? adv.to}까지 ${GOOD_BY_ID[adv.goodId]?.name ?? adv.goodId}`
+      + ` ${adv.qty}개 · ${adv.due}일차까지 · 못 지키면 위약금 ${adv.fine.toLocaleString('ko-KR')}닢이 빚으로`,
+      '게시판으로', false, () => { sideTab = 'trade'; buildUI(); }));
+  } else if (adv && adv.need > 0) {
+    lines.push(el('div.ctr-sub', {
+      style: { color: '#a89a84' },
+      text: `상관에 일감은 있으나 선창이 ${adv.need}칸 모자란다 (${adv.qty}개를 실어야 한다).`,
+    }));
+  }
+
   /* ★ 청산은 **마지막 문이고, 그래서 늘 보인다.** 팔 것이 남아 있어도 감추지 않는다 —
      감추면 "팔 것이 다 떨어진 뒤에야 알게 되는 문"이 되어 C-17이 그대로 재발한다.
      대신 단추가 `.danger`이고 모달이 잃는 것을 전부 적는다. */
@@ -2525,7 +2576,8 @@ function peopleTab() {
   return [
     fold('city', cityInfoCard(), false, city.area),
     fold('officer', officerCard(), false, OFFICER.name),
-    fold('mate', mateCard(), false, `${mateCount()}/${mateCap()}`),
+    /* badge는 `null`이다 — 카드 제 머리에 이미 「N/M · 이 항구에 K명」이 있다(중복 방지). */
+    fold('mate', mateCard(), false, null),
     fold('figure', figureCard(), false, null),
   ];
 }

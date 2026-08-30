@@ -10,10 +10,13 @@
 import { tavernSprite, tavernFrontSprite, TAVERN_SEATS, TAV_FRONT, VH } from '../sprites/scene.js';
 import { unitSprite, CHAR_FOOT, CW } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { CITY_BY_ID, TROOPS, CREW_TRAITS } from '../data.js';
+import { CITY_BY_ID, TROOPS, CREW_TRAITS, TAVERN } from '../data.js';
 import {
   state, ship, tavernCrews, recruitBand, avgCrewWage, shorthanded,
   pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf, salvage, salvageElsewhere,
+  /* 술집 평판(다-3) — 체불·이탈이 이 부두에 남긴 자국. **화면은 읽기만 한다**
+     (자국을 남기는 곳은 급여일 하나뿐이다 · `state.js: settlePayroll`). */
+  crewRepAt,
 } from '../state.js';
 import { el, overlay, toast, refreshHUD, refreshLog, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
@@ -118,6 +121,7 @@ function buildUI() {
     ]),
 
     el('div.tav-body', {}, [
+      repCard(),
       strandedCard(),
       ...(crews.length ? crews.map(bandCard) : [
         el('div.tav-empty', { text: '오늘은 자리가 비었다. 며칠 뒤에 다시 와 보자.' }),
@@ -127,6 +131,59 @@ function buildUI() {
   ].filter(Boolean));
   overlay.replaceChildren(panelEl);
   layout();
+}
+
+/* ── 소문난 배 (다-3 · 2026-08-30 · 회차 27) ────────────────────
+   ★ **이 한 줄이 없으면 규칙이 없는 것과 같다.** 체불·이탈은 그 부두에 자국을 남기고
+     같은 바다로 절반 번지는데(`state.js: markCrewRep`·`crewRepAt`), 그 자국이 하는 일은
+     **자리를 줄이고 · 계약금을 올리고 · 오는 사람의 기질을 갈아 치우는 것**이다
+     (`data.js: TAVERN.rep` · 실측 자국 1.0에서 자리 −2 · 계약금 +60% · 일당 +20%).
+     화면이 말하지 않으면 플레이어는 자기 배가 왜 안 차는지 영영 모르고 *"운이 나빴다"*로 읽는다.
+     이 저장소가 이미 못박아 둔 자리다 — *"규칙이 멀쩡한데 화면이 말하지 않아 수백 일을 잃는다"*.
+   ★ **값은 규칙에서만 온다** — 자국은 `crewRepAt()`가, 계수는 `TAVERN.rep`이 정본이고
+     여기서는 곱셈 한 번으로 **보이는 말**로 바꿀 뿐이다(새 계산 경로를 파지 않는다).
+   ⚠️ 자국이 0이면 **아무것도 안 그린다.** 늘 떠 있으면 벽지가 되고, 벽지가 되면
+     정작 소문이 났을 때 안 읽힌다(strandedCard와 같은 기준). */
+function repCard() {
+  const rep = crewRepAt(city.id);
+  if (!(rep > 0)) return null;
+
+  const R = TAVERN.rep ?? {};
+  /* 세 단계 — 문구는 규칙 PM이 넘긴 표 그대로다(RULE-ISSUES §A-2).
+     자국은 이어진 값이지만 **말은 세 단계**여야 한다. 퍼센트를 그대로 읽어 주면
+     "0.37의 평판"이라는 말이 되고, 그것은 이 게임의 어느 화면도 쓰지 않는 말투다. */
+  const tier = rep >= 0.60 ? 2 : rep >= 0.30 ? 1 : 0;
+  const line = [
+    '삯이 밀렸다는 말이 돈다 — 값을 조금 더 부른다',
+    '이 부두는 당신 배를 안다. 선불을 더 달라고 한다',
+    '성한 무리는 딴 배를 골랐다. 남은 것은 아쉬운 사람들뿐이다',
+  ][tier];
+
+  const seats = Math.round(rep * (R.seats ?? 0));
+  const adv = Math.round(rep * (R.adv ?? 0) * 100);
+  const wage = Math.round(rep * (R.wage ?? 0) * 100);
+  /* 여기에 제 자국이 없으면 **다른 항구에서 들려온 소문**이다(`crewRepAt`이 같은 바다를
+     절반으로 친다). 그것을 안 적으면 "여기서는 밀린 적이 없는데 왜"가 된다. */
+  const heard = !(state.crewRep?.[city.id]?.v > 0);
+
+  /* ⚠️ **줄을 셋 이상 쓰지 않는다.** 640×360에서 술집 본문은 182px뿐이라(실측)
+     이 카드가 넉 줄이면 무리 카드가 통째로 접혀 내려간다 — 소문을 알리려다 **고를 사람을
+     가리는** 꼴이 된다(회차 25가 머리말에서 겪은 그 자리). 그래서 값과 잊힘을 한 줄로 잇는다. */
+  return el(`div.tav-card.tav-rep.t${tier}`, {}, [
+    el('div.tav-name', {}, [el('b', { text: '소문난 배' })]),
+    el('div.tav-desc.tav-rep-line', {
+      text: (heard ? '이 바다의 다른 항구에서 들려온 말이다 — ' : '') + line,
+    }),
+    el('div.tav-desc', {
+      style: { color: '#8f8878' },
+      text: [seats > 0 ? `자리 −${seats}` : null,
+             adv > 0 ? `계약금 +${adv}%` : null,
+             wage > 0 ? `일당 +${wage}%` : null,
+             `참을성 있는 무리가 딴 배를 고를 확률 ${Math.round(rep * 100)}%`,
+             `${R.halfLife ?? 90}일마다 절반씩 잊힌다`,
+            ].filter(Boolean).join(' · '),
+    }),
+  ]);
 }
 
 /* ── 여기가 잠기는 자리다 (C-17 · 화면 쪽) ──────────────────────

@@ -1193,13 +1193,26 @@ function brokeCard() {
   if (!r.needsHelp) return null;
 
   const near = r.elsewhere[0];
+  /* ⚠️ **문은 `kind`로 찾는다 — 개수나 순서로 읽지 않는다.** 이번 회차에 문이 셋에서 넷으로
+     늘면서(계약 선금) 개수를 문자열로 못박아 둔 `test-rules` 한 줄이 실제로 깨졌다.
+     또 늘어도 이 화면은 살아 있어야 한다. */
   const loan = r.doors.find((d) => d.kind === 'loan');
+  const adv = r.doors.find((d) => d.kind === 'advance');
   /* ★ 「여기」만 세고 말하면 거짓말이 된다 — 하루 거리 항구에 창고 짐이 있는 판에서
      *"다 팔아도 못 채운다"*가 뜬다(항구 카드와 같은 정정 · 2026-08-30 실측). */
   const awayCovers = r.grave && r.elsewhere.length
     && r.gold + r.hereValue + r.elsewhereValue >= (r.exit ?? 0)
     && r.gold + r.hereValue + r.elsewhereValue >= r.debt;
-  const alarm = r.grave && !awayCovers;
+  /* ★★ **같은 실수를 넷째 문에서 되풀이하지 않는다.** 1기가 「여기만 세고 말하면 거짓말이 된다」로
+     정정한 자리인데(다른 항구), 선금 문이 늘면서 **같은 모양의 거짓말이 하나 더 생겼다** —
+     부산포 금고 0에서 카드가 *"다 팔아도 한 항차를 못 채운다"*(붉은 경보)라고 적는 동안
+     상관에 **선금 124닢**짜리 일감이 있었고 가장 싼 항차는 **26닢**이었다(실측).
+     `covered`가 「지금 여기서 팔 수 있는 것」만 세는 것은 설계대로다 — 틀린 것은 판정이 아니라
+     **그 판정으로 쓴 문장**이다. ⇒ 판정은 그대로 두고 문장·머리말·테두리만 선금까지 본다. */
+  const advCovers = r.grave && !awayCovers && adv?.ok
+    && r.gold + r.hereValue + adv.value >= (r.exit ?? 0)
+    && r.gold + r.hereValue + adv.value >= r.debt;
+  const alarm = r.grave && !awayCovers && !advCovers;
   const lines = [];
 
   lines.push(el('div', {
@@ -1214,7 +1227,10 @@ function brokeCard() {
       : awayCovers
         ? '<b>여기서는 못 채운다 — 그러나 막힌 것은 아니다.</b> 출항은 막히지 않으므로'
           + ' 아래 항구까지 가서 팔면 갚는다(못 낸 몫은 빚으로 남는다).'
-        : '<b>여기서 팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 뜨면 못 낸 몫이 빚으로 남는다.',
+        : advCovers
+          ? '<b>팔아서는 못 채운다 — 그러나 막힌 것은 아니다.</b> 상관의 일감을 맡으면'
+            + ' 선금이 지금 들어온다. <b>공짜 돈이 아니라 갚는 돈</b>이라는 것만 셈에 넣으면 된다.'
+          : '<b>여기서 팔 것을 다 팔아도 한 항차를 못 채운다.</b> 이대로 뜨면 못 낸 몫이 빚으로 남는다.',
     style: { color: alarm ? '#e0a08e' : '#d0a04a' },
   }));
 
@@ -1239,22 +1255,52 @@ function brokeCard() {
           + (near.stored ? ` · 창고 ${near.stored}칸` : ''),
     }));
   } else {
+    /* ⚠️ **없는 문을 세지 않는다.** 대금업자는 항구마다 있는 것이 아니라 없는 항구에서는
+       문이 하나뿐인데, 「둘 다」라고 적으면 사람은 없는 문을 찾다가 판을 접는다
+       (항구 카드가 회차 23에 같은 자리를 이미 고쳤다).
+       ★★ 2026-08-30 — **여기가 거짓말을 하고 있었다.** 부산포 금고 0에서 이 줄이
+         *"남은 문은 청산뿐이다"*라고 적는 동안 규칙에는 **선금 124닢짜리 일감**이 서 있었다
+         (`u2-scripts/u2-probe.mjs doors` 실측). 청산은 판을 되감는 문이고 선금은 안 되감는
+         문이라, 이 한 줄이 사람을 가장 비싼 문으로 보냈다. ⇒ 남은 문을 **세어서** 말한다. */
+    const rest = [adv?.ok ? '<b>계약 선금</b>' : null,
+                  loan?.ok ? '<b>빌리는 것</b>' : null,
+                  '<b>청산</b>'].filter(Boolean);
     lines.push(el('div.cblurb', {
-      style: { color: '#e0806e' },
-      /* ⚠️ **없는 문을 세지 않는다.** 대금업자는 항구마다 있는 것이 아니라 없는 항구에서는
-         문이 하나뿐인데, 「둘 다」라고 적으면 사람은 없는 문을 찾다가 판을 접는다
-         (항구 카드가 회차 23에 같은 자리를 이미 고쳤다). */
-      html: '세계 어디에도 팔 것이 없다. 남은 문은 '
-          + (loan?.ok ? '<b>빌리는 것</b>과 <b>청산</b>이다 — 둘 다' : '<b>청산</b>뿐이다 —')
-          + ' 항구 안에 있다.',
+      style: { color: rest.length > 1 ? '#d0a04a' : '#e0806e' },
+      html: '세계 어디에도 팔 것이 없다. 남은 문은 ' + rest.join(' · ')
+          + (rest.length > 1 ? '이다 — 모두 항구 안에 있다.' : '뿐이다 — 항구 안에 있다.'),
+    }));
+  }
+
+  /* ── 넷째 문: 계약 선금 (X-3 → 규칙이 `doors`에 넣어 주었다) ───────────
+     ★ **이 문은 「돈이 생긴다」가 아니다.** 선금은 갚아야 하는 돈이고 못 지키면 위약금이
+       빚으로 남는다(`CONTRACT.penalty` ×1.25). `value`만 그리면 「공짜 돈」이 되어
+       화면이 **잘못 권하는 문**이 된다 — 그래서 들어오는 값과 무는 값을 **한 줄 안에** 둔다.
+     ★ `ok:false`여도 지운다: 「지금은 주문이 없다」는 소음이지만 **「N칸이 모자란다」는
+       판단의 재료**다(큰 계약이 큰 배를 사는 이유가 된다). 그 둘만 남긴다. */
+  if (adv && (adv.ok || adv.need > 0)) {
+    const where = CITY_BY_ID[adv.to]?.name ?? adv.to;
+    const what = GOOD_BY_ID[adv.goodId]?.name ?? adv.goodId;
+    lines.push(el('div.cblurb', {
+      style: { color: adv.ok ? '#e6c96a' : '#a89a84' },
+      html: adv.ok
+        ? `받아 둔 일감이 있다 — 선금 <b>${adv.value.toLocaleString('ko-KR')}닢</b>이 지금 들어온다.`
+          + ` 다만 <b>갚는 돈</b>이다 — ${where}까지 ${what} ${adv.qty}개를`
+          + ` <b>${adv.due}일차</b>까지 넘겨야 하고, 못 지키면 위약금`
+          + ` <span style="color:#d05a4a">${adv.fine.toLocaleString('ko-KR')}닢</span>이 빚으로 남는다.`
+        : `일감은 있으나 선창이 <b>${adv.need}칸</b> 모자란다`
+          + ` (${what} ${adv.qty}개를 실어야 한다). 짐을 내려놓거나 큰 배가 있어야 열리는 문이다.`,
     }));
   }
 
   /* ★ 문은 **항구에 모아 둔다.** 여기에 청산 단추를 하나 더 두면 같은 규칙이 두 화면에
      따로 살게 되고, 바다 한가운데에서 배를 넘기는 그림이 된다. 지도는 **가리키기만** 한다. */
+  /* 단추의 말도 판을 따라간다 — 팔 것이 하나도 없는데 「팔 것을 본다」로 보내면
+     사람은 빈 목록 앞에서 다시 막힌다(1기 U-5의 「머리말이 몸통과 반대말을 한다」와 같은 자리). */
+  const doorWord = r.here.length ? '팔 것과 마지막 문' : adv?.ok ? '일감과 마지막 문' : '마지막 문';
   lines.push(el('button.btn.sm.dark', {
-    text: `${CITY_BY_ID[state.at]?.name ?? '항구'}로 — 팔 것과 마지막 문을 본다`,
-    title: '항구 오른쪽 맨 위 「금고가 바닥이다」 카드에 팔 것과 마지막 문이 모여 있다',
+    text: `${CITY_BY_ID[state.at]?.name ?? '항구'}로 — ${doorWord}을 본다`,
+    title: '항구 오른쪽 맨 위 「금고가 바닥이다」 카드에 팔 것 · 계약 선금 · 마지막 문이 모여 있다',
     onclick: () => go('port'),
     style: { marginTop: '4px' },
   }));
@@ -1266,11 +1312,15 @@ function brokeCard() {
       el('span', {
         text: !r.grave ? '금고가 비었다 — 팔면 채워진다'
             : awayCovers ? '금고가 비었다 — 팔 것은 다른 항구에'
+            : advCovers ? '금고가 비었다 — 팔 것 대신 일감이 있다'
             : '금고가 바닥이다',
       }),
       el('span', {
+        /* ⚠️ 머리말이 몸통과 반대말을 하면 안 된다(1기 U-5와 같은 기준) — 팔 것이 없어도
+           **선금 문이 열려 있으면** 딱지가 그것을 센다. 「없다」만 적으면 몸통의 선금 줄과 어긋난다. */
         text: r.here.length ? `팔 것 ${r.here.length}가지 · ${r.hereValue.toLocaleString('ko-KR')}닢`
             : r.elsewhere.length ? `다른 항구에 ${r.elsewhereValue.toLocaleString('ko-KR')}닢`
+            : adv?.ok ? `선금 ${adv.value.toLocaleString('ko-KR')}닢`
             : '여기엔 팔 것이 없다',
         style: { fontSize: '11px', color: alarm ? '#d09080' : '#8f8878', letterSpacing: 0 },
       }),
