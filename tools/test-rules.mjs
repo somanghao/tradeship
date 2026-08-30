@@ -27,10 +27,12 @@ import {
   mainPortOf, civicSplit,
   industryPathHint, yardBusy, endingProgress,
   growKind, growStock, growCap, canBuyGrow, buyGrow, workAt, chainMargin, costFor,
-  shopCut, canBuyShop, buyShop, shopTick, collectShop, consignToShop,
+  shopCut, canBuyShop, buyShop, shopAt, millOf, shopTick, collectShop, consignToShop,
   canConsign, sendConsign, arriveConsign, canStartLine, startLine, stopLine, cargoCapTotal, waitDays,
   gripMarkup, hasOutsideSource, enrollOffer, buyEnroll, enrolled, convoyDue, rollConvoys,
   fleetSlain, bondPenalty, workEntry, rollPoach, addRegard, regardOf, reviveTrespass,
+  /* 회차 28 · 나-1 — 상단과 세력이 **관계**에서 만나는 자리 둘 */
+  guildBackers, backerSlain, stirSeen, gripsHere, guildCounterAt, recordSlain,
   rollFelling, rollFactionRaid, atWar,
   contractOffer, acceptContract, START_GOLD,
   /* 수직계열화 1단계(A-9) — 값은 `check-chain.mjs`가 보고, 여기서는 규칙의 뼈대만 본다 */
@@ -73,7 +75,7 @@ import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, W
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, HOLDING_KEYS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON,
   /* C-18 — 나라가 짓는 조선소 */
-  CIVIC, ENCOUNTER_LOSS } from '../js/data.js';
+  CIVIC, ENCOUNTER_LOSS, FACTIONS } from '../js/data.js';
 import { readFileSync } from 'node:fs';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
@@ -1191,6 +1193,32 @@ resetGame();
     addRegard('casa', 8, 'test');
     ok(reviveTrespass('potosi') && !workAt('mine', 'silverore', 'potosi').idle,
        '관계가 풀리면 그 문이 열린다 — 회복하는 길이 있어야 벌이 벌이 된다');
+  }
+
+  /* ⓕ-2 ★ **입회비를 못 낼 때 값만 삼키지 않는다** — 세 매입 함수가 같은 규약인가 (회차 28)
+     `buyShop`·`buyMill`이 정가를 먼저 빼고 나서 입회비를 검사해 **정가만 사라지고 시설은 안 서는**
+     자리가 있었다(실측 27,780닢). 셋 다 **빼기 전에 정가+입회비**를 본다. */
+  {
+    for (const [name, plan] of [
+      ['광산', () => { state.at = 'potosi'; const c = canBuyGrow('silverore', 'potosi');
+                       return [c.price, () => buyGrow('silverore', 'potosi'),
+                               () => workAt('mine', 'silverore', 'potosi')]; }],
+      ['판매소', () => { state.at = 'venezia'; const c = canBuyShop('pepper', 'venezia');
+                       return [c.price, () => buyShop('pepper', 'venezia'),
+                               () => shopAt('pepper', 'venezia')]; }],
+      ['가공장', () => { state.at = 'venezia'; const c = canBuyMill('dye_scarlet', 'venezia');
+                       return [c.price, () => buyMill('dye_scarlet', 'venezia'),
+                               () => millOf('dye_scarlet', 'venezia')]; }],
+    ]) {
+      resetGame('venezia'); state.gold = 1e7;
+      state.holdings = { potosi: { rental: true, warehouse: true },
+                         venezia: { rental: true, warehouse: true } };
+      const [price, buy, has] = plan();
+      state.gold = price;                       // 정가만 있고 입회비가 없다
+      const r = buy();
+      ok(r.ok === false && state.gold === price && !has(),
+         `${name}: 입회비가 모자라면 **아무것도 안 일어난다** — 금고도 그대로다 (${price?.toLocaleString('ko-KR')}닢)`);
+    }
   }
 
   /* ⓗ 3단계 · 회사의 벌목 — **파는 대신 벤다** */
@@ -2492,6 +2520,53 @@ resetGame();
   /* ⑬ ★ **세력과 겹치지 않는다**(설계 §0) — 상단은 쥔 자리의 웃돈도, 계약 가로채기도 안 한다 */
   ok(!/gripMarkup|rollPoach|enrollOffer|convoyDue/.test(guildSrc),
      '★ 상단은 `gripMarkup`·`rollPoach`를 쓰지 않는다 — 그 둘은 **세력**의 것이다(중복 금지)');
+
+  /* ⑬-b ★ **상단 ↔ 세력이 관계에서 만나는 자리 둘**(회차 28 · 나-1)
+     회차 27은 둘을 **값**에서 만나게 했다(`gripBlocksGuild`·`guildCounter`). 여기 둘은
+     **관계**에서 만난다 — 그리고 둘 다 순수한 뺄셈이라 **새 수입원이 아니다**.
+     ★ 경계는 그대로다: 만나는 자리는 `state.js` 하나이고 `guild.js`는 한 줄도 안 바뀐다. */
+  {
+    /* ⓐ 깃발이 실제로 겹치는가 — 겹치는 곳이 0이면 이 규칙은 서 있어도 없는 것과 같다 */
+    const { HOUSES } = await import('../js/npc/houses.js');
+    const backed = HOUSES.filter((h) => guildBackers(h.flag).length);
+    ok(backed.length > 0 && backed.length < HOUSES.length,
+       `★ 뒤에 선 세력이 있는 상단이 ${backed.length}/${HOUSES.length}곳 — 전부도 0도 아니다`);
+    ok(guildBackers('pirate').length === 0 && guildBackers(null).length === 0,
+       '해적기 뒤에도, 깃발 없는 회사(푸거) 뒤에도 나라가 없다');
+
+    /* ⓑ 상단의 호위선단을 꺾으면 그 깃발 뒤에 선 세력이 등을 돌린다 */
+    resetGame('venezia');
+    const h = backed[0], fids = guildBackers(h.flag);
+    const foe = { id: 'x', houseId: h.id, flag: h.flag, nation: h.name, level: 3 };
+    recordSlain(foe, 'mediterranean');       // ★ 전투 승리의 유일한 관문이 부른다
+    ok(fids.every((f) => regardOf(f) === FACTION.backerRaw),
+       `상단의 배를 꺾으면 그 깃발의 나라가 등을 돌린다 — ${fids.map((f) => `${f} ${regardOf(f)}`).join(' · ')}`);
+
+    /* ⓒ ⚠️ **`houseId`가 문지기다** — 같은 깃발의 떠돌이 해적으로는 나라가 안 움직인다 */
+    resetGame('venezia');
+    recordSlain({ id: 'y', flag: h.flag, nation: '해적', level: 3 }, 'mediterranean');
+    ok(fids.every((f) => regardOf(f) === 0),
+       '★ 깃발만 같은 배로는 안 문다 — 물면 그 깃발을 단 해적을 잡아도 나라가 화내는 규칙이 된다');
+
+    /* ⓓ 사주를 끝낸 부두에 임자가 앉아 있으면 임자도 본다. **삯은 한 닢도 안 건드린다** */
+    resetGame('venezia');
+    const owners = Object.keys(FACTIONS).filter((f) => gripsHere(f, 'venezia'));
+    const gold0 = state.gold;
+    const hit = stirSeen('venezia');
+    ok(owners.length > 0 && hit?.length === owners.length
+       && owners.every((f) => regardOf(f) === FACTION.stirRaw) && state.gold === gold0,
+       `사주의 소란을 그 부두의 임자가 본다 — ${owners.join(' · ')} (금고는 그대로)`);
+    ok(stirSeen('marseille') === null, '임자 없는 부두에서는 아무도 안 본다');
+
+    /* ⓔ 회차 27 ⓑ가 **흥망까지 이미 담고 있다** — 상단이 문을 닫으면 웃돈이 되살아난다 */
+    resetGame('venezia');
+    const { initGuilds: ig } = await import('../js/npc/guild.js');
+    ig();
+    const live = guildCounterAt('venezia');
+    for (const [id, g] of Object.entries(state.guilds)) if ((g.seats ?? []).includes('venezia')) state.guilds[id].dead = 1;
+    ok(live > 0 && guildCounterAt('venezia') === 0,
+       `★ 상단이 문을 닫으면 그 항구의 웃돈이 되살아난다 — 감쇠 ${(live * 100).toFixed(1)}% → 0%`);
+  }
 
   /* ⑭ 이용 — 사주의 진척을 `sell()`이 센다(경쟁 상단의 상관에 물건을 부으면 그 자리가 흔들린다) */
   resetGame();

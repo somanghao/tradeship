@@ -82,4 +82,35 @@ export const SHIPS = {
     upkeep: 48, rig: 0.15, tint: 'white',
     desc: '자바 북안이 짓던 거대한 상선. 널을 네 겹으로 댄 선체는 포탄이 두 겹까지밖에 못 뚫는다. 느리지만 이보다 많이 싣는 배가 없다.',
   },
+
+  /* ══ 회차 28 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ 란차랑(3,400)에서 종(24,000)까지 **일곱 배의 빈 계단**이 있었다. 그 사이를 채운다. */
+
+  penjajap: {
+    hull: 'galley', name: '펜자잡', origin: '말레이 해협', originFlag: 'malacca',
+    tier: 1, era: 'classic', yards: ['johor', 'patani', 'aceh'], price: 1750,
+    // 해협의 습격선. 노가 스물이 넘고 돛은 보조라, 무풍의 좁은 물목에서 상선을 따라잡는다.
+    // 포르투갈 기록이 믈라카 함락 전후로 가장 자주 적은 배 이름이 이것이다.
+    hp: 62, crew: 20, crewMax: 30, crewMin: 12, cargo: 34, guns: 6, speed: 1.50,
+    upkeep: 7, rig: 0.10, tint: 'dark',
+    desc: '노 스물로 좁은 물목을 건너 상선에 붙는 습격선. 실을 것은 거의 없고 발만 빠르다.',
+  },
+  pencalang: {
+    hull: 'fluyt', name: '펜찰랑', origin: '자바 북안', originFlag: 'majapahit',
+    tier: 2, era: 'classic', yards: ['banten', 'makassar', 'brunei'], price: 5400,
+    // 자바·수마트라 연안을 오가던 무역선. 이물이 높고 선미가 넓어 쌀과 후추를 많이 싣는다.
+    // 화물/최소선원 12.3 — 이 바다에서 사람 대비 가장 많이 싣는 배다.
+    hp: 126, crew: 22, crewMax: 36, crewMin: 14, cargo: 172, guns: 4, speed: 1.05,
+    upkeep: 17, rig: 0.25, tint: 'oak',
+    desc: '자바 북안의 연안 무역선. 싸움은 못 하지만 적은 손으로 쌀과 후추를 잔뜩 싣는다.',
+  },
+  ghurab: {
+    hull: 'frigate', name: '구랍', origin: '아체 술탄국', originFlag: 'malacca',
+    tier: 2, era: 'classic', yards: ['aceh', 'patani'], price: 8900, requires: 'lancaran',
+    // 아체가 포르투갈령 믈라카를 여러 번 치러 갈 때 앞세운 큰 갤리(아랍어 ghurāb, '까마귀').
+    // 오스만이 보낸 포수와 대포가 이 배에 실렸다 — 그래서 이 바다에서 포가 가장 많다.
+    hp: 178, crew: 44, crewMax: 68, crewMin: 24, cargo: 96, guns: 18, speed: 1.30,
+    upkeep: 27, rig: 0.25, tint: 'dark',
+    desc: '아체 술탄이 믈라카를 치러 갈 때 앞세운 큰 갤리. 오스만이 보낸 대포를 그대로 얹었다.',
+  },
 };

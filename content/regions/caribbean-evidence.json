@@ -1949,6 +1949,66 @@
     }
   },
   "ships": {
+    "perlera": {
+      "price": 1250,
+      "verdict": "confirmed",
+      "basis": "쿠바과 섬과 마르가리타의 진주 어장은 1500~1540년대 카리브에서 가장 먼저 돈이 된 사업이고, 그 어장으로 잠수부를 실어 나른 카노아가 사료에 거듭 나온다(라스 카사스가 그 노동을 고발한 대상이 이 배 위의 사람들이다). 값·제원 사료는 없어 이 바다의 사다리(피라구아 1,200 ~ 파타체 2,400) 안에 놓았다 — 피라구아보다 비싸되 덜 싣고 더 빠르다. 화물 58 ÷ 최소선원 7 = 8.3으로 소형 연안선 밴드 안이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Cubagua Island",
+          "url": "https://en.wikipedia.org/wiki/Cubagua_Island"
+        },
+        {
+          "title": "Wikipedia — Pearl Islands / Caribbean pearl fisheries",
+          "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz"
+        }
+      ]
+    },
+    "aviso": {
+      "price": 3800,
+      "verdict": "confirmed",
+      "basis": "아비소(navío de aviso)는 인도 함대 제도의 실제 장치다 — 플로타의 출항·적재·사고를 세비야에 먼저 알리려고 단독으로 앞서 보낸 빠른 배이고, 카사 데 콘트라타시온 문서에 이름이 남아 있다. 값은 사료가 아니라 이 바다의 사다리에서 파타체(2,400)와 우르카(10,500) 사이에 놓은 것이고, 화물 84 ÷ 최소선원 12 = 7.0으로 '짐배가 아닌 배' 자리를 지킨다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Spanish treasure fleet",
+          "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+        },
+        {
+          "title": "Wikipedia — Casa de Contratación",
+          "url": "https://en.wikipedia.org/wiki/Casa_de_Contrataci%C3%B3n"
+        }
+      ]
+    },
+    "fragata": {
+      "price": 5400,
+      "verdict": "corrected",
+      "basis": "★ 16세기의 'fragata'는 뒷날의 프리깃이 아니다 — 노와 돛을 함께 쓰는 작고 빠른 배이고, 프랑스·잉글랜드 사략선이 스페인령 본토 연안을 덮칠 때 쓴 것이 이것이다. 그래서 이름만 보고 대형 군함으로 옮기면 틀린다(그 자리는 이 바다에서 갈리사브라가 맡는다). 포 14 · 화물/최소선원 5.9로 '싸우려고 만든 배'로 적었고 값은 사다리 중간이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Frigate (origins of the term)",
+          "url": "https://en.wikipedia.org/wiki/Frigate"
+        },
+        {
+          "title": "Wikipedia — Privateer",
+          "url": "https://en.wikipedia.org/wiki/Privateer"
+        }
+      ]
+    },
+    "galeondelaplata": {
+      "price": 23000,
+      "verdict": "confirmed",
+      "basis": "아바나 왕실 조선소는 16세기 후반 카리브 최대의 조선소였고 쿠바산 경질목(마호가니·시더)으로 갈레온을 지어 플로타에 넣었다. 이 바다의 꼭대기 자리라 값은 지중해 갈레온(19,500)·라구사 아르고시(26,000) 사이에 두었다. 화물 265 ÷ 최소선원 34 = 7.8은 포갑판을 가진 큰 배의 밴드다. `requires: 'urca'`는 사료가 아니라 이 저장소의 사다리 규약이다(상급선은 선행 선종을 몰아 봐야 열린다).",
+      "sources": [
+        {
+          "title": "Wikipedia — Havana Shipyard",
+          "url": "https://en.wikipedia.org/wiki/Havana_Shipyard"
+        },
+        {
+          "title": "Wikipedia — Manila galleon / Spanish galleon",
+          "url": "https://en.wikipedia.org/wiki/Galleon"
+        }
+      ]
+    },
     "_읽는이에게": "이 바다의 배는 함대 제도(플로타)를 전제로 갈린다. 스페인은 1566년 프랑스 사략선의 아바나 습격 뒤 페드로 메넨데스 데 아빌레스의 설계로 상선을 혼자 보내지 않고 해마다 두 무리로 묶어 보냈다 — 누에바에스파냐 함대는 베라크루스로, 티에라피르메 갈레온은 카르타헤나·포르토벨로로. 그래서 여기 배는 '혼자서도 살아남는 배'가 아니라 함대 안에서 맡은 일이 있는 배다. ★ 톤수·승조원을 밝힌 사료는 둘이다 — 파타체(약 30톤)와 사브라(80~170톤 · 승조원 ≤60 · 포 ≤10 · 화물 약 100톤 · 아메리카 횡단 30일 이내). 나머지(피라구아·우르카)와 모든 값·체력은 지중해 사다리(코카 1,100/78칸 · 브리간틴 4,200/140칸 · 캐랙 9,800/240칸 · 갈레아스 14,000/110칸)에 맞춘 것이라 전부 probable이다.",
     "piragua": {
       "price": 1200,

@@ -88,6 +88,24 @@ export const PIRATES = [
       spare: '“서로 못 본 걸로 합시다.”',
     },
   },
+
+  /* ── 발파라이소 ─────────────────────────────────────────────
+     올리비어르 판 노르트. 네덜란드인으로는 처음 세계를 돌았고, 마젤란 해협을 나와 칠레·페루 연안을
+     훑은 뒤 태평양을 건너 마닐라 앞바다에서 스페인 함대와 싸웠다.
+     ★ 캐번디시와 같은 자리이되 **깃발이 다르다** — 이 바다의 남쪽 문(해협)이 잉글랜드만의 것이
+       아니었다는 표시로 둔다. scope 'ocean'인 것도 그 때문이다: 이 사람은 지나가는 사람이다. */
+  {
+    id: 'vannoort', name: '올리비어르 판 노르트', flag: 'burgundy', ship: 'holk',
+    base: 'valparaiso', purse: [2600, 8000], strength: 4, bounty: [3000, 6000],
+    hunt: ['arica|valparaiso', 'concepcion|valparaiso', 'arica|callao'],
+    circuit: ['valparaiso', 'concepcion', 'valparaiso', 'arica', 'callao', 'arica', 'valparaiso'],
+    season: null, scope: 'ocean',
+    blurb: '해협을 나온 배는 대개 굶주려 있다. 그래서 처음 만나는 항구가 가장 위험하다.',
+    lines: {
+      hail: '“해협에서 넉 달을 굶었소. 오늘은 예의를 차릴 형편이 아니오.”',
+      spare: '“식량과 물이면 되오. 은은 당신들 왕에게나 가져다주시오.”',
+    },
+  },
 ];
 
 

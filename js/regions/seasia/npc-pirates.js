@@ -104,6 +104,25 @@ export const PIRATES = [
     blurb: '맹그로브 뒤에서 나온다. 배 두 척에 사람 스물, 그것뿐이다.',
     lines: { hail: '“주석이냐 후추냐. 무거운 쪽을 내려라.”' },
   },
+
+  /* ── 테르나테 ───────────────────────────────────────────────
+     술탄 바불라의 코라코라 선단. 1570년 포르투갈이 그의 아버지를 성 안에서 죽이자 다섯 해를 포위해
+     **테르나테에서 포르투갈을 몰아냈다.** 정향의 임자가 정향의 값을 정한다는 것을 이 바다에
+     처음으로 보여 준 사람이다.
+     ★ 코라코라는 노 젓는 배라 짐을 못 싣는다 — 그래서 이 선단은 **털러 오는 것이 아니라
+       길을 막으러 온다**(요율 6~8.5의 향료 삼각 구간). */
+  {
+    id: 'babullah', name: '술탄 바불라의 선단', flag: 'majapahit', ship: 'korakora',
+    base: 'ternate', purse: [900, 3400], strength: 3, bounty: [1100, 2600],
+    hunt: ['ternate|tidore', 'ambon|ternate', 'makassar|ternate'],
+    circuit: ['ternate', 'tidore', 'ternate', 'ambon', 'ternate', 'makassar', 'ternate'],
+    season: null, scope: 'region',
+    blurb: '정향의 임자가 정향의 값을 정한다. 그 값을 안 치르면 이 바다를 못 지난다.',
+    lines: {
+      hail: '“이 섬의 나무는 내 아버지의 것이었소. 지금은 내 것이오. 열매도 마찬가지요.”',
+      spare: '“정향만 내리시오. 그것 말고는 당신들이 여기 올 이유가 없지 않소.”',
+    },
+  },
 ];
 
 

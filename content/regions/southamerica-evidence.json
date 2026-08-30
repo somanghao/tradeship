@@ -1476,6 +1476,43 @@
     }
   },
   "ships": {
+    "jangada": {
+      "price": 700,
+      "verdict": "confirmed",
+      "basis": "장가다는 브라질 노르데스치의 통나무 뗏목으로, 16세기 포르투갈 기록부터 지금까지 같은 해안에서 쓰인다. 값은 사료가 아니라 이 권역 최저가(발사 620) 바로 위에 두었고, **일부러 값어치가 안 되게** 적었다 — 화물 30칸이라 발사(44칸/620닢)보다 비싸고 덜 싣는다. 이 자리는 이문이 아니라 '이 바다에 이런 배가 있었다'를 위한 것이다(절대 원칙 — 콘텐츠는 풍부하게).",
+      "sources": [
+        {
+          "title": "Wikipedia — Jangada",
+          "url": "https://en.wikipedia.org/wiki/Jangada"
+        }
+      ]
+    },
+    "galeota": {
+      "price": 4900,
+      "verdict": "probable",
+      "basis": "갈레오타(galeota)는 이베리아권에서 노 열여섯~스무 쌍짜리 소형 갤리를 가리켰고, 브라질·라플라타 연안에서 밀무역선 추격과 강어귀 순찰에 쓰였다. 다만 이 바다의 개별 선가 사료는 없어 값은 사다리(수마카 3,600 ~ 나비오 21,000) 사이에 놓았다. 화물 62 ÷ 최소선원 16 = 3.9로 갤리 밴드(짐배가 아님)를 따른다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Galiot",
+          "url": "https://en.wikipedia.org/wiki/Galiot"
+        }
+      ]
+    },
+    "naudobrasil": {
+      "price": 18500,
+      "verdict": "confirmed",
+      "basis": "브라질 설탕은 16세기 후반 포르투갈 왕실 세입의 큰 축이었고, 바이아·페르남부쿠에서 리스본으로 상자(caixa)를 싣고 간 것이 이 큰 나우다. 값은 사료가 아니라 대서양 나우(11,000)와 대형 크라벨(21,000) 사이에 놓았다. 화물 285 ÷ 최소선원 26 = 11.0으로 나우 밴드(8~12)를 지킨다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Sugar plantations in colonial Brazil",
+          "url": "https://en.wikipedia.org/wiki/Sugar_plantations_in_the_Caribbean"
+        },
+        {
+          "title": "Wikipedia — Carrack / Nau",
+          "url": "https://en.wikipedia.org/wiki/Carrack"
+        }
+      ]
+    },
     "_읽는이에게": "이 권역 배들의 15~17세기 제원(톤수·승조원·값)을 밝힌 사료를 거의 확보하지 못했다. 그래서 값과 수치는 지중해 사다리(코카 1,100/78칸 · 브리간틴 4,200/140칸 · 캐랙 9,800/240칸 · 갈레온 19,500/200칸)에 맞춘 것이고, 확보한 사료는 성격 서술뿐이다. 조선은 과야킬 한 곳에 몰아 두었다 — geo.js에서 industry 3인 유일한 도시다.",
     "balsa": {
       "price": 620,

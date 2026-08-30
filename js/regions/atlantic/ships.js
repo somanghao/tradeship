@@ -111,4 +111,27 @@ export const SHIPS = {
     upkeep: 46, rig: 0.80, tint: 'dark',
     desc: '한자가 남쪽 공법을 들여와 지은 거선. 상선인데 어지간한 군함만큼 물린다.',
   },
+
+  /* ══ 회차 28 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ 이 바다는 tier 2가 셋인데 셋 다 성격이 같았다(짐배). 성격이 다른 둘을 더한다. */
+
+  balinger: {
+    hull: 'hulk', name: '발린저', origin: '잉글랜드·브르타뉴', originFlag: 'england',
+    tier: 1, era: 'classic', yards: ['bristol', 'london'], price: 1150,
+    // 갑판 없는 노 젓는 배. 백년전쟁 무렵 해협에서 나포와 전령을 함께 맡았고, 상선으로도
+    // 썼다. 크라이어보다 비싸되 더 빠르고 포를 하나 더 건다 — 좁은 해협의 배다.
+    hp: 62, crew: 14, crewMax: 22, crewMin: 8, cargo: 58, guns: 3, speed: 1.18,
+    upkeep: 4, rig: 0.60, tint: 'oak',
+    desc: '해협을 오가던 노 젓는 작은 배. 갑판이 없어 파도를 뒤집어쓰지만 무풍에도 나아간다.',
+  },
+  haringbuis: {
+    hull: 'fluyt', name: '헤링 버스', origin: '홀란트 청어 어장', originFlag: 'burgundy',
+    tier: 2, era: 'classic', yards: ['amsterdam', 'kobenhavn'], price: 3900,
+    // ★ **네덜란드의 자본은 향신료가 아니라 청어에서 나왔다.** 배 위에서 바로 소금에 절이는
+    //   이 배가 북해 어장을 통째로 바꿨고, 그 이문이 뒷날 원양 선단의 밑천이 됐다.
+    //   그래서 이 배는 싸움을 아예 못 하는 대신(포 셋) 짐칸이 크다(13.5).
+    hp: 120, crew: 20, crewMax: 34, crewMin: 13, cargo: 176, guns: 3, speed: 0.94,
+    upkeep: 12, rig: 0.85, tint: 'oak',
+    desc: '갑판 위에서 청어를 바로 절이던 배. 싸움은 못 하지만 통을 가득 싣고 북해를 오간다.',
+  },
 };

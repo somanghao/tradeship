@@ -2197,6 +2197,32 @@
     }
   },
   "ships": {
+    "balinger": {
+      "price": 1150,
+      "verdict": "confirmed",
+      "basis": "발린저(balinger)는 15세기 잉글랜드·브르타뉴의 갑판 없는 노 젓는 배로, 왕실 회계 문서와 백년전쟁 기록에 이름이 남아 있다. 나포와 전령을 함께 맡았고 상선으로도 썼다. 값·제원 사료는 없어 이 바다의 사다리(크라이어 900 ~ 코그 1,300) 사이에 두었고, 화물 58 ÷ 최소선원 8 = 7.3으로 소형 연안선 밴드 안이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Balinger",
+          "url": "https://en.wikipedia.org/wiki/Balinger"
+        }
+      ]
+    },
+    "haringbuis": {
+      "price": 3900,
+      "verdict": "confirmed",
+      "basis": "★ 헤링 버스(haringbuis)는 이 바다에서 가장 중요한 배다 — 갑판 위에서 청어를 바로 절이는(gibbing) 이 배가 북해 어장을 통째로 바꿨고 그 이문이 뒷날 네덜란드 원양 선단의 밑천이 됐다. 15세기 후반부터 홀란트·젤란트에서 수백 척이 떴다. 값은 사료가 아니라 홀크(3,000)와 고래잡이 나오(7,400) 사이이고, 포 3 · 화물 176 ÷ 최소선원 13 = 13.5로 '싸움을 못 하는 대신 잘 싣는 배'로 적었다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Herring Buss",
+          "url": "https://en.wikipedia.org/wiki/Herring_Buss"
+        },
+        {
+          "title": "Wikipedia — Dutch herring fishery / gibbing",
+          "url": "https://en.wikipedia.org/wiki/Gibbing"
+        }
+      ]
+    },
     "crayer": {
       "price": 900,
       "verdict": "probable",

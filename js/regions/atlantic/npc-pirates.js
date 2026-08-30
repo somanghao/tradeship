@@ -118,6 +118,24 @@ export const PIRATES = [
       spare: '“그 정도면 정박료로 치겠소. 다음엔 미리 내시오.”',
     },
   },
+
+  /* ── 비스케이만 ─────────────────────────────────────────────
+     브르타뉴 사략선. 프랑스 왕의 허가장을 쥐고 이베리아 배를 세웠고, 전쟁이 끝나면 허가장 없이
+     같은 일을 했다 — 두 상태를 오간 것이 이 무리의 성격이다.
+     ★ 요율이 높은 것은 **빌바오~라로셸(9.0)·빌바오~보르도(8.0)**, 곧 이베리아 양모와
+       보르도 포도주가 지나는 길이다. 사냥터를 그 길에 맞췄다. */
+  {
+    id: 'bretons', name: '브르타뉴 사략선', flag: 'france', ship: 'balinger',
+    base: 'nantes', purse: [700, 2400], strength: 2, bounty: [700, 1600],
+    hunt: ['bilbao|larochelle', 'bilbao|bordeaux', 'bordeaux|bristol', 'larochelle|nantes'],
+    circuit: ['nantes', 'larochelle', 'bordeaux', 'larochelle', 'nantes', 'plymouth', 'nantes'],
+    season: null, scope: 'region',
+    blurb: '허가장이 있을 때와 없을 때 하는 일이 같다. 다른 것은 돌아와서 낼 세뿐이다.',
+    lines: {
+      hail: '“왕의 허가장이 있소. 보여 드릴까, 아니면 그냥 넘기시겠소.”',
+      spare: '“소금과 포도주만 내리시오. 나머지는 당신 것이오.”',
+    },
+  },
 ];
 
 

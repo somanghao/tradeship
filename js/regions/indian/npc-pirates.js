@@ -121,6 +121,24 @@ export const PIRATES = [
       spare: '“가시오. 어차피 저 물목에서 또 걸릴 거요.”',
     },
   },
+
+  /* ── 바트칼·호나바르 ────────────────────────────────────────
+     티모자(팀마야). 비자야나가라 쪽 항구를 근거로 이슬람 상선을 털던 힌두 사략선주였고,
+     1510년 알부케르크에게 **고아를 치라고 권하고 길을 안내한** 사람이 바로 그다.
+     ★ 그래서 이 사람은 「누구 편인가」로 못 읽는다 — 어제의 사냥꾼이 오늘의 안내인이다.
+       사냥터를 바트칼 언저리(요율 4.5~5)로 좁게 잡은 것도 그 때문이다: 멀리 안 나간다. */
+  {
+    id: 'timoja', name: '티모자', flag: 'vijayanagara', ship: 'galbat',
+    base: 'bhatkal', purse: [1200, 4200], strength: 3, bounty: [1400, 3200],
+    hunt: ['bhatkal|goa', 'bhatkal|mangalore', 'bhatkal|cannanore'],
+    circuit: ['bhatkal', 'goa', 'bhatkal', 'mangalore', 'bhatkal', 'cannanore', 'bhatkal'],
+    season: null, scope: 'region',
+    blurb: '어제는 사냥꾼이고 오늘은 안내인이다. 이 해안에서는 그 둘이 같은 직업이다.',
+    lines: {
+      hail: '“고아로 가시오? 좋소. 나도 그리로 가는 길이오 — 다만 먼저 셈을 하고.”',
+      spare: '“쌀은 두고 후추만 내리시오. 사람은 굶으면 안 되오.”',
+    },
+  },
 ];
 
 

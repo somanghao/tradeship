@@ -1587,6 +1587,51 @@
     }
   },
   "ships": {
+    "barinel": {
+      "price": 1050,
+      "verdict": "confirmed",
+      "basis": "바리넬(barinel)은 카라벨 이전에 엔히크 왕자의 기니 항해에 쓰인 노+돛 배로, 주라라의 연대기에 이름이 나온다(1440년대 아르갱 항해). 카라벨이 나오자 곧 밀려났다는 것도 같은 사료가 적는다. 값·제원 사료는 없어 이 바다의 사다리(카누 780 ~ 삼북 1,200) 사이에 놓았고, 화물 66 ÷ 최소선원 8 = 8.3으로 소형 연안선 밴드 안이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Barinel",
+          "url": "https://en.wikipedia.org/wiki/Barinel"
+        },
+        {
+          "title": "Wikipedia — Gomes Eanes de Zurara",
+          "url": "https://en.wikipedia.org/wiki/Gomes_Eanes_de_Zurara"
+        }
+      ]
+    },
+    "pangaio": {
+      "price": 2700,
+      "verdict": "confirmed",
+      "basis": "팡가이오(pangaio)는 포르투갈인이 모잠비크~킬와 사이에서 본 스와힐리 연안의 꿰맨 배를 부른 이름이고 16세기 기록에 거듭 나온다. 못 없이 야자 노끈으로 꿰매고 돛은 매트로 짰다는 서술도 함께 남아 있다 — 그래서 rig 0.00 · 포 2로 적었다. 값은 사료가 아니라 므템베(1,450)와 기니 무역선(3,400) 사이다. 화물 128 ÷ 최소선원 10 = 12.8로 다우 밴드 위쪽이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Mtepe / sewn boat",
+          "url": "https://en.wikipedia.org/wiki/Mtepe"
+        },
+        {
+          "title": "Wikipedia — Swahili coast",
+          "url": "https://en.wikipedia.org/wiki/Swahili_coast"
+        }
+      ]
+    },
+    "naudamina": {
+      "price": 16500,
+      "verdict": "confirmed",
+      "basis": "상 조르즈 다 미나(엘미나)의 금은 1480~1500년대 포르투갈 왕실 세입의 큰 축이었고, 카사 다 미나가 그 항로의 배를 관리했다. 이 바다에는 tier 3이 하나도 없어 사다리 위가 막혀 있었으므로 그 자리를 이 배가 맡는다. 값은 사료가 아니라 대서양 나우(11,000)와 대형 크라벨(21,000) 사이이고, 화물 255 ÷ 최소선원 25 = 10.2로 나우 밴드 안이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Elmina Castle",
+          "url": "https://en.wikipedia.org/wiki/Elmina_Castle"
+        },
+        {
+          "title": "Wikipedia — Casa da Índia",
+          "url": "https://en.wikipedia.org/wiki/Casa_da_%C3%8Dndia"
+        }
+      ]
+    },
     "_읽는이에게": "다우·므템베·카누의 15~16세기 제원(톤수·길이·승조원)을 밝힌 사료를 하나도 확보하지 못했다. 그래서 값과 수치는 전부 지중해 사다리(코카 1,100/78칸 · 브리간틴 4,200/140칸 · 캐랙 9,800/240칸)에 맞춘 것이고, 확보한 사료는 '큰 다우는 승조원 서른 남짓, 작은 것은 열둘' 정도의 성격 서술뿐이다. 전부 probable이다.",
     "canoa": {
       "price": 780,

@@ -1822,6 +1822,36 @@
     }
   },
   "ships": {
+    "thoni": {
+      "price": 1350,
+      "verdict": "confirmed",
+      "basis": "토니(thoni)는 코로만델 해안의 연안 화물선이다. ★ 이 해안에는 항구다운 항구가 없어 큰 배가 모래톱 밖에 서고 작은 배가 짐을 실어 날랐다는 것이 이 해안 무역의 기본 사실이고, 그 큰 쪽이 이 배다. 코드에 코로만델 조선소가 하나도 없던 것을 이 배가 메운다. 값은 사료가 아니라 이 바다의 사다리(야트라 도니 1,150 ~ 파타마르 2,400) 사이이고 화물 88 ÷ 최소선원 8 = 11.0이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Coromandel Coast",
+          "url": "https://en.wikipedia.org/wiki/Coromandel_Coast"
+        },
+        {
+          "title": "Wikipedia — Masulipatnam",
+          "url": "https://en.wikipedia.org/wiki/Machilipatnam"
+        }
+      ]
+    },
+    "naodegoa": {
+      "price": 17500,
+      "verdict": "confirmed",
+      "basis": "★ 인도 티크로 고아·코친에서 지은 나우가 리스본에서 지은 같은 배보다 오래 버텼다는 것은 포르투갈 인도 항로(Carreira da Índia) 연구가 거듭 말하는 사실이고, 그래서 16세기 후반에는 큰 나우를 아예 인도에서 지었다. 값은 사료가 아니라 코티아(10,400)와 라구사 아르고시(26,000) 사이이고, 화물 300 ÷ 최소선원 27 = 11.1로 나우 밴드 안이다. `requires: 'kotia'`는 이 저장소의 사다리 규약이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Carreira da Índia",
+          "url": "https://en.wikipedia.org/wiki/Carreira_da_%C3%8Dndia"
+        },
+        {
+          "title": "Wikipedia — Portuguese India / Goa shipyards",
+          "url": "https://en.wikipedia.org/wiki/Portuguese_India"
+        }
+      ]
+    },
     "yathra": {
       "price": 1150,
       "verdict": "probable",

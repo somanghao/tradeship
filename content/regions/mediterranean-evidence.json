@@ -2810,6 +2810,21 @@
     }
   },
   "ships": {
+    "grippo": {
+      "price": 1000,
+      "verdict": "probable",
+      "basis": "그리포(grippus/gripo)는 베네치아·라구사 공증 문서에 나오는 아드리아의 작은 화물선이다. 소금·기름·양모를 하루 거리로 옮겼다. 값·제원 사료는 없어 타르타네(700)와 코카(1,100) 사이에 두었고, ★ **칸당 값은 코카가 낫게** 적었다(58/1,000 = 0.058 대 78/1,100 = 0.071) — 이 배는 '먼저 사는 배'가 아니라 '가까운 데를 도는 배'라는 뜻이고, 그래야 이 바다의 첫 배 자리를 안 흔든다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Ragusa (Dubrovnik) maritime republic",
+          "url": "https://en.wikipedia.org/wiki/Republic_of_Ragusa"
+        },
+        {
+          "title": "Wikipedia — Ship types of the medieval Mediterranean",
+          "url": "https://en.wikipedia.org/wiki/Medieval_ships"
+        }
+      ]
+    },
     "tartane": {
       "price": 700,
       "verdict": "probable",

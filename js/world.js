@@ -21,7 +21,7 @@ import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
-import { seasonOf, inSeason, activeBounty, setRetireHook, setWorldHook } from './state.js';
+import { seasonOf, inSeason, activeBounty, setRetireHook, setWorldHook, stirSeen } from './state.js';
 import { riskKey } from './map/geo.js';
 /* ★ **꺾인 뱃길** — NPC 배도 플레이어와 같은 폴리라인을 타게 한다(`npcPos`).
    `sprites/maps/lanes.js`는 캔버스를 안 쓰는 **순수 등록소**라(그림 함수가 없다)
@@ -205,8 +205,17 @@ export function worldTick(days = 1) {
   /* ★ 상단은 배가 아니라 **회사**다 — 위 정원 셈과 따로 돈다.
      여기 두는 이유: 시간 진행의 입구가 하나여야 "항구에 서 있는 동안 상단이 멈춘다"가 안 난다. */
   guildTick(days, news);
+  /* ⚠️ **어느 부두였는지는 치르기 전에 읽는다** — `settleGuildOffer()`가 `state.guildOffer`를
+     비우고 나면 그 자리를 물을 방법이 없다(그쪽은 `js/npc/guild.js`라 한 줄도 안 고친다). */
+  const stirCity = state.guildOffer?.city ?? null;
   const paid = settleGuildOffer();
-  if (paid?.ok) news.push({ kind: 'guild-paid', who: paid.by, foe: paid.foe, fee: paid.fee });
+  if (paid?.ok) {
+    news.push({ kind: 'guild-paid', who: paid.by, foe: paid.foe, fee: paid.fee });
+    /* ★ **사주는 임자의 마당에서 벌어진다**(회차 28 · 나-1) — 흔든 것은 남의 상관이지만
+       흔들린 부두는 그 세력의 것이다. 삯(`fee`)은 한 닢도 안 건드린다: 값이 하나 붙을 뿐이다.
+       ★ 세력의 이름을 아는 곳은 `state.js` 하나다 — 여기서는 항구 id만 넘긴다. */
+    if (stirCity) stirSeen(stirCity);
+  }
   /* 철이 지난 배는 **항구에 있을 때만** 물러난다 — 바다 한복판에서 배가 사라지면
      플레이어가 본 것이 무엇이었는지 설명되지 않는다. 발트가 얼고 계절풍이 뒤집히면
      그 바다의 배가 한 철 통째로 자취를 감추는 것이 이 규칙의 목적이다. */
@@ -711,6 +720,10 @@ export function pirateEnemy(n) {
        그대로 물려받으므로(`makePirate: standIn`) 동중국해에서 브리그가 나오지 않는다 —
        `fleeOdds`가 이 값으로 적 속력을 재고, 나포하면 이 배가 들어온다. */
     hull: s.hull, tint: 'dark', flag: n.flag ?? 'pirate',
+    /* ★ **어느 집 배였는지를 전투 화면까지 들려 보낸다**(회차 28 · 나-1) — 없으면
+       `state.js: backerSlain`이 깃발만 보게 되어 **그 깃발을 단 떠돌이 해적**을 잡아도
+       나라가 화를 내는 엉뚱한 규칙이 된다. 상단 호위선단에만 붙는 값이다. */
+    houseId: n.houseId ?? null,
     hp: Math.round(s.hp * mul), guns: Math.max(2, Math.round(s.guns * mul)),
     crew: Math.max(10, Math.round(s.crewMax * (0.35 + lv * 0.09))),
     level: lv, prize: n.shipKey,

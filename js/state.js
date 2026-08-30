@@ -1304,13 +1304,15 @@ export function canBuyShop(goodId, cityId = state.at) {
 export function buyShop(goodId, cityId = state.at) {
   const c = canBuyShop(goodId, cityId);
   if (!c.ok) return c;
-  state.gold -= c.price;
-  book('outgo', 'ships', c.price);
+  /* ★ **값을 빼기 전에 입회비까지 본다**(`buyGrow`와 같은 규약). 따로 보면 정가만 삼키고
+     시설은 안 서는 자리가 생긴다 — 회차 28에 실측된 구멍이다(27,780닢이 증발했다). */
   const ent = workEntry(cityId);
   const fee = Math.round(c.price * ent.fee);
-  if (fee > state.gold) return { ok: false, reason: `입회비 ${fee.toLocaleString('ko-KR')}닢이 모자란다` };
-  state.gold -= fee;
-  if (fee) book('outgo', 'ships', fee);
+  if (c.price + fee > state.gold) {
+    return { ok: false, reason: `입회비까지 ${(c.price + fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  }
+  state.gold -= c.price + fee;
+  book('outgo', 'ships', c.price + fee);
   const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
   m[workKey('shop', goodId)] = { level: 1, since: state.day, idle: ent.idle, stock: 0, proceeds: 0 };
   m.spent = (m.spent ?? 0) + c.price;
@@ -1661,13 +1663,14 @@ export function buyMill(recipeId, cityId = state.at) {
   const c = canBuyMill(recipeId, cityId);
   if (!c.ok) return c;
   const r = CHAIN_BY_ID[recipeId];
-  state.gold -= c.price;
-  book('outgo', 'ships', c.price);      // 거점과 같은 갈래 — 배 밖에 묶이는 자본이다
+  /* ★ **값을 빼기 전에 입회비까지 본다**(`buyGrow`와 같은 규약 · 위 `buyShop` 주석 참조) */
   const ent = workEntry(cityId);
   const fee = Math.round(c.price * ent.fee);
-  if (fee > state.gold) return { ok: false, reason: `입회비 ${fee.toLocaleString('ko-KR')}닢이 모자란다` };
-  state.gold -= fee;
-  if (fee) book('outgo', 'ships', fee);
+  if (c.price + fee > state.gold) {
+    return { ok: false, reason: `입회비까지 ${(c.price + fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  }
+  state.gold -= c.price + fee;
+  book('outgo', 'ships', c.price + fee);  // 거점과 같은 갈래 — 배 밖에 묶이는 자본이다
   const m = ((state.works ??= {})[cityId] ??= { paid: state.day, spent: 0, missed: 0 });
   m[workKey('mill', chainOut(r))] = { level: 1, since: state.day, idle: ent.idle, job: null };
   m.spent = (m.spent ?? 0) + c.price;   // 유지비는 **들인 돈 전체**에 붙는다(거점과 같다)
@@ -2276,7 +2279,12 @@ export const slainOn = (regionId, tier) => state.slain?.[slainKey(regionId, tier
     ★ **상선은 세지 않는다.** 내가 먼저 덮친 상선이 조건 ③을 채우면 "이 바다의 두목을
       꺾었다"가 "살진 배 한 척을 털었다"로 바뀐다. 분류 규칙은 `battle.js: foeKind`와 같다. */
 export function recordSlain(enemy, regionId = currentRegion()) {
-  if (!enemy || !regionId) return null;
+  if (!enemy) return null;
+  /* ★ **깃발 뒤에는 나라가 있다**(회차 28 · 나-1) — 상단의 호위선단이면 그 깃발을 제 것이라
+     부르는 세력도 장부에 적는다. 여기 두는 이유는 이 함수가 **전투 승리의 유일한 관문**이라
+     씬이 새로 부를 것이 없기 때문이다(`fleetSlain`은 등급 4·5만 보므로 회사의 배를 못 본다). */
+  backerSlain(enemy);
+  if (!regionId) return null;
   if (enemy.nation === '상인') return null;
   const tier = Math.min(5, Math.max(1, enemy.level ?? 1));
   const keys = [slainKey(regionId, tier)];
@@ -2635,6 +2643,60 @@ export function guildCounterAt(cityId = state.at) {
   }
   if (sum <= 0) return 0;
   return max * (sum / (sum + (FACTION.guildCounterRef ?? 1)));
+}
+
+/* ── ★ 상단 ↔ 세력이 만나는 자리 **셋째·넷째** (회차 28 · 나-1) ────────────────────
+   회차 27이 낸 둘(`gripBlocksGuild`·`guildCounterAt`)은 **값**에서 만난다.
+   여기 둘은 **관계**에서 만난다 — 그리고 둘 다 순수한 뺄셈이라 새 수입원이 아니다.
+
+   ★ 경계는 회차 27의 판정을 그대로 지킨다 — **`js/npc/guild.js`는 한 줄도 안 바뀐다.**
+     상단이 실어 보낸 평범한 값(`enemy.flag`·`enemy.houseId`·항구 id)만 읽고,
+     세력의 이름을 아는 곳은 여전히 이 파일 하나다(`test-rules` ⑬이 그것을 감시한다).
+
+   ⚠️ **`state.guilds`를 안 읽는다** — 상단이 살았는지 죽었는지는 이 두 규칙과 무관하다.
+     꺾은 배가 그 집 배였다는 것과, 그 소란이 임자의 부두에서 났다는 것만 본다. */
+
+/** 그 깃발을 **제 것이라 부르는 세력들** — 회사(상단)의 `flag` 하나와 나라(세력)의 `flags` 여럿이
+    만나는 유일한 자리다. 깃발이 없으면(푸거) 빈 배열 — 덮칠 배가 없으면 등을 돌릴 일도 없다. */
+export function guildBackers(flag) {
+  if (!flag || flag === 'pirate') return [];
+  return Object.keys(FACTIONS).filter((id) => (FACTIONS[id].flags ?? []).includes(flag));
+}
+
+/** 상단의 **호위선단**을 꺾었다 — 그 깃발 뒤에 선 세력이 등을 돌린다.
+    ★ `recordSlain`이 부른다(전투 승리의 유일한 관문). 씬이 새로 부를 것이 없다 —
+      *"규칙이 서 있는데 화면이 안 부르면 없는 것과 같다"*를 이 저장소가 다섯 번 겪었다.
+    ⚠️ **`houseId`가 있어야만 문다.** 깃발만 보고 물면 그 깃발을 단 **떠돌이 해적**을
+      잡아도 나라가 화를 내는 엉뚱한 규칙이 된다(오스만 깃발의 해적이 실제로 있다). */
+export function backerSlain(enemy) {
+  if (!enemy?.houseId) return null;
+  const hits = guildBackers(enemy.flag);
+  if (!hits.length) return null;
+  const out = [];
+  for (const fid of hits) {
+    const now = addRegard(fid, FACTION.backerRaw, 'backer');
+    out.push({ fac: fid, name: FACTIONS[fid].name, delta: FACTION.backerRaw, now });
+  }
+  pushLog(`꺾은 것은 회사의 배였으나 깃발은 나라의 것이었다 — `
+        + `${out.map((o) => `${o.name} ${o.now}`).join(' · ')}.`, 'warn');
+  return out;
+}
+
+/** **사주를 끝낸 부두에 임자가 앉아 있으면** 임자도 그 소란을 본다.
+    상단 A가 상단 B의 자리를 흔들라고 시킨 것이지만, 흔들린 자리는 그 세력의 마당이다.
+    ★ `world.js`가 `settleGuildOffer()` 바로 옆에서 부른다 — 세계가 도는 입구(항해·정박)
+      양쪽이 `worldTick` 하나를 거치므로 **한쪽만 도는 사고가 안 난다**. */
+export function stirSeen(cityId = state.at) {
+  const out = [];
+  for (const fid of Object.keys(FACTIONS)) {
+    if (!gripsHere(fid, cityId)) continue;
+    const now = addRegard(fid, FACTION.stirRaw, 'stir');
+    out.push({ fac: fid, name: FACTIONS[fid].name, delta: FACTION.stirRaw, now });
+  }
+  if (!out.length) return null;
+  pushLog(`${CITY_BY_ID[cityId]?.name ?? cityId}의 부두가 시끄러웠다 — 임자가 그것을 보았다`
+        + ` (${out.map((o) => `${o.name} ${o.now}`).join(' · ')}).`, 'warn');
+  return out;
 }
 
 /** 그 자리에 시설을 세울 때의 **입회비와 대가** — `SPEC-vertical`과 물리는 자리.

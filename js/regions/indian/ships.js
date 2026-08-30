@@ -92,4 +92,28 @@ export const SHIPS = {
     upkeep: 26, rig: 0.15, tint: 'oak',
     desc: '다우 중에 가장 큰 배. 고물 누각에 포르투갈식 조각이 붙었다. 짐도 포도 웬만큼 얹는다.',
   },
+
+  /* ══ 회차 28 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ 코로만델(동안)에서 짓는 배가 하나도 없었다 — 조선소가 전부 서안이었다. 그쪽에 하나,
+       그리고 이 바다의 꼭대기에 하나를 더한다. */
+
+  thoni: {
+    hull: 'caravel', name: '토니', origin: '코로만델', originFlag: 'vijayanagara',
+    tier: 1, era: 'classic', yards: ['nagapattinam', 'masulipatnam', 'pulicat'], price: 1350,
+    // 벵골만 동안의 연안 화물선. 이 해안에는 항구다운 항구가 없어 배가 모래톱 밖에 서고
+    // 작은 배가 짐을 실어 날랐다 — 그 큰 쪽이 토니다. 면포를 싣고 실론·믈라카까지 갔다.
+    hp: 68, crew: 12, crewMax: 20, crewMin: 8, cargo: 88, guns: 1, speed: 1.18,
+    upkeep: 5, rig: 0.10, tint: 'oak',
+    desc: '모래톱 밖에 선 큰 배로 짐을 실어 나르던 코로만델의 연안선. 면포를 싣고 실론까지 간다.',
+  },
+  naodegoa: {
+    hull: 'carrack', name: '고아 나우', origin: '고아(티크 조선소)', originFlag: 'portugal',
+    tier: 3, era: 'classic', yards: ['goa', 'cochin', 'diu'], price: 17500, requires: 'kotia',
+    // ★ **리스본이 아니라 고아에서 지은 배가 더 오래 버텼다** — 인도 티크는 유럽 참나무와 달리
+    //   좀에 잘 안 먹혔고, 그래서 16세기 후반에는 인도 항로의 큰 나우를 아예 이쪽에서 지었다.
+    //   이 바다에서 가장 크고, 코티아를 몰아 본 사람에게만 열린다.
+    hp: 245, crew: 48, crewMax: 76, crewMin: 27, cargo: 300, guns: 18, speed: 0.96,
+    upkeep: 40, rig: 0.70, tint: 'white',
+    desc: '인도 티크로 고아에서 지은 큰 나우. 유럽에서 지은 같은 배보다 좀에 강하고 오래 버틴다.',
+  },
 };

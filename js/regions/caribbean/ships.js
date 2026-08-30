@@ -65,4 +65,48 @@ export const SHIPS = {
     upkeep: 30, rig: 0.85, tint: 'dark',
     desc: '함대를 기다리지 않고 은만 싣고 먼저 뜨는 배. 빠르고 사납지만 화물칸이 값에 비해 좁다.',
   },
+
+  /* ══ 회차 28 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ **이 바다가 아홉 중 가장 얇았다** — 선종이 넷뿐이라 조선소에 갈 이유가 거의 없었다.
+       넷을 더해 여덟으로 만든다. 값은 이 바다의 사다리(피라구아 1,200 ~ 갈리사브라 13,000)
+       안에서만 움직이고 **가장 싼 자리는 안 건드린다** — 시작 언저리를 흔들지 않으려는 것이다.
+     근거는 `content/regions/caribbean-evidence.json`의 `ships` 절에 같이 넣었다. */
+
+  perlera: {
+    hull: 'caravel', name: '진주잡이 카노아', origin: '쿠바과·마르가리타', originFlag: 'spain',
+    tier: 1, era: 'classic', yards: ['maracaibo', 'trujillo', 'jamaica'], price: 1250,
+    // 1520~40년대 베네수엘라 앞바다 진주 어장의 배. 잠수부 스물을 싣고 하루를 나가는 배라
+    // 짐칸보다 갑판이 넓고 발이 빠르다 — 피라구아보다 비싸고 덜 싣지만 더 빠르고 포가 있다.
+    hp: 74, crew: 12, crewMax: 20, crewMin: 7, cargo: 58, guns: 3, speed: 1.34,
+    upkeep: 4, rig: 0.10, tint: 'oak',
+    desc: '진주 어장으로 잠수부를 실어 나르던 배. 짐칸은 좁아도 발이 빠르고 갑판에 소포 셋을 걸었다.',
+  },
+  aviso: {
+    hull: 'caravel', name: '아비소', origin: '아바나(급보선)', originFlag: 'spain',
+    tier: 2, era: 'classic', yards: ['havana', 'cartagena'], price: 3800,
+    // 플로타의 출항일과 은의 양을 세비야에 먼저 알리던 급보선. 짐이 아니라 **소식**을 나른다.
+    // 그래서 이 바다에서 가장 빠르되 화물/최소선원이 7.0뿐이다.
+    hp: 108, crew: 20, crewMax: 32, crewMin: 12, cargo: 84, guns: 6, speed: 1.46,
+    upkeep: 12, rig: 0.55, tint: 'white',
+    desc: '선단보다 먼저 떠나 소식을 먼저 옮기던 배. 이 바다에서 가장 빠르지만 짐칸이 좁다.',
+  },
+  fragata: {
+    hull: 'brig', name: '프라가타', origin: '스페인령 본토 연안', originFlag: null,
+    tier: 2, era: 'classic', yards: ['cartagena', 'campeche'], price: 5400,
+    // ★ 16세기의 '프라가타'는 뒷날의 프리깃이 아니다 — 노와 돛을 함께 쓰는 작고 빠른 배이고,
+    //   프랑스·잉글랜드 사략선이 스페인령 연안 마을을 덮칠 때 쓴 것이 이 배다.
+    //   그래서 포는 많고 짐칸은 좁다(화물/최소선원 5.9 — 싸우려고 만든 배).
+    hp: 138, crew: 26, crewMax: 42, crewMin: 15, cargo: 88, guns: 14, speed: 1.40,
+    upkeep: 20, rig: 0.40, tint: 'dark',
+    desc: '노와 돛을 함께 쓰는 사략선. 얕은 만으로 들어와 마을을 털고 바람이 서기 전에 빠져나간다.',
+  },
+  galeondelaplata: {
+    hull: 'galleon', name: '은선단 갈레온', origin: '아바나(왕실 조선소)', originFlag: 'spain',
+    tier: 3, era: 'classic', yards: ['havana'], price: 23000, requires: 'urca',
+    // 아바나에서 쿠바 목재로 지어 플로타의 호위 겸 은 운반을 맡던 배. 이 바다의 꼭대기다.
+    // ★ 우르카를 몰아 본 사람에게만 열린다 — 큰 배를 다뤄 본 뒤에야 왕실 조선소가 이름을 적는다.
+    hp: 280, crew: 60, crewMax: 95, crewMin: 34, cargo: 265, guns: 26, speed: 0.98,
+    upkeep: 46, rig: 0.70, tint: 'white',
+    desc: '아바나의 왕실 조선소가 쿠바 목재로 지은 배. 은을 싣고 대서양을 건너라고 만든 것이라 짐칸과 포갑판이 함께 크다.',
+  },
 };

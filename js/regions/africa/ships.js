@@ -107,4 +107,36 @@ export const SHIPS = {
     upkeep: 15, rig: 0.00, tint: 'white',
     desc: '계절풍을 타고 인도까지 오가던 대형 다우. 적은 선원으로 많이 싣지만 현측이 비어 있다.',
   },
+
+  /* ══ 회차 28 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ **이 바다에는 tier 3이 하나도 없었다** — 위가 막힌 사다리라 조선소가 곧 끝났다.
+       아래(바리넬)·가운데(팡가이오)·꼭대기(미나 나우) 셋을 더해 여덟으로 만든다. */
+
+  barinel: {
+    hull: 'caravel', name: '바리넬', origin: '기니 탐험선', originFlag: 'portugal',
+    tier: 1, era: 'classic', yards: ['santiago', 'elmina'], price: 1050,
+    // 카라벨 이전에 기니 해안을 내려간 배. 노를 저을 수 있어 무풍대와 강어귀를 지났고,
+    // 그 대신 먼바다에서는 굼떴다 — 실제로 카라벨이 나오자 곧 밀려났다.
+    hp: 60, crew: 14, crewMax: 22, crewMin: 8, cargo: 66, guns: 3, speed: 1.20,
+    upkeep: 4, rig: 0.30, tint: 'oak',
+    desc: '카라벨 이전에 기니 해안을 내려가던 배. 노가 있어 무풍대를 지나지만 먼바다에서는 굼뜨다.',
+  },
+  pangaio: {
+    hull: 'caravel', name: '팡가이오', origin: '스와힐리 해안', originFlag: 'swahili',
+    tier: 2, era: 'classic', yards: ['kilwa', 'mocambique', 'zanzibar'], price: 2700,
+    // 포르투갈 기록이 모잠비크~킬와 사이에서 가장 자주 적은 꿰맨 배. 못 하나 없이
+    // 야자 노끈으로 판자를 꿰맸고 돛은 매트로 짰다. 싸울 수 없되 잘 싣는다(12.8).
+    hp: 96, crew: 16, crewMax: 26, crewMin: 10, cargo: 128, guns: 2, speed: 1.12,
+    upkeep: 8, rig: 0.00, tint: 'white',
+    desc: '못 없이 노끈으로 꿰맨 스와힐리 연안선. 돛은 야자잎 매트다. 싸울 수는 없지만 잘 싣는다.',
+  },
+  naudamina: {
+    hull: 'carrack', name: '미나 나우', origin: '엘미나 금 항로', originFlag: 'portugal',
+    tier: 3, era: 'classic', yards: ['mocambique', 'elmina', 'luanda'], price: 16500, requires: 'guineiro',
+    // 상 조르즈 다 미나의 금을 리스본으로 나르던 왕실 나우. 금은 부피가 없으므로 이 배의
+    // 짐칸은 사실 **돌아가는 길의 물건**을 위한 것이다 — 노예·후추·상아가 그 자리에 실렸다.
+    hp: 220, crew: 44, crewMax: 70, crewMin: 25, cargo: 255, guns: 16, speed: 0.98,
+    upkeep: 35, rig: 0.67, tint: 'white',
+    desc: '미나의 금을 리스본으로 나르던 왕실 나우. 이 바다에서 가장 크고, 가장 늦게 열린다.',
+  },
 };

@@ -1587,6 +1587,36 @@
     }
   },
   "ships": {
+    "badan": {
+      "price": 1600,
+      "verdict": "probable",
+      "basis": "바단(badan)은 자루크·붐과 함께 유럽 접촉 이전의 '양끝 뾰족한' 옛 다우 선형으로 분류된다. 자루크가 노와 속력 쪽이라면 바단은 화물 쪽이라 화물 84 ÷ 최소선원 8 = 10.5로 사료의 원양 다우 밴드(8~12) 안에 두었다. 당대 선가 사료는 없어 값은 이 권역 사다리(잘바 1,050 ~ 삼부크 2,900) 사이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Dhow",
+          "url": "https://en.wikipedia.org/wiki/Dhow"
+        },
+        {
+          "title": "WIT Transactions Vol.79 — A survey on the features of the existing motorized wooden dhows",
+          "url": "https://www.witpress.com/Secure/elibrary/papers/MH05/MH05008FU.pdf"
+        }
+      ]
+    },
+    "mahaila": {
+      "price": 3300,
+      "verdict": "probable",
+      "basis": "마하일라(mahaila)는 티그리스·유프라테스의 큰 강배로 바스라~바그다드 사이의 짐을 날랐다. ★ 이 권역은 항로 여섯이 물이 아니라 강과 낙타인데(권역 근거의 routes 참조) 그 길을 실제로 다닌 배가 코드에 하나도 없었다. 값·제원 사료는 없어 당기(4,400) 아래에 놓았고, 바닥이 평평한 강배라 속력을 이 바다 최저(0.92)로, 화물/최소선원을 16.2로 적었다 — 먼바다를 못 가는 대신 잘 싣는다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Mahaila (boat)",
+          "url": "https://en.wikipedia.org/wiki/Mahaila"
+        },
+        {
+          "title": "Wikipedia — Tigris–Euphrates river system",
+          "url": "https://en.wikipedia.org/wiki/Tigris%E2%80%93Euphrates_river_system"
+        }
+      ]
+    },
     "jalba": {
       "price": 1050,
       "verdict": "probable",

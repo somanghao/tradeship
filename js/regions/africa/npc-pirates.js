@@ -88,6 +88,24 @@ export const PIRATES = [
       spare: '“가라. 섬 사이는 우리가 더 잘 안다.”',
     },
   },
+
+  /* ── 앙고셰 ─────────────────────────────────────────────────
+     앙고셰의 밀무역선. 포르투갈이 소팔라에 성을 세워 금 무역을 독점하려 하자, 잠베지 하구 북쪽의
+     이 작은 술탄국이 **성을 비켜 가는 길**을 열었다 — 내륙의 금이 소팔라를 안 거치고 여기로 나왔다.
+     1511년 포르투갈이 앙고셰를 친 것은 해적질 때문이 아니라 **그 길 때문**이다.
+     ★ 그래서 이 무리는 큰 배를 안 노린다. 요율 4.5~6의 짧은 연안 구간에 앉아 작게 자주 문다. */
+  {
+    id: 'angocheband', name: '앙고셰의 밀무역선', flag: 'swahili', ship: 'pangaio',
+    base: 'angoche', purse: [500, 1800], strength: 2, bounty: [500, 1200],
+    hunt: ['angoche|mocambique', 'angoche|kilwa', 'kilwa|mocambique'],
+    circuit: ['angoche', 'mocambique', 'angoche', 'kilwa', 'angoche'],
+    season: null, scope: 'region',
+    blurb: '성을 비켜 가는 길을 아는 사람들. 금은 그 길로 나오고, 세는 그 길로 안 들어간다.',
+    lines: {
+      hail: '“소팔라의 문서를 보여 주지 마시오. 여기서는 그것이 오히려 흠이오.”',
+      spare: '“상아만 두고 가시오. 금은 어차피 당신 것이 아니잖소.”',
+    },
+  },
 ];
 
 

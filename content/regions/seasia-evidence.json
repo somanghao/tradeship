@@ -1876,6 +1876,47 @@
     }
   },
   "ships": {
+    "penjajap": {
+      "price": 1750,
+      "verdict": "confirmed",
+      "basis": "펜자잡(penjajap)은 토메 피르스의 『수마 오리엔탈』과 포르투갈 믈라카 기록에 거듭 나오는 말레이 습격선이다. 노가 주력이고 돛은 보조라 좁은 물목에서 상선을 따라잡았다. 값·제원 사료는 없어 이 바다의 사다리(프라우 1,300 ~ 발랑가이 2,300) 안에 두었고, 화물 34 ÷ 최소선원 12 = 2.8로 '짐이 아니라 사람과 노를 싣는 배'로 적었다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Penjajap",
+          "url": "https://en.wikipedia.org/wiki/Penjajap"
+        },
+        {
+          "title": "Wikipedia — Suma Oriental",
+          "url": "https://en.wikipedia.org/wiki/Suma_Oriental"
+        }
+      ]
+    },
+    "pencalang": {
+      "price": 5400,
+      "verdict": "probable",
+      "basis": "펜찰랑(pencalang)은 자바·수마트라 연안의 무역선으로, 유럽 기록에 'pantchiallang'으로 남았다. 16세기 이름인지 뒤에 굳은 이름인지는 갈리지만 이 저장소는 연도를 고정하지 않는다. 값은 사다리(란차랑 3,400 ~ 종 24,000)의 빈 계단을 채우려고 놓았고, 화물 172 ÷ 최소선원 14 = 12.3으로 짐배 밴드 위쪽이다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Pencalang",
+          "url": "https://en.wikipedia.org/wiki/Pencalang"
+        }
+      ]
+    },
+    "ghurab": {
+      "price": 8900,
+      "verdict": "confirmed",
+      "basis": "아체 술탄국은 1537년부터 여러 차례 포르투갈령 믈라카를 쳤고, 1560년대에는 오스만이 포수와 대포를 보냈다. 그 함대의 주력 대형 갤리를 아랍어 ghurāb(까마귀)에서 온 이름으로 불렀다. 값은 사료가 아니라 이 바다의 사다리에 맞춘 것이고, 포 18은 '오스만 대포를 얹은 배'를 이 게임의 눈금으로 옮긴 것이다(같은 값의 유럽 배보다 짐칸이 좁다).",
+      "sources": [
+        {
+          "title": "Wikipedia — Aceh Sultanate",
+          "url": "https://en.wikipedia.org/wiki/Aceh_Sultanate"
+        },
+        {
+          "title": "Wikipedia — Ottoman expedition to Aceh",
+          "url": "https://en.wikipedia.org/wiki/Ottoman_expedition_to_Aceh"
+        }
+      ]
+    },
     "perahu": {
       "price": 1300,
       "verdict": "probable",

@@ -103,6 +103,24 @@ export const PIRATES = [
       spare: '“가시오. 우리가 찾는 건 저 노새들이오.”',
     },
   },
+
+  /* ── 토르투가 ───────────────────────────────────────────────
+     프랑수아 르 클레르, 별명 「나무다리」(Jambe de Bois). 1554년 산티아고데쿠바를 통째로 털었고
+     그 이듬해 그의 부하 자크 드 소르가 아바나를 태웠다 — 이 바다에 **사략이 사업이 된** 시작점이다.
+     ★ 이미 있는 소르와 짝이다. 소르가 아바나 쪽이면 이쪽은 **동쪽 쿠바와 이스파니올라 사이**
+       (요율 8~9.5의 윈드워드 해협)에 앉는다. */
+  {
+    id: 'leclerc', name: '나무다리 르 클레르', flag: 'france', ship: 'fragata',
+    base: 'tortuga', purse: [1600, 5200], strength: 3, bounty: [1800, 4200],
+    hunt: ['santiagocuba|tortuga', 'havana|santiagocuba', 'santiagocuba|trinidadcuba'],
+    circuit: ['tortuga', 'santiagocuba', 'havana', 'santiagocuba', 'trinidadcuba', 'santiagocuba', 'tortuga'],
+    season: null, scope: 'region',
+    blurb: '다리 하나를 두고 온 대신 이 바다의 지도를 얻었다. 값을 치른 쪽은 늘 지나가는 배다.',
+    lines: {
+      hail: '“다리 값은 스페인이 갚기로 했소. 오늘은 당신이 대신 내시오.”',
+      spare: '“설탕은 무겁소. 은만 내리면 보내 주겠소.”',
+    },
+  },
 ];
 
 

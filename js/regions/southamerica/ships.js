@@ -91,4 +91,37 @@ export const SHIPS = {
     upkeep: 38, rig: 0.67, tint: 'green',
     desc: '과야킬에서 아메리카 목재로 지은 태평양의 대형 상선. 포는 적고 화물칸이 넓다.',
   },
+
+  /* ══ 회차 28 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ **브라질 쪽에 사다리가 없었다** — 태평양 쪽은 나비오(21,000)로 올라가는데
+       대서양 쪽은 수마카 3,600에서 끝이었다. 위·아래로 셋을 더해 여덟으로 만든다. */
+
+  jangada: {
+    hull: 'hulk', name: '장가다', origin: '노르데스치', originFlag: null,
+    tier: 1, era: 'classic', yards: ['recife', 'salvador'], price: 700,
+    // 통나무 여섯을 묶고 삼각돛 하나를 세운 뗏목. 가라앉을 선체가 없어 파도를 타고 넘는다.
+    // ★ 발사(620)보다 비싸되 훨씬 덜 싣는다 — 값으로는 결코 이문이 안 되는 배이고,
+    //   이 자리는 "이 바다에 이런 배가 있었다"를 위한 것이다(콘텐츠는 풍부하게).
+    hp: 40, crew: 6, crewMax: 10, crewMin: 4, cargo: 30, guns: 0, speed: 1.20,
+    upkeep: 2, rig: 0.35, tint: 'oak',
+    desc: '통나무를 묶고 돛 하나를 세운 뗏목. 가라앉을 선체가 없어 파도를 타고 넘지만 실을 것이 거의 없다.',
+  },
+  galeota: {
+    hull: 'galley', name: '갈레오타', origin: '라플라타·브라질 연안', originFlag: null,
+    tier: 2, era: 'classic', yards: ['salvador', 'riodejaneiro', 'buenosaires'], price: 4900,
+    // 노와 돛을 함께 쓰는 소형 갤리. 프랑스 밀무역선을 쫓고 강어귀를 거슬러 오르는 데 썼다.
+    // 무풍의 만에서 유일하게 움직이는 배라 이 바다의 순찰선 자리를 맡는다.
+    hp: 128, crew: 30, crewMax: 46, crewMin: 16, cargo: 62, guns: 12, speed: 1.44,
+    upkeep: 16, rig: 0.20, tint: 'dark',
+    desc: '노와 돛을 함께 쓰는 작은 갤리. 무풍의 만에서도 나아가 강어귀까지 거슬러 오른다.',
+  },
+  naudobrasil: {
+    hull: 'carrack', name: '브라질 나우', origin: '바이아(설탕 항로)', originFlag: null,
+    tier: 3, era: 'classic', yards: ['salvador', 'recife'], price: 18500, requires: 'sumaca',
+    // 브라질 설탕을 리스본으로 나르던 큰 나우. 한 척에 상자 수천을 실었고, 그래서 이 배의
+    // 값어치는 포가 아니라 **짐칸**이다(화물/최소선원 11.0 — 나우 밴드 그대로).
+    hp: 235, crew: 46, crewMax: 74, crewMin: 26, cargo: 285, guns: 14, speed: 0.95,
+    upkeep: 38, rig: 0.70, tint: 'oak',
+    desc: '설탕 상자를 수천 개씩 싣고 대서양을 건너던 배. 포갑판은 얇고 짐칸은 이 바다에서 가장 크다.',
+  },
 };

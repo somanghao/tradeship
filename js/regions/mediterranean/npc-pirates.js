@@ -131,6 +131,24 @@ export const PIRATES = [
       spare: '“됐다. 다음엔 호위를 붙이든가.”',
     },
   },
+
+  /* ── 알제 ───────────────────────────────────────────────────
+     울루지 알리(킬리치 알리 파샤). 칼라브리아 어부의 아들로 태어나 갤리 노를 젓다가 개종하고,
+     알제의 주인이 되었다가 레판토에서 유일하게 제 함대를 온전히 빼내 돌아간 사람이다.
+     ★ 이 바다의 **서쪽 문**(알제~말라가·마요르카·바르셀로나 요율 8.5~9)이 그의 자리다 —
+       바르바로사 형제가 동쪽에서 하던 일을 서쪽에서 이어받았다. */
+  {
+    id: 'uluchali', name: '울루지 알리', flag: 'ottoman', ship: 'xebec',
+    base: 'algiers', purse: [2600, 8000], strength: 4, bounty: [3000, 6500],
+    hunt: ['algiers|mallorca', 'algiers|malaga', 'algiers|barcelona', 'algiers|palermo'],
+    circuit: ['algiers', 'mallorca', 'algiers', 'malaga', 'algiers', 'barcelona', 'algiers'],
+    season: null, scope: 'region',
+    blurb: '노를 젓던 사람이 노 젓게 하는 자리로 올라갔다. 그 바다에서는 그 길이 흔했다.',
+    lines: {
+      hail: '“나도 저 밑에서 노를 저었소. 그러니 당신 사람들 걱정은 마시오 — 자리만 바뀔 뿐이오.”',
+      spare: '“배는 두고 사람은 데려가겠소. 사람이 더 값나가는 바다요.”',
+    },
+  },
 ];
 
 

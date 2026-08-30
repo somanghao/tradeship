@@ -130,6 +130,25 @@ export const PIRATES = [
       spare: '“다음 물목에서도 같은 걸 물을 거요. 깃발을 내걸어 두시오.”',
     },
   },
+
+  /* ── 광저우·차오저우 ────────────────────────────────────────
+     유향(劉香). 정지룡과 같은 바다에서 자란 광둥의 두목이고, 정지룡이 관군의 옷을 입은 뒤에는
+     **그 관군에게 쫓기다 배 위에서 스스로 불을 질렀다.** 두 사람이 갈린 자리가 곧
+     "해적이 관군이 되는 길"이 하나뿐이었다는 뜻이다.
+     ★ 사냥터를 광저우 언저리로 잡았다 — 마카오~광저우(3.0)는 안전하지만
+       차오저우·경주 쪽(6.5~7)은 관군의 손이 옅은 물이다. */
+  {
+    id: 'liuxiang', name: '유향', flag: 'ming', ship: 'haicangchuan',
+    base: 'guangzhou', purse: [2200, 7200], strength: 4, bounty: [2400, 5200],
+    hunt: ['chaozhou|guangzhou', 'guangzhou|qiongzhou', 'guangzhou|yuegang'],
+    circuit: ['guangzhou', 'macau', 'guangzhou', 'chaozhou', 'guangzhou', 'qiongzhou', 'guangzhou'],
+    season: null, scope: 'region',
+    blurb: '같은 물에서 자란 둘 중 하나만 관복을 얻었다. 남은 하나가 이 사람이다.',
+    lines: {
+      hail: '“관의 배요, 아니면 장사치 배요? 요새는 그 둘을 눈으로 못 가리겠소.”',
+      spare: '“쌀은 두고 가시오. 내 사람들도 먹어야 하오.”',
+    },
+  },
 ];
 
 
