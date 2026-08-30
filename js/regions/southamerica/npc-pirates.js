@@ -31,15 +31,19 @@ export const PIRATES = [
      캘리포니아 앞바다에서 마닐라 갤리온 산타아나를 낚았다. 드레이크에 이어 두 번째로
      세계일주를 마친 잉글랜드인이고, 이 바다에서 그가 한 일은 나포보다 방화에 가까웠다.
      ★ 소굴이 없다. 발파라이소를 base로 둔 것은 물을 채우고 배를 눕힐 후미가 그쪽뿐이라서다.
-     ★ hunt에 'callao|portobelo'가 들어 있다 — 페루 은이 파나마로 올라가는 원양 구간이고,
-       이 바다에 사략선이 들어오는 이유의 전부다. */
+     ★ hunt에 'callao|panama'가 들어 있다 — 페루 은이 파나마로 올라가는 구간이고,
+       이 바다에 사략선이 들어오는 이유의 전부다.
+     ⚠️ 회차 26에 'callao|portobelo'에서 고쳤다 — **그 둘은 이어져 있지 않다**(포르토벨로는
+       지협 건너다). `huntedOnLeg`는 `riskKey`가 hunt와 **정확히 일치**할 때만 열리므로
+       없는 항로를 적으면 그 줄은 조용히 죽고 화면만 사냥터라고 말한다
+       (`node tools/probe-roster.mjs` §1이 이제 이것을 잡는다). */
   {
     id: 'cavendish', name: '토머스 캐번디시', flag: 'england', ship: 'redonda',
     base: 'valparaiso', purse: [2600, 8500], strength: 4, bounty: [2800, 6000],
     // 'acapulco|manila' — 이 게임에서 가장 긴 항로(48일·요율 10.0)이고, 캐번디시가
     // 실제로 그 배(산타아나)를 낚은 구간이다. 마닐라 갤리온을 노리는 자가 하나도 없으면
     // 태평양 요율 10.0이 그냥 날씨값이 되어 버린다.
-    hunt: ['arica|callao', 'arica|valparaiso', 'callao|guayaquil', 'callao|portobelo', 'acapulco|manila'],
+    hunt: ['arica|callao', 'arica|valparaiso', 'callao|guayaquil', 'callao|panama', 'acapulco|manila'],
     circuit: ['valparaiso', 'arica', 'callao', 'paita', 'guayaquil', 'paita', 'callao', 'arica', 'valparaiso'],
     season: null, scope: 'ocean',
     blurb: '해협을 넘어온 배다. 돌아갈 길이 없으니 실어 가는 대신 태운다.',

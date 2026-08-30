@@ -18,10 +18,10 @@
 // 설계 정본 `.playtest/round-25/NPC-DESIGN.md` · 수치 `js/data.js: GUILD`
 // 관측 `node tools/sim-guild.mjs 20`
 
-import { GUILD, GOOD_BY_ID, CITY_BY_ID, SHIPS } from '../data.js';
+import { GUILD, GOOD_BY_ID, CITY_BY_ID, SHIPS, SHOCK } from '../data.js';
 import {
   state, neighborsOf, distanceBetween, priceOf, baseTariff, routeRisk,
-  marketDepth, addGuildFlow, guildFlowOf, regionOf, infamyOf,
+  marketDepth, addGuildFlow, guildFlowOf, regionOf, infamyOf, addShock, guildFactor,
 } from '../state.js';
 import { HOUSES, HOUSE_BY_ID } from './houses.js';
 
@@ -47,16 +47,48 @@ export const mightOf = (cap) =>
 /** 한 항차에 나르는 칸 — 규모가 큰 상단일수록 크다 */
 const holdOf = (h) => Math.round(GUILD.holdBase * (0.55 + 0.18 * (h.rank ?? 3)));
 
+/* ── 상관은 명부가 아니라 장부에 있다 (회차 26) ────────────────
+   ★ **상관은 팔리고 넘어간다.** 파산·합병으로 임자가 바뀌므로 런타임 값이 필요한데,
+     명부(`js/npc/houses*.js`)는 **콘텐츠 정본**이라 판 안에서 고치면 안 된다
+     (세이브에 안 실리고 `content/houses-evidence.json`·`check-houses`와 갈린다).
+     ⇒ 장부(`state.guilds[id].seats`)에 두고 **이 함수 하나로만** 읽는다.
+   ⚠️ `h.seats`를 직접 읽는 자리가 하나라도 남으면 넘겨받은 상관이 **어떤 규칙에는 보이고
+     어떤 규칙에는 안 보인다** — 이 저장소가 여러 번 겪은 「규칙이 서 있는데 아무 일도 안 나는」 모양이다. */
+export function seatsOf(h) {
+  const g = state.guilds?.[h.id];
+  const arr = (g?.seats ?? h.seats ?? []);
+  return arr.filter((c) => CITY_BY_ID[c]);
+}
+
+/** 아직 문을 닫지 않은 상단만 — 문 닫은 상단은 항차도 상호작용도 안 한다 */
+export const liveHouses = () => HOUSES.filter((h) => !state.guilds?.[h.id]?.dead);
+
+/* ── 총자산 — **현금이 아니라 자산으로 잰다** (회차 26) ─────────
+   ★ 처음엔 부실을 `g.cap`(현금)으로 쟀더니 **모든 상단이 120일에 파산**했다.
+     상단은 자본의 최대 80%(`loadRatio`)를 짐에 쓰므로 **떠 있는 항차가 있는 동안 현금이
+     바닥에 가깝다** — 그것은 부실이 아니라 정상 영업이다. 사료의 결산도 현금이 아니라
+     *미착 상품(goods in transit)을 자산으로 세는* 대차대조였다.
+   ⇒ 부실·결산·합병은 전부 이 값으로 잰다. `fleetOf`/`mightOf`는 지금까지대로 **현금**을 본다
+     (그쪽은 *"지금 몇 척을 띄울 수 있나"*라서 현금이 맞다 — 규칙을 안 바꾼다). */
+export const worthOf = (g) =>
+  (g?.cap ?? 0) + (g?.voy ?? []).reduce((a, v) => a + (v.spend ?? 0), 0);
+
+/** 그 바다에서 살아 있는 상단 수 — 합병·재기의 하한(`GUILD.minHouses`)이 이것을 본다 */
+export const liveInRegion = (rid) => liveHouses().filter((h) => h.region === rid).length;
+
 /* ── 시야 — 그 상단이 닿는 항구들 ─────────────────────────────
    ★ **한 번만 계산한다.** 항로 그물은 안 변하므로 매일 BFS를 돌 이유가 없다
-     (돌면 264 도시 × 상단 수십 × 수천 일이라 시뮬이 못 끝난다). */
+     (돌면 264 도시 × 상단 수십 × 수천 일이라 시뮬이 못 끝난다).
+   ⚠️ **상관이 바뀌면 그 캐시를 반드시 버린다**(`dropReach`). 안 버리면 인수한 상관이
+     시야에 영영 안 들어와 규칙이 서 있는데 아무 일도 안 난다. */
 const reachCache = new Map();
+const dropReach = (id) => reachCache.delete(id);
 
 function reachOf(h) {
   if (reachCache.has(h.id)) return reachCache.get(h.id);
   const rid = h.region;
   const out = [];
-  for (const seat of h.seats ?? []) {
+  for (const seat of seatsOf(h)) {
     if (!CITY_BY_ID[seat]) continue;
     // 거리를 함께 쌓는 너비우선 — `hops`칸까지
     /* ⚠️ **위험은 길을 따라 쌓인다.** 처음엔 `routeRisk(seat, target)` 하나로 쟀는데,
@@ -103,7 +135,7 @@ function reachOf(h) {
      "손댄 데는 좁아졌다"는 동어반복이 된다. */
 export function houseLanes(perSeat = 6) {
   const out = [];
-  for (const h of HOUSES) {
+  for (const h of liveHouses()) {
     for (const { seat, near } of reachOf(h)) {
       for (const t of near.slice(0, perSeat)) {
         for (const gid of (h.goods ?? [])) {
@@ -120,6 +152,7 @@ export function houseLanes(perSeat = 6) {
 /* ── 장부 ─────────────────────────────────────────────────── */
 export function initGuilds() {
   state.guilds = {};
+  reachCache.clear();                 // 새 판은 명부의 상관으로 되돌아간다
   for (const h of HOUSES) {
     const cap = startCapital(h);
     state.guilds[h.id] = {
@@ -132,6 +165,9 @@ export function initGuilds() {
          점잖은 상관은 처음부터 문을 열어 둔다. 그래야 세 갈래가 다 산다. */
       regard: Math.round((0.5 - (h.temper ?? 0.4)) * GUILD.temperRegard),
       voy: [], cool: 0,
+      /* 흥망(회차 26) — 옛 세이브에는 없어도 되게 전부 `??`로 열어 읽는다 */
+      seats: [...(h.seats ?? [])], low: 0, dead: 0, by: null, lost: 0,
+      book: GUILD.bookDays, peak: cap,
     };
   }
 }
@@ -140,7 +176,7 @@ export const guildOf = (id) => state.guilds?.[id] ?? null;
 
 /** 자본 서열 — 화면·소문이 읽는다 */
 export function guildRank(regionId = null) {
-  return HOUSES
+  return liveHouses()
     .filter((h) => !regionId || h.region === regionId)
     .map((h) => ({ h, g: state.guilds?.[h.id] }))
     .filter((x) => x.g)
@@ -149,12 +185,15 @@ export function guildRank(regionId = null) {
       rank: i + 1, id: x.h.id, name: x.h.name, region: x.h.region,
       cap: Math.round(x.g.cap), fleet: x.g.fleet, might: mightOf(x.g.cap),
       legs: x.g.legs, gain: Math.round(x.g.gain), regard: Math.round(x.g.regard),
+      seats: seatsOf(x.h).length, lost: x.g.lost ?? 0,
+      /* 사료 자본 대비 지금 — 「부가 힘이 된다」의 사다리를 화면이 이 값으로 읽는다 */
+      cap0: Math.round(x.g.cap0 ?? 0), took: (x.g.took ?? []).length,
     }));
 }
 
 /** 그 항구에 상관을 둔 상단들(장부까지) */
 export const guildsAtCity = (cityId) =>
-  HOUSES.filter((h) => (h.seats ?? []).includes(cityId))
+  liveHouses().filter((h) => seatsOf(h).includes(cityId))
     .map((h) => ({ house: h, ledger: state.guilds?.[h.id] ?? null }));
 
 /* ── 그 상단이 나를 어떻게 보는가 ─────────────────────────────
@@ -253,7 +292,9 @@ function pickVoyage(h, g) {
           const riskCut = 1 - Math.min(0.9, (t.risk ?? 0) * GUILD.riskAversion);
           const score = ((net * qty - GUILD.dayCost * days) / days) * riskCut * know;
           if (score <= 0) continue;
-          if (!best || score > best.score) best = { from, to, gid, qty, buy, days, score };
+          /* ★ 길 위 요율의 합을 항차에 **실어 보낸다** — 도착할 때 그 요율로 굴려
+             배가 안 닿을 수 있다(`GUILD.lossPerPct`). 지금까지 요율은 점수만 깎았다. */
+          if (!best || score > best.score) best = { from, to, gid, qty, buy, days, score, risk: t.risk ?? 0 };
         }
       }
     }
@@ -277,10 +318,11 @@ export function guildTick(days = 1, news = []) {
   }
 
   for (let d = 0; d < days; d++) {
-    for (const h of HOUSES) {
+    for (const h of liveHouses()) {
       const g = state.guilds[h.id];
       if (!g) continue;
       g.voy ??= [];                 // 옛 세이브가 배열 없이 실려 올 수 있다
+      g.seats ??= [...(h.seats ?? [])];
       if (g.cool > 0) g.cool--;
 
       // ① 떠 있는 항차가 닿는다
@@ -288,10 +330,44 @@ export function guildTick(days = 1, news = []) {
         const v = g.voy[i];
         if (--v.eta > 0) continue;
         g.voy.splice(i, 1);
+        /* ★★ **배는 안 닿을 수도 있다**(회차 26). 사료에서 **요율이 곧 손실률**이고
+           이 저장소는 `ROUTE_RISK`를 당대 인수업자의 요율로 적어 두었는데
+           상단의 항차에는 한 번도 안 물렸다 — 그래서 아무도 안 망했다.
+           ⚠️ 플레이어의 조우 확률은 한 톨도 안 바뀐다(상단의 배는 지도에 안 뜬다). */
+        if (rnd() < Math.min(0.5, (v.risk ?? 0) * GUILD.lossPerPct)) {
+          /* 적하보험이 매입액의 일부를 돌려준다(`GUILD.lossCover`) — 안 그러면 한 번 잃은
+             상단이 그대로 죽어 「흥망」이 아니라 「한 번의 주사위」가 된다. */
+          const back = v.spend * GUILD.lossCover;
+          g.gain -= v.spend - back + GUILD.dayCost * v.days;
+          g.cap = Math.max(0, g.cap + back - GUILD.dayCost * v.days);
+          g.lost = (g.lost ?? 0) + 1;
+          /* ★ 그 짐은 기다리던 항구에 안 닿는다 — **그 물건이 귀해진다.**
+             `world.js: raids()`가 이미 쓰는 규약 **그대로** 쓴다: **그 항구가 실제로 사들이던
+             물건일 때만** 걸고, 폭과 날수도 `SHOCK.raidMult`/`raidDays`를 그대로 쓴다.
+             ⚠️ **처음엔 제 상수(1.35·40일)를 따로 두고 아무 항구에나 걸었다가 되돌렸다.**
+               상단의 항차는 하루에 한 척꼴로 안 돌아오므로(600일에 555건) 그것이
+               **사건 밀도를 통째로 흔든다** — 실측에서 `sim-guild`의 「사건 폭」이 **−36.4%**로
+               떨어졌다. 그 지표는 활성 사건의 |mult−1| 중앙값이라, **작은 사건을 많이 뿌리면
+               큰 기회가 사라진 것처럼 보인다.** 사건 밀도(`SHOCK.densityBase`)는 맞춰 둔 값이고
+               거기에 눈금 없는 새 사건원을 얹으면 안 된다. */
+          /* ★ **얇은 시장에서만 한 배가 값을 움직인다.** `demand` 문턱만으로는 사건이 6건 →
+             24건으로 **네 배**가 됐다(실측) — 상단의 배는 하루에 한 척꼴로 안 돌아오기 때문이다.
+             그 물건이 「귀해진다」가 참이려면 **잃은 양이 그 항구의 시장 깊이에 견줘 커야** 한다.
+             큰 항구(깊이 338)는 한 배로 안 흔들리고 작은 항구(45)는 흔들린다 — 그것이 이 게임이
+             이미 `marketDepth`로 적어 둔 규칙이고, 여기에 새 눈금을 만들지 않는다. */
+          if (CITY_BY_ID[v.to]?.demand?.[v.gid]
+              && v.qty >= marketDepth(v.to) * GUILD.lossShockShare) {
+            addShock(v.to, v.gid, SHOCK.raidMult, SHOCK.raidDays, 'raid');
+            news.push({ kind: 'guild-lost', who: h.name, city: v.to, goodId: v.gid, qty: v.qty });
+          }
+          continue;
+        }
         const unit = px(v.to, v.gid);
         const revenue = unit * v.qty * (1 - baseTariff(v.to));
         const profit = revenue - v.spend - GUILD.dayCost * v.days;
-        g.cap = Math.max(g.cap0 * 0.2, g.cap + revenue - GUILD.dayCost * v.days);
+        /* ⚠️ **자본 하한(`cap0 × 0.2`)을 뗐다** — 그것이 있으면 파산이 영영 안 걸린다.
+           대신 0 아래로는 안 간다(음수 자본은 규칙이 아니라 버그다). */
+        g.cap = Math.max(0, g.cap + revenue - GUILD.dayCost * v.days);
         g.gain += profit;
         g.legs++;
         /* ★ **부으면 값이 내린다.** 이 한 줄이 물가 안정화의 절반이다(나머지 절반은 아래 매입). */
@@ -301,9 +377,43 @@ export function guildTick(days = 1, news = []) {
         }
       }
 
-      // ② 유지비 — 안 굴리면 마른다(자본이 영원히 불지 않게)
-      g.cap = Math.max(g.cap0 * 0.2, g.cap * (1 - GUILD.upkeep));
+      /* ② 유지비 두 갈래.
+         ⓐ 자본에 **비례**하는 몫 — 안 굴리면 마른다(자본이 영원히 불지 않게).
+         ⓑ ★ 상관마다 붙는 **정액** — 이 한 줄이 파산을 성립시킨다. ⓐ만 있으면 자본이 줄 때
+           유지비도 같이 줄어 **아무도 못 무너진다**(실측: 1,440일에 문 닫은 곳 0). 사료의 팩토리는
+           건물·직원·현지 관리에 정액이 들었고, 수지가 안 맞는 상관을 닫는 것이 곧 상사의 몰락이었다. */
+      g.cap = Math.max(0, g.cap * (1 - GUILD.upkeep) - seatsOf(h).length * GUILD.seatUpkeep);
       g.fleet = fleetOf(g.cap);
+
+      /* ③ **결산과 배당** — 자본은 무한히 안 쌓인다(회차 26).
+         손대기 전 실측: 두 해면 49곳이 전부 선단 6·세기 5로 **천장에 눌어붙어** 사다리가 사라지고
+         사료 자본의 17.4배 서열이 4.6배 안으로 모였다. 사료의 상사는 2~3년마다 결산하고
+         이익을 조합원에게 나눴다 — 그 한 줄이 서열을 판 내내 살린다.
+         ⚠️ 나간 돈은 **세계 밖으로** 간다. 플레이어에게 오지 않는다. */
+      /* ★ **장부가(book value)** — 「무너지고 있다」는 사료 자본이 아니라 **제 최고점**에 견줘야 한다.
+         처음엔 `cap0`(사료 자본)로 재려 했는데, 판이 돌면 자본이 그 10~28배에서 놀아
+         **부실 문턱에 영영 안 닿았다**(실측: 2,880일에 문 닫은 곳 0). 그건 흥망이 아니다.
+         결산 때 책을 닫고 다시 여는 것이 사료의 모양이고, 그 사이의 최고점이 곧 장부가다. */
+      g.peak = Math.max(g.peak ?? g.cap0, worthOf(g));
+
+      g.book = (g.book ?? GUILD.bookDays) - 1;
+      if (g.book <= 0) {
+        g.book = GUILD.bookDays;
+        const keep = g.cap0 * GUILD.capKeep;
+        const worth = worthOf(g);
+        if (worth > keep) {
+          /* 나갈 몫은 총자산으로 재고, **치르는 것은 현금**이다(짐을 배당할 수는 없다). */
+          const out = Math.min(g.cap * 0.9, (worth - keep) * GUILD.payout);
+          g.paid = (g.paid ?? 0) + out;
+          g.cap -= out;
+          g.fleet = fleetOf(g.cap);
+        }
+        g.peak = worthOf(g);        // 책을 닫고 새로 연다 — 배당을 「추락」으로 읽으면 안 된다
+      }
+
+      /* ④ 부실을 센다 — 이어지면 문을 닫는다(`bustTick`).
+         ⚠️ **총자산으로 잰다** — 현금으로 재면 짐을 실은 상단이 전부 부실이 된다(위 `worthOf`). */
+      g.low = (worthOf(g) < (g.peak ?? g.cap0) * GUILD.bustAt) ? (g.low ?? 0) + 1 : 0;
 
       // ③ 빈 선단이 있으면 새 항차를 뽑는다
       let free = g.fleet - g.voy.length;
@@ -315,12 +425,182 @@ export function guildTick(days = 1, news = []) {
         g.cap -= spend;
         /* ★ **사가면 값이 오른다.** 산지가 수요지 쪽으로 올라온다 — 양끝이 서로에게 다가간다. */
         pushFlow(v.from, v.gid, -v.qty);
-        g.voy.push({ from: v.from, to: v.to, gid: v.gid, qty: v.qty, spend, days: v.days, eta: v.days });
+        g.voy.push({ from: v.from, to: v.to, gid: v.gid, qty: v.qty, spend, days: v.days,
+                     eta: v.days, risk: v.risk ?? 0 });
       }
     }
     rollGuildActs(news);
+    /* ⚠️ **날을 먼저 센다.** 0에서 `% mergeCheckDays`를 보면 **첫날에 합병이 터진다** —
+       실측에서 1일차에 상단 하나가 이미 문을 닫아 있었다(판이 시작하기도 전이다). */
+    state.guildDay = (state.guildDay ?? 0) + 1;
+    bustTick(news);
+    mergeTick(news);
+    reviveTick(news);
   }
   return news;
+}
+
+/* ══ 흥망 — 인수·합병·파산 (회차 26) ══════════════════════════
+   설계 정본 `.playtest/round-26/C-DESIGN.md` · 관측 `node tools/probe-houses.mjs`
+
+   ★ **명부는 한 줄도 안 지운다.** 문을 닫는 것은 장부(`state.guilds`)뿐이고
+     `js/npc/houses*.js`·`content/houses-evidence.json`은 그대로다 —
+     새 판은 언제나 49곳으로 선다(콘텐츠는 줄지 않는다는 최상위 원칙).
+   ★ **상관이 빈 항구를 만들지 않는다.** 그래서 파산은 소멸이 아니라 **인수**다.
+     회차 25가 이 기능을 미룬 이유가 정확히 그것이었다. */
+
+/** 상관을 옮긴다 — 시야 캐시를 **반드시** 함께 버린다 */
+function moveSeats(fromId, toId, seats) {
+  const a = state.guilds[fromId], b = state.guilds[toId];
+  if (!a || !b) return 0;
+  b.seats = [...new Set([...(b.seats ?? []), ...seats])];
+  a.seats = (a.seats ?? []).filter((c) => !seats.includes(c));
+  dropReach(fromId); dropReach(toId);
+  (b.took ??= []).push({ id: fromId, day: state.day, seats: seats.length });
+  return seats.length;
+}
+
+/** 그 상단을 삼킬 수 있는 상대 — 같은 바다이거나 원양을 도는 상단 중 자본 1위 */
+function buyerFor(h) {
+  const cand = liveHouses().filter((x) => x.id !== h.id
+    && (x.region === h.region || x.reach === 'ocean')
+    && (state.guilds[x.id]?.cap ?? 0) > 0);
+  if (!cand.length) return null;
+  return cand.reduce((a, b) =>
+    (worthOf(state.guilds[a.id]) >= worthOf(state.guilds[b.id]) ? a : b));
+}
+
+/** 문을 닫힌 것으로 적고 상관과 떠 있던 항차를 인수자에게 넘긴다 */
+function foldInto(h, buyer, price, news, kind) {
+  const g = state.guilds[h.id], b = state.guilds[buyer.id];
+  const seats = seatsOf(h);
+  b.cap = Math.max(0, b.cap - price);
+  moveSeats(h.id, buyer.id, seats);
+  /* 떠 있던 항차도 넘어간다 — 바다에 뜬 배가 임자 없이 남으면 그 짐이 영영 안 닿는다 */
+  b.voy = [...(b.voy ?? []), ...(g.voy ?? [])];
+  g.voy = [];
+  /* ⚠️ **상단의 시계로 적는다.** `state.day`는 *항해했을 때만* 오르므로(항구에 시간이 없다)
+     그것으로 적으면 재기(`reviveDays`)가 판에 따라 영영 안 오거나 즉시 온다. */
+  g.dead = state.guildDay ?? 1;
+  g.by = buyer.id;
+  g.cap = 0;
+  g.fleet = 0;
+  g.low = 0;
+  b.fleet = fleetOf(b.cap);
+  dropReach(h.id);
+  news.push({ kind, who: buyer.name, foe: h.name, city: seats[0] ?? null,
+              seats: seats.length, coin: Math.round(price) });
+  return true;
+}
+
+/** ③ 부실이 이어지면 문을 닫는다 — 살 사람이 없으면 부실인 채로 버틴다 */
+function bustTick(news) {
+  for (const h of liveHouses()) {
+    const g = state.guilds[h.id];
+    if (!g || (g.low ?? 0) < GUILD.bustDays) continue;
+    /* ⚠️ 그 바다의 마지막 상단은 안 닫는다 — 상관이 빈 항구가 생긴다 */
+    if (liveInRegion(h.region) <= 1) { g.low = 0; continue; }
+    const buyer = buyerFor(h);
+    if (!buyer) { g.low = 0; continue; }
+    const price = g.cap + seatsOf(h).length * GUILD.seatPrice;
+    foldInto(h, buyer, price, news, 'guild-bust');
+  }
+}
+
+/** ④ 합병 — 큰 쪽이 작은 쪽을 산다. 서열을 실제로 바꾸는 자리다.
+    ⚠️ **한 번 볼 때 바다마다 한 건만** 한다. 처음엔 조건만 맞으면 다 삼키게 두었더니
+      첫 판정에서 **일곱 곳이 한꺼번에 사라졌다** — 흥망이 아니라 한 번의 정리해고다.
+    ⚠️ 그리고 먹잇감은 **작기만 해서는 안 되고 기울고 있어야** 한다(`mergeWeakAt`).
+      사료의 인수도 「작은 경쟁사」가 아니라 「무너지는 경쟁사」를 샀다. */
+function mergeTick(news) {
+  const regions = [...new Set(HOUSES.map((h) => h.region))];
+  /* ★ **바다마다 판정 날을 어긋나게 둔다.** 같은 날 보게 두면 실측에서 **180일차에 일곱 곳이
+     한꺼번에 문을 닫았다** — 규칙은 옳은데 화면에는 「어느 날 세계가 한 번 정리됐다」로 읽힌다.
+     한 해에 걸쳐 흩으면 같은 횟수가 사건처럼 읽힌다(규칙은 한 줄도 안 바뀐다). */
+  const step = Math.max(1, Math.floor(GUILD.mergeCheckDays / regions.length));
+  regions.forEach((rid, i) => {
+    if (((state.guildDay ?? 0) + i * step) % GUILD.mergeCheckDays) return;
+    if (liveInRegion(rid) <= GUILD.minHouses) return;
+    const here = liveHouses().filter((h) => h.region === rid);
+    let done = false;
+    for (const h of [...here].sort((a, b) =>
+      worthOf(state.guilds[b.id]) - worthOf(state.guilds[a.id]))) {
+      if (done) break;
+      const A = state.guilds[h.id];
+      if (!A || A.dead) continue;
+      const mySeats = new Set(seatsOf(h));
+      const prey = here.filter((x) => {
+        if (x.id === h.id) return false;
+        const B = state.guilds[x.id];
+        if (!B || B.dead) return false;
+        if (worthOf(A) < worthOf(B) * GUILD.mergeRatio) return false;
+        // ★ 기울고 있어야 산다 — 잘 도는 상단은 안 팔린다
+        if (worthOf(B) > (B.peak ?? B.cap0) * GUILD.mergeWeakAt) return false;
+        /* 상관이 겹치거나 이웃이어야 산다 — 못 가는 바다의 상관을 살 수는 없다 */
+        return seatsOf(x).some((c) => mySeats.has(c)
+          || neighborsOf(c).some((n) => mySeats.has(n)));
+      });
+      if (!prey.length) continue;
+      const B = prey.reduce((a, b) =>
+        (worthOf(state.guilds[a.id]) >= worthOf(state.guilds[b.id]) ? a : b));
+      const price = worthOf(state.guilds[B.id]) * GUILD.mergePrem;
+      if (price > A.cap * 0.5) continue;           // 제 자본의 절반 넘게 쓰지 않는다
+      foldInto(B, h, price, news, 'guild-merge');
+      done = true;
+    }
+  });
+}
+
+/** ⑤ 재기 — 그 바다가 하한 아래로 내려가면 문 닫았던 이름이 다시 선다 */
+function reviveTick(news) {
+  if ((state.guildDay ?? 0) % GUILD.mergeCheckDays) return;
+  const seen = new Set(HOUSES.map((h) => h.region));
+  for (const rid of seen) {
+    if (liveInRegion(rid) >= GUILD.minHouses) continue;
+    const back = HOUSES.filter((h) => h.region === rid
+      && state.guilds[h.id]?.dead
+      && (state.guildDay ?? 0) - state.guilds[h.id].dead >= GUILD.reviveDays)
+      .sort((a, b) => state.guilds[a.id].dead - state.guilds[b.id].dead)[0];
+    if (!back) continue;
+    const g = state.guilds[back.id];
+    /* 옛 상관 하나를 되찾는다 — 지금 임자에게서 떨어져 나온다 */
+    const want = (back.seats ?? []).filter((c) => CITY_BY_ID[c])[0];
+    const holder = want ? liveHouses().find((x) => seatsOf(x).includes(want)) : null;
+    g.dead = 0; g.by = null; g.low = 0; g.book = GUILD.bookDays;
+    g.cap = g.cap0 * GUILD.reviveCap;
+    g.peak = g.cap;
+    g.fleet = fleetOf(g.cap);
+    g.seats = want ? [want] : [...(back.seats ?? [])];
+    if (holder && want) {
+      const hg = state.guilds[holder.id];
+      hg.seats = seatsOf(holder).filter((c) => c !== want);
+      dropReach(holder.id);
+    }
+    dropReach(back.id);
+    news.push({ kind: 'guild-revive', who: back.name, city: want ?? null });
+  }
+}
+
+/** 흥망의 장부 — 도구·대시보드가 읽는다(소문 줄이 아니라 **결과**를 센다) */
+export function guildHistory() {
+  const out = { live: 0, dead: 0, took: 0, seatsMoved: 0, lost: 0, paid: 0, rows: [] };
+  for (const h of HOUSES) {
+    const g = state.guilds?.[h.id];
+    if (!g) continue;
+    if (g.dead) out.dead++; else out.live++;
+    out.took += (g.took ?? []).length;
+    out.seatsMoved += (g.took ?? []).reduce((a, t) => a + t.seats, 0);
+    out.lost += g.lost ?? 0;
+    out.paid += g.paid ?? 0;
+    out.rows.push({
+      id: h.id, name: h.name, region: h.region,
+      cap: Math.round(g.cap), cap0: Math.round(g.cap0 ?? 0),
+      seats: seatsOf(h).length, dead: g.dead ?? 0,
+      by: g.by ? (HOUSE_BY_ID[g.by]?.name ?? g.by) : null,
+      took: (g.took ?? []).length, lost: g.lost ?? 0,
+    });
+  }
+  return out;
 }
 
 /* ── 세 갈래 — 괴롭히고 · 이용하고 · 돕는다 ────────────────────
@@ -328,7 +608,7 @@ export function guildTick(days = 1, news = []) {
    못 가는 바다의 상단이 나를 괴롭히면 화면에 아무 일도 안 일어난다. */
 function rollGuildActs(news) {
   const here = regionOf(state.at);
-  for (const h of HOUSES) {
+  for (const h of liveHouses()) {
     const g = state.guilds[h.id];
     if (!g || g.cool > 0) continue;
     if (h.region !== here && h.reach !== 'ocean') continue;
@@ -344,7 +624,7 @@ function rollGuildActs(news) {
 
 /** ① 괴롭힘 — 매점(값을 올린다) 또는 투매(값을 내린다). 플레이어가 선 항구 언저리에서. */
 function pressPlayer(h, g, news) {
-  const seats = (h.seats ?? []).filter((c) => CITY_BY_ID[c]);
+  const seats = seatsOf(h);
   const goods = (h.goods ?? []).filter((gid) => GOOD_BY_ID[gid]);
   if (!seats.length || !goods.length) return;
   const city = seats.includes(state.at) ? state.at : seats[Math.floor(rnd() * seats.length)];
@@ -363,7 +643,7 @@ function pressPlayer(h, g, news) {
 
 /** ③ 도움 — 신용장(매입 할인) · 호위(조우 감소). **매매 대행은 없다**(설계 §0-2). */
 function helpPlayer(h, g, news) {
-  const seats = (h.seats ?? []).filter((c) => CITY_BY_ID[c]);
+  const seats = seatsOf(h);
   if (!seats.length) return;
   const b = (state.guildBoon ||= { credit: null, escort: null });
   b.credit = { cities: [...seats], off: GUILD.creditOff, until: state.day + GUILD.helpDays, by: h.id };
@@ -374,12 +654,13 @@ function helpPlayer(h, g, news) {
 /** ② 이용 — A가 B의 자리를 흔들라고 사주한다. 주인공이 남의 싸움의 도구가 된다. */
 function offerCommission(h, g, news) {
   if (state.guildOffer && state.guildOffer.until > state.day) return;
-  const rivals = HOUSES.filter((x) => x.id !== h.id && x.region === h.region
-    && (x.seats ?? []).length && (state.guilds[x.id]?.cap ?? 0) > 0);
+  const rivals = liveHouses().filter((x) => x.id !== h.id && x.region === h.region
+    && seatsOf(x).length && (state.guilds[x.id]?.cap ?? 0) > 0);
   if (!rivals.length) return;
   const foe = rivals[Math.floor(rnd() * rivals.length)];
   // 흔들 자리 = 경쟁 상단의 상관, 흔들 물건 = 그가 취급하는 것
-  const city = foe.seats[Math.floor(rnd() * foe.seats.length)];
+  const foeSeats = seatsOf(foe);
+  const city = foeSeats[Math.floor(rnd() * foeSeats.length)];
   const pool = (foe.goods ?? []).filter((gid) => GOOD_BY_ID[gid]);
   if (!CITY_BY_ID[city] || !pool.length) return;
   const gid = pool[Math.floor(rnd() * pool.length)];
@@ -416,10 +697,10 @@ export function settleGuildOffer() {
    ⚠️ **조우 확률은 안 건드린다.** 밀도를 올리면 그냥 더 자주 털리고
      *"사람은 이길 수 있는 상대만 싸운다"*는 전제가 깨진다(명부 해적과 같은 규약). */
 export function guildFoeOnLeg(aId, bId) {
-  for (const h of HOUSES) {
+  for (const h of liveHouses()) {
     const g = state.guilds?.[h.id];
     if (!g?.press || g.press.until <= state.day) continue;
-    const seats = h.seats ?? [];
+    const seats = seatsOf(h);
     if (!seats.includes(aId) && !seats.includes(bId)) continue;
     const might = clamp(g.press.might ?? 1, 1, 5);
     const shipKey = GUILD.escortShips[might - 1];
@@ -459,7 +740,10 @@ export function guildPriceReport(limit = 20) {
     for (const gid of Object.keys(state.guildFlow[cityId])) {
       const f = guildFlowOf(cityId, gid);
       if (!f) continue;
-      const push = -(GUILD.flowK * f) / Math.max(1, marketDepth(cityId));
+      /* ★ **여기서 다시 셈하지 않는다**(X-2). 전에는 같은 식을 손으로 옮겨 적어 **상한(±10%)을
+         안 물었고**, 실측 ±12%가 나왔다 — 항구 시세 칸의 「상단이 민 폭」과 대시보드가
+         **서로 다른 수를 말하게 된다.** 정본은 `state.js: guildFactor()` 하나다. */
+      const push = guildFactor(cityId, gid) - 1;
       rows.push({
         city: cityId, cityName: CITY_BY_ID[cityId]?.name ?? cityId,
         good: gid, goodName: GOOD_BY_ID[gid]?.name ?? gid,

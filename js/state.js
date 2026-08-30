@@ -3688,6 +3688,19 @@ export function payBounties() {
 let retireHook = null;
 export const setRetireHook = (fn) => { retireHook = fn; };
 
+/* ── ★★ 항구에 서 있는 동안에도 세계는 돈다 (회차 26 · X-1) ────────
+   **`waitDays()`가 `decayGuildFlow`만 부르고 `worldTick`은 안 불렀다.** 그 결과:
+     항구에서 열흘 기다리면 상단의 자국이 18,655 → 14,482(**−22.4%**)로 삭기만 하고
+     **상단 항차는 0회**였다 — *기다릴수록 세계가 멈춘 채 값만 되돌아왔다.*
+   그런데 `js/npc/guild.js`의 주석은 *"항구에 서 있는 동안 상단이 멈추지 않게 입구를 하나로 뒀다"*
+   라고 적고 있었다. **입구가 둘이었고 하나만 돌고 있었다** — 문서가 코드와 어긋난 자리다.
+   (`tickLines`·`rollConvoys`가 이미 같은 이유로 양쪽에 걸려 있다 — 그 규약을 마저 지킨다.)
+   ⚠️ `state.js`는 `world.js`를 import할 수 없다(모듈 방향 `data → state → world`).
+     그래서 `setRetireHook`과 **같은 후크 규약**으로 꽂는다 — 안 꽂혀 있으면 아무 일도 안 일어나므로
+     `world`를 안 부르는 도구는 지금까지대로 돈다. */
+let worldHook = null;
+export const setWorldHook = (fn) => { worldHook = fn; };
+
 /* ── 초무한 자가 그 바다에서 일한다 (과소기 · 토벌 협조) ────────
    ★ 효과는 **그 권역에 매인다** — 무라카미의 과소기가 카리브에서 통할 리 없다.
      그리고 **갱신해야 산다**: 그 바다에 거점이 없으면 `ROSTER.tameGraceDays` 뒤에 식는다
@@ -6125,6 +6138,9 @@ export function waitDays(n = 1) {
     if (!Object.keys(row).length) delete state.impact[cityId];
   }
   decayGuildFlow(n);              // 상단의 자국도 삭는다 — 손을 놓으면 값이 되돌아온다
+  /* ★★ **그리고 세계가 돈다**(X-1). 이 한 줄이 없으면 기다리는 동안 상단의 자국이 **삭기만** 한다 —
+     `decayGuildFlow`는 여기 있는데 그것을 다시 채우는 `guildTick`이 없었다. */
+  const world = worldHook ? worldHook(n) : null;
   const shocks = rollShockEvents(n);
   /* ⚠️ **정기선은 여기서도 돈다.** `advanceDays`에만 걸면 *"항구에 서 있는 동안 정기선이
      멈춘다"*가 된다 — `QUICKMAP-trade.md`의 *"항구에는 시간이 없다"*가 이 층에서 절반만 참이다. */
@@ -6133,7 +6149,7 @@ export function waitDays(n = 1) {
   rollFelling(n);
   rollFactionRaid(n);
   rollPoach();
-  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks, lines, convoys };
+  return { ok: true, days: n, cost: c, unpaid: r.owed, shocks, lines, convoys, world };
 }
 
 /** 사람을 내려놓는다 — 창고가 있는 항구에서만. 급여 시계가 멈춘다. */
@@ -6486,6 +6502,11 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     /* ★ **새 판은 상단도 처음부터다.** `??=`로만 만들면 옛 판의 자본·호감이 살아남는다
        (`slain`·`tamed`가 명시 선언돼 있는 것과 같은 이유). */
     guilds: {}, guildFlow: {}, guildBoon: null, guildOffer: null,
+    /* 상단의 하루 세는 자 — 합병·재기 판정의 **주기**가 여기 걸려 있다(회차 26).
+       ⚠️ `state.day`로는 못 센다: `guildTick(days)`가 하루 루프를 도는 동안 `state.day`는
+       그대로라 같은 날에 판정이 여러 번 난다. 그리고 **세이브·`resetGame`에 실려야**
+       짝지은 측정(`sim-guild.mjs`)의 두 팔이 같은 자리에서 판정한다. */
+    guildDay: 0,
     infamy: {}, holdings: {}, stored: {}, yards: {}, works: {},
     dues: {},                    // 새 판에는 아무 나라에도 세를 안 냈다 (C-18)
     /* 3단계 — 유통. 새 판에는 묶어 둔 배도 띄워 둔 위탁도 없다 */

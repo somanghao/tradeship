@@ -9,10 +9,12 @@
 //   ② 아홉 권역이 다 열리는가, 그리고 **몇 번 갈아타야 닿는가** (권역 거리)
 //   ③ 실제로 배를 몰고 갔을 때 며칠이 걸리는가 (원양 항해의 무게)
 //   ④ 고립된 항구·죽은 교역품이 없는가
+//   ⑤ **명부 해적의 사냥터(`hunt`)가 실재하는 항로인가** (회차 26에 넣었다)
 //
 //   node tools/check-world.mjs
 
-import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS, YARD, HOLDING, HOLDINGS } from '../js/data.js';
+import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS, YARD, HOLDING, HOLDINGS,
+         ALL_PIRATES, riskKey } from '../js/data.js';
 
 /* 공업력이 실제로 어디까지 오르나 — `state.js: industryOf`가 쓰는 그 상한을 그대로 읽는다.
    여기서 숫자를 새로 적으면 그쪽이 바뀔 때 조용히 갈라진다. */
@@ -188,6 +190,26 @@ for (const [key, s] of Object.entries(SHIPS)) {
       + `${nowhere.slice(0, 3).map((c) => c.name).join(' · ')}${nowhere.length > 3 ? ' …' : ''}`
       + `를 공업력 ${Math.min(...nowhere.map(need))}까지 올리면 열린다`);
   }
+}
+
+/* ── ⑤ 명부 해적의 사냥터가 실재하는 항로인가 ───────────────
+   ★ `world.js: huntedOnLeg`는 `riskKey(a,b)`가 `def.hunt`와 **정확히 일치**할 때만 열린다.
+     그래서 없는 항로·정렬 안 된 키를 적으면 그 줄은 **조용히 죽고**, 항구 카드는 여전히
+     "사냥터 A↔B"라고 말한다 — 플레이어는 그리로 나가 보고 아무도 안 만난다.
+     이 저장소가 **984 게임일에 명부 조우 0회**로 겪은 사고의 작은 판이다.
+   실패로 잡는 이유: 콘텐츠 부족이 아니라 **규칙의 자기모순**이다(최상위 원칙의 갈림선).
+   실측 도구는 `node tools/probe-roster.mjs`. */
+for (const def of ALL_PIRATES) {
+  if (!CITY_BY_ID[def.base]) bad('명부소굴', `${def.name} — 소굴 '${def.base}'가 없는 항구다`);
+  let live = 0;
+  for (const key of def.hunt ?? []) {
+    const [a, b] = String(key).split('|');
+    if (!CITY_BY_ID[a] || !CITY_BY_ID[b]) { bad('명부사냥터', `${def.name} — '${key}'에 없는 항구가 있다`); continue; }
+    if (riskKey(a, b) !== key) { bad('명부사냥터', `${def.name} — '${key}'가 정렬형이 아니다(→'${riskKey(a, b)}')`); continue; }
+    if (!neighborsOf(a).includes(b)) { bad('명부사냥터', `${def.name} — '${key}'는 이어져 있지 않은 두 항구다`); continue; }
+    live++;
+  }
+  if (!live && (def.hunt ?? []).length) soft('명부사냥터', `${def.name} — 쓸 수 있는 사냥터가 하나도 없다(소굴 언저리로만 만난다)`);
 }
 
 /* ── 출력 ─────────────────────────────────────────────── */

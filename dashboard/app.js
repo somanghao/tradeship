@@ -9,6 +9,7 @@ import { runPorts, portLoaded } from './port-view.js';
 import { runShips, shipLoaded } from './ship-view.js';
 import { runOverview, overviewLoaded } from './overview-view.js';
 import { runNpcs, npcLoaded } from './npc-view.js';
+import { runGuilds, bindGuildControls, guildLoaded } from './guild-view.js';
 
 const tabs = [...document.querySelectorAll('#nav .tab')];
 const grps = [...document.querySelectorAll('#nav .grp')];
@@ -26,6 +27,7 @@ function show(name) {
   if (name === 'port' && !portLoaded()) runPorts();
   if (name === 'ship' && !shipLoaded()) runShips();
   if (name === 'npc' && !npcLoaded()) runNpcs();
+  if (name === 'guild' && !guildLoaded()) runGuilds();
   // 오버뷰는 계측이 가볍지만 **캐시 실측**이 있어 열 때마다 다시 그린다
   if (name === 'overview') runOverview();
   location.hash = `#${name}`;
@@ -36,6 +38,7 @@ for (const t of tabs) t.onclick = () => show(t.dataset.tab);
 
 bindPirateControls();
 bindWageControls();
+bindGuildControls();
 
 // 새로고침해도 보던 탭으로 돌아온다
 const start = location.hash.replace('#', '');

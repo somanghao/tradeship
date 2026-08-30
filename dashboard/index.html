@@ -223,6 +223,19 @@
     </div>
   </div>
 
+  <!-- 상단(商團) — 지도에 배로 안 뜨는 층. 소문 세 줄이 유일한 얼굴이라 여기가 그 얼굴이다(G-7). -->
+  <div class="grp" data-tab="guild">
+    <button class="tab" data-tab="guild">상단</button>
+    <div class="subs">
+      <a href="#g-s-curve">자본 곡선</a>
+      <a href="#g-s-rank">자본 서열</a>
+      <a href="#g-s-lanes">무역로</a>
+      <a href="#g-s-push">상단이 민 폭</a>
+      <a href="#g-s-fall">흥망 — 인수·합병·파산</a>
+      <a href="#g-s-seas">바다별</a>
+    </div>
+  </div>
+
   <div class="grp" data-tab="wage">
     <button class="tab" data-tab="wage">보수·물가</button>
     <div class="subs">
@@ -555,6 +568,55 @@
 
   <h2 id="n-s-list">사람 명부 <span class="note">위 바다·갈래 고르기와 찾기가 함께 걸린다</span></h2>
   <div class="panel" style="overflow:auto"><div id="n-list"></div></div>
+</section>
+
+<!-- ══════════════ 상단(商團) ══════════════ -->
+<section class="tabpage" id="tab-guild">
+  <h1>상단 — 무역로로 부를 쌓는 회사</h1>
+  <p class="legend para">
+    <b>상단은 배가 아니라 회사다.</b> <code>js/regions/&lt;권역&gt;/npc-traders.js</code>의 명부가
+    지도 위의 점이라면, 이쪽은 <b>자본을 들고 여러 항차를 동시에 굴리는 장부</b>다 —
+    <b>지도에 한 점도 안 뜬다</b>(해적 밀도·조우 확률을 한 톨도 안 건드리려고 그렇게 뒀다).
+    그래서 소문 세 줄이 그들의 유일한 얼굴이고, <b>이 화면이 없으면 물가를 누르는 층 전체가 안 보인다.</b>
+    <br>
+    상단이 하는 일은 셋뿐이다 — <b>재고·시세·항차</b>. 쥔 자리의 웃돈과 계약 가로채기는
+    <b>세력</b>(<code>SPEC-factions.md</code>)의 것이고 여기서 다시 만들지 않는다.
+    회차 26에 <b>흥망</b>이 붙었다: 자본이 무너지면 <b>상관에 임자가 바뀐다</b> —
+    명부(<code>js/npc/houses*.js</code>)는 한 줄도 안 지우므로 새 판은 언제나 49곳으로 선다.
+  </p>
+
+  <div class="bar">
+    <label>세계 일수
+      <select id="g-days">
+        <option value="360">360일</option>
+        <option value="720">720일</option>
+        <option value="1440" selected>1,440일</option>
+        <option value="2160">2,160일</option>
+      </select>
+    </label>
+    <button id="g-run">다시 굴린다</button>
+    <span style="color:var(--dim);font-size:11px" id="g-stamp"></span>
+  </div>
+
+  <div class="cards" id="g-cards"></div>
+
+  <h2 id="g-s-curve">자본 곡선 <span class="note">상위 여섯 · 세로축은 닢이 아니라 <b>사료 자본의 몇 배</b>다 — 절대액으로 그리면 큰 상단 몇이 화면을 먹고 나머지가 바닥 한 줄이 된다</span></h2>
+  <div class="panel"><div id="g-curve"></div></div>
+
+  <h2 id="g-s-rank">자본 서열 <span class="note">선단 = 동시에 굴리는 항차 수 = <b>물가를 누르는 힘</b> · 세기 = 압박 함대의 강함(<code>pirateEnemy</code>와 같은 눈금)</span></h2>
+  <div class="panel" style="overflow:auto"><div id="g-rank"></div></div>
+
+  <h2 id="g-s-lanes">무역로 <span class="note">★ <b>결과가 아니라 설계에서 뽑는다</b>(상관 × 시야 × 품목) — 결과에서 뽑으면 “손댄 데는 좁아졌다”가 동어반복이 된다</span></h2>
+  <div class="panel" style="overflow:auto"><div id="g-lanes"></div></div>
+
+  <h2 id="g-s-push">상단이 민 폭 <span class="note">정본은 <code>state.js: guildFactor()</code> 하나다 — 여기서 다시 셈하지 않으므로 항구 시세 칸과 <b>같은 수</b>를 말한다(±상한을 문다)</span></h2>
+  <div class="panel" style="overflow:auto"><div id="g-push"></div></div>
+
+  <h2 id="g-s-fall">흥망 — 인수·합병·파산 <span class="note">⚠️ <b>상관이 빈 항구는 안 생긴다</b> — 파산은 소멸이 아니라 인수다</span></h2>
+  <div class="panel" style="overflow:auto"><div id="g-fall"></div></div>
+
+  <h2 id="g-s-seas">바다별 <span class="note">살아 있는 상단이 하한 아래로 내려가면 문 닫았던 이름이 다시 선다(재기)</span></h2>
+  <div class="panel" style="overflow:auto"><div id="g-seas"></div></div>
 </section>
 
 </main>

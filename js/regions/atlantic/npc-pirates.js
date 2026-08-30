@@ -87,7 +87,11 @@ export const PIRATES = [
   {
     id: 'vitalienbrueder', name: '식량형제단', flag: 'pirate', ship: 'crayer',
     base: 'stockholm', purse: [400, 1500], strength: 2, bounty: [420, 950],
-    hunt: ['danzig|stockholm', 'danzig|riga', 'danzig|lubeck', 'kobenhavn|stockholm'],
+    /* ⚠️ 회차 26에 'kobenhavn|stockholm'을 'stockholm|visby'로 고쳤다 — **그 둘은 이어져
+       있지 않다.** 고틀란드(비스뷔)는 1394~98년 이 무리가 실제로 눌러앉은 섬이고
+       스톡홀름은 그들이 식량을 들여보내 이름을 얻은 곳이라, 고증도 이쪽이 낫다.
+       없는 항로를 hunt에 적으면 그 줄은 조용히 죽는다(`tools/probe-roster.mjs` §1). */
+    hunt: ['danzig|stockholm', 'danzig|riga', 'danzig|lubeck', 'stockholm|visby'],
     circuit: ['stockholm', 'danzig', 'riga', 'reval', 'stockholm'],
     season: 'summer', scope: 'region',
     blurb: '슈퇴르테베커의 이름을 아직도 판다. 얼음이 풀리는 넉 달만 바다에 있다.',

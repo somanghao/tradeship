@@ -1297,11 +1297,20 @@ resetGame();
   ok(!canStartLine('cocca', 'venezia', 'genova', ['salt']).ok, '같은 배를 두 번 묶지 못한다');
   /* ⚠️ 양쪽 시계 — `waitDays`에도 걸려 있어야 한다 */
   const moved0 = (state.stored.venezia?.salt ?? 0);
-  waitDays(Math.max(2, ln.turn));
-  ok((state.stored.venezia?.salt ?? 0) < moved0 && (state.stored.genova?.salt ?? 0) > 0,
+  const wd = waitDays(Math.max(2, ln.turn));
+  /* ⚠️ **「제노바에 쌓였나」로 재면 요율만큼 빨개진다** — `tickLines`는 편도마다 `routeRisk`로
+     해적을 굴리고(베네치아~제노바 4%), 걸리면 짐이 통째로 사라져 제노바가 0칸이 된다.
+     실측 30회 중 1회가 그렇게 떨어졌다. 이 검사가 지키려는 것은 *짐이 닿았나*가 아니라
+     **정기선이 `waitDays`에서도 돌았나**이므로, 확률이 안 낀 것으로 잰다 —
+     `waitDays()`가 돌려주는 `lines`(그 자리에서 실제로 실은 칸)를 본다. */
+  const ran = (wd.lines ?? []).some((x) => x.loaded > 0);
+  ok(ran && (state.stored.venezia?.salt ?? 0) < moved0,
      `★ 항구에 서 있는 동안에도 정기선이 돈다 — tickLines가 waitDays에도 걸려 있다`
-     + ` (베네치아 ${moved0} → ${state.stored.venezia?.salt ?? 0}칸 · 제노바 ${state.stored.genova?.salt ?? 0}칸)`);
-  ok(!(state.stored.venezia?.salt > 0 && state.stored.genova?.salt === 0),
+     + ` (베네치아 ${moved0} → ${state.stored.venezia?.salt ?? 0}칸 · 실은 ${(wd.lines ?? []).map((x) => x.loaded).join('/')}칸`
+     + ` · 제노바 ${state.stored.genova?.salt ?? 0}칸${(wd.lines ?? []).some((x) => x.robbed) ? ' — 이번 판은 털렸다' : ''})`);
+  /* 같은 이유로 이 줄도 **털린 판을 빼고** 본다 — 털리면 제노바가 0인 것이 정상이다 */
+  ok((wd.lines ?? []).some((x) => x.robbed)
+     || !(state.stored.venezia?.salt > 0 && state.stored.genova?.salt === 0),
      '★ 한 방향으로만 나른다 — 왕복 양쪽에서 실으면 같은 짐을 도로 실어 오는 배가 된다');
   ok(stopLine('cocca').ok, '언제든 풀 수 있다');
 }
@@ -2337,7 +2346,8 @@ resetGame();
 {
   const { GUILD } = await import('../js/data.js');
   const { HOUSES } = await import('../js/npc/houses.js');
-  const { startCapital, fleetOf, mightOf, initGuilds, guildTick, guildRank } =
+  const { startCapital, fleetOf, mightOf, initGuilds, guildTick, guildRank,
+          liveHouses, guildHistory, guildsAtCity } =
     await import('../js/npc/guild.js');
   const { REGIONS } = await import('../js/regions/index.js');
   const { readFileSync: rf } = await import('node:fs');
@@ -2408,8 +2418,30 @@ resetGame();
   const marked = Object.keys(state.guildFlow).length;
   ok(legs > 0 && marked > 0, `상단이 120일에 항차 ${legs}회 · 자국 남긴 항구 ${marked}곳`);
   const rk = guildRank();
-  ok(rk.length === HOUSES.length && rk[0].cap >= rk.at(-1).cap,
-     `자본 서열이 선다 — 1위 ${rk[0].name} ${rk[0].cap.toLocaleString('en-US')}닢 · 꼴찌 ${rk.at(-1).cap.toLocaleString('en-US')}닢`);
+  /* ⚠️ **`guildRank()`는 살아 있는 상단만 낸다**(회차 26 — 문 닫은 상단이 화면 서열에 남으면 안 된다).
+     그래서 `=== HOUSES.length`가 아니라 `=== liveHouses().length`로 잰다. 명부는 안 줄어든다. */
+  ok(rk.length === liveHouses().length && rk.length <= HOUSES.length && rk[0].cap >= rk.at(-1).cap,
+     `자본 서열이 선다 — 살아 있는 ${rk.length}/${HOUSES.length}곳 · 1위 ${rk[0].name} ${rk[0].cap.toLocaleString('en-US')}닢 · 꼴찌 ${rk.at(-1).cap.toLocaleString('en-US')}닢`);
+
+  /* ⑨-2 ★ **흥망이 실제로 도는가**(회차 26) — 문을 닫은 상단이 있으면 **그 상관에 임자가 있어야** 한다.
+     상관이 빈 항구가 생기면 화면이 설명할 길이 없다(회차 25가 이 기능을 미룬 이유). */
+  {
+    const hist = guildHistory();
+    const orphan = [];
+    for (const r of hist.rows) {
+      if (!r.dead) continue;
+      const def = HOUSES.find((h) => h.id === r.id);
+      for (const c of (def.seats ?? [])) {
+        if (!guildsAtCity(c).length) orphan.push(`${def.name}→${c}`);
+      }
+    }
+    ok(orphan.length === 0,
+       `문 닫은 ${hist.dead}곳의 상관이 전부 임자를 찾았다 — 넘어간 상관 ${hist.seatsMoved}곳`
+       + (orphan.length ? ` ⛔ 빈 상관 ${orphan.slice(0, 3).join(' · ')}` : ''));
+    /* 명부는 한 줄도 안 줄어든다 — 문을 닫는 것은 장부뿐이다(콘텐츠 보존) */
+    ok(hist.live + hist.dead === HOUSES.length,
+       `명부는 그대로다 — 살아 ${hist.live} + 문닫음 ${hist.dead} = ${HOUSES.length}곳`);
+  }
 
   /* ⑩ ⚠️ **사건이 갓 난 자리는 상단이 안 건드린다** — 큰 기회는 플레이어의 것이다 */
   resetGame(); initGuilds();

@@ -21,11 +21,15 @@ import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
-import { seasonOf, inSeason, activeBounty, setRetireHook } from './state.js';
+import { seasonOf, inSeason, activeBounty, setRetireHook, setWorldHook } from './state.js';
 import { riskKey } from './map/geo.js';
+/* ★ **꺾인 뱃길** — NPC 배도 플레이어와 같은 폴리라인을 타게 한다(`npcPos`).
+   `sprites/maps/lanes.js`는 캔버스를 안 쓰는 **순수 등록소**라(그림 함수가 없다)
+   이 파일이 Node에서 그대로 도는 규약을 안 깬다. 표가 없으면 직선을 돌려주는 fail-soft다. */
+import { laneAt } from './sprites/maps/lanes.js';
 /* ★ 상단(商團) — **지도에 안 뜨는 층**이다. `state.npcs` 정원을 한 척도 안 건드리므로
    해적 밀도·조우 확률이 안 움직인다. 자본을 쌓고 그 자본이 물가를 누른다 → `js/npc/guild.js` */
-import { guildTick, settleGuildOffer } from './npc/guild.js';
+import { guildTick, settleGuildOffer, initGuilds } from './npc/guild.js';
 
 let seq = 0;
 const rnd = () => Math.random();
@@ -84,6 +88,11 @@ export function initWorld() {
   state.npcs = [];
   for (let i = 0; i < NPC.traders; i++) state.npcs.push(makeTrader());
   for (let i = 0; i < NPC.pirates; i++) state.npcs.push(makePirate());
+  /* ★ **상단 장부도 여기서 선다**(회차 26 · X-5). 전에는 `initGuilds()`가 `guildTick` 안에만
+     있어서 **새 판의 첫 항구에서 상단 카드가 통째로 안 떴다** — 첫 출항을 해야 세계가 생겼다.
+     세계를 세우는 자리는 여기 하나다(`state.npcs`와 같은 자리에 두는 것이 그 뜻이다).
+     ⚠️ 이어한 판은 장부가 이미 있으므로 **비었을 때만** 세운다 — 안 그러면 세이브가 통째로 초기화된다. */
+  if (!state.guilds || !Object.keys(state.guilds).length) initGuilds();
 }
 
 function makeTrader() {
@@ -487,7 +496,17 @@ export function strayTrader(aId, bId) {
   return n;
 }
 
-/** 지도에 찍을 위치 — 항해 중이면 두 항구 사이를 보간한다 */
+/** 지도에 찍을 위치 — 항해 중이면 **꺾인 뱃길 위를** 보간한다.
+    ★ 회차 26에 고쳤다(지도 PM이 소유 밖이라 넘긴 것). 전에는 두 항구를 **직선**으로 이어
+      NPC 배가 이탈리아 반도와 일본 열도를 가로질러 갔다 — 아홉 장을 손으로 다시 그린
+      회차이므로 그 한 척이 지형을 통째로 거짓말로 만든다.
+    ★ 플레이어의 배는 이미 `scenes/map.js`가 `laneAt()`으로 같은 폴리라인을 탄다
+      (`sprites/maps/lanes.js` 머리주석). 같은 함수를 쓰므로 **두 배가 같은 길로 간다.**
+    ⚠️ `lanes.js`는 **캔버스를 안 쓰는 순수 등록소**라 `world.js`가 Node에서 그대로 import된다
+      (이 파일이 `sprites/`를 피해 온 이유는 Canvas 의존이었고, 여기엔 그것이 없다).
+      권역 표가 아직 등록 전이면 `laneAt`이 **직선을 돌려준다** — fail-soft라 시뮬이 안 깨진다.
+    ⚠️ **규칙엔 한 줄도 안 닿는다** — 항해일(`voyageDays`)은 여전히 두 항구의 직선거리다.
+      꺾인 길은 그림에만 쓴다(`lanes.js`가 정한 규약 그대로). */
 export function npcPos(n) {
   const a = CITY_BY_ID[n.at];
   if (!n.to) {
@@ -497,7 +516,32 @@ export function npcPos(n) {
   }
   const b = CITY_BY_ID[n.to];
   const u = n.legs ? 1 - n.days / n.legs : 0;
+  /* 원양 구간은 두 바다에 걸쳐 있어 어느 권역 표에도 없다 — 그때는 직선이 맞다(지금까지대로). */
+  const rid = REGION_OF_CITY[n.at];
+  if (rid && rid === REGION_OF_CITY[n.to]) {
+    const [x, y] = laneAt(rid, a, b, u);
+    return { x, y };
+  }
   return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
+}
+
+/** 그 배가 향하는 쪽 — 뱃머리를 돌려 놓는 데 쓴다(씬이 읽는다).
+    ★ 꺾인 길에서는 **다음 점을 봐야** 뱃머리가 맞는다. 직선 시절에는 두 항구를 이은
+      각도 하나로 충분했지만, 폴리라인에서는 그 각도가 실제 진행 방향과 어긋난다. */
+export function npcHeading(n) {
+  if (!n.to) return 0;
+  const p = npcPos(n);
+  const u = n.legs ? 1 - n.days / n.legs : 0;
+  const a = CITY_BY_ID[n.at], b = CITY_BY_ID[n.to];
+  const rid = REGION_OF_CITY[n.at];
+  let nx, ny;
+  if (rid && rid === REGION_OF_CITY[n.to]) {
+    [nx, ny] = laneAt(rid, a, b, Math.min(1, u + 0.02));
+  } else {
+    nx = a.x + (b.x - a.x) * Math.min(1, u + 0.02);
+    ny = a.y + (b.y - a.y) * Math.min(1, u + 0.02);
+  }
+  return Math.atan2(ny - p.y, nx - p.x);
 }
 
 /** 플레이어가 잡거나 격침시킨 NPC를 세계에서 지운다 */
@@ -514,6 +558,13 @@ export function removeNpc(id) {
      24,000닢을 내고 체크리스트에서 이름 하나가 지워질 뿐이다. (한 번 그렇게 고쳤다가 되돌렸다.)
    정원은 안 줄인다 — 사라지는 것은 **이름과 현상금**뿐이라는 `rosterOf` 주석의 규약 그대로다. */
 setRetireHook((id) => retireRosterShip(id));   // 명부가 닫히면 `state.js`가 이것을 부른다
+
+/* ★★ **항구에 서 있는 동안에도 세계가 돈다**(회차 26 · X-1). `waitDays()`가 이것을 부른다 —
+   전에는 그쪽이 `decayGuildFlow`만 불러 **자국이 삭기만 하고 상단 항차가 0회**였다
+   (실측: 열흘 대기에 자국 −22.4% · 항차 0). 입구가 둘인데 하나만 돌고 있었다.
+   ⚠️ 항해 쪽 입구는 `scenes/map.js`가 입항할 때 부르는 `worldTick(days)`이고 그쪽은 그대로다 —
+     두 입구가 겹쳐 도는 일은 없다(항해와 대기는 배타적이다). */
+setWorldHook((n) => worldTick(n));
 
 export function retireRosterShip(pirateId) {
   const gone = (state.npcs || []).filter((n) => n.kind === 'pirate' && n.defId === pirateId);
@@ -572,7 +623,42 @@ export function newsLines(news, limit = 3) {
       out.push({ text: `${e.who}이(가) 신용장을 끊어 주었다.`, kind: 'good' });
     } else if (e.kind === 'guild-paid') {
       out.push({ text: `${e.who}이(가) 셈을 치렀다 — ${e.fee.toLocaleString('en-US')}닢.`, kind: 'good' });
+    /* ── 흥망(회차 26) — **이 넷이 없으면 인수·합병이 대시보드에만 있고 판에는 없다.**
+       상단은 지도에 배로 안 뜨므로 소문이 그들의 유일한 얼굴이다. */
+    } else if (e.kind === 'guild-bust') {
+      out.push({
+        text: `${e.foe}이(가) 문을 닫았다. 상관 ${e.seats}곳을 ${e.who}이(가) `
+            + `${e.coin.toLocaleString('en-US')}닢에 넘겨받았다.`,
+        kind: 'bad',
+      });
+    } else if (e.kind === 'guild-merge') {
+      out.push({
+        text: `${e.who}이(가) ${e.foe}을(를) 사들였다 — 상관 ${e.seats}곳이 한 장부로 들어갔다`
+            + ` (${e.coin.toLocaleString('en-US')}닢).`,
+        kind: 'bad',
+      });
+    } else if (e.kind === 'guild-revive') {
+      out.push({
+        text: `${e.who}의 이름이 다시 걸렸다`
+            + (e.city ? ` — ${CITY_BY_ID[e.city]?.name ?? e.city}의 옛 상관을 되찾았다.` : '.'),
+        kind: 'good',
+      });
     }
+  }
+  /* ★ **잃은 항차는 따로, 그리고 한 줄만.** 세계 전체로 보면 하루에 한 척꼴로 안 돌아오므로
+     (실측 600일에 555건) 앞의 갈래와 같은 자리에 두면 **괴롭힘·사주·도움 줄을 통째로 밀어낸다** —
+     `raid`가 상단 줄을 밀어내던 것과 **정확히 같은 사고**다(회차 25 §A-3). 그래서 뒤에 두고 하나만 쓴다.
+     ⚠️ 그래도 반드시 한 줄은 남긴다 — 안 닿은 짐은 그 항구에서 **값이 뛰고**(`raids()`와 같은 규약)
+       그것을 화면이 말하지 않으면 플레이어에게 그 기회는 없는 것과 같다. */
+  /* ⚠️ **내 바다 것만 쓴다.** 세계 전체를 쓰면 900일에 461줄이 되어 괴롭힘(20)·사주(18)를
+     스무 배로 덮는다 — 못 가는 바다의 배가 안 돌아온 이야기는 기회가 아니라 소음이다. */
+  const lost = news.find((e) => e.kind === 'guild-lost' && REGION_OF_CITY[e.city] === here);
+  if (lost && out.length < limit) {
+    out.push({
+      text: `${lost.who}의 배가 돌아오지 않았다 — ${CITY_BY_ID[lost.city]?.name ?? lost.city}에서 기다리던 `
+          + `${GOOD_BY_ID[lost.goodId]?.name ?? lost.goodId} ${lost.qty}개가 닿지 않는다. 값이 뛴다.`,
+      kind: 'warn',
+    });
   }
   for (const e of news) {
     if (out.length >= limit) break;
