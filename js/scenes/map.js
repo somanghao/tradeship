@@ -34,7 +34,7 @@ import {
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
-  pirateThreat, newsLines, pirateEnemy,
+  pirateThreat, newsLines, pirateEnemy, npcHeading,
 } from '../world.js';
 import { ALL_TRADERS, ALL_PIRATES, LIVE_LANES } from '../regions/index.js';
 /* 상단 압박 함대 — 조우 갈래가 이것을 읽어야 화면에 나온다(G-5) → npc/guild.js */
@@ -266,9 +266,11 @@ function drawNpcs(ctx, t) {
     ctx.fillStyle = pirate ? '#d05a4a' : '#ded2b8';
     ctx.fillRect(x, y, 1, 1);
     if (n.to) {                                   // 진행 방향으로 짧은 항적
-      const a = CITY_BY_ID[n.at], b = CITY_BY_ID[n.to];
-      const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      const ux = (b.x - a.x) / d, uy = (b.y - a.y) / d;
+      /* ★ **배는 꺾인 뱃길을 타는데 항적만 직선을 가리키면 둘이 어긋난다.**
+         출발·도착 좌표의 차(b−a)는 뱃길이 아니라 현(弦)이다 — `npcPos`가 타는
+         그 폴리라인에서 방향을 받는다(`world.js: npcHeading`). */
+      const th = npcHeading(n);
+      const ux = Math.cos(th), uy = Math.sin(th);
       ctx.fillStyle = pirate ? '#d05a4a66' : '#ded2b866';
       for (let i = 1; i <= 2; i++) {
         ctx.fillRect(Math.round(x - ux * i * 2), Math.round(y - uy * i * 2), 1, 1);
