@@ -30,6 +30,15 @@ import { runSim } from './sim-core.mjs';
 const N = +(process.argv[2] || 20);
 const DAYS = +(process.argv[3] || 360);
 const V = +(process.argv[4] || 60);
+/* ★★ 회차 28 (가-4) — **「N항차 뒤」와 「N일 뒤」는 다른 질문이다.**
+   회차 27이 못을 박았다: `js/regions/eastasia/geo.js` **좌표 12줄**만 바뀌었는데
+   이 도구의 30항차 판정이 **−19.2% ↔ +12.1%로 뒤집혔다.** 기전은
+   **「상단의 압력은 날로 쌓이는데 판정은 항차로 한다」** — 항구가 가까워져 같은 항차가
+   더 짧은 날에 끝나면 밀 시간이 줄어 *"상단이 있으나 마나"*로 보인다(규칙은 한 톨도 안 바뀌었는데).
+   ⇒ **항차 갈래는 그대로 두고 「일수 갈래」를 나란히 낸다.** 두 답이 갈리면 그것이 곧 신호다.
+   쓰기: `node tools/sim-guild.mjs 20 360 60 60,120,200` */
+const AT_DAYS = String(process.argv[5] || '60,120,200')
+  .split(',').map((x) => +x.trim()).filter((x) => x > 0);
 
 /** 아주 흔한 LCG. 암호가 아니라 **재현**이 목적이다. */
 function seeded(seed) {
@@ -150,8 +159,27 @@ function digest(res) {
      **비율은 오히려 오른다**(실측 −10.3% 금고에 +1.56%p ROI). 사용자가 물은 것도 「항차이익」이다.
      → `wiki/sim-measurement.md`의 같은 함정(후반 브레이크). */
   const nets = live.map((r) => r.gain - r.spend);
-  return { n: rows.length, a30: at(30), a60: at(60), g10: gat(10), g30: gat(30),
-           roi: med(rois), net: med(nets), net30: med(nets.slice(0, 30)) };
+  /* ── ★ 가-4 — **날로 재는 갈래.** 그 날짜를 지나기 직전의 행을 쓴다.
+     ⚠️ 그 날에 못 닿은 판은 **끌어다 쓰지 않는다**(`null`) — 없는 표본을 마지막 값으로 메우면
+        「짧게 끝난 판」이 「그 날까지 번 판」인 척한다. 닿은 판 수를 함께 낸다. */
+  const byDay = (d) => {
+    let r = null;
+    for (const x of rows) { if (x.day <= d) r = x; else break; }
+    return (rows.at(-1)?.day ?? 0) >= d ? r : null;
+  };
+  const days = {};
+  for (const d of AT_DAYS) {
+    const r = byDay(d);
+    days['g' + d] = r ? r.gold : null;          // 그 날의 금고
+    days['a' + d] = r ? r.assets : null;        // 그 날의 총자산
+    days['v' + d] = r ? r.v : null;             // ★ 그 날이 **몇 항차째**인가 — 자(尺)의 정체
+  }
+  /* 하루당 항차이익 — 항차가 짧아지면 항차이익은 줄고 하루당은 그대로다(자를 갈라 보는 자리) */
+  const perDay = live.filter((r) => r.days > 0).map((r) => (r.gain - r.spend) / r.days);
+  return { n: rows.length, lastDay: rows.at(-1)?.day ?? 0,
+           a30: at(30), a60: at(60), g10: gat(10), g30: gat(30),
+           roi: med(rois), net: med(nets), net30: med(nets.slice(0, 30)),
+           perDay: med(perDay), ...days };
 }
 
 console.log(`상단 ${HOUSES.length}곳 · 짝지어(paired) ${N}시드 · 세계 ${DAYS}일 · 항차 ${V}`);
@@ -243,6 +271,46 @@ for (const [name, k] of [['  ★ 항차이익 중앙값(닢)', 'net'], ['  ★ �
   console.log(pad(name, 30) + pad(won(med(A.map((x) => x[k]))), 14) + pad(won(med(B.map((x) => x[k]))), 14)
     + pad(`${d >= 0 ? '+' : ''}${d.toFixed(1)}%`, 12) + band(d, -45, -1));
 }
+/* ══ ★★ 가-4 — **③-b 날로 재는 갈래** (항차 갈래는 위 그대로 둔다) ═══════════
+   회차 27이 못을 박은 자리다: **좌표 12줄**이 30항차 판정을 −19.2% ↔ +12.1%로 뒤집었는데
+   기전은 「압력은 날로 쌓이는데 판정은 항차로 한다」였다. 그러니 **두 자를 나란히 놓는다.**
+   ⚠️ 그 날에 못 닿은 판은 **표본에서 뺀다** — 마지막 값으로 메우면 짧게 끝난 판이 섞인다. */
+console.log(String.fromCharCode(10) + '── ③-b **날로 재면** (가-4 · 같은 판을 다른 자로 잰다) ─────────────');
+console.log(pad('지표', 30) + pad('상단 없음', 14) + pad('상단 있음', 14) + pad('짝지은 차이', 12) + '표본(닿은 판)');
+/** 그 날에 **양쪽 다** 닿은 짝만 쓴다 */
+const pairDay = (k) => {
+  const d = [];
+  for (let i = 0; i < N; i++) {
+    const a = A[i][k], b = B[i][k];
+    if (a == null || b == null || !a) continue;
+    d.push(pct(b, a));
+  }
+  return { d: med(d), n: d.length };
+};
+const medDay = (arr, k) => med(arr.map((x) => x[k]).filter((x) => x != null));
+for (const d of AT_DAYS) {
+  for (const [label, k] of [[d + '일차 금고', 'g' + d], [d + '일차 총자산', 'a' + d]]) {
+    const r = pairDay(k);
+    console.log(pad('  ' + label, 30) + pad(won(medDay(A, k)), 14) + pad(won(medDay(B, k)), 14)
+      + pad(`${r.d >= 0 ? '+' : ''}${r.d.toFixed(1)}%`, 12)
+      + (r.n >= Math.ceil(N * 0.6) ? band(r.d, -45, -1) + ' ' : '⚠표본부족 ')
+      + r.n + '/' + N);
+  }
+  /* ★ **자(尺)의 정체를 함께 적는다** — 「그 날이 몇 항차째인가」. 이 수가 두 트리에서 갈리면
+     「N항차 뒤」 판정은 같은 질문에 답하고 있지 않다. */
+  console.log(pad('    └ 그때 몇 항차째', 30) + pad(medDay(A, 'v' + d) + '항차', 14)
+    + pad(medDay(B, 'v' + d) + '항차', 14) + pad('', 12) + '※ 이 수가 움직이면 항차 갈래를 믿지 마라');
+}
+{
+  const dd = pairD('perDay');
+  console.log(pad('  ★ 하루당 항차이익(닢/일)', 30) + pad(won(med(A.map((x) => x.perDay))), 14)
+    + pad(won(med(B.map((x) => x.perDay))), 14) + pad(`${dd >= 0 ? '+' : ''}${dd.toFixed(1)}%`, 12)
+    + '※ 항차가 짧아져도 안 움직인다 — 자를 가르는 줄');
+  console.log(pad('  (참고) 마지막 날', 30) + pad(med(A.map((x) => x.lastDay)) + '일', 14)
+    + pad(med(B.map((x) => x.lastDay)) + '일', 14) + pad('', 12)
+    + `※ ${V}항차가 이만큼 걸린다 — 위 일수 갈래의 상한`);
+}
+
 const roiA = med(A.map((x) => x.roi)), roiB = med(B.map((x) => x.roi));
 const roiD = med(A.map((a, i) => (B[i].roi - a.roi)));
 console.log(pad('  (참고) 항차 ROI 중앙값', 30) + pad((roiA * 100).toFixed(2) + '%', 14) + pad((roiB * 100).toFixed(2) + '%', 14)

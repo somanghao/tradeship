@@ -164,8 +164,71 @@ export async function open(opts = {}) {
     neighbors: window.__game.neighbors(),
   }));
 
+  /** 이 판에서 만난 조우 전부 — 도주도 **센다**(가-3) */
+  const encounters = [];
+
+  /* ── ★ 회차 28 (가-3) — **「피했다」를 센다** ────────────────────────────
+     회차 22~27이 *"등급 5가 안 나온다"*를 세 회차 동안 **게임 결함**으로 오진했다.
+     실제로는 **만나고 있었고 하네스가 모달에서 도주를 골랐다** — 그리고 그 선택이
+     **아무 데도 안 남았다.** `settleBattle`을 안 지나므로 `R.battles`에도, `R.events`에도,
+     `events`(문자열)에도 등급이 없다 ⇒ 통계에서 강한 상대만 조용히 사라진다.
+     ⇒ 여기서 조우 모달을 만날 때마다 **등급을 읽어** `g.encounters`에 남긴다.
+        `{kind:'declined'|'fought', level, foe, hp, crew, guns, day, gold, hunting}`
+
+     ★ 등급을 얻는 길이 셋이다(게임 코드는 한 줄도 안 고친다):
+       ① **급 문구**(`map.js: RANK_WORD`) — 떠돌이 적은 `blurb`가 없어 이것이 뜬다.
+       ② **선체 수치** — `localize()`가 얼굴만 갈고 hp/guns/crew는 `ENEMIES` 그대로다.
+       ③ **명부 이름** — 이름 있는 자는 `「…호」`로 뜨고 `state.npcs`에 `strength`가 있다.
+     셋 다 실패하면 `level:null`로 남긴다 — **모르는 것을 0으로 세지 않는다.** */
+  const ENC_TITLE = /돛이 보인다/;
+  const readEncounter = () => page.evaluate(() => {
+    const m = [...document.querySelectorAll('.modal')]
+      .find((e) => e.id !== 'logmodal' && e.getClientRects().length > 0);
+    if (!m) return null;
+    const t = (m.innerText || '').replace(/\s+/g, ' ').trim();
+    if (!/돛이 보인다/.test(t)) return null;
+
+    // 「상대는 선체 360 · 선원 130 · 포 30문」 — 내 배 쪽은 `hp/maxHp`라 슬래시로 갈린다
+    const mm = t.match(/상대는\s*선체\s*(\d+)\s*·\s*선원\s*(\d+)\s*·\s*포\s*(\d+)\s*문/);
+    const hp = mm ? Number(mm[1]) : null;
+    const crew = mm ? Number(mm[2]) : null;
+    const guns = mm ? Number(mm[3]) : null;
+
+    // ① 급 문구 (map.js: RANK_WORD 그대로 — 베낀 것이므로 문구가 바뀌면 ②③이 받는다)
+    const RANKW = {
+      pirate: ['', '이름도 못 얻은 잡배', '몇 번 굴러 본 무리', '이 바다에서 이름이 도는 자',
+               '두목급이다', '이 바다의 주인 행세'],
+      navy: ['', '허가장 한 장을 앞세운 작은 배', '순찰이라 부르지만 하는 일은 다르지 않다',
+             '이 물목을 맡은 배', '왕실이 이름을 아는 배', '기함이다'],
+    };
+    let level = null, via = null;
+    for (const kind of Object.keys(RANKW)) {
+      for (let i = 5; i >= 1 && level == null; i--) {
+        if (RANKW[kind][i] && t.includes(RANKW[kind][i])) { level = i; via = 'rank'; }
+      }
+    }
+    // ② 선체 수치 — ENEMIES의 hp는 [80,110,175,240,360]
+    if (level == null && hp != null) {
+      const HP = [80, 110, 175, 240, 360];
+      const i = HP.indexOf(hp);
+      if (i >= 0) { level = i + 1; via = 'hp'; }
+    }
+    // ③ 명부 이름 — 「왕직호」 → state.npcs에서 '왕직'을 찾아 strength
+    let foe = null;
+    const b = m.querySelector('b');
+    if (b) foe = b.textContent.trim();
+    if (level == null && foe) {
+      const bare = foe.replace(/호$/, '');
+      const n = (window.__game.state.npcs ?? []).find((x) => x.name === bare || x.name === foe);
+      if (n && n.strength != null) { level = Math.min(5, Math.max(1, n.strength)); via = 'roster'; }
+    }
+    return { foe, hp, crew, guns, level, via, text: t.slice(0, 240) };
+  }).catch(() => null);
+
   const g = {
     page, browser, errors, notes, titleUp,
+    /** ★ 가-3 — 조우 하나하나의 기록. `declined`가 「만났는데 피했다」다 */
+    encounters,
     /** 제목 화면을 닫는다.
         ★ `click('출항하기')`는 제목 화면과 **항구 사이드패널의 출항 단추 둘 다** 매치해
           뒤에 가려진 쪽을 눌러 실패했다(중동 테스터가 잡았다). 제목 화면만 집는다. */
@@ -533,6 +596,32 @@ export async function open(opts = {}) {
              그래서 러너가 사냥 중임을 알리면(`__r22_hunt`) 이 회피를 끈다. */
           const hunting = await page.evaluate(() => !!window.__r22_hunt).catch(() => false);
           const wantFight = !!flee && (hunting || !outmatched);
+          /* ★★ 가-3 — **고르기 *전에* 등급을 읽는다.** 도주를 고르면 `settleBattle`을 안 지나
+             그 상대가 통계에서 통째로 사라진다. 회차 22~27이 그 자리에서
+             *"등급 5가 안 나온다"*를 세 회차 동안 게임 결함으로 오진했다.
+             ⚠️ 모달을 누른 뒤에 읽으면 이미 닫혀 있다 — 반드시 여기서 읽는다. */
+          if (flee && ENC_TITLE.test(m.text ?? '')) {
+            const e = await readEncounter();
+            if (e) {
+              const snap = await read().catch(() => ({}));
+              const rec = {
+                kind: wantFight ? 'fought' : 'declined',
+                level: e.level, via: e.via, foe: e.foe,
+                hp: e.hp, crew: e.crew, guns: e.guns,
+                outmatched, hunting,
+                day: snap.day ?? null, gold: snap.gold ?? null,
+                from: s.at ?? null, to: cityId,
+              };
+              encounters.push(rec);
+              /* ★ **모르는 것을 조용히 넘기지 않는다** — 등급을 못 읽었으면 소리를 낸다.
+                 (회차 27의 교훈: 빈손을 성공으로 세지 마라.) */
+              if (rec.level == null) {
+                notes.push({ kind: 'enc-nolevel', foe: e.foe, hp: e.hp, text: e.text });
+              }
+            } else {
+              notes.push({ kind: 'enc-unread', text: (m.text ?? '').split(String.fromCharCode(10))[0] });
+            }
+          }
           if (wantFight) await page.evaluate(() => { window.__r22_fight = true; }).catch(() => {});
           if (!(await g.modalClick(wantFight ? null : (flee ?? null)))) break;
         }
