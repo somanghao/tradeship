@@ -17,6 +17,7 @@
 //   맞지 않으면 **조용히 무시**하고 새 판으로 연다. 억지로 이어 붙이는 것보다 낫다.
 
 import { state } from './state.js';
+import { CITY_BY_ID } from './data.js';
 
 const KEY = 'tradeship:save:v1';
 /* ★ **덮어쓰기 직전의 판 한 장.** 타이틀에서 「어느 바다에서 시작할까」나 갈래를 고르면
@@ -65,6 +66,14 @@ const FILL_IF_MISSING = {
   guildBoon: () => null,     // 지금 나를 돕는 상단(신용장·호위)
   guildOffer: () => null,    // 진행 중인 사주(commission)
   guildDay: () => 0,         // 상단의 하루 세는 자 — 합병·재기 판정의 주기(회차 26)
+  /* ── 동료 · 코멘다 (A-5 · 2026-08-25) ─────────────────────
+     읽는 자리가 전부 `state.mates?.[…]`라 없어도 안 깨지지만, **세이브 대상 목록이 곧 문서**라
+     `dashboard/architecture.mjs`의 상태 트리와 갈리지 않게 적어 둔다(`tamed`와 같은 이유). */
+  mates: () => ({}),         // 태운 동료 — 옛 판은 **아무도 안 태운 것으로** 이어진다
+  /* ── 술집 평판 (다-3 · 회차 27) ───────────────────────────
+     체불·이탈이 그 항구에 남긴 자국. 옛 판은 **아무 항구도 나를 모르는 것으로** 이어진다 —
+     0이 기본선이라 비어 있어도 뜻이 통한다(`regard`와 같은 선). */
+  crewRep: () => ({}),
 };
 
 /* ── 옛 판 손보기 (C-18 · 2026-08-28) ──────────────────────────
@@ -77,7 +86,55 @@ const FILL_IF_MISSING = {
      둘이 올리던 값이 정확히 같으므로(+1 · 상한 3) 이어한 판의 공업력이 **한 칸도 안 움직인다.**
    ⚠️ VERSION을 올리지 않는 이유: 올리면 그 판이 통째로 버려진다. 뜻이 통하게 옮길 수 있으면
      옮기는 쪽이 옳다(`FILL_IF_MISSING` 주석과 같은 선). */
+/* ── 유령 도시 id 청소 (X-2 · 2026-08-30 · 회차 27) ────────────
+   ★★ **조용한 실패다.** `state.stored`에 이제 없는 도시 id가 하나라도 남아 있으면
+     항구 사이드패널이 **오류 한 줄 없이 통째로 사라진다** — 화면이 `CITY_BY_ID[id]`를
+     그대로 읽기 때문이다. 세계가 아홉 바다로 커지며 도시 id가 여러 번 갈렸으므로
+     (카리브·남미의 `trujillo` 충돌 정리가 대표적이다) **옛 세이브에는 실제로 남아 있을 수 있다.**
+   ⇒ 이어할 때 한 번 훑어 버린다. **`stored` 하나만 고치지 않는다** — 같은 모양이
+     도시로 키를 매기는 사전형 필드 전부에 있고, 지금 안 나는 것은 그 화면이 아직
+     `?.`로 읽고 있어서일 뿐이라 다음 화면이 그대로 밟는다.
+   ⚠️ 값이 있는 칸을 버리는 것이므로 **버린 것을 세어 콘솔에 남긴다** — 조용히 지우면
+     이 청소기 자체가 다음 사람의 조용한 실패가 된다. */
+/* ⚠️⚠️ **여기 적은 필드는 「키가 도시 id인 것」뿐이어야 한다.** 처음 짤 때 `infamy`(세력 id)와
+   `boons.permit`(권역 id)을 섞어 넣었다가 **악명과 통행문서를 통째로 지웠다**(`check-factions` 45→43).
+   비슷하게 생긴 사전이 넷 더 있고 전부 **도시가 아니다**:
+     `regard`(세력) · `guilds`(상단) · `slain`/`tamed`(해적) · `mates`(동료) · `boons.permit`(권역).
+   새 필드를 넣기 전에 **키를 한 번 찍어 보고** 넣는다. */
+const CITY_KEYED = ['prices', 'impact', 'guildFlow', 'crewRep', 'holdings', 'stored',
+                    'yards', 'dues', 'works', 'scouted'];
+
+function pruneGhostCities(st) {
+  let gone = 0;
+  const drop = (obj, where) => {
+    if (!obj || typeof obj !== 'object') return;
+    for (const id of Object.keys(obj)) {
+      if (CITY_BY_ID[id]) continue;
+      delete obj[id]; gone++;
+      console.warn(`[save] 이제 없는 항구 «${id}»를 ${where}에서 지웠다`);
+    }
+  };
+  for (const k of CITY_KEYED) drop(st[k], `state.${k}`);
+  // 은혜(boons)는 한 겹 더 안쪽에 도시로 키를 맨다
+  // ⚠️ `boons.permit`은 **권역** id로 키를 맨다 — 여기 넣으면 안 된다
+  for (const k of ['smuggle', 'repair']) drop(st.boons?.[k], `state.boons.${k}`);
+  return gone;
+}
+
 function migrate(st) {
+  pruneGhostCities(st);
+
+  /* ── 부관 급여 유예 (다-2 · 회차 27) ──────────────────────
+     `payroll`은 **중첩 객체**라 위 `FILL_IF_MISSING`(맨 위 칸만 본다)이 못 닿는다.
+     새 칸 셋을 여기서 열어 준다 — 없으면 `undefined`와의 비교가 **조용한 false**가 되어
+     유예 단추가 영영 안 열린다(`wiki/gotchas.md` §7이 적어 둔 그 함정이다). */
+  const P = (st.payroll ??= {});
+  P.officerDue ??= 0;      // 이번 달에 쌓인 부관 몫(`due`의 부분집합)
+  P.officerDefer ??= 0;    // 미뤄 둔 삯 — 이자가 이미 붙은 값
+  P.deferMonths ??= 0;     // 연속 유예 횟수
+  // 유예의 대가로 내준 **영구 지분**도 `officer` 안쪽이라 여기서 연다(옛 판은 0 = 아무것도 안 내줬다)
+  if (st.officer) st.officer.share ??= 0;
+
   const H = st.holdings ?? {};
   for (const [cityId, m] of Object.entries(H)) {
     if (!m || !m.dock) continue;

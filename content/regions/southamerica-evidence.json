@@ -1523,6 +1523,127 @@
       ]
     }
   },
+  "mates": {
+    "_읽는이에게": "동료(항해사) 51명의 근거. ★ **직명과 제도만 사료이고 사람은 지어냈다** — 실존 인물을 고용 가능한 부품으로 만들지 않기 위해서다(가문 이름은 실재한 집안에서 빌린 경우가 있고 그때는 basis에 적었다). 그래서 판정은 그 사람이 아니라 **그 자리가 이 바다에 실재했는가**에 매긴다. 코드 정본은 js/regions/<권역>/npc-mates.js이고, 특전 키 열 개(sailDaysOff·gunUp·meleeUp·hullUp·repairOff·upkeepOff·tariffOff·impactOff·fleeUp·crewLossOff) 밖의 키를 만들면 규칙이 조용히 무시한다.",
+    "_보수": {
+      "verdict": "gameplay",
+      "basis": "보수(hire·wage·cut)와 특전 수치는 **사료가 아니라 밸런스 값**이라 인물별로 옮겨 적지 않는다 — 여기 복사해 두면 한쪽만 고쳐도 조용히 어긋나기 때문이다(코드 js/regions/<권역>/npc-mates.js가 정본). 대신 밴드와 기준자를 적어 둔다. ▸ **계약금(hire)** 선장급 800~2,500닢 · 기능직 300~900닢. ▸ **일당(wage)** 기준자는 선원 일당 `CREW_WAGE` 1.2닢과 부관 에이미 2.6닢이고, 선장급 3~6 · 기능직 2.8~4에 든다. ▸ **성과 배분(cut)** 선장급만 갖고 0~0.06이다(에이미 0.11). ▸ **특전은 한 사람에 하나나 둘, 얕게** — 에이미(tariffOff .35 + impactOff .22 = 0.57)보다 세면 안 된다. 명부 51명 가운데 합이 0.18을 넘는 사람이 없다. ▸ 계약 모양은 **코멘다**다(data.js: COMMENDA — 편무 25% · 쌍무 50%+밑천 ×3.0). 그 분배 비율만은 사료이고 근거는 content/voyage-evidence.json의 `commendaSplit`이다(1199년 계약 원문 · 381건).",
+      "sources": [
+        {
+          "title": "Puga & Trefler, \"International Trade and Institutional Change: Medieval Venice's Response to Globalization\" (QJE 2014) — 편무/쌍무 코멘다 분배",
+          "url": "https://doi.org/10.1093/qje/qju006"
+        }
+      ]
+    },
+    "sam-callao-captain": {
+      "name": "로드리고 데 살라사르",
+      "title": "선장",
+      "role": "captain",
+      "at": "callao",
+      "verdict": "confirmed",
+      "basis": "카야오는 리마의 외항이자 **남해 함대(Armada del Mar del Sur)** 의 모항이었고, 포토시 은은 아리카에서 배에 실려 카야오를 거쳐 파나마로 올라갔다. 이 바다는 훔볼트 해류와 남풍이 일정해 서두를 이유가 적었다 — 유지비 감면(upkeepOff)이 그 규칙성이다.",
+      "sources": [
+        {
+          "title": "Callao",
+          "url": "https://en.wikipedia.org/wiki/Callao"
+        },
+        {
+          "title": "Spanish treasure fleet",
+          "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+        }
+      ]
+    },
+    "sam-salvador-captain": {
+      "name": "발타자르 코헤이아",
+      "title": "선장",
+      "role": "captain",
+      "at": "salvador",
+      "verdict": "confirmed",
+      "basis": "사우바도르(바이아)는 브라질 설탕의 집산지였고 리스본–루안다–바이아를 잇는 큰 배가 그 항로를 돌았다. **설탕 상자(caixa)는 무겁다** — 큰 선체가 아니면 왕복을 못 버텼다는 것이 hullUp의 근거다.",
+      "sources": [
+        {
+          "title": "Salvador, Bahia",
+          "url": "https://en.wikipedia.org/wiki/Salvador,_Bahia"
+        },
+        {
+          "title": "Sugar in the Portuguese Empire",
+          "url": "https://en.wikipedia.org/wiki/Colonial_Brazil"
+        }
+      ]
+    },
+    "sam-huancavelica-purser": {
+      "name": "에르난도 오초아",
+      "title": "화물장",
+      "role": "purser",
+      "at": "huancavelica",
+      "verdict": "confirmed",
+      "basis": "우앙카벨리카의 **산타바르바라 광산**은 아메리카 은 정련(파티오 아말감법)에 쓰는 **수은**의 유일한 현지 공급원이었고, 수은은 왕실 전매라 **플라스크 수를 세는 장부가 곧 조세 장부**였다. 「수은 장부가 곧 세금 장부」(tariffOff)가 그 제도다.",
+      "sources": [
+        {
+          "title": "Huancavelica",
+          "url": "https://en.wikipedia.org/wiki/Huancavelica"
+        },
+        {
+          "title": "Patio process",
+          "url": "https://en.wikipedia.org/wiki/Patio_process"
+        }
+      ]
+    },
+    "sam-arica-bosun": {
+      "name": "디에고 마마니",
+      "title": "갑판장",
+      "role": "bosun",
+      "at": "arica",
+      "verdict": "confirmed",
+      "basis": "포토시의 은은 노새·야마 대상이 안데스 고개를 넘어 **아리카**로 내려와 배에 실렸다. 미타 부역과 대상 짐꾼이 그 길을 채웠고 마마니는 아이마라계의 흔한 성이다. 「4천 미터 고개에서 짐 다루는 법」이 수리 감면(repairOff)의 출처다 — 부품을 못 구하는 곳에서 고치는 법이다.",
+      "sources": [
+        {
+          "title": "Potosí",
+          "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+        },
+        {
+          "title": "Arica",
+          "url": "https://en.wikipedia.org/wiki/Arica"
+        }
+      ]
+    },
+    "sam-buenosaires-navigator": {
+      "name": "라몬 벨라스코",
+      "title": "항해장",
+      "role": "navigator",
+      "at": "buenosaires",
+      "verdict": "confirmed",
+      "basis": "라플라타 강 어귀는 폭이 매우 넓은데 **수심이 얕고 진흙 여울이 옮겨 다녀** 도선사 없이는 큰 배가 앉았다. 부에노스아이레스가 오래도록 뒷문 항구에 머문 이유의 하나다. 「지도를 믿는 배는 진흙에 앉는다」가 그 지형이고, 얕은 물을 아는 것이 도주(fleeUp)로 이어진다.",
+      "sources": [
+        {
+          "title": "Río de la Plata",
+          "url": "https://en.wikipedia.org/wiki/R%C3%ADo_de_la_Plata"
+        },
+        {
+          "title": "Buenos Aires",
+          "url": "https://en.wikipedia.org/wiki/Buenos_Aires"
+        }
+      ]
+    },
+    "sam-potosi-surgeon": {
+      "name": "로렌소 이바녜스",
+      "title": "선의",
+      "role": "surgeon",
+      "at": "potosi",
+      "verdict": "confirmed",
+      "basis": "포토시의 병원은 미타 부역꾼과 **아소가도(azogado — 수은 중독자)** 를 받았다. 이 산에서 사람을 죽인 것은 사고보다 분진과 수은이었다는 것이 기록으로 남는다 — 「칼 때문이 아니다」가 그 사실이고 crewLossOff의 근거다.",
+      "sources": [
+        {
+          "title": "Potosí",
+          "url": "https://en.wikipedia.org/wiki/Potos%C3%AD"
+        },
+        {
+          "title": "Mit'a",
+          "url": "https://en.wikipedia.org/wiki/Mit%27a"
+        }
+      ]
+    }
+  },
   "art": {
     "iconTodo": [
       {

@@ -101,9 +101,16 @@ export const state = {
   bands: [],
   hired: [],                 // 이미 태운 술집 자리의 id — 같은 무리를 두 번 태우지 못하게
 
+  /* 술집 평판(다-3) — `{ <항구id>: { v, day } }`. 체불·이탈이 그 부두에 남긴 자국(0~1)이고
+     **읽을 때 반감기로 옅어진다**(`crewRepAt` — 날마다 깎는 후크가 없으므로 두 입구 문제가 안 생긴다).
+     자리 수·계약금·일당·오는 사람의 기질이 함께 움직인다 → `data.js: TAVERN.rep` */
+  crewRep: {},
+
   /* 급여는 **발생주의**다 — 날마다 쌓이고 달마다 항구에서 치른다.
-     due 이번 달 쌓인 급여(선원+부관) · arrears 못 준 채 넘어간 체불 · nextDue 다음 정산일 */
-  payroll: { due: 0, arrears: 0, nextDue: 30, lastDay: 1 },
+     due 이번 달 쌓인 급여(선원+부관) · arrears 못 준 채 넘어간 체불 · nextDue 다음 정산일
+     officerDue 그중 부관 몫 · officerDefer 미뤄 둔 부관 삯 · deferMonths 미룬 달 누계 → `OFFICER.defer` */
+  payroll: { due: 0, arrears: 0, nextDue: 30, lastDay: 1,
+             officerDue: 0, officerDefer: 0, deferMonths: 0 },
   /* 이번 달 장부 — 정산 화면이 "이 달 장사가 어땠나"를 보여주기 위한 누적.
      `book()` 하나로만 적는다(적는 자리를 흩뿌리면 반드시 빠뜨린다). */
   ledger: null,
@@ -333,7 +340,12 @@ export function guildFactor(cityId, goodId) {
   if (!GUILD.enabled) return 1;
   const f = guildFlowOf(cityId, goodId);
   if (!f) return 1;
-  const raw = 1 - (GUILD.flowK * f) / Math.max(1, marketDepth(cityId));
+  /* ★ **독점은 자본을 밀어낸다**(다-4 · 회차 27) — 세력이 쥔 항구·품목에서는 상단이 미는 힘이
+     그만큼 덜 먹는다. 특허 독점은 남의 자본을 못 들어오게 하는 장치였고, 그것이 없으면
+     세력이 만든 값차이를 상단이 조용히 지워 *"딴 데서 사면 된다"*가 답이 아니게 된다.
+     ⇒ 만나는 자리는 여기 한 곳이다. `js/npc/guild.js`는 세력을 여전히 모른다(경계 유지). */
+  const blocked = gripHeld(goodId, cityId) ? (1 - (FACTION.gripBlocksGuild ?? 0)) : 1;
+  const raw = 1 - (GUILD.flowK * f * blocked) / Math.max(1, marketDepth(cityId));
   return Math.max(1 - GUILD.priceCap, Math.min(1 + GUILD.priceCap, raw));
 }
 
@@ -485,7 +497,7 @@ export function sellNet(goodId, n, cityId = state.at) {
   const profit = gain - (state.buyPrice[goodId] || 0) * n;
   if (profit <= 0) return gain;          // 밑진 거래에서는 아무도 떼지 않는다
   let left = profit;
-  const cut = state.officer ? Math.round(left * OFFICER.cut) : 0;
+  const cut = state.officer ? Math.round(left * officerCut()) : 0;
   left -= cut;
   const mrate = mateCut();
   const mcut = left > 0 && mrate > 0 ? Math.round(left * mrate) : 0;
@@ -2592,7 +2604,37 @@ export function gripMarkup(goodId, cityId = state.at) {
     if (!hasOutsideSource(id, goodId)) up *= FACTION.gripSoleHalf;
     worst = Math.max(worst, up);
   }
-  return worst;
+  /* ★ **자본은 정치를 얕게 만든다**(다-4 · 회차 27) — 큰 상관이 여럿 앉은 항구에서는
+     창고에 남의 물건이 쌓여 있어 임자가 값을 온전히 못 부른다.
+     ⚠️ 수량과 무관해야 한다(`buy()`의 이분 탐색이 단조 증가를 전제한다) — 항구와 그날의 자본만 본다. */
+  return worst * (1 - guildCounterAt(cityId));
+}
+
+/** 그 자리를 **쥔 세력이 있는가** — 내 관계와 무관하다(웃돈은 관계가 정하고, 이건 자리의 성질이다).
+    `gripMarkup`은 호감이 0 이상이면 0을 돌려주므로 「독점이 자본을 밀어내는가」를 그것으로 물으면
+    **친한 판에서만 상단이 값을 좁히는** 엉뚱한 규칙이 된다. */
+export function gripHeld(goodId, cityId = state.at) {
+  for (const [id, f] of Object.entries(FACTIONS)) {
+    if (f.grip.goods.includes(goodId) && gripsHere(id, cityId)) return true;
+  }
+  return false;
+}
+
+/** 그 항구에 앉은 **살아 있는 상단의 자본 합**이 웃돈을 깎는 정도 (0 ~ `FACTION.guildCounter`).
+    ★ state는 상단 명부를 모른다 — `state.guilds`(평범한 값)만 읽는다. 모듈 방향을 안 깬다.
+    ★ 포화식(`s/(s+ref)`)이라 상한이 저절로 선다 — 자본이 폭주해도 웃돈이 0이 되지 않는다
+      (0이 되면 세력 독점이 후반에 통째로 사라진다). */
+export function guildCounterAt(cityId = state.at) {
+  const max = FACTION.guildCounter ?? 0;
+  if (!max || !GUILD.enabled) return 0;
+  let sum = 0;
+  for (const g of Object.values(state.guilds ?? {})) {
+    if (!g || g.dead) continue;
+    if (!(g.seats ?? []).includes(cityId)) continue;
+    sum += Math.max(0, g.cap || 0);
+  }
+  if (sum <= 0) return 0;
+  return max * (sum / (sum + (FACTION.guildCounterRef ?? 1)));
 }
 
 /** 그 자리에 시설을 세울 때의 **입회비와 대가** — `SPEC-vertical`과 물리는 자리.
@@ -3014,7 +3056,7 @@ export function sell(goodId, qty) {
   const profit = gain - cost;
   let cut = 0;
   if (profit > 0 && state.officer) {
-    cut = Math.round(profit * OFFICER.cut);
+    cut = Math.round(profit * officerCut());
     state.gold -= cut;
     state.officer.earned += cut;
   }
@@ -3074,10 +3116,24 @@ export function sell(goodId, qty) {
 /* ── 대형 주문 ────────────────────────────────────────────────
    항구마다 상관이 내건 큰 계약이 하나 걸려 있다(사흘마다 갈린다). 화물은 직접
    조달해야 하지만 성사되면 시세보다 후하게 받는다 — 한 건으로 다음 배에 다가서는 길. */
+/* ★★ **2026-08-30 — 이 함수는 조용히 고장 나 있었다**(회차 27 · 다-3을 재다 걸렸다).
+   FNV-1a는 마지막 글자를 `h ^= c; h *= prime` 한 번만 거치므로, **끝자리만 다른 문자열이
+   거의 같은 값**을 낸다. 이 저장소는 결정론 굴림을 `hash(cityId, 태그, i, cyc)` 꼴로 쓰는데
+   **가장 자주 바뀌는 것(`cyc`)이 맨 끝**이라 정확히 그 자리를 밟았다:
+     마르세유 술집 0번 자리 = 0.020 0.024 0.012 0.016 0.036 …  (여덟 사이클)
+     베네치아 0번 자리      = 0.078 0.082 0.086 0.090 0.094 …
+   ⇒ `TAVERN.cycle: 2`("사람은 이틀마다 갈린다")도 `usedListings`의 3일도 **사실이 아니었다.**
+     베네치아 0번 자리는 스무 날 내리 「성실한 4명」이었고, 마르세유 0번 자리는 늘 비어 있었다
+     (그 자리의 난수가 언제나 0.02 < `emptyOdds` 0.22였다).
+   ⚠️ 아무 검사도 안 걸렸다 — **값이 균등분포이긴 했다.** 도시마다 다른 값이 나오니
+     "결정론이 맞다"는 검사는 통과하고, 분포 검사도 도시 전체로 재면 통과한다.
+     **한 자리를 시간축으로 훑어야** 보인다. → `wiki/gotchas.md`(조용한 실패)
+   ⇒ 끝을 흩어 준다(avalanche). 값의 성질은 그대로이고 **갈리는 주기만 실제가 된다.** */
 function hash(...parts) {
   let h = 2166136261;
   const s = parts.join('|');
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
   return (h >>> 0) / 4294967295;
 }
 
@@ -3494,6 +3550,38 @@ export function recoveryOptions(cityId = state.at, { lender = undefined } = {}) 
        : '이 항구에는 대금업자가 없다',
   });
 
+  /* ★ **계약 선금** — 바닥에서 실제로 쓸 수 있는 문인데 목록에 없었다(X-3 · 회차 27).
+     화면은 `doors`만 읽으므로 **여기 없으면 플레이어에게는 없는 것과 같다.**
+     ⚠️ **이 문은 「돈이 생긴다」가 아니다.** 선금은 **갚아야 하는 돈**이고, 못 지키면
+       `abandonContract`가 선금의 `CONTRACT.penalty`(×1.25)를 위약금으로 물린다 —
+       기한을 넘겨도 같다(`js/state.js:3902`). 그래서 `owed`(선금)·`fine`(파기 값)·`due`를
+       **함께 채워** 화면이 「빌리는 것」으로 그릴 수 있게 한다. 「가능」만 있으면 잘못 권한다.
+     ★ 못 싣는 크기면 `ok:false`로 그 이유를 적는다 — 「큰 계약이 큰 배를 사는 이유가 된다」는
+       `acceptContract`의 설계를 여기서 되풀이하지 않고 **그대로 비춘다**. */
+  {
+    const off = state.contract ? null : contractOffer(cityId);
+    const room = cargoCapTotal();
+    const fits = !!off && off.qty <= room;
+    const adv = off?.advance ?? 0;
+    doors.push({
+      kind: 'advance',
+      ok: !!off && fits && adv > 0,
+      value: adv,                                  // 지금 손에 들어오는 돈
+      owed: adv,                                   // ★ 그만큼이 빚처럼 남는다(갚는 길은 납품이다)
+      fine: Math.round(adv * CONTRACT.penalty),    // 파기하거나 기한을 넘기면 무는 값
+      offer: off, qty: off?.qty ?? 0, need: off ? Math.max(0, off.qty - room) : 0,
+      to: off?.to ?? null, goodId: off?.goodId ?? null, due: off?.due ?? null,
+      why: state.contract ? '이미 맡은 주문이 있다'
+         : !off ? '지금은 들어온 주문이 없다'
+         : !fits ? `일감은 있으나 ${off.qty - room}칸이 모자란다 (${off.qty}개를 실어야 한다)`
+         : adv <= 0 ? '이 일감은 선금이 없다 — 담보(선단 매각가)가 모자란다'
+         : `선금 ${adv.toLocaleString('ko-KR')}닢이 지금 들어온다`
+           + ` — 다만 ${CITY_BY_ID[off.to]?.name ?? off.to}까지 ${GOOD_BY_ID[off.goodId]?.name ?? off.goodId}`
+           + ` ${off.qty}개를 ${off.due}일차까지 넘겨야 하고,`
+           + ` 못 지키면 위약금 ${Math.round(adv * CONTRACT.penalty).toLocaleString('ko-KR')}닢이 빚으로 남는다`,
+    });
+  }
+
   /* 청산 — **마지막 문이고 늘 열려 있다.** 감추면 "팔 것이 다 떨어진 뒤에야 알게 되는 문"이
      되어 C-17이 그대로 재발한다. 값을 무는 문이지 막힌 문이 아니다. */
   const keep = wreckShipOf(currentRegion()) ?? BANKRUPT.keepShip;
@@ -3632,6 +3720,8 @@ export function liquidate() {
   state.crewMax = s.crewMax;
   state.crew = Math.min(state.crew, s.crewMin ?? 0);
   state.payroll.due = 0; state.payroll.arrears = 0;
+  // 미뤄 둔 부관 삯도 여기서 끝난다 — 해상대차의 셈은 배와 함께 닫힌다(→ wiki/payroll.md §7)
+  state.payroll.officerDue = 0; state.payroll.officerDefer = 0; state.payroll.deferMonths = 0;
   trimLoadout();
   state.everOwned?.add(keep);
 
@@ -3865,6 +3955,36 @@ export function officerPerk(key) {
   return state.officer ? (OFFICER.perks[key] || 0) : 0;
 }
 
+/* ── 부관 급여 유예 (2026-08-30 · 회차 27) ──────────────────
+   값과 근거는 `data.js: OFFICER.defer`의 주석이 정본이다. 여기는 **규칙**만 둔다.
+   ★ 새 계산 경로를 파지 않는다 — 성과급을 읽는 자리가 `OFFICER.cut` 상수에서
+     `officerCut()` 함수로 바뀔 뿐이고, 부르는 쪽은 유예 여부를 몰라도 된다. */
+
+/** 지금 미뤄 둔 에이미의 삯 (이미 이자가 붙은 값) */
+export const officerDeferred = () => state.payroll?.officerDefer || 0;
+
+/** 이번에 미룰 수 있는 액수 = 이번 달 발생분 + 이미 미뤄 둔 것 */
+export const officerDeferAmount = () =>
+  (state.payroll?.officerDue || 0) + officerDeferred();
+
+/** 유예 단추를 열어도 되나 — 부관이 있고, 미룰 것이 있고, **내줄 지분이 남았을 때**.
+    ★ 횟수로 막지 않는다. 「연속 N달」로 막으면 **한 달 걸러 미루는 것**이 영영 통해
+      실측에서 여섯 달 중 3.88달을 미뤘다 — 지분이 상한에 닿은 뒤로는 이자만 물면 그만이라
+      사실상 공짜였다. 지분이 문지기여야 「평생 두 번」이 실제로 두 번이 된다. */
+export function canDeferOfficer() {
+  if (!state.officer) return false;
+  if ((state.officer.share || 0) >= (OFFICER.defer?.shareMax ?? 0)) return false;
+  return officerDeferAmount() > 0;
+}
+
+/** 성과급 비율 — **미룬 달마다 영구히 오른 지분**을 더해서 돌려준다.
+    ★ **그 사람에게서 빌리면 그 사람의 몫이 커진다. 그리고 그 몫은 안 돌아온다.**
+      「미룬 동안만」 올리는 첫 판은 실측에서 *미루지 않을 이유가 없는 단추*였다
+      (이탈 28/40 → 4/40인데 대가가 213닢) → `data.js: OFFICER.defer` ⓑ. */
+export function officerCut() {
+  return OFFICER.cut + (state.officer?.share || 0);
+}
+
 /* ── 동료 — 코멘다(commenda) ────────────────────
    값과 근거는 `data.js: COMMENDA`의 주석이 정본이다. 여기는 **규칙**만 둔다.
    ★ 특전은 부관·갈래와 **같은 자리에서 더해진다** — 읽는 쪽은
@@ -3998,7 +4118,9 @@ export const originOf = () => ORIGIN_BY_ID[state.origin ?? DEFAULT_ORIGIN] ?? nu
 /** 처음부터 승선해 있는 상태 — `resetGame()`이 이걸로 시작한다.
     등용/해고 함수는 없다. 만나는 장면도 헤어지는 장면도 없기 때문이다. */
 export function initialOfficer() {
-  return { hiredDay: 0, earned: 0, paid: 0 };
+  /* `share` — 급여를 미룬 대가로 **영구히 내준 성과급 지분**(0 ~ `OFFICER.defer.shareMax`).
+     갚아도 안 돌아온다. 동업자에게 삯을 못 주면 그 사람의 지분이 커지는 것이 이 관계다. */
+  return { hiredDay: 0, earned: 0, paid: 0, share: 0 };
 }
 
 /** 이 항구의 수리 단가 — 선장인에게 말을 넣어 두었으면 깎인다 */
@@ -4059,13 +4181,56 @@ function pickTrait(r) {
 }
 
 /** 그 항구 술집에 지금 앉아 있는 무리들. 화면과 규칙이 같은 목록을 본다. */
+/* ── 술집 평판 (2026-08-30 · 회차 27 · 다-3) ────────────────
+   값과 근거는 `data.js: TAVERN.rep`의 주석이 정본이다. 여기는 **규칙**만 둔다.
+   ★★ **날마다 깎는 후크를 안 단다.** 이 저장소는 *세계가 도는 입구가 둘*(`advanceDays`·`waitDays`)이라
+     한쪽만 걸면 그 층이 통째로 멈춘다(회차 26에 상단이 정박 중 멈춰 있었다).
+     자국은 **읽을 때 날짜로 환산**하므로 그 함정 자체가 없다 — 어느 입구로 들어와도 같은 값이다. */
+
+/** 그 항구에 지금 남아 있는 자국(0~1) — 반감기로 옅어진 값 */
+function repMark(cityId, day = state.day) {
+  const m = state.crewRep?.[cityId];
+  if (!m || !m.v) return 0;
+  const R = TAVERN.rep ?? {};
+  const age = Math.max(0, day - (m.day ?? day));
+  return m.v * Math.pow(0.5, age / Math.max(1, R.halfLife ?? 90));
+}
+
+/** 이 항구의 평판 자국 — **제 자국과, 같은 바다에서 들려온 소문 가운데 큰 쪽**.
+    ★ 소문이 바다를 타지 않으면 한 항구만 더럽히고 옆 항구에서 태우면 그만이라
+      규칙이 아니라 우회로가 된다. */
+export function crewRepAt(cityId = state.at, day = state.day) {
+  const R = TAVERN.rep ?? {};
+  let v = repMark(cityId, day);
+  const here = regionOf(cityId);
+  for (const other of Object.keys(state.crewRep ?? {})) {
+    if (other === cityId || regionOf(other) !== here) continue;
+    v = Math.max(v, repMark(other, day) * (R.spread ?? 0));
+  }
+  return Math.min(R.cap ?? 1, v);
+}
+
+/** 자국을 남긴다 — 급여일에 못 준 만큼, 사람이 떠난 만큼.
+    ★ 자국은 **덮어쓰지 않고 더한다**(옅어진 옛 값 위에 얹는다) — 되풀이하면 깊어져야 한다. */
+export function markCrewRep(cityId, amount, day = state.day) {
+  if (!(amount > 0) || !cityId) return 0;
+  const R = TAVERN.rep ?? {};
+  const v = Math.min(R.cap ?? 1, repMark(cityId, day) + amount);
+  (state.crewRep ??= {})[cityId] = { v, day };
+  return v;
+}
+
 export function tavernCrews(cityId = state.at, day = state.day) {
   const city = CITY_BY_ID[cityId];
   if (!city) return [];
 
   const cyc = Math.floor(day / TAVERN.cycle);
+  const rep = crewRepAt(cityId, day);      // 체불·이탈이 이 항구(또는 이 바다)에 남긴 자국
+  const R = TAVERN.rep ?? {};
   // 큰 항구일수록 사람이 많다. size 1→2자리, 3→4자리가 기본이고 여기서 빈 자리가 빠진다.
-  const slots = Math.min(TAVERN.slots[1], TAVERN.slots[0] + (city.size - 1));
+  // ★ 소문난 배에는 사람이 덜 온다 — 다만 **0으로는 안 만든다**(술집이 비면 배가 묶인다).
+  const slots = Math.max(1, Math.min(TAVERN.slots[1], TAVERN.slots[0] + (city.size - 1))
+                          - Math.round(rep * (R.seats ?? 0)));
   // 나포선 경매항(튀니스·알제·몰타)에는 거친 자들이 더 모인다 — 그 도시의 성격이
   // 시장·조선소만이 아니라 **사람**에서도 드러나야 한다.
   const roughPort = !!city.prizeYard;
@@ -4091,6 +4256,15 @@ export function tavernCrews(cityId = state.at, day = state.day) {
     if (roughPort && (trait === 'green' || trait === 'drunk')) {
       const r2 = hash(cityId, 'tavtrait2', i, cyc);
       trait = r2 < 0.34 ? 'rough' : r2 < 0.52 ? 'corsair' : pickTrait(r2);
+    }
+    /* ★ **소문이 오는 사람을 갈아 치운다** — 삯이 밀리는 배라고 알려지면
+       참을성 있는 무리는 딴 배를 고르고 아쉬운 사람만 남는다. 나포항의 재굴림과 **같은 수법**이라
+       도시별 확률표를 새로 만들지 않는다(도시를 늘려도 표를 안 고친다).
+       ⇒ 체불하면 참을성 없는 사람만 오고, 그래서 **다음 체불이 더 아프다**(나선). */
+    if (rep > 0 && (CREW_TRAITS[trait]?.temper ?? 0) >= (R.sourAt ?? 1)
+        && hash(cityId, 'tavrep', i, cyc) < rep) {
+      const r3 = hash(cityId, 'tavrep2', i, cyc);
+      trait = r3 < 0.40 ? 'drunk' : r3 < 0.70 ? 'green' : 'rough';
     }
     const T = CREW_TRAITS[trait];
 
@@ -4120,8 +4294,11 @@ export function tavernCrews(cityId = state.at, day = state.day) {
       //   일당까지 올리면 90항차 내내 복리로 불어나 밸런스가 종친 하나만으로 크게 흔들린다
       //   (economy-trade.md: "임금은 규모와 무관한 고정비라 후반 브레이크" — 갈래 하나 때문에
       //   그 브레이크의 세기를 바꾸지 않는다).
-      wage: Math.round(CREW_WAGE * T.wageMul * jitter * 100) / 100,
-      advance: Math.round(TAVERN.advanceUnit * T.advMul * jitter * (1 + originPerk('hireUp', cityId))) * n,
+      /* ★ 자국이 값에 붙는다 — **계약금이 더 크게 오른다.** 나중에 준다는 말을 못 믿으니
+         선불을 더 달라는 것이고(선급금 관행 그대로), 일당은 그보다 얕게 오른다. */
+      wage: Math.round(CREW_WAGE * T.wageMul * jitter * (1 + rep * (R.wage ?? 0)) * 100) / 100,
+      advance: Math.round(TAVERN.advanceUnit * T.advMul * jitter * (1 + rep * (R.adv ?? 0))
+                          * (1 + originPerk('hireUp', cityId))) * n,
       name: pool[nameIdx],
       city: cityId,
     });
@@ -6123,6 +6300,8 @@ export function waitDays(n = 1) {
 
   // 급여는 발생주의 — 정박 중에도 날마다 쌓인다(치르는 것은 급여일)
   state.payroll.due += c.wages + c.officer;
+  // 부관 몫은 **따로도** 센다 — 급여일에 그것만 미룰 수 있어야 하기 때문이다(OFFICER.defer)
+  state.payroll.officerDue = (state.payroll.officerDue || 0) + c.officer;
   book('outgo', 'wages', c.wages);
   book('outgo', 'officer', c.officer);
   if (state.officer) state.officer.paid += c.officer;
@@ -6222,6 +6401,8 @@ export function advanceDays(n, leg = null) {
 
   // 쌓이는 것 — 급여
   state.payroll.due += c.wages + c.officer;
+  // 부관 몫은 **따로도** 센다 — 급여일에 그것만 미룰 수 있어야 하기 때문이다(OFFICER.defer)
+  state.payroll.officerDue = (state.payroll.officerDue || 0) + c.officer;
   book('outgo', 'wages', c.wages);
   book('outgo', 'officer', c.officer);
   if (state.officer) state.officer.paid += c.officer;   // 급여와 성과급을 따로 센다
@@ -6275,7 +6456,7 @@ export function advanceDays(n, leg = null) {
    그래서 체불의 대가가 "게임 오버"가 아니라 "다음 장사 밑천이 줄어드는 것"이 된다. */
 /** 지금 정산할 때가 됐나 (항구에 있을 때만 참) */
 export function paydayDue() {
-  return state.day >= state.payroll.nextDue && (state.payroll.due > 0 || state.payroll.arrears > 0);
+  return state.day >= state.payroll.nextDue && payrollOwed() > 0;
 }
 
 /** 오늘은 "짐을 팔고 오겠다"고 미뤄 둔 상태인가 — 같은 날 항구 안에서만 유효하다.
@@ -6285,8 +6466,10 @@ export const paydayDeferred = () => state.payroll.deferredDay === state.day;
 /** 다음 급여일까지 남은 날 */
 export const daysToPayday = () => Math.max(0, state.payroll.nextDue - state.day);
 
-/** 이번에 치러야 할 총액(이번 달 발생분 + 지난 체불) */
-export const payrollOwed = () => state.payroll.due + state.payroll.arrears;
+/** 이번에 치러야 할 총액(이번 달 발생분 + 지난 체불 + **미뤄 둔 부관 삯**).
+    ★ 미룬 삯도 결국 청구된다 — 유예는 면제가 아니라 **다음 달로 미는 것**이다. */
+export const payrollOwed = () =>
+  state.payroll.due + state.payroll.arrears + (state.payroll.officerDefer || 0);
 
 /** 무리 하나가 들고 갈 짐을 고른다 — **값나가는 것부터**.
     폭풍 투하(싼 것부터)와 정반대다. 훔쳐 가는 쪽은 고르기 때문이다. */
@@ -6322,7 +6505,10 @@ function stealCargo(headcount, rand = Math.random) {
         20일 넘는 구간에서는 체납이 구조적으로 강제된다 — 그러면 그것은 선택이 아니라 사고다.
       ★ **벌칙은 한 칸도 안 바뀐다.** 못 준 비율(`ratio`)이 그대로 불만·이탈로 간다.
         유예 제도를 새로 만들지 않았다는 뜻이다 — 바뀌는 것은 *얼마를 주느냐*뿐이고,
-        덜 주면 그만큼 정확히 더 아프다. */
+        덜 주면 그만큼 정확히 더 아프다.
+    @param opts.deferOfficer **부관의 삯만 미룬다**(회차 27 · `data.js: OFFICER.defer`).
+      ★ 위 `pay`가 *덜 주는 것*이라면 이쪽은 *분모를 줄이는 것*이다 — 떠날 수 없는 사람에게
+        못 준 돈이 떠날 수 있는 사람의 불만으로 계산되던 자리를 끊는다. 대가는 이자와 성과급. */
 export function settlePayroll(rand = Math.random, opts = {}) {
   /* ★ **빌린 돈이 먼저다.** 전주는 급여일에 맞춰 사람을 보내고, 선원보다 먼저 받아 간다 —
      그것이 이 돈이 무이자가 아닌 이유이자 빌리는 것이 위험한 이유다.
@@ -6359,7 +6545,12 @@ export function settlePayroll(rand = Math.random, opts = {}) {
     }
   }
 
-  const owed = payrollOwed();
+  /* ★ **부관 급여 유예** — 미룬 몫은 이번 달 청구에서 통째로 빠진다(분모에서도 빠진다).
+     떠날 수 없는 사람에게 못 준 돈으로 떠날 수 있는 사람이 성내던 자리를 끊는 것이 이 규칙의 전부다. */
+  const deferring = !!opts.deferOfficer && canDeferOfficer();
+  const deferred = deferring ? Math.min(payrollOwed(), officerDeferAmount()) : 0;
+
+  const owed = payrollOwed() - deferred;
   const cap = opts.pay == null ? owed : Math.max(0, Math.min(owed, Math.round(opts.pay)));
   const paid = Math.min(state.gold, cap);
   const missed = owed - paid;
@@ -6385,14 +6576,45 @@ export function settlePayroll(rand = Math.random, opts = {}) {
   }
   if (deserted.length) trimLoadout();
 
+  /* ★ **체불은 이 항구에 자국을 남긴다**(다-3 · `data.js: TAVERN.rep`).
+     여기가 그 유일한 발생 지점이다 — 급여일은 항구에서만 오므로 「어디에 남기나」가 자명하다.
+     못 준 비율만큼, 그리고 사람이 떠났으면 무리 수만큼 더. 소문은 같은 바다로 번지고(`crewRepAt`)
+     반감기로 옅어진다. ⇒ 다음 술집에서 **자리가 줄고 값이 오르고 오는 사람이 갈린다.** */
+  {
+    const R = TAVERN.rep ?? {};
+    const mark = ratio * (R.miss ?? 0) + deserted.length * (R.desert ?? 0);
+    if (mark > 0) {
+      const v = markCrewRep(state.at, mark);
+      pushLog(`삯이 밀린 일이 ${CITY_BY_ID[state.at]?.name ?? state.at} 부두에 소문났다`
+            + ` — 술집에서 사람 모으기가 어려워진다.`, 'bad');
+      if (v >= 0.6) pushLog('이 바다에서는 이제 이 배를 안다. 성한 무리는 딴 배를 고른다.', 'bad');
+    }
+  }
+
   state.payroll.arrears = missed;
   state.payroll.due = 0;
+  /* 미룬 삯은 **이자와 함께** 다음 달로 넘어가고, 안 미뤘으면 이번 청구에 이미 섞여 나갔다. */
+  state.payroll.officerDefer = deferred ? Math.round(deferred * (OFFICER.defer?.rate ?? 1)) : 0;
+  if (deferred) state.payroll.deferMonths = (state.payroll.deferMonths || 0) + 1;   // 누계(화면용)
+  state.payroll.officerDue = 0;
+  if (deferred && state.officer) {
+    /* ★ **대가는 영구 지분이다** — 이 한 줄이 유예를 「선택」으로 만든다.
+       미루는 순간에는 싸다(가난할 때는 뗄 이익 자체가 없다). 값은 후반에 온다. */
+    const D = OFFICER.defer ?? {};
+    const before = state.officer.share || 0;
+    state.officer.share = Math.min(D.shareMax ?? 0, before + (D.share ?? 0));
+    pushLog(`에이미의 삯 ${deferred.toLocaleString('ko-KR')}닢을 미뤘다 — `
+          + `다음 급여일에 ${state.payroll.officerDefer.toLocaleString('ko-KR')}닢으로 걷힌다. `
+          + `대신 그의 몫이 ${Math.round(OFFICER.cut * 100)}%에서 `
+          + `${Math.round(officerCut() * 100)}%로 올랐다. 되돌리는 길은 없다.`, 'warn');
+  }
   // 밀렸어도 다음 급여일은 온다 — 밀린 달을 건너뛰면 체불이 벌이 안 된다
   while (state.payroll.nextDue <= state.day) state.payroll.nextDue += MONTH_DAYS;
 
   const closed = state.ledger;
   state.ledger = newLedger(state.day);
-  return { owed, paid, missed, deserted, ledger: closed, arrears: missed, loanPaid, loanLeft, enforced };
+  return { owed, paid, missed, deserted, ledger: closed, arrears: missed, loanPaid, loanLeft, enforced,
+           deferred, officerDefer: state.payroll.officerDefer, deferMonths: state.payroll.deferMonths };
 }
 
 /* ── 저 혼자 일어나는 사건 ────────────────────────────────────
@@ -6518,7 +6740,11 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
-    payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1, deferredDay: 0 },
+    /* 술집 평판(다-3) — 체불·이탈이 항구에 남긴 자국 `{ <항구id>: { v, day } }`.
+       ★ `slain`·`tamed`와 같은 이유로 **명시해서 비운다** — `??=`로만 만들면 새 판에 옛 판의 소문이 남는다. */
+    crewRep: {},
+    payroll: { due: 0, arrears: 0, nextDue: MONTH_DAYS, lastDay: 1, deferredDay: 0,
+               officerDue: 0, officerDefer: 0, deferMonths: 0 },
     ledger: newLedger(1),
     fleet: { [shipKey]: { at, hp: s.hp, arms: { ...arms }, refits: {} } },
     consorts: {},                // 새 판에는 따라 나선 배가 없다 — 안 비우면 옛 선단이 남는다

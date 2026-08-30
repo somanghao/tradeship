@@ -570,13 +570,24 @@ resetGame();
      '청산해도 거점은 남는다 — 해상대차의 담보는 **배와 화물**이지 부동산이 아니다');
 
   // ⑥ 기한을 넘긴 위약금도 빚으로 남는다 (스스로 파기한 것과 같은 취급)
-  resetGame('venezia');
-  state.crew = 6; state.gold = 0;
-  acceptContract();
+  /* ⚠️ **항구를 하나로 못박으면 그날 일감이 이 배로 못 싣는 크기일 때 검사가 통째로 죽는다.**
+     회차 27에 `state.js: hash()`를 고쳐 난수가 다시 뽑히자 베네치아 1일차 일감이 곡물 50개가
+     됐고(낡은 바사 선복 42칸) 이 줄이 `state.contract` null로 러너를 통째로 세웠다.
+     **규칙은 멀쩡했다** — 테스트가 특정 난수에 기대고 있었던 것이다(제안 3,710건 중 못 싣는 것
+     0.8%는 `CONTRACT.qtyCap`이 만드는 의도된 값이다). ⇒ 실을 수 있는 일감이 나오는 첫 항구를 쓴다. */
+  let cport = 'venezia';
+  for (const cid of ['venezia', 'genova', 'napoli', 'marseille', 'barcelona', 'palermo']) {
+    resetGame(cid);
+    state.crew = 6; state.gold = 0;
+    acceptContract();
+    if (state.contract) { cport = cid; break; }
+  }
   const adv = state.contract?.advance ?? 0;
   state.gold = 0;
-  state.day = state.contract.due + 1;
-  advanceDays(1, { from: 'venezia', to: 'venezia' });
+  if (state.contract) {
+    state.day = state.contract.due + 1;
+    advanceDays(1, { from: cport, to: cport });
+  }
   ok(adv === 0 || debtOwed() > 0,
      '기한을 넘긴 위약금도 증발하지 않고 빚으로 남는다 — 자진 파기와 같은 취급');
 }
@@ -668,10 +679,12 @@ resetGame();
   ok(!r1.here.some((x) => x.kind === 'ship'),
      '그 배는 `here`에는 안 담긴다 — 오늘 팔 수 있는 것과 가야 팔 수 있는 것을 가른다');
 
-  // ⑤ 세 문은 **언제나 셋이다** — 청산을 감추면 "다 떨어진 뒤에야 아는 문"이 되어 C-17이 재발한다
+  // ⑤ 문은 **언제나 다 보인다** — 청산을 감추면 "다 떨어진 뒤에야 아는 문"이 되어 C-17이 재발한다
+  /* ⚠️ 회차 27에 계약 선금이 문으로 늘었다(화면이 그 문을 못 가리키고 있었다).
+     ★ 화면은 `kind`로 찾는다 — **개수나 순서로 읽지 않는다**(문이 또 늘면 그 화면이 죽는다). */
   const kinds = r1.doors.map((d) => d.kind);
-  ok(kinds.join(',') === 'sell,loan,liquidate' && r1.doors.at(-1).ok === true,
-     '문은 늘 셋(팔기·빌리기·청산)이고 **청산은 팔 것이 남아 있어도 보인다**');
+  ok(kinds.join(',') === 'sell,loan,advance,liquidate' && r1.doors.at(-1).ok === true,
+     '문은 넷(팔기·빌리기·**계약 선금**·청산)이고 **청산은 팔 것이 남아 있어도 보인다**');
 
   // ⑥ **대금업자는 주입받는다** — `figuresAt`은 world.js라 state가 부를 수 없다(모듈 방향)
   ok(recoveryOptions('venezia').doors[1].ok === null,

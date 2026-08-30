@@ -2861,6 +2861,127 @@
       ]
     }
   },
+  "mates": {
+    "_읽는이에게": "동료(항해사) 51명의 근거. ★ **직명과 제도만 사료이고 사람은 지어냈다** — 실존 인물을 고용 가능한 부품으로 만들지 않기 위해서다(가문 이름은 실재한 집안에서 빌린 경우가 있고 그때는 basis에 적었다). 그래서 판정은 그 사람이 아니라 **그 자리가 이 바다에 실재했는가**에 매긴다. 코드 정본은 js/regions/<권역>/npc-mates.js이고, 특전 키 열 개(sailDaysOff·gunUp·meleeUp·hullUp·repairOff·upkeepOff·tariffOff·impactOff·fleeUp·crewLossOff) 밖의 키를 만들면 규칙이 조용히 무시한다.",
+    "_보수": {
+      "verdict": "gameplay",
+      "basis": "보수(hire·wage·cut)와 특전 수치는 **사료가 아니라 밸런스 값**이라 인물별로 옮겨 적지 않는다 — 여기 복사해 두면 한쪽만 고쳐도 조용히 어긋나기 때문이다(코드 js/regions/<권역>/npc-mates.js가 정본). 대신 밴드와 기준자를 적어 둔다. ▸ **계약금(hire)** 선장급 800~2,500닢 · 기능직 300~900닢. ▸ **일당(wage)** 기준자는 선원 일당 `CREW_WAGE` 1.2닢과 부관 에이미 2.6닢이고, 선장급 3~6 · 기능직 2.8~4에 든다. ▸ **성과 배분(cut)** 선장급만 갖고 0~0.06이다(에이미 0.11). ▸ **특전은 한 사람에 하나나 둘, 얕게** — 에이미(tariffOff .35 + impactOff .22 = 0.57)보다 세면 안 된다. 명부 51명 가운데 합이 0.18을 넘는 사람이 없다. ▸ 계약 모양은 **코멘다**다(data.js: COMMENDA — 편무 25% · 쌍무 50%+밑천 ×3.0). 그 분배 비율만은 사료이고 근거는 content/voyage-evidence.json의 `commendaSplit`이다(1199년 계약 원문 · 381건).",
+      "sources": [
+        {
+          "title": "Puga & Trefler, \"International Trade and Institutional Change: Medieval Venice's Response to Globalization\" (QJE 2014) — 편무/쌍무 코멘다 분배",
+          "url": "https://doi.org/10.1093/qje/qju006"
+        }
+      ]
+    },
+    "med-ragusa-captain": {
+      "name": "블라호 구체티치",
+      "title": "선장",
+      "role": "captain",
+      "at": "ragusa",
+      "verdict": "confirmed",
+      "basis": "라구사(두브로브니크)의 배는 한 사람이 통째로 가진 것이 아니라 **카라티(carati) 지분**으로 여럿이 나눠 가졌고, 배를 모는 사람이 그 지분의 한 몫을 들고 타는 것이 흔했다 — 선장이 고용인이 아니라 공동선주였다는 뜻이다. 그래서 이 인물의 성향(아껴 굴린다·성과 배분을 요구한다)은 성격이 아니라 **소유 구조의 결과**다. 구체티치(Gučetić/Gozze)는 라구사의 실재한 귀족 가문 이름을 빌린 것이고 인물은 지어냈다.",
+      "sources": [
+        {
+          "title": "Republic of Ragusa",
+          "url": "https://en.wikipedia.org/wiki/Republic_of_Ragusa"
+        },
+        {
+          "title": "Sixty-fourths share (ship ownership by shares)",
+          "url": "https://en.wikipedia.org/wiki/Sixty-fourths_share"
+        }
+      ]
+    },
+    "med-genova-captain": {
+      "name": "안드레아 스피놀라",
+      "title": "선장",
+      "role": "captain",
+      "at": "genova",
+      "verdict": "confirmed",
+      "basis": "제노바는 포카이아·키오스의 **명반(alum)** 을 마오나(Maona) 독점으로 쥐고 큰 카라카에 실어 서유럽 직물업으로 날랐다 — 명반은 무겁고 값이 나가 큰 배가 아니면 수지가 안 맞았다. 「큰 배만 몰아 왔다」가 그 항로의 성질이다. 스피놀라는 제노바의 실재한 알베르고(가문 연합) 이름이고 인물은 지어냈다.",
+      "sources": [
+        {
+          "title": "Maona of Chios and Phocaea",
+          "url": "https://en.wikipedia.org/wiki/Maona_of_Chios_and_Phocaea"
+        },
+        {
+          "title": "Alum",
+          "url": "https://en.wikipedia.org/wiki/Alum"
+        }
+      ]
+    },
+    "med-venezia-navigator": {
+      "name": "무라노의 자코모",
+      "title": "항해장",
+      "role": "navigator",
+      "at": "venezia",
+      "verdict": "confirmed",
+      "basis": "베네치아의 **무다(muda)** 는 국가가 지은 대형 갤리를 경매(incanto)로 빌려주는 정기 선단이었고, 지휘는 귀족(sopracomito·patrono)이 맡되 **실제 물길은 노키에로(nocchiero)** 가 쥐었다 — 명예와 기술이 다른 사람에게 나뉘어 있던 구조다. 「성이 없어 섬 이름으로 불린다」는 그 계층 차이를 그대로 옮긴 것이다.",
+      "sources": [
+        {
+          "title": "Republic of Venice",
+          "url": "https://en.wikipedia.org/wiki/Republic_of_Venice"
+        },
+        {
+          "title": "Venetian navy",
+          "url": "https://en.wikipedia.org/wiki/Venetian_navy"
+        }
+      ]
+    },
+    "med-malta-gunner": {
+      "name": "살바토레 카사르",
+      "title": "포술장",
+      "role": "gunner",
+      "at": "malta",
+      "verdict": "confirmed",
+      "basis": "성 요한 기사단의 갤리는 한 척마다 **봄바르디에레(bombardiere · 포수)** 와 노꾼의 정원을 규정으로 못박아 두었다 — 포수는 우연히 잘 쏘는 사람이 아니라 **정원에 적힌 자리**였다. 카사르는 몰타의 실재한 성씨(건축가 지롤라모 카사르)를 빌렸고 인물은 지어냈다.",
+      "sources": [
+        {
+          "title": "Navy of the Order of Saint John",
+          "url": "https://en.wikipedia.org/wiki/Navy_of_the_Order_of_Saint_John"
+        },
+        {
+          "title": "Girolamo Cassar",
+          "url": "https://en.wikipedia.org/wiki/Girolamo_Cassar"
+        }
+      ]
+    },
+    "med-algiers-bosun": {
+      "name": "코미테 유수프",
+      "title": "갑판장",
+      "role": "bosun",
+      "at": "algiers",
+      "verdict": "confirmed",
+      "basis": "갤리에서 **코미테(comite)** 는 노꾼 전체를 한 박자로 부리는 자리였다(라틴어 comes에서 왔고 오스만·바르바리 갤리에도 같은 자리가 있었다). 알제 갤리의 노꾼이 백 명대였던 것도 기록에 남는다. 백병 특전은 「사람 무리를 한 박자로 움직이는 손」이라는 이 자리의 성질에서 나온다.",
+      "sources": [
+        {
+          "title": "Galley",
+          "url": "https://en.wikipedia.org/wiki/Galley"
+        },
+        {
+          "title": "Barbary corsairs",
+          "url": "https://en.wikipedia.org/wiki/Barbary_corsairs"
+        }
+      ]
+    },
+    "med-candia-surgeon": {
+      "name": "니콜라오스 마브로스",
+      "title": "선의",
+      "role": "surgeon",
+      "at": "candia",
+      "verdict": "confirmed",
+      "basis": "칸디아(베네치아령 크레타)의 의사는 대개 **파도바 대학**에서 배웠다 — 베네치아 본국이 자국 신민의 의학 교육을 파도바 하나로 모아 두었기 때문이다. 「파도바에서 배우고 칸디아에서 개업했다」는 그 경로 그대로다.",
+      "sources": [
+        {
+          "title": "University of Padua",
+          "url": "https://en.wikipedia.org/wiki/University_of_Padua"
+        },
+        {
+          "title": "Kingdom of Candia",
+          "url": "https://en.wikipedia.org/wiki/Kingdom_of_Candia"
+        }
+      ]
+    }
+  },
   "openQuestions": [
     "제노바의 진짜 특산은 산호·명반(alum)인데 GOODS 12품목에 없다. 품목을 늘릴 때 1순위 후보.",
     "튀니스를 하프스로 바꿨으니 알제(오스만)와 적대라는 관계를 게임 규칙으로 쓸 여지가 있다(입항세·나포 판정 등).",

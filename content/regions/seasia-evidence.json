@@ -1927,6 +1927,109 @@
       ]
     }
   },
+  "mates": {
+    "_읽는이에게": "동료(항해사) 51명의 근거. ★ **직명과 제도만 사료이고 사람은 지어냈다** — 실존 인물을 고용 가능한 부품으로 만들지 않기 위해서다(가문 이름은 실재한 집안에서 빌린 경우가 있고 그때는 basis에 적었다). 그래서 판정은 그 사람이 아니라 **그 자리가 이 바다에 실재했는가**에 매긴다. 코드 정본은 js/regions/<권역>/npc-mates.js이고, 특전 키 열 개(sailDaysOff·gunUp·meleeUp·hullUp·repairOff·upkeepOff·tariffOff·impactOff·fleeUp·crewLossOff) 밖의 키를 만들면 규칙이 조용히 무시한다.",
+    "_보수": {
+      "verdict": "gameplay",
+      "basis": "보수(hire·wage·cut)와 특전 수치는 **사료가 아니라 밸런스 값**이라 인물별로 옮겨 적지 않는다 — 여기 복사해 두면 한쪽만 고쳐도 조용히 어긋나기 때문이다(코드 js/regions/<권역>/npc-mates.js가 정본). 대신 밴드와 기준자를 적어 둔다. ▸ **계약금(hire)** 선장급 800~2,500닢 · 기능직 300~900닢. ▸ **일당(wage)** 기준자는 선원 일당 `CREW_WAGE` 1.2닢과 부관 에이미 2.6닢이고, 선장급 3~6 · 기능직 2.8~4에 든다. ▸ **성과 배분(cut)** 선장급만 갖고 0~0.06이다(에이미 0.11). ▸ **특전은 한 사람에 하나나 둘, 얕게** — 에이미(tariffOff .35 + impactOff .22 = 0.57)보다 세면 안 된다. 명부 51명 가운데 합이 0.18을 넘는 사람이 없다. ▸ 계약 모양은 **코멘다**다(data.js: COMMENDA — 편무 25% · 쌍무 50%+밑천 ×3.0). 그 분배 비율만은 사료이고 근거는 content/voyage-evidence.json의 `commendaSplit`이다(1199년 계약 원문 · 381건).",
+      "sources": [
+        {
+          "title": "Puga & Trefler, \"International Trade and Institutional Change: Medieval Venice's Response to Globalization\" (QJE 2014) — 편무/쌍무 코멘다 분배",
+          "url": "https://doi.org/10.1093/qje/qju006"
+        }
+      ]
+    },
+    "sea-johor-captain": {
+      "name": "나코다 아왕",
+      "title": "선장",
+      "role": "captain",
+      "at": "johor",
+      "verdict": "confirmed",
+      "basis": "1511년 믈라카가 포르투갈에 떨어진 뒤 술탄가와 그 사람들은 **조호르 강을 거슬러 올라가 새 도읍을 세웠다**. 그 뒤 한 세기 동안 조호르는 정면 승부보다 물러섰다 다시 서는 쪽을 택했고 그 판단이 도주(fleeUp)라는 특전이 됐다. 나코다(nakhoda)는 말레이권의 선장 호칭이다.",
+      "sources": [
+        {
+          "title": "Johor Sultanate",
+          "url": "https://en.wikipedia.org/wiki/Johor_Sultanate"
+        },
+        {
+          "title": "Capture of Malacca (1511)",
+          "url": "https://en.wikipedia.org/wiki/Capture_of_Malacca_(1511)"
+        }
+      ]
+    },
+    "sea-tidore-gunner": {
+      "name": "주루 므리암 수타",
+      "title": "포술장",
+      "role": "gunner",
+      "at": "tidore",
+      "verdict": "confirmed",
+      "basis": "티도레·테르나테는 향료 때문에 유럽 요새가 먼저 들어선 섬이고 섬 편 사람들은 **그 요새의 대포를 배워 그 대포로 되쏘았다**. 주루 므리암(juru meriam)은 말레이어로 포수다 — 「대포는 남이 가져왔고 쏘는 법은 그가 배웠다」가 그 경위다.",
+      "sources": [
+        {
+          "title": "Tidore",
+          "url": "https://en.wikipedia.org/wiki/Tidore"
+        },
+        {
+          "title": "Spice trade",
+          "url": "https://en.wikipedia.org/wiki/Spice_trade"
+        }
+      ]
+    },
+    "sea-aceh-bosun": {
+      "name": "항 자파르",
+      "title": "갑판장",
+      "role": "bosun",
+      "at": "aceh",
+      "verdict": "confirmed",
+      "basis": "아체 술탄국의 갤리는 **대포보다 사람을 많이 실었다** — 접현해 넘어가는 싸움을 전제로 한 배였고 실제로 말라카 공격에서 그 전법을 되풀이했다. 항(Hang)은 말레이 무장에게 붙던 호칭이다. meleeUp이 그 선택의 값이다.",
+      "sources": [
+        {
+          "title": "Aceh Sultanate",
+          "url": "https://en.wikipedia.org/wiki/Aceh_Sultanate"
+        },
+        {
+          "title": "Hang Tuah",
+          "url": "https://en.wikipedia.org/wiki/Hang_Tuah"
+        }
+      ]
+    },
+    "sea-banten-purser": {
+      "name": "와크 살레",
+      "title": "화물장",
+      "role": "purser",
+      "at": "banten",
+      "verdict": "confirmed",
+      "basis": "반텐은 자바 서부의 **후추 집산항**이었고 후추는 한 철에 몰려 들어와 값이 무너지기 쉬운 상품이었다. 「몇 자루를 실었는지보다 며칠에 걸쳐 내놓는지를 본다」(impactOff)가 그 시장의 규칙이다.",
+      "sources": [
+        {
+          "title": "Banten Sultanate",
+          "url": "https://en.wikipedia.org/wiki/Banten_Sultanate"
+        },
+        {
+          "title": "Black pepper",
+          "url": "https://en.wikipedia.org/wiki/Black_pepper"
+        }
+      ]
+    },
+    "sea-mergui-interpreter": {
+      "name": "빈냐 텟",
+      "title": "통역",
+      "role": "interpreter",
+      "at": "mergui",
+      "verdict": "confirmed",
+      "basis": "메르귀–테나세림은 **말라카 해협을 돌지 않고 지협을 넘겨** 아유타야로 짐을 보내던 육로 관문이었다 — 짐을 한 번 내려야 하지만 해협의 통행세와 위험을 피할 수 있었다. 「해협을 안 지나고도 저쪽 바다에 닿는 길」(tariffOff)이 그 우회로다. 빈냐(Binnya)는 몬족 호칭이다.",
+      "sources": [
+        {
+          "title": "Mergui Archipelago",
+          "url": "https://en.wikipedia.org/wiki/Mergui_Archipelago"
+        },
+        {
+          "title": "Ayutthaya Kingdom",
+          "url": "https://en.wikipedia.org/wiki/Ayutthaya_Kingdom"
+        }
+      ]
+    }
+  },
   "art": {
     "iconTodo": [
       {

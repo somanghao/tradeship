@@ -28,11 +28,11 @@
 | 무엇 | 어디 |
 |---|---|
 | 인물 정의 · 능력치 · 대사 | `js/data.js: OFFICER` (정본) |
-| 상태 | `js/state.js: state.officer` = `{ hiredDay: 0, earned, paid }` — **절대 `null`이 되지 않는다** (`earned`=성과급 누적 · `paid`=급여 누적) |
+| 상태 | `js/state.js: state.officer` = `{ hiredDay: 0, earned, paid, share }` — **절대 `null`이 되지 않는다** (`earned`=성과급 누적 · `paid`=급여 누적 · **`share`=급여를 미룬 대가로 영구히 내준 성과급 지분**) |
 | 초기화 | `js/state.js: initialOfficer()` — `resetGame()`이 이걸로 시작한다. 등용·해고 함수는 **없다** |
-| 판정·계수 | `js/state.js: hasOfficer / officerPerk` |
+| 판정·계수 | `js/state.js: hasOfficer / officerPerk / officerCut` · 유예 `canDeferOfficer / officerDeferAmount / officerDeferred` |
 | 능력 반영 | `state.js`의 **기존 파생 함수에 계수로 곱한다** — `tariffRate` · `impactFactor` · `contractOffer` |
-| 성과급 징수 | `state.js: sell()` **한 곳뿐** |
+| 성과급 징수 | `state.js: sell()` **한 곳뿐** (비율은 상수가 아니라 **`officerCut()`** — 유예 지분이 더해진다) |
 | 급여 징수 | `state.js: voyageCost()`의 `officer` 항목 → `advanceDays()`가 **`state.payroll.due`에 쌓고**, 항구에서 `settlePayroll()`이 치른다(30일). 선원 일당과 **섞지 않는다**(뭉치면 "부관을 데리고 있는 값"을 읽을 수 없다) → [payroll.md](payroll.md) |
 | 항구 UI(카드·부두 실물) | `js/scenes/port.js: officerCard()` — **버튼 없는 살림 창**이고 모든 항구에서 뜬다 · `draw()`가 부두에 세운다 |
 | 항해 이벤트 변조·대사 | `js/scenes/map.js: officerAside()` · `resolveEvent()`의 `drift` · `meetMerchant()` |
@@ -42,6 +42,10 @@
 
 - **등장 조건이 없다.** `resetGame()`에서 이미 타고 있다. `OFFICER.home`(베네치아)은 이제 등장 장소가 아니라 **출신지**일 뿐이다 — 시작 항구와 같아서 "여기서부터 함께 떠난다"가 된다.
 - **물 새는 배를 몰아도 떠나지 않는다.** 예전에는 이 조건에서 승선을 거절했는데, 지금은 항구 카드에 재촉 대사(`lines.leaky`)만 뜬다. 떠나겠다는 말이 아니라 **떠날 수 없는 사람의 잔소리**다.
+- **가난할 때는 삯을 미룰 수 있다**(2026-08-30 · `OFFICER.defer`). 미룬 몫은 **못 준 비율의 분모에서도 빠져**
+  선원의 불만·이탈을 막아 준다. 대가는 이자 ×1.15/월과 **영구 지분**(성과급 +0.5%p/달 · 상한 +1%p) —
+  ★ **갚아도 안 돌아온다.** 동업자에게 삯을 못 주면 그 사람의 몫이 커지는 것이 이 관계의 결말이고,
+  그래서 상한이 곧 **평생 두 번**이다(`canDeferOfficer`가 지분으로 문을 닫는다). → [payroll.md](payroll.md) §8
 - **급여가 밀려도 떠나지 않는다.** 선원 무리는 체불이 쌓이면 짐을 들고 이탈하지만(`settlePayroll`), 에이미는 `state.bands`에 없으므로 그 판정을 아예 받지 않는다 — 떠날 수 없는 사람이라는 설정이 규칙에서도 그대로다. 밀린 삯은 `state.payroll.arrears`에 함께 쌓일 뿐이다.
 - **갑판 슬롯을 먹지 않는다.** `TROOPS`에 없으므로 백병전에도 서지 않는다 — 회계 담당이라는 성격에 맞고, 슬롯을 먹였다면 배치 칸이 5→4로 줄어 초반이 급격히 빡빡해졌을 것이다.
 - **성과급은 남은 이익에서만** 뗀다. 밑진 거래에서 떼면 손해에 수수료까지 물어 되팔기가 아예 막힌다.
@@ -142,4 +146,7 @@
 ## 아직 없는 것
 
 충성도·이탈·사연 같은 관리 요소는 넣지 않았다(가벼운 서사까지가 범위). **이탈은 이제 설계상 불가능하다.**
+⚠️ **성과급을 읽을 때는 `OFFICER.cut` 상수가 아니라 `state.js: officerCut()`을 쓴다** —
+유예로 내준 영구 지분(`state.officer.share`)이 거기 더해져 있다. 상수를 직접 읽는 화면은
+지분을 내준 뒤에도 11%라고 말한다.
 세이브/로드가 생기면 `state.officer`도 직렬화 목록에 함께 들어간다.
