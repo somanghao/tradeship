@@ -66,13 +66,38 @@ export const SHIPS = {
     upkeep: 5, rig: 0.85, tint: 'oak',
     desc: '쇠못을 하나도 쓰지 않고 야자 노끈으로 꿰맨 배. 사각 돗자리 돛을 단다. 잘 휘어 안 부서지지만 포에는 속수무책이다.',
   },
+  barca: {
+    // 바르카 — ★ 회차29 트랙 M. 이 사다리의 t1 자리가 **지중해 `caravel`**을 그대로
+    //   가리키고 있어(옛 guineiro.requires) 아프리카 최고선 사슬(naudamina←guineiro←…)의
+    //   앞칸 한 칸이 딴 바다에 있었다 — 아홉 바다 중 아프리카만 그랬다. 그 구멍을 이 배가 메운다.
+    //   ★ 처음엔 '카라벨랑(caravelão)'을 붙이려 했는데 **남아메리카가 이미 그 키·이름을
+    //   쓰고 있었다**(브라질 연안선, `js/regions/southamerica/ships.js`) — 세계에서 선종
+    //   키·이름은 하나뿐이라 겹칠 수 없다. 그래서 이 바다 고유의 다른 후보로 바꿨다:
+    //   주라라의 기니 연대기가 적은 **바르카(barcha)**다. 카라벨이 나오기 전 기니 탐험에
+    //   쓰인 두 배(바르카·바리넬) 중 하나이고, 바리넬은 이미 이 파일에 있다(1,050 자리).
+    //   1440년대의 그 바르카는 카라벨에 밀려난 작은 배였지만, "바르카"는 이후로도 몇
+    //   세기를 이어간 범선 계급명이다 — 이 자리는 그 계보의 후기·대형 개체로 본다.
+    // ★ **제원은 지중해 `caravel`과 완전히 같다** — 사다리에서 그 칸을 대신하는 것이므로
+    //   더 세거나 약하면 곡선이 움직인다(사용자 지시). tier·hull도 그대로 맞췄다. 그 값
+    //   자체(캐랙급 카라벨과 동급)는 사료가 아니라 verdict: gameplay다.
+    hull: 'caravel', name: '바르카', origin: '카보베르데·리오스 데 기네', originFlag: 'portugal',
+    tier: 1, era: 'classic', requires: null,
+    yards: ['santiago', 'cacheu', 'elmina', 'axim'],
+    price: 1400,
+    hp: 90, crew: 24, crewMax: 34, crewMin: 12, cargo: 90, guns: 6, speed: 1.35,
+    upkeep: 6, rig: 0.00, tint: 'oak',
+    desc: '카보베르데에서 리오스 데 기네를 오가던 연안 범선. 란사두들이 즐겨 탔다.',
+  },
   guineiro: {
-    // 기니 무역선 — 포르투갈이 이 해안에 두려고 카라벨을 고쳐 만든 배.
+    // 기니 무역선 — 포르투갈이 이 해안에 두려고 카라벨(또는 바르카)을 고쳐 만든 배.
     // 삼각돛 카라벨에 가로돛을 얹어(카라벨라 헤돈다) 무역풍 구간에서 속력을 얻고,
     // 얕은 강어귀에 들어갈 만큼 흘수가 얕은 것은 그대로 뒀다.
     // 화물칸은 캐랙의 절반이지만 포 여덟 문을 달아 이 바다에서는 웬만하면 이긴다.
+    // ★ 회차29 — requires를 지중해 `caravel`에서 이 바다의 `barca`로 바꿨다(사슬을
+    //   제 바다 안에서 닫는다). `requiresAlt: 'caravel'`을 함께 둬 **이미 caravel을 몰아 본
+    //   기존 세이브**가 막히지 않게 했다(state.js: shipLockedBy가 둘 중 하나만 봐도 통과시킨다).
     hull: 'caravel', name: '기니 무역선', origin: '포르투갈', originFlag: 'portugal',
-    tier: 2, era: 'classic', requires: 'caravel',
+    tier: 2, era: 'classic', requires: 'barca', requiresAlt: 'caravel',
     yards: ['elmina', 'santiago', 'luanda', 'mocambique'],
     price: 3400,
     hp: 112, crew: 26, crewMax: 38, crewMin: 13, cargo: 118, guns: 8, speed: 1.25,

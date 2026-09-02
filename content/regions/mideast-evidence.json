@@ -40,6 +40,12 @@
           "value": 1.24,
           "verdict": "probable",
           "basis": "유리병·구슬은 홍해 무역의 오래된 품목이고 내륙 교역의 결제 수단이기도 했다. 1.24."
+        },
+        "gumarabic": {
+          "side": "supply",
+          "value": 0.55,
+          "verdict": "probable",
+          "basis": "사헬~수단의 아카시아 벨트에서 긁어 낸 나무진이 낙타로 내려와 닿는 홍해의 전통적인 두 관문이 수아킨과 알렉산드리아였다 — '아라비아검'이라는 이름이 이 항로를 쥔 아랍 상인들에게서 왔을 정도다. 산지에 가까운 적출항이라 0.55."
         }
       }
     },
@@ -220,6 +226,18 @@
               "url": "https://en.wikipedia.org/wiki/Jeddah"
             }
           ]
+        },
+        "sesameoil": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "메카를 먹이는 항구답게 이집트 밀과 함께 식용유도 상시 들어왔을 것이다 — 참기름의 지다 유입 자체를 적은 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "blade": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "순례객이 사 가는 좋은 날붙이 수요를 반영했다 — 다마스쿠스 명검이 지다 순례시장까지 팔렸다는 직접 사료는 못 찾아 probable로 남긴다."
         }
       }
     },
@@ -675,6 +693,18 @@
               "url": "https://en.wikipedia.org/wiki/Khambhat"
             }
           ]
+        },
+        "saffron": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "말과 진주를 인도와 바꾸던 부유한 환적항답게 페르시아 사프란도 인도·아라비아로 되파는 사치품 목록에 올랐을 것이다 — 호르무즈발 사프란 재수출을 직접 적은 사료는 못 찾아 probable로 남긴다."
+        },
+        "blade": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "무기·갑주가 이 해협을 오가는 사치 교역품 목록에 자주 오른다 — 다마스쿠스 명검이 호르무즈까지 팔렸다는 직접 사료는 못 찾아 probable로 남긴다."
         }
       }
     },
@@ -897,6 +927,18 @@
               "url": "https://en.wikipedia.org/wiki/Basra"
             }
           ]
+        },
+        "sesameoil": {
+          "side": "supply",
+          "value": 0.52,
+          "verdict": "probable",
+          "basis": "참깨는 인더스·걸프와의 접촉으로 남부 메소포타미아에 들어와 이 강 유역의 오랜 농경 주식이 됐고, 올리브가 안 자라는 두 강 사이에서 바빌로니아 사람이 쓴 기름은 참기름 하나뿐이었다. 그 생산은 이슬람 시대까지 이어져 오늘날 이라크의 참기름·타히니로 남아 있다 — 대추야자 숲과 나란한 이 항구의 토종 유지다.",
+          "sources": [
+            {
+              "title": "Springer — Evidence for cultivation of sesame in the ancient world",
+              "url": "https://link.springer.com/article/10.1007/BF02859136"
+            }
+          ]
         }
       }
     },
@@ -999,6 +1041,30 @@
               "url": "https://medpopculture.voices.wooster.edu/wp-content/uploads/sites/140/2018/01/fischel_spice-trade-in-mamluk-egypt.pdf"
             }
           ]
+        },
+        "blade": {
+          "side": "supply",
+          "value": 0.54,
+          "verdict": "probable",
+          "basis": "카이로는 맘루크 술탄국의 수도이자 그 무기고였다. 우츠강 잉곳이 다마스쿠스만이 아니라 이 도시의 대장간에서도 검으로 벼려졌다는 것이 통설이지만, 카이로 대장간의 산출량·값을 직접 적은 사료는 못 찾아 probable로 남긴다. 다마스쿠스(0.50)보다 조금 비싼 것은 원료를 한 단계 더 들여오는 자리이기 때문이다."
+        },
+        "saffron": {
+          "side": "demand",
+          "value": 1.28,
+          "verdict": "probable",
+          "basis": "커피·향신료를 후하게 사 주던 이 대도시가 페르시아 사프란도 사들였을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "pistachio": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "알레포 대상로가 카이로까지 이어져 시리아 견과·건과가 이집트 시장에도 풀렸을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "gumarabic": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "카이로는 아라비아고무의 전통적인 두 관문(수아킨·알렉산드리아) 사이의 중계 시장이었을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
         }
       }
     },
@@ -1060,6 +1126,40 @@
           "value": 1.22,
           "verdict": "probable",
           "basis": "샴은 유리 공예의 오랜 전통이 있었으나 이 시기 최고급 유리는 베네치아 것이었고 그것을 사들였다. 자체 생산이 있어 배율은 낮은 1.22."
+        },
+        "blade": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "우츠강(남인도 도가니강 잉곳)이 3세기부터 17세기까지 코로만델·말라바르 항구에서 실려 와 이 도시의 대장간에서 검으로 벼려졌고, 그 물결무늬 날이 '다마스쿠스 강철'이라는 이름으로 유럽까지 전설이 됐다. 위의 weapon(0.64, 범용 무기)과 나란한 이 도시의 명품 자리다 — 완제품 검의 정확한 값 사료는 못 찾아 probable로 남긴다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Wootz steel",
+              "url": "https://en.wikipedia.org/wiki/Wootz_steel"
+            },
+            {
+              "title": "Wikipedia — Damascus steel",
+              "url": "https://en.wikipedia.org/wiki/Damascus_steel"
+            }
+          ]
+        },
+        "saffron": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "하지 대상의 출발지이자 커피를 카이로 다음으로 많이 사들이던 이 시장이 페르시아 사프란도 사들였을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "sesameoil": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "위의 oliveoil(0.54, 산지)과 별개로, 두 강 사이에서 올라온 참기름도 이 시장에 닿았을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "gumarabic": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "대상로가 이 도시까지 이어지므로 홍해에서 올라온 아라비아고무도 여기서 팔렸을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
         }
       }
     },
@@ -1131,6 +1231,56 @@
           "value": 1.24,
           "verdict": "probable",
           "basis": "바스라에서 올라온 인도 물건이 유럽 상관에 팔리던 자리다. 홍해 노선과 경쟁하는 또 하나의 종착지라 카이로보다 조금 높은 1.24로 뒀다."
+        },
+        "pistachio": {
+          "side": "supply",
+          "value": 0.48,
+          "verdict": "probable",
+          "basis": "오스만이 1516년 접수한 뒤 알레포는 대상로 종착지로 크게 성장했고 그 시장에는 페르시아 비단·인도 후추와 나란히 시리아산 견과·건과가 올랐다. 안테프(현 가지안테프) 지역의 피스타치오는 그 이름 자체가 이 지역에서 왔다는 설이 있을 만큼 알레포 인근의 명물이다 — 정확한 산지 값 사료는 못 찾아 probable로 남긴다.",
+          "sources": [
+            {
+              "title": "UNESCO Silk Road — Aleppo",
+              "url": "https://en.unesco.org/silkroad/content/aleppo"
+            },
+            {
+              "title": "\"History of Antep Pistachios\" (nazella.com.tr)",
+              "url": "https://nazella.com.tr/en/history-of-antep-pistachios.html"
+            }
+          ]
+        },
+        "saffron": {
+          "side": "demand",
+          "value": 1.3,
+          "verdict": "probable",
+          "basis": "유럽 상관이 상주하던 시장답게 페르시아 사프란도 비단·융단과 나란히 팔렸을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "sesameoil": {
+          "side": "demand",
+          "value": 1.22,
+          "verdict": "probable",
+          "basis": "위의 oliveoil(0.58, 산지)과 별개로, 두 강 사이에서 온 참기름도 대상로를 타고 이 시장에 닿았을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "gumarabic": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "유럽 상관이 있는 시장답게 홍해에서 올라온 아라비아고무(당대 유럽 섬유 가공에 쓰인 물건)도 사들였을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "rawsilk": {
+          "side": "supply",
+          "value": 0.6,
+          "verdict": "probable",
+          "basis": "위 silk(0.58)의 근거를 정직하게 읽으면 이것은 완제품이 아니라 원료다 — 이란 길란·시르반의 생사가 낙타로 알레포까지 와서 유럽 상관(베네치아·프랑스)에 팔렸다(Teixeira). A-9 수직계열화 사슬(`data.js: CHAIN`의 rawsilk→silk, req 공업력 2)이 이 바다엔 원료가 하나도 안 이어져 있었는데, 그 사슬은 이미 지중해 부르사(공급 0.62)·베네치아·제노바·이스탄불(수요 1.26~1.34)에서 돌고 있다 — 즉 원료가 어디서 왔는지 빈칸이었다. 기존 silk(0.58) 값은 곡선을 흔들지 않으려 그대로 두고 같은 사실을 rawsilk로 한 번 더 적었다. 값은 부르사(0.62)보다 산지에 가까워 조금 싸게, 세계 최저(닝보 0.58)보다는 비싸게 — 알레포가 원산지가 아니라 대상로 종점이라는 성격을 지켰다.",
+          "sources": [
+            {
+              "title": "Pedro Teixeira, The Travels of Pedro Teixeira (Hakluyt Soc. 1902)",
+              "url": "https://archive.org/details/travelsofpedrote09teix"
+            },
+            {
+              "title": "Wikipedia — Aleppo (Ottoman era silk trade with Venice/France)",
+              "url": "https://en.wikipedia.org/wiki/Aleppo"
+            }
+          ]
         }
       }
     },
@@ -1176,6 +1326,28 @@
           "value": 1.24,
           "verdict": "probable",
           "basis": "강길로 올라온 자기가 팔리던 시장이다. 종착지가 아니라 통과 시장이라 1.24."
+        },
+        "bitumen": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "confirmed",
+          "basis": "히트(유프라테스 강변, 고대 이름 '이스')의 역청 샘은 바그다드에서 가장 가까운 강변 산지다 — 헤로도토스가 바빌론 성벽에 쓰인 역청의 산지로 적었을 만큼 오래됐고, 그 무역은 고대부터 오스만 시대까지 이어진 것으로 조사됐다. 강배로 바그다드까지 내려오는 첫 시장이라 산지 값 0.50을 준다.",
+          "sources": [
+            {
+              "title": "Wikipedia — Hit, Iraq",
+              "url": "https://en.wikipedia.org/wiki/Hit,_Iraq"
+            },
+            {
+              "title": "\"The bitumen trade of Hīt from antiquity to Ottoman times\" (academia.edu)",
+              "url": "https://www.academia.edu/103471694/The_bitumen_trade_of_H%C4%ABt_from_antiquity_to_Ottoman_times"
+            }
+          ]
+        },
+        "pistachio": {
+          "side": "demand",
+          "value": 1.2,
+          "verdict": "probable",
+          "basis": "알레포에서 대상로로 넘어온 시리아 견과가 바그다드 시장에도 풀렸을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
         }
       }
     },
@@ -1247,6 +1419,30 @@
           "value": 1.22,
           "verdict": "probable",
           "basis": "고원의 수도라 바다에서 가장 먼 소비지다. 궁정과 도시 수요가 있으나 종착 시장이 아니라 최종 소비라 1.22로 완만하게 뒀다."
+        },
+        "saffron": {
+          "side": "supply",
+          "value": 0.5,
+          "verdict": "probable",
+          "basis": "사프란은 페르시아가 원산이라는 것이 정설이고, 유럽에서도 이미 '금과 맞먹는 무게값'으로 이름나 있었다 — 15세기 나바라 왕실이 향신료(후추)보다 여덟 배를 주고 사프란을 샀다는 기록이 있다(Jo Day, 2011). 왕실 공방의 고원 수도가 그 산지로 걸맞다 — 이스파한 자체의 산출량을 적은 사료는 못 찾아 probable로 남긴다.",
+          "sources": [
+            {
+              "title": "Jo Day, \"Crocuses in Context\", Hesperia 80.3 (2011), via JSTOR Daily",
+              "url": "https://daily.jstor.org/saffron-the-story-of-the-worlds-most-expensive-spice/"
+            }
+          ]
+        },
+        "pistachio": {
+          "side": "demand",
+          "value": 1.24,
+          "verdict": "probable",
+          "basis": "알레포 견과가 대상로를 타고 이 고원 궁정까지 팔려 왔을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
+        },
+        "blade": {
+          "side": "demand",
+          "value": 1.26,
+          "verdict": "probable",
+          "basis": "다마스쿠스 명검이 사치품으로 이 궁정까지 팔려 왔을 것이다 — 직접 사료는 못 찾아 probable로 남긴다."
         }
       }
     }
@@ -1584,6 +1780,100 @@
           "url": "https://archive.org/details/colloquiesonsimp00orta"
         }
       ]
+    },
+    "bitumen": {
+      "base": 32,
+      "verdict": "probable",
+      "basis": "히트(유프라테스 강변, 고대 이름 '이스')의 역청 샘은 헤로도토스가 바빌론 성벽에 쓰인 역청의 산지로 적었을 만큼 오래된 산지이고, 그 무역은 고대부터 오스만 시대까지 끊이지 않고 이어진 것으로 조사됐다(academia.edu 논문 제목 자체가 'from antiquity to Ottoman times'). 갈대배·다우의 판자 이음매를 메우는 방수 소모품이라 값싸고 무거운 벌크재다 — 직접 가격 사료는 못 찾아 이 바다 사다리의 맨 밑(곡물의 1.6배)에 뒀다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Hit, Iraq",
+          "url": "https://en.wikipedia.org/wiki/Hit,_Iraq"
+        },
+        {
+          "title": "\"The bitumen trade of Hīt from antiquity to Ottoman times\" (academia.edu)",
+          "url": "https://www.academia.edu/103471694/The_bitumen_trade_of_H%C4%ABt_from_antiquity_to_Ottoman_times"
+        },
+        {
+          "title": "Shafaq News — Ancient Tar Springs of Hit: Iraq's eternal flames still burn",
+          "url": "https://shafaq.com/en/Report/Ancient-Tar-Springs-of-Hit-Iraq-s-eternal-flames-still-burn"
+        }
+      ]
+    },
+    "sesameoil": {
+      "base": 44,
+      "verdict": "probable",
+      "basis": "참깨는 인더스·걸프와의 접촉으로 메소포타미아에 들어와 중기 청동기시대에 이미 남부 메소포타미아·유프라테스 중류·북부 메소포타미아의 농경 주식이 됐고, 바빌로니아 사람들이 쓴 기름은 참기름 하나뿐이었다 — 우르 점토판이 등불·제사용으로 쓴 기록을 남겼다. 올리브가 안 자라는 두 강 사이에서 그 자리를 대신한 토종 유지라는 뜻이고, 그 생산은 이슬람 시대까지 이어져 오늘날 이라크·레반트의 참기름·타히니로 남아 있다. 값 사료(대항해시대 기준)는 못 찾아 같은 급의 식용유인 올리브유(곡물의 2.6배)보다 조금 싼 2.2배로 뒀다 — 지역 토산 벌크품이라는 성격을 반영한 것이다.",
+      "sources": [
+        {
+          "title": "Springer — Evidence for cultivation of sesame in the ancient world",
+          "url": "https://link.springer.com/article/10.1007/BF02859136"
+        },
+        {
+          "title": "i3.MesopOil — Vegetable Oils and Animal Fats in Early Urban Societies of Syro-Mesopotamia (LMU München)",
+          "url": "https://www.i3-mesop-oil.gwi.uni-muenchen.de/"
+        }
+      ]
+    },
+    "pistachio": {
+      "base": 110,
+      "verdict": "probable",
+      "basis": "알레포는 오스만이 1516년 접수한 뒤 대상로의 종점으로 크게 성장했고, 그 시장에는 페르시아 비단·인도 후추와 나란히 시리아산 견과·건과가 올랐다. 안테프(현 가지안테프) 지역의 피스타치오는 그 이름 자체가 이 지역에서 왔다는 설이 있을 만큼 알레포 인근의 명물로 굳어 있다. 직접 가격 사료(곡물 대비 비율)는 찾지 못해 압축한 사다리 안에서 자리를 잡았다 — 향신료(16.5배)보다는 확실히 싸고 대추야자(1.7배)보다는 비싼 일용 견과 자리로, 대추야자의 세 배 남짓인 5.5배에 뒀다.",
+      "sources": [
+        {
+          "title": "UNESCO Silk Road — Aleppo",
+          "url": "https://en.unesco.org/silkroad/content/aleppo"
+        },
+        {
+          "title": "\"History of Antep Pistachios\" (nazella.com.tr)",
+          "url": "https://nazella.com.tr/en/history-of-antep-pistachios.html"
+        }
+      ]
+    },
+    "blade": {
+      "base": 260,
+      "verdict": "probable",
+      "basis": "우츠강(남인도 도가니강 잉곳)은 3세기부터 17세기까지 코로만델·말라바르 항구에서 실려 나가 다마스쿠스의 대장간에서 검으로 벼려졌고, 그 물결무늬 날이 '다마스쿠스 강철'이라는 이름으로 유럽까지 전설이 됐다 — 원료의 산지는 인도지만 완제품을 만드는 산업 자체는 다마스쿠스(와 맘루크의 수도 카이로)에 있었다. 잉곳 자체는 goods로 안 적고(그 물건은 인도양 권역의 몫이다) 이 바다가 실제로 내놓는 완제품만 적었다. 직접 가격 사료는 못 찾아 사다리 안에서 잡았다 — 게임의 범용 '무기'(8.25배)보다 훨씬 비싼 명품 날붙이 자리로 13배에 뒀다.",
+      "sources": [
+        {
+          "title": "Wikipedia — Wootz steel",
+          "url": "https://en.wikipedia.org/wiki/Wootz_steel"
+        },
+        {
+          "title": "Wikipedia — Damascus steel",
+          "url": "https://en.wikipedia.org/wiki/Damascus_steel"
+        }
+      ]
+    },
+    "gumarabic": {
+      "base": 180,
+      "verdict": "probable",
+      "basis": "아라비아고무(검)는 세네갈에서 수단·에리트레아까지 이어지는 사헬의 아카시아 벨트에서 긁어 낸 나무진으로, 낙타·소에 실려 그 산지에서 가장 가까운 항구로 내려갔는데 그 전통적인 두 관문이 수아킨과 알렉산드리아였다 — '아라비아검(gum arabic)'이라는 이름 자체가 이 무역로를 여러 세기 쥐고 있던 아랍 상인들에게서 왔다. 18세기 프랑스 회사가 파리·런던 시장에서 사들인 값의 30배로 되팔았다는 기록은 유럽 가공·전매 마진이 컸다는 뜻이지, 산지 값 자체가 비쌌다는 뜻은 아니다 — 그래서 이 바다 안에서는 비슷한 급의 나무진인 유향(8.5배)과 나란한 9배로 뒀다.",
+      "sources": [
+        {
+          "title": "The Old Operating Theatre Museum — Gum Arabic: History and Uses",
+          "url": "https://oldoperatingtheatre.com/gum-arabic-history-and-uses/"
+        },
+        {
+          "title": "Down To Earth — Gum arabic from Africa's acacia trees in the Sahel",
+          "url": "https://www.downtoearth.org.in/africa/gum-arabic-from-africa-s-acacia-trees-in-the-sahel-is-used-in-hundreds-of-products-what-s-worth-knowing-95907"
+        }
+      ]
+    },
+    "saffron": {
+      "base": 720,
+      "verdict": "probable",
+      "basis": "사프란(크로커스 암술머리)은 페르시아가 원산이라는 것이 정설이고, 유럽에서도 이미 '금과 맞먹는 무게값'으로 이름나 있었다 — 15세기 나바라 왕실이 이미 값비싼 향신료로 꼽히던 후추보다 여덟 배를 주고 사프란을 샀다는 기록이 있다(Jo Day, 2011). 그 비율(후추의 8배)을 이 바다의 향신료 환적값(16.5배)에 그대로 얹으면 132배가 되어 사다리를 통째로 깨므로, 기존 품목과 같은 압축을 걸어 이 바다의 최고가(진주 29·금괴 35보다도 위)인 36배에 놓았다 — '금보다 비쌌다'는 통설의 방향은 살리되 경제를 한 품목이 삼키지 않게 했다.",
+      "sources": [
+        {
+          "title": "Jo Day, \"Crocuses in Context: A Diachronic Survey of the Crocus Motif in the Aegean Bronze Age\", Hesperia 80.3 (2011), via JSTOR Daily",
+          "url": "https://daily.jstor.org/saffron-the-story-of-the-worlds-most-expensive-spice/"
+        },
+        {
+          "title": "Wikipedia — History of saffron",
+          "url": "https://en.wikipedia.org/wiki/History_of_saffron"
+        }
+      ]
     }
   },
   "ships": {
@@ -1699,6 +1989,29 @@
           "url": "https://www.encyclopedia.com/history/asia-and-africa/middle-eastern-history/dhow"
         }
       ]
+    },
+    "kalyon": {
+      "price": 15000,
+      "verdict": "gameplay",
+      "basis": "★ 사용자 지시로 회차 28의 판단(\"이 바다엔 t3를 안 넣는다\")을 뒤집는다 — 고증은 명분이지 족쇄가 아니라는 이번 회차 방향에 따라, 근거가 그럴듯하면 넣는 쪽을 택했다. 오스만은 실제로 수에즈에 조선소(아르세날)를 세워 포르투갈에 맞서는 홍해·인도양 함대를 지었다(1507년 셀만 레이스가 수에즈에서 출항 · 1538년 하드름 술레이만 파샤의 인도양 원정대가 그 정점이다). 그 조선소는 나무 한 조각 안 나는 사막에 있어 재목·철물·대포를 전부 아나톨리아·지중해에서 실어 왔다는 사실은 이 권역 geo.js에 이미 있던 조사다. 다만 '카륜'(kalyon, 오스만어로 갈레온)이라는 배 이름·선형 자체는 16세기 기록(1525년 홍해 함대는 바스타르다·갤리·소형 갤리 '칼야타' 위주)보다는 17~18세기 오스만 해군에서 더 뚜렷이 확인되는 용어라 verdict를 'gameplay'로 남긴다 — \"수에즈가 수입 재료로 원양 대형선을 지었다\"는 사실은 확인되고, 그 배를 부르는 이름과 세부 시기는 이 프로젝트의 연도 비고정 원칙(대항해시대쯤) 안에서 압축했다. 제원은 이 권역이 아니라 다른 바다의 t3(갈리사브라 13,000·간자 13,600·나우다미나 16,500) 밴드에 맞췄다 — 콘텐츠는 늘리되 곡선은 그대로 두는 것이 최상위 지침이다.",
+      "sources": [
+        {
+          "title": "Selman Reis — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Selman_Reis"
+        },
+        {
+          "title": "Ottoman Warships in the Indian Ocean Armada of 1538 (academia.edu)",
+          "url": "https://www.academia.edu/12794876/Ottoman_Warships_in_the_Indian_Ocean_Armada_of_1538_A_Qualitative_and_Statistical_Analysis"
+        },
+        {
+          "title": "Ottoman Maritime Arsenals and Shipbuilding Technology (muslimheritage.com)",
+          "url": "https://muslimheritage.com/uploads/Ottoman_Maritime_Arsenals1.pdf"
+        },
+        {
+          "title": "Ottoman campaign against Hormuz — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Ottoman_campaign_against_Hormuz"
+        }
+      ]
     }
   },
   "mates": {
@@ -1807,32 +2120,32 @@
   "art": {
     "iconTodo": [
       {
-        "good": "horse",
-        "note": "★ 가장 급하다 — 말. 지금은 상아(ivory) 아이콘을 빌려 써서 그림과 물건이 아예 다르다. 굴레 씌운 아라비아 말의 옆모습, 또는 말 머리."
+        "good": "_note",
+        "note": "★ 2026-09-01 정리 — 옛 목록에 있던 대추야자·유향·융단·장미수·커피·말·진주 일곱은 `js/sprites/icons.js`가 이미 각자 전용 아이콘을 갖고 있어(dates·incense·carpet·rosewater·coffee·horse·pearl) 지웠다. 아래 여섯은 회차 29에서 새로 늘린 품목이라 전용 아이콘이 없다."
       },
       {
-        "good": "pearl",
-        "note": "진주 — 반쯤 열린 조개와 그 안의 알, 또는 실에 꿴 진주 두름. 지금은 유리세공(glass) 아이콘을 빌려 쓴다."
+        "good": "saffron",
+        "note": "사프란 — 자주색 크로커스 꽃과 그 안의 붉은 암술머리 세 가닥. 지금은 생강(ginger) 뿌리를 빌려 써서 향신료와 구별이 잘 안 된다."
       },
       {
-        "good": "coffee",
-        "note": "커피 — 마대에서 쏟아진 볶은 원두. 지금은 향신료(spice) 자루를 빌려 써서 향신료와 구별이 안 된다."
+        "good": "pistachio",
+        "note": "피스타치오 — 벌어진 연두색 껍질 사이로 보이는 알맹이. 지금은 콜라나무 열매(kola) 아이콘을 빌려 쓴다(그나마 '벌어진 씨앗' 모양이 가장 가깝다)."
       },
       {
-        "good": "incense",
-        "note": "유향 — 유향나무에서 굳은 젖빛 수지 덩이와 향로. 지금은 소금(salt) 자루를 빌려 쓴다."
+        "good": "sesameoil",
+        "note": "참기름 — 올리브유와 다른 색(짙은 갈색·호박색)의 병. 지금은 올리브유(oliveoil) 암포라를 그대로 빌려 써서 두 기름이 화면에서 구별이 안 된다."
       },
       {
-        "good": "carpet",
-        "note": "융단 — 말아 세운 페르시아 융단(문양이 보이게). 지금은 비단(silk) 두루마리를 빌려 쓴다."
+        "good": "blade",
+        "note": "다마스쿠스 검 — 물결무늬(다마스크 무늬) 날의 굽은 검 한 자루. 지금은 무기(weapon, 검+방패) 아이콘을 빌려 써서 범용 weapon과 구별이 안 된다."
       },
       {
-        "good": "rosewater",
-        "note": "장미수 — 목이 긴 유리병과 장미 한 송이. 지금은 와인(wine) 아이콘을 빌려 쓴다."
+        "good": "bitumen",
+        "note": "역청 — 통 안에서 흘러넘치는 검은 역청. 지금 빌려 쓰는 tar 아이콘이 마침 이 물건 그대로라(★ 두 물건이 사실상 같은 것) 급하지 않다."
       },
       {
-        "good": "dates",
-        "note": "대추야자 — 야자 잎에 달린 열매 송이 또는 열매를 눌러 담은 항아리. 지금은 올리브유(oliveoil) 암포라를 빌려 쓴다."
+        "good": "gumarabic",
+        "note": "아라비아고무 — 아카시아 나무진 덩이(투명~호박색 눈물 모양). 지금은 호박(amber) 구슬 아이콘을 빌려 쓴다."
       }
     ],
     "hullTodo": [
@@ -1855,6 +2168,10 @@
       {
         "ship": "baghlah",
         "note": "바갈라 — 각진 높은 선미에 아치형 선미 창이 다섯, 그 위로 조각 장식. 포르투갈 배에서 온 형태라 캐랙 선체를 빌린 것이 아주 틀리지는 않지만, 돛은 세티 두 장이어야 하고 이물이 훨씬 날렵해야 한다."
+      },
+      {
+        "ship": "kalyon",
+        "note": "카륜 — 서양식 갈레온 선체 그대로다(다른 다우들과 달리 예외적으로 정확하다). 다만 오스만 색을 하나도 안 입혔다 — 붉은 초승달 페넌트, 이물 아래 아라베스크 장식 띠, 고물 누각의 오스만 문장 정도가 있어야 '수입한 갈레온'이 아니라 '수에즈가 지은 갈레온'으로 보인다. 지금은 generic galleon 선체를 그대로 빌려 쓴다."
       }
     ],
     "flagTodo": [

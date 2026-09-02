@@ -14,7 +14,7 @@
 //   node tools/check-world.mjs
 
 import { CITIES, CITY_BY_ID, GOODS, GOOD_BY_ID, SHIPS, YARD, HOLDING, HOLDINGS,
-         ALL_PIRATES, riskKey } from '../js/data.js';
+         ALL_PIRATES, ALL_MATES, riskKey } from '../js/data.js';
 
 /* 공업력이 실제로 어디까지 오르나 — `state.js: industryOf`가 쓰는 그 상한을 그대로 읽는다.
    여기서 숫자를 새로 적으면 그쪽이 바뀔 때 조용히 갈라진다. */
@@ -142,16 +142,50 @@ for (const [key, s] of Object.entries(SHIPS)) {
   }
 }
 
+/* ── ⑦ 명부 id가 세계에서 하나뿐인가 (회차 29) ─────────────────
+   ★ 남미 해적을 넣다가 실제로 밟을 뻔한 자리다. `regions/index.js: npcOf`(ALL_PIRATES·
+     ALL_MATES를 만드는 자리)는 교역품(`ALL_GOODS`)·선종(`ALL_SHIPS`)과 달리 **id 중복을
+     걸러내지 않고 그대로 이어 붙인다** — 권역마다 흩어진 명부를 한 배열로 모을 뿐이다.
+     남미에 '프랜시스 드레이크'(`id:'drake'`)를 넣을 뻔했는데, 카리브에 이미 같은 id의
+     인물이 있었다. 들어갔다면 `state.slain['pirate:drake']`·`state.mates['drake']`(둘 다
+     id를 키로 쓴다)가 **두 바다의 서로 다른 인물을 한 키로 묶어**, 한 바다에서 잡은/고용한
+     것이 다른 바다에서도 잡힌/고용된 것으로 조용히 처리된다 — 패권 조건 ③이 거짓 통과한다.
+     콘텐츠 부족이 아니라 **규칙의 자기모순**(id는 세계에서 하나뿐이어야 한다 — `regions/
+     index.js` 파일 머리주석)이라 실패로 잡는다. ALL_MATES도 같은 모양으로 id를 키 삼으므로
+     함께 본다(`hireMate`/`mateAt` 등이 `state.mates[m.id]`를 쓴다). */
+for (const [label, list] of [['해적', ALL_PIRATES], ['동료', ALL_MATES]]) {
+  const byId = new Map();
+  for (const n of list) {
+    if (!byId.has(n.id)) byId.set(n.id, []);
+    byId.get(n.id).push(n.region);
+  }
+  for (const [id, regions] of byId) {
+    if (regions.length > 1) {
+      bad('명부id충돌', `${label} id '${id}'가 ${regions.length}개 권역(${regions.join(' · ')})에 있다 — `
+        + 'state가 이 id를 키로 잡음/고용을 기록해 두 바다를 섞는다. id를 다시 짓는다');
+    }
+  }
+}
+
 /* ── ⑤ 표시 이름이 겹치는가 (C-4) ───────────────────────────
    ★ **권역을 나눠 만들면 이름이 겹치는 것을 아무도 못 본다.** 각 담당은 제 바다만 보고,
      id는 갈려 있으므로(`baghla` / `baghlah`) 다른 검사기는 전부 통과한다. 그런데 화면에는
      **값이 다른 두 줄이 같은 이름으로** 뜬다 — 실제로 조선소 목록에 '바갈라'가 둘이었고
      시장에 '유향'이 둘이었다. 이 검사가 없어 감수자가 눈으로 찾아야 했다.
    ⚠️ **합치라는 뜻이 아니다.** 같은 계열의 다른 바다 변종이면 제원이 다른 것이 옳다 —
-     고칠 것은 **표시 이름**이다(지명을 붙인다). 콘텐츠를 줄이는 쪽으로 읽으면 안 된다. */
+     고칠 것은 **표시 이름**이다(지명을 붙인다). 콘텐츠를 줄이는 쪽으로 읽으면 안 된다.
+   ★ **해적·동료도 여기 넣었다(회차 29) — 다만 이 둘은 사정이 다르다.** 배·품목은 "같은
+     계열의 다른 지역 변종"이 정상이지만(그래서 표시 이름만 가르면 끝), 해적·동료는 **역사
+     실존 인물 한 명씩을 가리키는 명부**라 같은 이름이 두 바다에 있는 것은 거의 항상
+     "같은 사람을 두 번 만든" 사고다(드레이크가 그 예) — 동명이인을 의도적으로 둘 넣을
+     이유가 이 명부의 설계상 없다. 그래서 이 검사가 잡아도 콘텐츠가 줄지 않는다: 잡히면
+     "표시 이름에 지명을 붙인다"가 아니라 **다른 인물·다른 사건으로 바꾼다**(FIX-L의 처리
+     그대로 — 나사우 함대로 교체). */
 for (const [label, entries] of [['교역품', GOODS.map((g) => [g.id, g.name])],
                                 ['선종', Object.entries(SHIPS).map(([k, s]) => [k, s.name])],
-                                ['도시', CITIES.map((c) => [c.id, c.name])]]) {
+                                ['도시', CITIES.map((c) => [c.id, c.name])],
+                                ['해적', ALL_PIRATES.map((p) => [p.id, p.name])],
+                                ['동료', ALL_MATES.map((m) => [m.id, m.name])]]) {
   const by = new Map();
   for (const [id, name] of entries) {
     if (!name) continue;

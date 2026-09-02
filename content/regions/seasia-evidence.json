@@ -1966,6 +1966,43 @@
           "url": "https://en.wikipedia.org/wiki/Djong_(ship)"
         }
       ]
+    },
+    "orembai": {
+      "price": 1600,
+      "verdict": "confirmed",
+      "basis": "오렘바이(arumbai)는 말루쿠 제도의 판재 조립선이다. 이물·고물이 둘 다 초승달처럼 치솟는 좌우대칭 선형이 위키피디아·현지 자료에 공통으로 기록되어 있고, 술탄의 공식 행렬선이자 평범한 어로·운송선으로도 쓰였다 — 17세기 바타비아에서는 네덜란드인이 저녁에 운하로 이 배를 저어 나가는 것이 유행어(orembaaien)가 될 만큼 흔했다. 제원·값 사료는 없어 이 바다의 첫 배 대역(프라우 1,300보다 위, 펜자잡 1,750보다 아래) 안에 두었다 — 가장 싼 자리(프라우)는 건드리지 않는다.",
+      "sources": [
+        {
+          "title": "Orembai — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Orembai"
+        }
+      ]
+    },
+    "juanga": {
+      "price": 2900,
+      "verdict": "confirmed",
+      "basis": "큰 코라코라는 이 바다에서 따로 '주앙가(juanga/joanga)'로 불렸다 — 테르나테의 하이룬 술탄이 1530~1570년 포르투갈과 싸울 때 병력을 실어 나른 배가 이 이름으로 사료에 남아 있다. `requires: 'korakora'`는 사료가 아니라 '작은 코라코라를 몰아 봐야 큰 주앙가를 짓는다'는 이 저장소의 사다리 규약이다. 값·정확한 제원은 확보하지 못해 코라코라(1,900)를 웃돌고 란차랑(3,400)을 밑도는 자리에 두었다.",
+      "sources": [
+        {
+          "title": "Kora kora — Wikipedia (juanga/joanga = larger kora-kora, Sultan Khairun's Ternate-Portuguese conflict 1530–1570)",
+          "url": "https://en.wikipedia.org/wiki/Kora_kora"
+        }
+      ]
+    },
+    "padewakang": {
+      "price": 4200,
+      "verdict": "gameplay",
+      "basis": "파데왕앙은 적어도 18세기 초부터 남술라웨시(부기스·마카사르·만다르)에서 지어져 뉴기니 서단에서 필리핀 남부, 말레이 반도까지 원양 무역·어로에 쓰인, 이 지역이 낸 가장 큰 전통 무역선이다(20세기 초 팔라리에게 자리를 넘길 때까지). 이 게임은 연도를 고정하지 않으므로 다른 16세기 배들과 한 사다리에 놓았고, 그래서 verdict는 동시대성이 아니라 실재 여부를 뜻한다. 값·정확한 제원 사료는 없어 란차랑(3,400)과 펜찰랑(5,400) 사이에 두었다.",
+      "sources": [
+        {
+          "title": "Padewakang — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Padewakang"
+        },
+        {
+          "title": "The Construction of an Historical Boat in South Sulawesi (Indonesia): The Padewakang — Journal of Maritime Archaeology (Springer, 2022)",
+          "url": "https://link.springer.com/article/10.1007/s11457-022-09332-5"
+        }
+      ]
     }
   },
   "mates": {
@@ -2126,6 +2163,18 @@
       {
         "ship": "balangay",
         "note": "발랑가이 — 널을 등나무 끈으로 꿰어 만든 배(lashed-lug), 길이 15m·너비 4m, 아웃리거와 발판. 지금은 hulk를 빌려 쓴다"
+      },
+      {
+        "ship": "orembai",
+        "note": "오렘바이 — 이물·고물이 둘 다 초승달처럼 뾰족하게 치솟는 좌우대칭 판재선. 지금은 caravel을 빌려 쓰는데 카라벨은 이물·고물이 다른 모양이라 그 대칭이 안 산다"
+      },
+      {
+        "ship": "juanga",
+        "note": "주앙가 — 코라코라보다 큰 아웃리거 노잡이배. 지금은 galley를 빌려 쓰는데 아웃리거·이엉지붕이 아직 없다(코라코라와 같은 함정)"
+      },
+      {
+        "ship": "padewakang",
+        "note": "파데왕앙 — 다우와 비슷한 배부른 선체에 탄자세일 두 장, 뒷돛대가 없다(훗날 피니시가 되며 스쿠너 삭구가 붙는다). 지금은 fluyt를 빌려 쓰는데 가로돛 그림이 탄자세일과 어긋난다"
       }
     ],
     "flagTodo": [],

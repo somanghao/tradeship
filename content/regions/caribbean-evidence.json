@@ -1858,6 +1858,148 @@
       "verdict": "probable",
       "basis": "남해(Mar del Sur)의 연안 항로다. 스페인이 태평양을 제 호수처럼 여겨 배가 사실상 무장을 하지 않고 다녔고, 드레이크가 1579년에 들어와 그 전제를 깨기 전까지는 사략선이 없었다. 이 권역에서 유일하게 지중해 내해 대역(2~3.5)의 값을 준 것은 그래서다 — 다만 요율표를 확보하지는 못했다.",
       "sources": []
+    },
+    "tampico|veracruz": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "만 서안의 짧은 연안이다. 탐피코는 1554년 코르테스 정복 이후 파누코 강어귀에 세워진 소항이라 은 함대가 들르는 베라크루스에 비해 오가는 짐값이 낮았고, 노리는 사략선도 그만큼 적었다. 지중해의 '평범한 연안'(4.0)보다 반 점 높게 둔 것은 그래도 뭍이 늪지라 좌초 위험이 있기 때문이다.",
+      "sources": [
+        { "title": "Tampico", "url": "https://en.wikipedia.org/wiki/Tampico" }
+      ]
+    },
+    "campeche|merida": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "유카탄 서안의 짧은 연안 구간이다. 캄페체가 항구이고 메리다는 반도 내륙의 도청소재지이므로 실제로는 짐이 육로로도 오갔다 — 뱃길로 잡을 때는 개펄이 얕은 근해에 그쳐 이 권역에서 가장 낮은 축에 둔다.",
+      "sources": [
+        { "title": "Campeche", "url": "https://en.wikipedia.org/wiki/Campeche" },
+        { "title": "Mérida, Yucatán", "url": "https://en.wikipedia.org/wiki/M%C3%A9rida,_Yucat%C3%A1n" }
+      ]
+    },
+    "havana|merida": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "유카탄 해협을 건너는 구간이다. 누에바에스파냐 함대가 베라크루스로 가려면 반드시 지나야 하는 목이라 havana|veracruz(7.0)와 같은 물을 쓴다 — 메리다 쪽 항구는 함대의 정박지가 아니라서 반 점 더 얹었다.",
+      "sources": []
+    },
+    "puertocaballos|trujillo": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "온두라스 북안을 따라가는 30리그 남짓의 구간으로 이 권역에서 가장 짧은 뱃길 축이다. 양단이 다 온두라스의 스페인 항구(푸에르토 카바요스는 1524년 곤살레스 다빌라가 세운 최초의 카리브 안 항구, 트루히요는 1524년 올리드가 세운 온두라스 첫 수도)라 짧은 연안치고는 순한 편이지만, 두 항구 모두 16~17세기 내내 사략·해적의 표적이었다(1594·1603·1668년 각각).",
+      "sources": [
+        { "title": "Raid on Puerto Caballos (1594)", "url": "https://en.wikipedia.org/wiki/Raid_on_Puerto_Caballos_(1594)" },
+        { "title": "Battle of Puerto Caballos (1603)", "url": "https://en.wikipedia.org/wiki/Battle_of_Puerto_Caballos_(1603)" }
+      ]
+    },
+    "havana|puertocaballos": {
+      "risk": 8,
+      "verdict": "probable",
+      "basis": "온두라스 함대가 본대와 합류하러 카리브를 가로질러 아바나까지 올라가는 외해 구간이다. 푸에르토 카바요스는 요새가 약해(1603년 잉글랜드 함대에 함락, 1668년 버커니어의 습격) 그곳을 떠난 배도 호위 없이는 안전하지 못했다 — havana|trujillo(8.0)와 같은 값을 준다.",
+      "sources": [
+        { "title": "Battle of Puerto Caballos (1603)", "url": "https://en.wikipedia.org/wiki/Battle_of_Puerto_Caballos_(1603)" }
+      ]
+    },
+    "granada|portobelo": {
+      "risk": 8.5,
+      "verdict": "confirmed",
+      "basis": "산후안강 하구에서 모스키토 해안을 따라 포르토벨로까지 내려가는, 해도가 부실했던 물이다. 1665년 헨리 모건이 정확히 이 뱃길을 거슬러(카누로 산후안강을 올라) 니카라과 호수의 그라나다를 습격해 은 50만 파운드어치를 털고 배를 불태웠다 — 이 구간이 실제로 해적의 침입로였다는 사건이 특정된다. 지중해 사략 소굴 대역(9~11) 바로 아래에 둔다.",
+      "sources": [
+        { "title": "Piracy on Lake Nicaragua", "url": "https://en.wikipedia.org/wiki/Piracy_on_Lake_Nicaragua" },
+        { "title": "Granada, Nicaragua", "url": "https://en.wikipedia.org/wiki/Granada,_Nicaragua" }
+      ]
+    },
+    "granada|trujillo": {
+      "risk": null,
+      "verdict": "probable",
+      "basis": "니카라과 고원을 넘는 노새길이다. 그라나다(니카라과 호수 안쪽)와 트루히요(온두라스 카리브 연안·1524년 세운 온두라스 첫 수도) 사이를 뭍으로 잇는 곁길로, 대양을 잇지 않으므로 요율을 null로 두어 해적을 끈다 — 다만 이 고원길 자체를 특정한 사료는 확보하지 못했다.",
+      "sources": [
+        { "title": "Trujillo, Honduras", "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras" }
+      ]
+    },
+    "santiagocuba|trinidadcuba": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "쿠바 남안 안쪽을 도는 구간이다. 하르디네스 데 라 레이나(여왕의 정원)라 불리는 산호밭·섬 무리가 외해의 풍랑과 대형선의 접근을 함께 막아 준다 — 이 권역 남안 항로 중 가장 순한 편이다.",
+      "sources": []
+    },
+    "jamaica|trinidadcuba": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "자메이카와 쿠바 남안의 트리니다드를 잇는 짧지만 트인 물이다. 트리니다드는 오리엔테·쿠아트로 비야스 지역 밀무역망의 한 축으로 18세기까지도 세관이 사실상 눈감던 항구였고, 자메이카 쪽 항구도 사정이 같아 양쪽 다 밀무역선의 길이었다.",
+      "sources": [
+        { "title": "Trinidad, Cuba", "url": "https://en.wikipedia.org/wiki/Trinidad,_Cuba" }
+      ]
+    },
+    "puertoplata|tortuga": {
+      "risk": 9.5,
+      "verdict": "confirmed",
+      "basis": "이스파니올라 북안 사이를 잇는 구간이다. 1605~06년 '오소리오의 파괴'로 스페인이 밀무역을 끊겠다며 푸에르토플라타를 통째로 불태우고 주민을 강제 이주시켰는데, 그 결과 이 해안에 스페인 배가 기댈 곳이 아예 사라졌고 프랑스가 그 빈자리에 들어와 토르투가의 해안형제단이 되었다 — 이 정책이 오히려 자신이 막으려던 것을 만든 사례다. santiagocuba|tortuga·santodomingo|tortuga와 함께 이 권역 최고 요율 셋 가운데 하나다.",
+      "sources": [
+        { "title": "Devastations of Osorio", "url": "https://en.wikipedia.org/wiki/Devastations_of_Osorio" },
+        { "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }
+      ]
+    },
+    "puertoplata|sanjuan": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "모나 해협 북쪽을 지나는 구간이다. 뱃길 자체는 트여 있으나 오소리오의 파괴 이후 푸에르토플라타 쪽 해안에 정박할 스페인 항구가 사실상 없어져 지나는 배가 적었다 — sanjuan|santodomingo(6.0, 모나 해협 남쪽)보다 반 점 높게 둔다.",
+      "sources": [
+        { "title": "Devastations of Osorio", "url": "https://en.wikipedia.org/wiki/Devastations_of_Osorio" }
+      ]
+    },
+    "sanjuan|stkitts": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "리워드 제도를 거슬러 올라가는 구간이다. 무역풍과 북적도 해류를 정면으로 받으며 동쪽으로 가야 해 시간이 걸리고, 세인트키츠는 1624년 잉글랜드·1625년 프랑스가 한 섬을 나눠 앉은 곳이라 산후안(스페인)에서 보면 적대 깃발과 이웃한 물이다.",
+      "sources": [
+        { "title": "Saint Kitts", "url": "https://en.wikipedia.org/wiki/Saint_Kitts" }
+      ]
+    },
+    "barbados|stkitts": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "소앤틸리스 열도 안쪽을 도는 구간이다. 섬이 늘 시야에 들어오는 물이라 길을 잃을 위험은 낮지만, 두 섬 다 잉글랜드령이라 스페인 순찰선에게는 반갑지 않은 항로였다 — 열도 바깥으로 나서는 barbados|nuevacadiz(7.5)보다는 한 점 낮게 둔다.",
+      "sources": [
+        { "title": "Barbados", "url": "https://en.wikipedia.org/wiki/Barbados" }
+      ]
+    },
+    "barbados|nuevacadiz": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "소앤틸리스 열도 바깥에서 본토(티에라피르메)로 내려서는 외해 구간이다. 유럽에서 갓 건너온 배가 카리브 안으로 들어오는 첫 관문이라 사략선이 진을 치기 좋은 자리였다.",
+      "sources": []
+    },
+    "cumana|nuevacadiz": {
+      "risk": 5,
+      "verdict": "probable",
+      "basis": "아라야 반도의 소금밭에서 쿠바과 섬까지 이어지는 짧은 구간이다. 소금배와 진주배가 같은 물을 썼다 — 쿠바과의 누에바카디스는 16세기 초 서반구 최초의 진주 러시로 번성했다가 남획으로 굴이 씨가 마르고 1541년 크리스마스에 허리케인이 마을을 통째로 지워 1545년 완전히 버려졌다. 그 재해의 성격이 사람보다 날씨였으므로 이 권역 평균보다는 낮게 둔다.",
+      "sources": [
+        { "title": "Nueva Cádiz", "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz" },
+        { "title": "Cubagua Island", "url": "https://en.wikipedia.org/wiki/Isla_de_Cubagua" }
+      ]
+    },
+    "cumana|maracaibo": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "티에라피르메 본토 연안을 따라가는 구간이다. 카리브 해류를 타고 서쪽으로 순류를 받지만, 마라카이보 쪽으로 갈수록 스페인 함대의 주력 항로(카르타헤나~아바나)에서 벗어나 호위가 얇아진다.",
+      "sources": []
+    },
+    "curacao|riohacha": {
+      "risk": 7,
+      "verdict": "probable",
+      "basis": "자유항 퀴라소와 진주항 리오아차 사이의 밤길이다. 1648년 이후 퀴라소는 네덜란드 서인도회사가 밀무역·사략을 사실상 눈감아 준 근거지였고, 리오아차는 진주로 부유했으나 카르타헤나에서 바람과 해류로 갈려 있어 고립된 항구라 드레이크(1569)·모건(1669)·얀 빌럼스(1680)가 차례로 노렸다 — 두 항구의 성격이 만나는 물이라 요율을 이 권역 중간대에 둔다.",
+      "sources": [
+        { "title": "Dutch West India Company", "url": "https://en.wikipedia.org/wiki/Dutch_West_India_Company" }
+      ]
+    },
+    "curacao|maracaibo": {
+      "risk": 7.5,
+      "verdict": "confirmed",
+      "basis": "베네수엘라 만을 건너 마라카이보 호수 어귀의 좁은 목(바라)으로 들어서는 구간이다. 1666년 프랑스 해적 롤로네가 배 8척·650명으로 이 목의 산카를로스 요새를 깨고 마라카이보를 약탈했고, 1669년에는 헨리 모건이 같은 길로 들어가 마라카이보·히브랄타르를 턴 뒤 스페인 함대를 이 목에서 격파했다 — 좁은 목에 갇히면 못 빠진다는 이 항로의 성격이 두 사건 모두에서 그대로 드러난다.",
+      "sources": [
+        { "title": "Henry Morgan's raid on Lake Maracaibo", "url": "https://en.wikipedia.org/wiki/Henry_Morgan%27s_raid_on_Lake_Maracaibo" },
+        { "title": "San Carlos de la Barra Fortress", "url": "https://en.wikipedia.org/wiki/San_Carlos_de_la_Barra_Fortress" }
+      ]
     }
   },
   "goods": {
@@ -2043,6 +2185,47 @@
           "url": "https://es.wikipedia.org/wiki/Zabra"
         }
       ]
+    },
+    "balandra": {
+      "price": 1450,
+      "verdict": "probable",
+      "basis": "발란드라는 스페인령 카리브의 항해·통상 기록에 거듭 나오는 이름이다 — 외대박이 연안 다용도선으로, 포를 갖추고 작은 마을을 습격하는 데도 쓰인 것으로 정리된다(모형선박 포럼·스미스소니언 식민지 슬루프 모형 자료가 이 성격을 확인한다). 제원·값을 밝힌 사료는 확보하지 못해 이 바다의 첫 배 대역(피라구아 1,200 ~ 파타체 2,400) 안에 놓았다 — 피라구아·페를레라보다 약간 비싸게 하여 「가장 싼 자리」를 건드리지 않았다.",
+      "sources": [
+        {
+          "title": "Ship Model, Colonial Sloop — Smithsonian National Museum of American History",
+          "url": "https://americanhistory.si.edu/collections/object/nmah_844170"
+        },
+        {
+          "title": "Balandra canaria — Ships of Scale forum",
+          "url": "https://shipsofscale.com/sosforums/threads/balandra-canaria.6839/"
+        }
+      ]
+    },
+    "sloop": {
+      "price": 4600,
+      "verdict": "confirmed",
+      "basis": "자메이카 슬루프는 1670년대부터 자메이카에서 다듬어진 외대박이 쾌속선으로, 길이 30~60피트에 흘수 8피트 남짓, 최대 100톤에 승조원 20~70명·포 15문가량이었다는 기록이 남아 있다. 1710~30년 카리브 해적 습격의 절반 이상이 이 선형으로 이뤄졌다('슬루프 무역'이라 불릴 만큼). ★ 이 게임의 자메이카는 아직 스페인령(1655년 전)이라 그 이름을 조선지로 못 쓴다 — 실제로 영국 깃발을 단 이 바다의 두 항구(세인트키츠·바베이도스)와 해안형제단의 토르투가로 조선지를 돌렸다. 값은 사료가 없어 이 바다의 사다리(아비소 3,800 ~ 프라가타 5,400) 안에 두었다.",
+      "sources": [
+        {
+          "title": "Bermuda sloop — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Bermuda_sloop"
+        },
+        {
+          "title": "Leopards of the Seas: Bermuda Sloops in the Golden Age of Piracy — Blood & Pigment",
+          "url": "https://bloodandpigment.com/2020/10/18/leopards-of-the-seas-bermuda-sloops-in-the-golden-age-of-piracy/"
+        }
+      ]
+    },
+    "registro": {
+      "price": 18000,
+      "verdict": "confirmed",
+      "basis": "1740년 부르봉 왕조가 태평양·대서양에서 플로타 호송 제도를 접고 'navío de registro'(등록선) 제도를 열었다 — 배 한 척이 개별 허가만으로 대서양을 건너는 것이다. 갈레온 제도(1740년 폐지)·플로타 제도(1789년 폐지)가 차례로 끝나며 이 방식이 표준이 됐다. ★ 이 게임은 연도를 고정하지 않으므로 다른 16세기 배들과 한 사다리에 놓았다(verdict는 '이런 배가 있었다'에 대한 것이지 동시대성에 대한 것이 아니다). 제원·값 사료는 없어 이 바다의 꼭대기 둘(갈리사브라 13,000 · 은선단 갈레온 23,000) 사이에 두었다 — 호위 없이 혼자 다니므로 갈리사브라보다 크고 무장이 두꺼워야 하지만, 은선단 갈레온만큼 짐에 특화되지는 않았다고 보았다.",
+      "sources": [
+        {
+          "title": "Registered ship (navío de registro) — Spanish treasure fleet",
+          "url": "https://en.wikipedia.org/wiki/Spanish_treasure_fleet"
+        }
+      ]
     }
   },
   "mates": {
@@ -2213,6 +2396,18 @@
       {
         "ship": "galizabra",
         "note": "갈리사브라 — 갈레온을 작게 줄이고 선루를 깎아 낸 배. 낮고 길고 포문이 촘촘하다. 지금은 frigate 선체를 빌려 쓰는데 그 선체에 갤리의 노가 그려져 있으면 어긋난다(rig 0.85)"
+      },
+      {
+        "ship": "balandra",
+        "note": "발란드라 — 돛대 하나에 세로돛(스프릿 또는 개프), 흘수가 얕고 선체가 낮다. 지금은 caravel 선체를 빌려 쓰는데 카라벨의 사각돛·높은 선미루가 외대박이 다용도선과 어긋난다"
+      },
+      {
+        "ship": "sloop",
+        "note": "자메이카 슬루프 — 돛대 하나에 큰 세로돛(개프+스테이세일), 좁고 낮고 날렵한 선체. 지금은 brig 선체(두대박이 가로돛)를 빌려 쓰는데 돛대 수부터 어긋난다 — 이 바다에서 가장 급하게 새 선체가 필요한 자리"
+      },
+      {
+        "ship": "registro",
+        "note": "등록선 — 갈레온보다 선루가 낮고 날렵하다(호위 없이 혼자 다니므로 속력을 더 본다). 지금은 galleon 선체를 그대로 빌려 써서 은선단 갈레온과 실루엣이 같다"
       }
     ],
     "flagTodo": [],

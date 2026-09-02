@@ -113,4 +113,40 @@ export const SHIPS = {
     upkeep: 27, rig: 0.25, tint: 'dark',
     desc: '아체 술탄이 믈라카를 치러 갈 때 앞세운 큰 갤리. 오스만이 보낸 대포를 그대로 얹었다.',
   },
+
+  /* ══ 회차 29 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ 여덟 종에서 열한 종으로. 가장 싼 자리(프라우 1,300)는 그대로 두고 그 위 빈 계단만 채운다.
+       근거는 `content/regions/seasia-evidence.json`. */
+
+  orembai: {
+    hull: 'caravel', name: '오렘바이', origin: '말루쿠', originFlag: null,
+    tier: 1, era: 'classic', yards: ['ternate', 'tidore', 'ambon'], price: 1600,
+    // 말루쿠의 판재 조립선. 이물과 고물이 둘 다 초승달처럼 치솟은 좌우대칭 배로, 술탄이
+    // 공식 행렬에 쓰던 배이자 평범한 어로·운송선이기도 했다. 이름은 말레이어 rembaya
+    // ('국가의 배')에 포르투갈식 관사가 붙은 것으로 본다. 17세기 바타비아에서는 네덜란드인이
+    // 저녁에 운하로 이 배를 저어 나가는 것이 한동안 유행이었을 만큼 흔한 배였다.
+    hp: 60, crew: 10, crewMax: 18, crewMin: 6, cargo: 72, guns: 1, speed: 1.15,
+    upkeep: 5, rig: 0.10, tint: 'oak',
+    desc: '이물고물이 초승달처럼 치솟은 말루쿠의 판재선. 술탄의 행렬에도 쓰이고 평소엔 흔한 어로·운송선이다.',
+  },
+  juanga: {
+    hull: 'galley', name: '주앙가', origin: '테르나테', originFlag: null,
+    tier: 1, era: 'classic', yards: ['ternate', 'tidore', 'ambon'], price: 2900, requires: 'korakora',
+    // 큰 코라코라를 이 바다는 따로 '주앙가(juanga/joanga)'라 불렀다. 테르나테의 하이룬
+    // 술탄이 1530~70년 포르투갈과 싸울 때 병력을 실어 나른 배가 이것이다 — 코라코라를
+    // 몰아 본 사람이 다음으로 짓는 큰 배로 두었다. 짐칸보다 사람 태우는 갑판이 넓다.
+    hp: 80, crew: 60, crewMax: 110, crewMin: 40, cargo: 34, guns: 7, speed: 1.45,
+    upkeep: 11, rig: 0.00, tint: 'dark',
+    desc: '코라코라보다 큰 향료제도의 노잡이 전함. 테르나테 술탄이 포르투갈과 싸울 때 병력을 이 배로 날랐다.',
+  },
+  padewakang: {
+    hull: 'fluyt', name: '파데왕앙', origin: '부기스·마카사르', originFlag: 'majapahit',
+    tier: 2, era: 'classic', yards: ['makassar', 'banten'], price: 4200,
+    // 부기스·마카사르의 원양 무역선. 탄자세일을 걸고 뉴기니 서단에서 필리핀 남부, 말레이
+    // 반도까지 오갔다는 기록이 있는, 남술라웨시가 낸 배 중 가장 크다(20세기 초 팔라리에게
+    // 자리를 넘기기 전까지). 훗날 서양 스쿠너 삭구와 섞여 '피니시'가 되는 것이 바로 이 계보다.
+    hp: 140, crew: 26, crewMax: 40, crewMin: 18, cargo: 150, guns: 4, speed: 1.15,
+    upkeep: 15, rig: 0.05, tint: 'white',
+    desc: '부기스·마카사르가 낸 원양 무역선. 탄자세일 하나로 뉴기니에서 말레이 반도까지 오갔다.',
+  },
 };

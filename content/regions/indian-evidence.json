@@ -1907,6 +1907,51 @@
       "verdict": "probable",
       "basis": "다우 계보의 끝. 코티아와 같은 화물톤/1인 밴드(238 / 26 = 9.2)에 맞췄고 값은 '대형 상선' 밴드의 위쪽이다. 포르투갈이 온 뒤 고물 누각에 갈레온식 조각이 붙었다는 것은 다우 형태사의 통설이나, 간자의 제원을 담은 사료는 확보하지 못했다.",
       "sources": []
+    },
+    "gallivat": {
+      "price": 1900,
+      "verdict": "confirmed",
+      "basis": "갈리바트(gallivat)는 말라바르·콘칸 해안의 노+라틴세일 겸용 소형 무장선이다. 대개 70톤 아래(넓게는 50~150톤), 돛대 1~2에 노잡이 벤치 스무 줄(노 20~40)을 갖췄다. 봄베이 해병대 기록에 남은 가장 큰 갈리바트('샤크')는 유럽인 6 + 크리스천 토파스 6 + 라스카르 20 + 병사 16이었다. 마라타 해군은 그랩(아래 참조) 한 척에 갈리바트 여럿을 딸려 무풍에 끌어 주고 상륙전을 도왔다. 값은 사료가 없어 이 바다의 첫 배 대역(야트라 도니 1,150보다 위, 파타마르 2,400보다 아래)에 두었다.",
+      "sources": [
+        {
+          "title": "Gallivat — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Gallivat"
+        },
+        {
+          "title": "List of vessels of the Bombay Marine (1798) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/List_of_vessels_of_the_Bombay_Marine_(1798)"
+        }
+      ]
+    },
+    "uru": {
+      "price": 6800,
+      "verdict": "probable",
+      "basis": "베이포레(캘리컷 인근 말라바르)는 자모린 시대(12세기~)부터 예멘·오만 상인의 주문으로 코이어 밧줄로 널을 꿰맨 원양 다우를 지어 팔았다 — 오늘날까지 이어지는 실제 조선 전통이다. 사료는 큰 우루가 화물 300~500톤에 이른다고 적지만, 이 바다의 사다리(발람 3,600 ~ 코티아 10,400)를 지키려 **중형 상선 규모로 낮춰 잡았다**(이 배 하나로 지금까지의 「가장 큰 화물칸」을 앞지르면 곡선이 흔들린다). 값·정확한 톤수를 밝힌 당대 사료는 확보하지 못해 probable로 남긴다.",
+      "sources": [
+        {
+          "title": "Uru (boat) — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Uru_(boat)"
+        },
+        {
+          "title": "Beypore Uru — Kerala Tourism",
+          "url": "https://www.keralatourism.org/kerala-article/2015/beypore-uru/532"
+        }
+      ]
+    },
+    "grab": {
+      "price": 8300,
+      "verdict": "confirmed",
+      "basis": "그랩(grab/gurab)은 마라타 해군(1712년 수르카일 칸호지 앙그레)의 주력함이다. 뱃머리가 낮고 길게 뻗어 앞으로 포문을 냈고, 뱃전에 6~9파운드 포, 갑판에 9~12파운드 포 두 문을 얹었다. 1735년 데르비 호 습격에는 갤리 9 · 그랩 5 · 갈리바트 15가 동원됐고, 큰 그랩은 400톤에 이르렀다는 기록이 있다. 짐보다 싸움에 지은 배라 화물칸은 좁게 잡았다. 값은 사료가 없어 이 바다의 사다리(발람 3,600 ~ 코티아 10,400) 위쪽에 두었다.",
+      "sources": [
+        {
+          "title": "Maratha Navy — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Maratha_Navy"
+        },
+        {
+          "title": "Kanhoji Angre — Wikipedia",
+          "url": "https://en.wikipedia.org/wiki/Kanhoji_Angre"
+        }
+      ]
     }
   },
   "mates": {
@@ -2097,6 +2142,18 @@
       {
         "ship": "galbat",
         "note": "갈베트 — 노를 양현에 늘어놓은 낮은 무장 연안선. 지금은 galley를 빌려 쓰는데 크기가 지중해 갤리보다 작아야 한다."
+      },
+      {
+        "ship": "gallivat",
+        "note": "갈리바트 — 갈베트보다 작고 낮은 노+라틴세일 겸용선, 돛대 1~2. 지금은 galley를 빌려 쓰는데 갈베트와 실루엣이 같아진다 — 둘을 가르려면 이쪽을 더 낮고 짧게 그려야 한다"
+      },
+      {
+        "ship": "uru",
+        "note": "우루 — 코이어로 꿰맨 원양 다우, 코티아와 같은 계통이나 이물이 더 곤두선다. 지금은 carrack을 빌려 쓴다(코티아와 같은 함정)"
+      },
+      {
+        "ship": "grab",
+        "note": "그랩 — 뱃머리가 낮고 길게 뻗어 앞으로 포문을 낸 마라타 전함. 지금은 frigate를 빌려 쓰는데 유럽식 뱃머리라 그랩 특유의 낮고 뾰족한 이물이 안 산다"
       }
     ],
     "flagTodo": [],

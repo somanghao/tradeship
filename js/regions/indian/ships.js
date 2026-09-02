@@ -116,4 +116,40 @@ export const SHIPS = {
     upkeep: 40, rig: 0.70, tint: 'white',
     desc: '인도 티크로 고아에서 지은 큰 나우. 유럽에서 지은 같은 배보다 좀에 강하고 오래 버틴다.',
   },
+
+  /* ══ 회차 29 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ 여덟 종에서 열한 종으로. 가장 싼 자리(야트라 도니 1,150)는 그대로 두고 그 위 빈 계단만
+       채운다. 근거는 `content/regions/indian-evidence.json`. */
+
+  gallivat: {
+    hull: 'galley', name: '갈리바트', origin: '콘칸', originFlag: null,
+    tier: 1, era: 'classic', yards: ['chaul', 'dabhol'], price: 1900,
+    // 노와 라틴세일을 함께 쓰는 작고 빠른 호위·상륙정. 콘칸의 마라타 함대(칸호지 앙그레)가
+    // 그랩(아래 참조) 한 척에 이 배를 여럿 딸려 보냈다 — 무풍에 그랩을 끌어 주고, 사람을
+    // 더 태우고, 얕은 하구까지 쫓아 들어간다. 70톤 아래가 흔했고 짐칸은 두지 않는다시피 했다.
+    hp: 70, crew: 30, crewMax: 50, crewMin: 20, cargo: 28, guns: 4, speed: 1.35,
+    upkeep: 8, rig: 0.00, tint: 'dark',
+    desc: '노와 돛을 함께 쓰는 작고 빠른 호위정. 큰 배를 무풍에 끌어 주고 얕은 하구까지 쫓아 들어간다. 짐은 거의 못 싣는다.',
+  },
+  uru: {
+    hull: 'carrack', name: '우루', origin: '베이포레(말라바르)', originFlag: 'zamorin',
+    tier: 2, era: 'classic', yards: ['calicut', 'cannanore'], price: 6800,
+    // 캘리컷 인근 베이포레에서 아랍 상인의 주문을 받아 지은 원양 다우. 코이어 밧줄로 널을
+    // 꿰매는 공법은 코티아와 같지만 짓는 손이 다르다 — 예멘·오만 상인이 직접 목수를 두고
+    // 감독했다. 큰 것은 300~500톤에 이르렀다고 하나, 이 바다의 사다리를 지키려 중형 상선
+    // 규모로 낮춰 잡았다(값·정확한 톤수 사료는 없어 판정은 probable).
+    hp: 150, crew: 26, crewMax: 42, crewMin: 20, cargo: 180, guns: 6, speed: 1.02,
+    upkeep: 17, rig: 0.05, tint: 'oak',
+    desc: '베이포레에서 아랍 상인의 주문으로 짓던 원양 다우. 코이어 밧줄로 꿰맨 선체가 산호초에 얹혀도 잘 안 터진다.',
+  },
+  grab: {
+    hull: 'frigate', name: '그랩', origin: '콘칸(마라타)', originFlag: null,
+    tier: 2, era: 'classic', yards: ['chaul', 'dabhol'], price: 8300,
+    // 마라타 해군(칸호지 앙그레)의 주력함. 뱃머리가 낮고 길게 뻗어 앞으로 포문을 냈고,
+    // 뱃전에는 6~9파운드 포를, 갑판에는 9~12파운드 포 두 문을 얹었다. 큰 것은 400톤에
+    // 이르러 동인도회사 순시선과 정면으로 붙었다 — 짐보다 싸움에 지은 배라 화물칸은 작다.
+    hp: 165, crew: 42, crewMax: 66, crewMin: 28, cargo: 100, guns: 16, speed: 1.20,
+    upkeep: 24, rig: 0.05, tint: 'dark',
+    desc: '마라타 해군의 주력함. 낮고 길게 뻗은 뱃머리에 포문을 촘촘히 냈다. 갈리바트를 거느리고 동인도회사 배와 맞섰다.',
+  },
 };

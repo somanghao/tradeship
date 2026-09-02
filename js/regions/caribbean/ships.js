@@ -109,4 +109,43 @@ export const SHIPS = {
     upkeep: 46, rig: 0.70, tint: 'white',
     desc: '아바나의 왕실 조선소가 쿠바 목재로 지은 배. 은을 싣고 대서양을 건너라고 만든 것이라 짐칸과 포갑판이 함께 크다.',
   },
+
+  /* ══ 회차 29 · 콘텐츠 확장 ═══════════════════════════════════════
+     ★ 여덟 종에서 열한 종으로. **어느 칸의 「가장 싼 배」 자리도 안 건드린다** — 셋 다
+       그 자리 위에 놓았다(피라구아 1,200 밑으로 내려가는 배가 없다). 값은 이 바다의
+       사다리 사이 빈 계단에만 놓았다. 근거는 `content/regions/caribbean-evidence.json`. */
+
+  balandra: {
+    hull: 'caravel', name: '발란드라', origin: '스페인령 카리브(연안 다용도선)', originFlag: 'spain',
+    tier: 1, era: 'classic', yards: ['campeche', 'veracruz', 'maracaibo'], price: 1450,
+    // 스페인령 카리브의 식민지 항해 기록에 가장 자주 나오는 이름 중 하나다. 돛대 하나에
+    // 화물칸과 포 몇 문을 함께 두어, 짐도 나르고 작은 마을을 습격하는 데도 쓰였다 —
+    // 특정 용도로 못박기 어려운 "무엇이든 하는 배"였던 것이 곧 이 배의 정체성이다.
+    hp: 70, crew: 10, crewMax: 18, crewMin: 6, cargo: 65, guns: 2, speed: 1.20,
+    upkeep: 5, rig: 0.15, tint: 'oak',
+    desc: '스페인령 카리브 어디서나 보이던 외대박이 다용도선. 짐도 나르고 작은 포 몇 문으로 연안 마을도 넘본다.',
+  },
+  sloop: {
+    hull: 'brig', name: '자메이카 슬루프', origin: '자메이카(영국계 조선)', originFlag: 'england',
+    tier: 2, era: 'classic', yards: ['stkitts', 'barbados', 'tortuga'], price: 4600,
+    // ★ 이 게임의 자메이카는 아직 스페인령(1655년 전)이라 정작 그 이름을 못 쓴다 — 그래서
+    //   조선지는 이 바다에서 실제로 영국 깃발을 단 두 항구(세인트키츠·바베이도스)와
+    //   해안형제단의 토르투가로 돌렸다. 1670년대 자메이카에서 다듬어진 외대박이 쾌속선으로,
+    //   흘수가 얕아(8피트) 얕은 물로 숨고 20~70명을 태워 상선을 앞지른다.
+    hp: 100, crew: 14, crewMax: 50, crewMin: 10, cargo: 70, guns: 12, speed: 1.55,
+    upkeep: 15, rig: 0.20, tint: 'dark',
+    desc: '외대박이 쾌속선. 흘수가 얕아 얕은 물로 숨고, 이 바다에서 가장 빨라 상선을 앞지르고 순시선을 따돌린다. 짐칸은 좁다.',
+  },
+  registro: {
+    hull: 'galleon', name: '등록선', origin: '스페인(개별 무역 특허선)', originFlag: 'spain',
+    tier: 3, era: 'modern', yards: ['havana', 'cartagena'], price: 18000, requires: 'urca',
+    // ★ 1740년 부르봉 왕조가 플로타 제도를 접고 "navío de registro"(등록선) 제도를 열었다 —
+    //   함대를 기다리지 않고 배 한 척이 허가만 받아 대서양을 혼자 건너는 것이다. 호위가
+    //   없는 대신 짐도 포도 스스로 감당해야 했으므로 갈리사브라보다 크고 은선단 갈레온보다는
+    //   작다 — 그 중간에 놓았다. **곡선을 흔들지 않으려 우르카를 몰아 본 사람에게만 연다**
+    //   (은선단 갈레온과 같은 자리).
+    hp: 250, crew: 50, crewMax: 80, crewMin: 30, cargo: 190, guns: 22, speed: 1.10,
+    upkeep: 36, rig: 0.75, tint: 'white',
+    desc: '함대를 기다리지 않고 허가만으로 혼자 대서양을 건너는 배. 호위가 없는 대신 스스로를 지킬 포와 짐을 함께 싣는다.',
+  },
 };
