@@ -39,6 +39,19 @@ function walk(dir, out = []) {
 const UI_FILES = [...walk('js/scenes'), 'js/ui.js', 'js/payday.js', 'js/main.js', 'js/factions.js', 'js/save.js'];
 const OTHER_FILES = walk('js').filter((f) => !UI_FILES.includes(f) && f !== 'js/state.js');
 
+/* ★★ **검사기·하네스도 규칙을 쓴다.** 처음엔 `tools/`를 안 봤는데, 그러면 `test-rules`가
+   테스트하는 함수와 `check-*`가 대조하는 함수가 통째로 「아무도 안 쓴다」로 나온다 —
+   실측(회차 30): 죽은 코드로 보고된 13건 중 **7건이 검사기가 쓰는 것**이었다
+   (`atWar`·`crewAfterLoss`·`isOceanGate`·`chainMargin`·`enrolled`·`salvageValue`·`YEAR_DAYS`).
+   ⇒ 그 자리를 따로 세어 **「검사기만 쓴다」**로 가른다. 죽은 코드와는 다른 것이다:
+     검사기가 쓴다는 것은 **규칙이 지켜지는지 재고 있다**는 뜻이지 게임이 안 쓴다는 뜻이 아니다.
+   ⚠️ `.playtest/`는 안 본다 — 회차마다 생기고 지워지는 자리라, 거기서만 쓰이는 것은
+     「하네스 전용」이고 그것은 정말로 게임이 안 쓰는 것이다. */
+const TOOL_FILES = (() => {
+  try { return readdirSync(join(ROOT, 'tools')).filter((f) => f.endsWith('.mjs')).map((f) => 'tools/' + f); }
+  catch { return []; }
+})();
+
 const IDENT = /[A-Za-z_$][A-Za-z0-9_$]*/g;
 /* ★ **주석은 걷어낸다.** 이 저장소는 주석에 함수 이름을 아주 많이 적는다(설계 경위를 코드 옆에
    남기는 것이 규약이다). 주석을 그대로 세면 「`js/data.js`가 `routeRisk`를 쓴다」 같은
@@ -60,6 +73,8 @@ const otherTok = tokensOf(OTHER_FILES);
    화면은 그 반환의 `r.tips`를 그린다(port.js 2381~2389). 정보상이 파는 것이 바로 그것이다.
    `backerSlain`도 `recordSlain` 안에서 불린다. 셋 다 「죽은 코드」로 보고됐지만 **살아 있었다.**
    ⇒ 자기 호출을 세면 남는 것이 진짜 **아무도 안 부르는 것**이 된다. */
+const toolTok = tokensOf(TOOL_FILES);
+
 const selfTok = (() => {
   /* 정의 줄(`export function NAME(`)은 빼야 한다 — 안 그러면 모든 이름이 자기 자신을 부른 셈이 된다 */
   const body = strip(stateSrcRaw).replace(/^export\s+(?:async\s+)?function\s+[A-Za-z_$][A-Za-z0-9_$]*/gm, ' ')
@@ -99,13 +114,14 @@ const REVIEWED = new Map([
   ['inSeason',      '계절 판정 — 화면은 `routeSeasonLabel`·`seasonOf`로 말한다'],
 ]);
 
-const orphanUI = [], orphanAll = [], reviewed = [], indirect = [];
+const orphanUI = [], orphanAll = [], reviewed = [], indirect = [], tested = [];
 for (const n of names) {
   if (SKIP.has(n)) continue;
   if (uiTok.has(n)) continue;                    // 화면이 직접 부른다 — 볼 것 없다
   if (REVIEWED.has(n)) { reviewed.push(n); continue; }
   if (otherTok.has(n)) { orphanUI.push(n); continue; }   // 규칙·세계는 쓰는데 화면만 안 쓴다
   if (selfTok.has(n)) { indirect.push(n); continue; }    // `state.js` 안에서 상위 함수가 쓴다
+  if (toolTok.has(n)) { tested.push(n); continue; }      // 검사기가 그 규칙을 재고 있다
   orphanAll.push(n);                             // 아무 데도 없다 — 진짜 죽은 것
 }
 /* 판정표가 낡는 것도 막는다 — 화면이 부르게 된 이름이 표에 남아 있으면 알려 준다 */
@@ -128,6 +144,11 @@ if (indirect.length) {
      그래도 세어 둔다: 상위 함수마저 화면에 안 닿으면 사슬 통째로 죽어 있을 수 있다. */
   console.log('· 규칙 안에서만 쓰인다(상위 함수가 부른다) — ' + indirect.length + '개');
   if (process.argv.includes('--all')) console.log('   ' + indirect.join(' · '));
+  console.log('');
+}
+if (tested.length) {
+  console.log('· 검사기가 재고 있다(게임 화면은 안 부른다) — ' + tested.length + '개');
+  if (process.argv.includes('--all')) console.log('   ' + tested.join(' · '));
   console.log('');
 }
 if (reviewed.length) {
