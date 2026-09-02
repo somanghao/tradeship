@@ -244,7 +244,7 @@ addPressure(city, good, qty × NPC_PRESSURE)   // NPC_PRESSURE = 0.5
 
 ## 상단(商團) — 자본이 물가를 누른다 (회차 25)
 
-> 명부 `js/npc/houses.js`(+`-euro`/`-asia`/`-newworld` · **49곳**) · 엔진 `js/npc/guild.js` ·
+> 명부 `js/npc/houses.js`(+`-euro`/`-asia`/`-newworld` · **53곳**) · 엔진 `js/npc/guild.js` ·
 > 수치 `js/data.js: GUILD` · 근거 `content/houses-evidence.json` ·
 > 설계 정본 `.playtest/round-25/NPC-DESIGN.md` · 실측·뒤집힌 결론 `.playtest/round-25/NPC-ISSUES.md`
 
@@ -351,7 +351,7 @@ sway = fleet × might                                        ← 상호작용을
 **상단이 실제 상단처럼 굴러가려면 서로 먹고 먹혀야 한다.** 설계 정본 `.playtest/round-26/C-DESIGN.md`.
 
 - ★ **명부는 한 줄도 안 지운다.** 문을 닫는 것은 **장부**(`state.guilds[id].dead`)뿐이고
-  `js/npc/houses*.js`·`content/houses-evidence.json`은 그대로다 — 새 판은 언제나 49곳으로 선다.
+  `js/npc/houses*.js`·`content/houses-evidence.json`은 그대로다 — 새 판은 언제나 53곳으로 선다.
 - ★ **상관이 빈 항구를 만들지 않는다.** 파산은 소멸이 아니라 **인수**다 — 그 상관은 그 바다의
   자본 1위가 값을 치르고 넘겨받는다. (회차 25가 이 기능을 미룬 이유가 정확히 이것이었다.)
 - **상관은 런타임 값이다** — `state.guilds[id].seats`. **`seatsOf(h)` 한 함수로만 읽는다**
@@ -364,7 +364,7 @@ sway = fleet × might                                        ← 상호작용을
 
 #### 함정 둘 (회차 26 실측)
 
-- **★★ 자본은 놔두면 천장에 눌어붙는다.** 손대기 전 실측: 두 해면 **49곳이 전부 선단 6·세기 5**가 되고
+- **★★ 자본은 놔두면 천장에 눌어붙는다.** 손대기 전 실측: 두 해면 **상단 전부가 선단 6·세기 5**가 되고
   사료 자본의 17.4배 서열이 4.6배 안으로 모인다. **평형 자본이 `cap0`가 아니라 `rank`가 정한
   `holdBase`에 묶여 있기** 때문이다(자본이 커져도 한 항차의 칸이 안 커지는데 유지비만 자본에 비례한다).
   ⇒ **결산과 배당**이 그것을 푼다. ⚠️ 자본 하한(`cap0 × 0.2`)을 의심해 세어 봤지만 **수도꼭지가 아니었다** —

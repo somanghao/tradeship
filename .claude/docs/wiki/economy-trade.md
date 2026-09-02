@@ -399,7 +399,7 @@ routeFactor     = windFactor × currentFactor
 ⇒ 부호 있는 항 **`state.guildFlow`**와 **`guildFactor()`**를 `shockFactor` 옆에 **따로** 곱한다(`impact`는 안 건드린다).
 상단이 싼 데서 사서 비싼 데로 나르면 **그 방향으로 가격차가 줄어든다** — 실제 상단이 한 일이 그것이다.
 
-- 값(`js/npc/houses*.js` 49곳) · 판단 `js/npc/guild.js` · 근거 `content/houses-evidence.json` · 검증 `tools/check-houses.mjs`
+- 값(`js/npc/houses*.js` 53곳) · 판단 `js/npc/guild.js` · 근거 `content/houses-evidence.json` · 검증 `tools/check-houses.mjs`
 - 곡선은 `node tools/sim-guild.mjs 20`(**같은 시드로 짝지어** 상단 유/무를 비교한다)
 - **세력과 다르다** — 세력은 정치·독점(`gripMarkup`·`rollPoach`), 상단은 자본·물류. `test-rules`가 상단 코드에 그 두 이름이 없는지 **소스로 확인**한다.
 
