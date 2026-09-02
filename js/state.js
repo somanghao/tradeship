@@ -1059,7 +1059,6 @@ export const chainInValue = (recipe) =>
 /** 가공마진 — `check-chain.mjs`가 이 값이 밴드 안인지 본다(코드가 정본) */
 export const chainMargin = (recipe) => chainOutValue(recipe) / chainInValue(recipe);
 
-export const worksOf = (cityId = state.at) => state.works?.[cityId] ?? null;
 /** 그 항구의 시설 목록 — `[key, 시설]`. `paid`·`spent` 같은 살림 필드는 걸러 낸다. */
 export function workList(cityId = state.at) {
   const m = state.works?.[cityId];
@@ -1068,7 +1067,6 @@ export function workList(cityId = state.at) {
 }
 export const workAt = (kind, good, cityId = state.at) =>
   state.works?.[cityId]?.[workKey(kind, good)] ?? null;
-export const hasWork = (kind, good, cityId = state.at) => !!workAt(kind, good, cityId);
 /** 그 사슬의 가공장 — 사슬 하나에 가공장 하나다(산출 품목이 열쇠) */
 export const millOf = (recipeId, cityId = state.at) => {
   const r = CHAIN_BY_ID[recipeId];
@@ -4180,7 +4178,6 @@ export function hireUnit() {
 }
 
 /** 지금 고른 갈래 — 화면이 "누구로 시작했나"를 보여줄 때 */
-export const originOf = () => ORIGIN_BY_ID[state.origin ?? DEFAULT_ORIGIN] ?? null;
 
 /** 처음부터 승선해 있는 상태 — `resetGame()`이 이걸로 시작한다.
     등용/해고 함수는 없다. 만나는 장면도 헤어지는 장면도 없기 때문이다. */
@@ -4424,10 +4421,6 @@ export function trimBands() {
    선체 최대치처럼 상태값에 직접 반영되는 것은 recalcShip()이 다시 계산한다. */
 export function hasRefit(key) {
   return !!state.refits[key];
-}
-
-export function refitPrice(key) {
-  return REFITS[key].price;
 }
 
 export function buyRefit(key) {
@@ -4709,9 +4702,6 @@ export function setSlot(i, troopKey) {
 
 /* ── 선단 ─────────────────────────────────────────────────────
    보유 선박은 마지막으로 내린 항구에 정박한 채로 남는다. 자동 매각은 없다. */
-export function fleetRecord(key) {
-  return state.fleet[key];
-}
 export function resaleOf(key) {
   return Math.round((SHIPS[key]?.price ?? 0) * SHIP_RESALE);
 }

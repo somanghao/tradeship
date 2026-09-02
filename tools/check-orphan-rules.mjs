@@ -112,6 +112,11 @@ const REVIEWED = new Map([
   ['setRetireHook', '주입 훅 — `world.js`가 `state`에 꽂는다(순환 참조 방지)'],
   ['setWorldHook',  '위와 같다'],
   ['inSeason',      '계절 판정 — 화면은 `routeSeasonLabel`·`seasonOf`로 말한다'],
+  /* ★ 아래는 성격이 다르다 — **아직 아무도 안 부르지만 남겨 두기로 판정한 것**이다.
+     지우면 나중에 그 일을 할 때 `state`를 직접 만지게 되는데, 이 저장소는 그것을 막는다. */
+  ['setCaptain',    '동행선의 선장을 바꾸는 **유일한 안전한 문**. 지금은 `setConsort`가 자동으로 '
+                    + '앉히고(고를 것이 없어 화면을 안 늘렸다) 아무도 안 부르지만, 선장을 고르게 '
+                    + '할 때 여기로 들어온다 — 지우면 그때 `state.consorts`를 직접 만지게 된다'],
 ]);
 
 const orphanUI = [], orphanAll = [], reviewed = [], indirect = [], tested = [];
