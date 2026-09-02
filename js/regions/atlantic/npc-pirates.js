@@ -136,6 +136,30 @@ export const PIRATES = [
       spare: '“소금과 포도주만 내리시오. 나머지는 당신 것이오.”',
     },
   },
+  /* ── 반란이 낸 함대 ────────────────────────────────────────
+     바다거지(Watergeuzen). 오라녜 공의 사략 허가장을 들고 스페인 배를 털던 네덜란드 반란군이다.
+     잉글랜드에서 쫓겨난 뒤 **1572년 브릴을 기습 점령**했고, 그 항구 하나가 반란의 물꼬를 텄다 —
+     이 바다에서 **사략이 나라를 하나 여는 데 실제로 관여한** 유일한 경우다.
+     ★ 이 바다의 유일한 strength 5다. 기존 강자가 얀 야콥선(4)·무라트 레이스 알사기르(4) 둘인데
+       그 위가 비어 있었다(아홉 바다 중 두목이 없던 셋 가운데 하나).
+     ★ 깃발이 `pirate`인 이유 — **그들에게는 아직 나라가 없었다.** 카리브의 시마론과 같은 자리다
+       (`js/sprites/ship.js: FLAGS`에 네덜란드 깃발이 없기도 하지만, 없어서 고른 것이 아니다).
+     ★ 사냥터는 스페인령 네덜란드의 보급선 길이다 — 앤트베르펜·브뤼허로 드는 물목.
+       암스테르담을 소굴로 둔 것은 브릴·플러싱이 이 지도에 없기 때문이고, 반란의 무게중심이
+       곧 그리로 옮겨 갔기 때문이다. */
+  {
+    id: 'watergeuzen', name: '바다거지', flag: 'pirate', ship: 'fluyt',
+    base: 'amsterdam', purse: [4800, 15500], strength: 5, bounty: [5000, 11500],
+    hunt: ['amsterdam|antwerpen', 'antwerpen|brugge', 'antwerpen|london', 'brugge|london'],
+    circuit: ['amsterdam', 'antwerpen', 'brugge', 'london', 'brugge', 'antwerpen', 'amsterdam'],
+    season: null, scope: 'region',
+    blurb: '허가장을 든 반란군이다. 스페인 배만 턴다 — 그 구별이 언제까지 갈지는 아무도 모른다.',
+    lines: {
+      hail: '“스페인 짐이오? 그럼 우리 것이오. 아니라면 증명해 보시오.”',
+      spare: '“배는 두고 가시오. 사람은 안 건드리오 — 우리도 쫓겨 다니는 몸이오.”',
+    },
+  },
+
 ];
 
 
