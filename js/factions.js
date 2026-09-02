@@ -40,6 +40,14 @@ const midY = (i) => rowY(i) + NODE / 2;
 const C_NEG = '#a8563f', C_ZERO = '#6f6858', C_POS = '#5f86a8';
 const hue = (v) => (v < 0 ? C_NEG : v > 0 ? C_POS : C_ZERO);
 
+/** `state.js: addRegard`의 `why` → 화면 문장. 그 함수가 관계를 움직이는 유일한 문이므로
+    여기 없는 `why`가 새로 생기면 문구가 `(사유 미상)`으로 떨어진다 — 새 사유를 추가하면 같이 채운다. */
+const WHY_LABEL = {
+  backer: '호위선단을 꺾었다', stir: '이 세력 마당에서 사주를 벌였다',
+  trespass: '허락 없이 자리에 시설을 세웠다', enroll: '명부에 이름을 올렸다',
+  bond: '한편인 상단이 덮쳤다', fleet: '이 세력의 함대를 꺾었다', contract: '주문을 해냈다',
+};
+
 const SIDE_NAME = { trade: '사고파는 자', gate: '문을 쥔 자' };
 const SELLS_LABEL = {
   paper: '종이 (카르타스)', order: '순서 (감합)', toll: '세 (조약문)',
@@ -207,6 +215,14 @@ function detail(id) {
       style: { color: hue(v) },
     }),
     el('div.fac-blurb', { text: f.blurb }),
+    /* ★ 회차 29 나-1 후속 — 관계가 **왜** 바뀌었는지. `pushLog`는 60줄이 지나면 사라지지만
+       `state.regardWhy`는 세력당 최근 한 건을 계속 들고 있으므로, 여기서 다시 읽으면 언제든 「최근 변동 사유」로 찾아볼 수 있다. */
+    (() => {
+      const why = state.regardWhy?.[id];
+      if (!why || !why.delta) return null;
+      return line('최근 변동', `${why.day}일차 · ${why.delta > 0 ? '+' : ''}${why.delta} — `
+        + (WHY_LABEL[why.why] ?? '(사유 미상)'));
+    })(),
     line('파는 것', SELLS_LABEL[f.sells] + (v <= REGARD.refuseAt ? ' — 지금은 안 판다' : '')),
     line('쥔 것', `${names(f.grip.goods, GOOD_BY_ID)} │ ${names(f.grip.cities, CITY_BY_ID)}`),
     line('앉은 곳', names(f.seats, CITY_BY_ID)),

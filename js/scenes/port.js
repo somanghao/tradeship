@@ -240,7 +240,12 @@ function placeStage() {
 export const portStageDebug = () => ({ ox: stageOx, shipX: 132 + stageOx, box: curShipBox() });
 
 export const portScene = {
-  enter() {
+  /* U2(회차 29) — 술집의 `strandedCard`가 「상관 게시판」(거래 탭)으로 곧장 보내려면
+     이 화면이 `params.tab`을 읽어야 한다(`shipyard.js: enter(params)`와 같은 자리 —
+     `main.js: go(name, params)`는 이미 params를 넘겨주고 있었는데 이 씬만 안 받고 있었다).
+     안 주면 지금 탭 그대로다(세션 동안 기억하는 `sideTab`을 강제로 되돌리지 않는다). */
+  enter(params = {}) {
+    if (params.tab) sideTab = params.tab;
     city = CITY_BY_ID[state.at];
     bg = portSprite(city.style, city.seed);
     dockers = pickDockers(city.seed);
@@ -780,6 +785,18 @@ function officerCard() {
           officerDeferred() ? el('div.ctr-sub', {
             html: `<span style="color:#d0a04a">미뤄 둔 삯 `
                 + `<b>${officerDeferred().toLocaleString('ko-KR')}닢</b> — 다음 급여일에 걷힌다.</span>`,
+          }) : null,
+          /* U3(회차 29) — **유예 누계**가 이 화면 어디에도 없었다. `state.payroll.deferMonths`는
+             `settlePayroll`이 미룰 때마다 세는 값인데(`state.js:6666` 주석 "누계(화면용)") 정작
+             화면은 안 읽고 있었다 — `payday.js`의 급여일 결과 모달은 **미룬 그 순간**만 말하고,
+             빚을 다 갚고 나면(`officerDeferred()`가 0으로 돌아가면) 「몇 번 미뤄서 몫이 이만큼
+             올랐나」는 판이 끝날 때까지 다시 어디서도 안 보였다.
+             ★ 새 계산이 아니다 — `state.payroll.deferMonths`(누계 횟수)와 `state.officer.share`
+               (영구히 오른 지분, 위 성과급 줄이 이미 읽는 값)를 **문장으로만** 옮긴다. */
+          state.payroll?.deferMonths ? el('div.ctr-sub', {
+            html: `<span style="color:#8f8878">에이미의 삯을 여태 <b>${state.payroll.deferMonths}번</b> 미뤘다`
+                + ` — 그때마다 지분이 영구히 올라 원래 ${(OFFICER.cut * 100).toFixed(1)}%였던 몫이`
+                + ` 지금 <b>${(officerCut() * 100).toFixed(1)}%</b>다(되돌릴 수 없다).</span>`,
           }) : null,
           el('div.ctr-sub', {
             html: `<span style="color:#6f6858">지금까지 급여 `

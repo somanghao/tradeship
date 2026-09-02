@@ -1050,7 +1050,10 @@ html, body {
 /* ══ 급여 정산 화면 ═══════════════════════════════════════════
    모달 하나에 장부(왼쪽)와 선창(오른쪽)을 나란히 둔다 —
    "얼마 벌었나"와 "무엇이 실려 있나"를 같이 봐야 급여를 낼지 팔지가 정해진다. */
-.modal-box:has(.pay-wrap) { width: min(760px, 94vw); }
+/* ⚠️ U1(회차 29) — `.pay-wrap`은 접혔을 때 DOM에 없다(`ledgerOpen` false가 기본).
+   그 상태에서 이 셀렉터가 안 걸리면 폭이 접었다 폈다 할 때마다 560↔760으로 출렁인다.
+   접힌 상태를 감싸는 `.pay-foldwrap`은 항상 있으므로 그걸로 건다. */
+.modal-box:has(.pay-foldwrap) { width: min(760px, 94vw); }
 
 .pay-lead { font-size: 13px; color: #c5baa8; line-height: 1.7; margin-bottom: 8px; }
 .pay-lead b { color: var(--brass-l); }
@@ -1062,6 +1065,14 @@ html, body {
 }
 .pay-danger b { color: #f0b8a6; }
 
+/* U1(회차 29) — 장부·선창을 접어 640×360에서 넘치는 세로 자리를 되찾는다.
+   말은 안 줄이고(펴면 그대로 있다) 기본 자리만 줄인다 → `payday.js: openPayday` 머리 주석. */
+.pay-foldwrap { margin-top: 4px; }
+.pay-fold-head {
+  font-size: 10.5px; color: #8f8878; letter-spacing: .06em;
+  cursor: pointer; user-select: none; padding: 4px 0;
+}
+.pay-fold-head:hover { color: #c8a86a; }
 .pay-wrap { display: flex; gap: 12px; margin-top: 10px; }
 .pay-pane { flex: 1 1 0; min-width: 0; }
 .pay-pane h4 {

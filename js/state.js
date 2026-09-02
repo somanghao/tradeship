@@ -142,6 +142,7 @@ export const state = {
      ★ 평범한 객체·숫자다(`Set` 금지) — `save.js`가 `state`를 통째로 직렬화한다. */
   regard: {},                // 세력 id → −10…+10 (악명을 빼기 **전**의 raw)
   _regardAge: 0,             // 삭음 누적일 — 90일마다 한 칸씩 0 쪽으로 (`decayRegard`)
+  regardWhy: {},             // 세력 id → { day, delta, why } 가장 최근 한 건 (`addRegard`가 적는다 · 화면 원인 표시용)
 
   /* ── 거점과 보관 화물 (A-1) ────────────────────────────────
      `holdings[cityId] = { rental:true, warehouse:true, … , paid: 마지막 유지비 낸 날 }`
@@ -2490,6 +2491,10 @@ export function addRegard(facId, n, why = '') {
   if (v === cur) return cur;
   if (v === 0) delete m[facId];        // 0이 기본선이라 안 적는다 — 세이브가 그만큼 가벼워진다
   else m[facId] = v;
+  /* ★ **왜 바뀌었는지도 여기 한 곳에서 남긴다**(회차 29 · 나-1 후속) — `why`가 곧 원인이고,
+     이 함수가 관계를 움직이는 유일한 문이니 여기서 놓치면 어디서도 못 줍는다.
+     세력당 **가장 최근 한 건**만 들고 있다(로그처럼 쌓지 않는다 — `pushLog`가 이미 그 몫이다). */
+  (state.regardWhy ??= {})[facId] = { day: state.day, delta: v - cur, why };
   return v;
 }
 
@@ -4759,11 +4764,16 @@ export function tierNeeded(key, cityId = state.at) {
   return Math.max(1, t - (home ? 1 : 0));
 }
 
-/** 아직 열리지 않은 배면 "무엇을 몰아 봐야 하는지"를 돌려준다. 열렸으면 null. */
+/** 아직 열리지 않은 배면 "무엇을 몰아 봐야 하는지"를 돌려준다. 열렸으면 null.
+ *  ★ `requiresAlt`가 있으면 **둘 중 하나만 몰아 봤어도** 통과한다 — `requires`를
+ *    바꾼 뒤에도 옛 선행선을 몰아 본 세이브가 막히지 않게 하는 완화책이다
+ *    (회차29 · 아프리카 guineiro: caravel → caravelao 전환에서 처음 썼다). */
 export function shipLockedBy(key) {
-  const req = SHIPS[key]?.requires;
+  const s = SHIPS[key];
+  const req = s?.requires;
   if (!req) return null;
   if (state.everOwned?.has(req)) return null;
+  if (s.requiresAlt && state.everOwned?.has(s.requiresAlt)) return null;
   return SHIPS[req]?.name ?? req;
 }
 
@@ -6796,7 +6806,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     /* 3단계 — 유통. 새 판에는 묶어 둔 배도 띄워 둔 위탁도 없다 */
     lines: {}, consign: [],
     /* 새 판에서는 아무도 나를 모른다 — 열 세력 전부 0(「모른다」)에서 시작한다 */
-    regard: {}, _regardAge: 0,
+    regard: {}, _regardAge: 0, regardWhy: {},
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
     mates: {}, scouted: {}, bountyDue: [], slain: {}, tamed: {}, ended: 0, endedNine: 0,
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },

@@ -59,16 +59,39 @@ const won = (n) => n.toLocaleString('ko-KR');
      여기서 파는 단추가 생긴 이상 이 화면은 **여러 번 다시 그려진다** — 그 전제가 새로 생긴 것이다. */
 let openModal = null;
 
+/* ── U1(회차 29) — 640×360 넘침 ────────────────────────────────
+   ★ 회차 27 E2-1 → 28 E-3으로 두 번 이월된 자리다. 실측(`.playtest/round-29/u1-*.mjs`):
+     장부+선창(`.pay-wrap`)이 **265px**로 이 화면에서 가장 큰 한 덩어리이고, 팔 것(`sellPane`)·
+     부관 유예(`deferPane`)가 함께 뜨면 몸통이 636px까지 자라 640×360에서 **487px**를 넘친다.
+     `.modal-box`가 `max-height:80vh; overflow:auto`라 단추 자체는 스크롤로 닿긴 하지만
+     (`allActionsReachable: true`), 거의 두 화면을 훑어야 「급여를 치른다」에 닿는다.
+   ⇒ **말을 줄이지 않고 자리를 접는다** — 장부·선창은 판단 재료이지 **막힌 순간의 선택**은
+     아니다(그건 `pay-lead`가 이미 요약해 준다). 이 회차의 UI-BACKLOG가 짚은 방향 그대로
+     ("작은 창에서는 장부를 접고 「청구·금고·모자란 액수 + 단추」만 먼저 보이게").
+   ⚠️ **세션 동안 기억한다**(`port.js`·`shipyard.js`의 `foldOpen`과 같은 규약) — 한 번 펴 보면
+     다음 급여일에도 펴져 있다. 매달 다시 접히면 그것도 성가심이다. */
+let ledgerOpen = false;
+
 /** 급여일 화면을 띄운다. `onDone`은 정산이 끝난 뒤(모달이 닫힌 뒤) 불린다. */
 export function openPayday(onDone) {
   openModal?.remove();
   const owed = payrollOwed();
   const short = Math.max(0, owed - state.gold);
 
-  const box = el('div.pay-wrap', {}, [
-    ledgerPane(),
-    holdPane(),
-  ]);
+  /* ★ 접힌 채로는 **한 줄 요약**만 보인다 — 몇 종을 들고 있는지는 이미 있는 값을 세기만 한다
+     (새 계산이 아니다. `Object.keys(state.cargo||{}).length`은 이 파일 다른 곳에서도 쓴다). */
+  const heldN = Object.values(state.cargo || {}).filter((n) => n > 0).length;
+  const box = el('div.pay-foldwrap', {}, [
+    el('div.pay-fold-head', {
+      text: `${ledgerOpen ? '▾' : '▸'} 장부 · 선창 자세히 보기`
+          + (heldN ? ` (선창 ${heldN}종)` : ''),
+      onclick: () => { ledgerOpen = !ledgerOpen; openPayday(onDone); },
+    }),
+    ledgerOpen ? el('div.pay-wrap', {}, [
+      ledgerPane(),
+      holdPane(),
+    ]) : null,
+  ].filter(Boolean));
 
   /* ★ **C-8 — 급여일에 선택이 없다.** 단추가 하나뿐이라 늘 "낼 수 있는 만큼"이었다.
      새 규칙(유예 제도)을 만들지 않는다 — **이미 있는 선택지들을 이 화면에 끌어온다.**

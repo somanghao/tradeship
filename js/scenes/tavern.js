@@ -10,13 +10,18 @@
 import { tavernSprite, tavernFrontSprite, TAVERN_SEATS, TAV_FRONT, VH } from '../sprites/scene.js';
 import { unitSprite, CHAR_FOOT, CW } from '../sprites/char.js';
 import { blit } from '../pixel.js';
-import { CITY_BY_ID, TROOPS, CREW_TRAITS, TAVERN } from '../data.js';
+import { CITY_BY_ID, GOOD_BY_ID, TROOPS, CREW_TRAITS, TAVERN } from '../data.js';
 import {
   state, ship, tavernCrews, recruitBand, avgCrewWage, shorthanded,
   pushLog, hire, HIRE_UNIT, CREW_WAGE, regionOf, salvage, salvageElsewhere,
   /* 술집 평판(다-3) — 체불·이탈이 이 부두에 남긴 자국. **화면은 읽기만 한다**
      (자국을 남기는 곳은 급여일 하나뿐이다 · `state.js: settlePayroll`). */
   crewRepAt,
+  /* U2(회차 29) — `strandedCard`가 `salvage`/`salvageElsewhere`(파는 문)만 보고 있었다.
+     항구의 `salvageCard`(`port.js:886`)는 **계약 선금**(`recoveryOptions().doors`의 `advance`)까지
+     같이 센다 — 같은 "돈이 모자라 못 태운다" 처지인데 두 화면의 선택지가 어긋나 있었다.
+     ★ 새 계산을 파지 않는다 — `recoveryOptions()`는 이미 있는 함수를 그대로 부를 뿐이다. */
+  recoveryOptions,
 } from '../state.js';
 import { el, overlay, toast, refreshHUD, refreshLog, spriteElTrim, josa } from '../ui.js';
 import { go, viewport } from '../main.js';
@@ -164,7 +169,17 @@ function repCard() {
   const wage = Math.round(rep * (R.wage ?? 0) * 100);
   /* 여기에 제 자국이 없으면 **다른 항구에서 들려온 소문**이다(`crewRepAt`이 같은 바다를
      절반으로 친다). 그것을 안 적으면 "여기서는 밀린 적이 없는데 왜"가 된다. */
-  const heard = !(state.crewRep?.[city.id]?.v > 0);
+  const mine = state.crewRep?.[city.id];
+  const heard = !(mine?.v > 0);
+
+  /* ★ U4(회차 29) — "90일마다 절반씩 잊힌다"는 **일반 규칙**만 있고, 지금 이 자국이
+     **언제** 다음 반감에 닿는지(남은 날)는 어디에도 없었다. `mine.day`는 이 자국이
+     마지막으로 찍힌 날(`markCrewRep`)이고, 반감은 그날부터 `halfLife`마다 되풀이되는
+     주기이므로 다음 경계까지 남은 날은 나머지 연산 하나면 된다 — 새 규칙이 아니라
+     `crewRepAt`이 이미 쓰는 지수감쇠(`repMark`)를 **날짜로 되짚어** 읽을 뿐이다.
+     소문(heard)만 들었을 땐 이 항구엔 제 자국이 없어 잴 것이 없다 — 일반 규칙만 남긴다. */
+  const hl = R.halfLife ?? 90;
+  const daysLeft = mine?.v > 0 ? hl - ((state.day - mine.day) % hl) : null;
 
   /* ⚠️ **줄을 셋 이상 쓰지 않는다.** 640×360에서 술집 본문은 182px뿐이라(실측)
      이 카드가 넉 줄이면 무리 카드가 통째로 접혀 내려간다 — 소문을 알리려다 **고를 사람을
@@ -180,7 +195,7 @@ function repCard() {
              adv > 0 ? `계약금 +${adv}%` : null,
              wage > 0 ? `일당 +${wage}%` : null,
              `참을성 있는 무리가 딴 배를 고를 확률 ${Math.round(rep * 100)}%`,
-             `${R.halfLife ?? 90}일마다 절반씩 잊힌다`,
+             daysLeft != null ? `${daysLeft}일 뒤 절반으로 준다(주기 ${hl}일)` : `${hl}일마다 절반씩 잊힌다`,
             ].filter(Boolean).join(' · '),
     }),
   ]);
@@ -213,6 +228,10 @@ function strandedCard() {
      규칙은 그것이 어디에 얼마나 있는지 이미 안다(`salvageElsewhere`) — 물어봐서 말한다. */
   const away = salvageElsewhere(city.id);
   const awayTotal = away.reduce((a, r) => a + r.gold, 0);
+  /* ★ U2 — 항구의 `salvageCard`와 **같은 문**을 본다(`recoveryOptions().doors`의 `kind:'advance'`).
+     계약 선금은 파는 것이 아니라 **빌리는 것**(갚는 길은 납품)이라 `salvage`엔 안 잡힌다 —
+     그래서 이 카드가 따로 물어야 한다. `kind`로 찾는다(문 순서가 바뀌어도 안 죽게). */
+  const adv = recoveryOptions(city.id).doors.find((d) => d.kind === 'advance');
 
   return el('div.tav-card.tav-stranded', {}, [
     el('div.tav-name', {}, [el('b', { text: '사람을 못 태운다' })]),
@@ -234,10 +253,23 @@ function strandedCard() {
           : '이 항구에서 팔 것은 없고 다른 항구에 둔 것도 없다.'
             + ' 남은 문은 **청산**이다 — 배를 넘기고 셈을 끝내면 판은 1일차 조건으로 다시 선다.',
     }),
+    /* ★ U2 — 파는 문 말고 **빌리는 문**도 있다는 것을 여기서 처음 말한다.
+       금액·기한·위약금까지 함께 적는다(`port.js`의 같은 문과 같은 기준 — 「가능」만 있으면 잘못 권한다). */
+    adv?.ok ? el('div.tav-desc', {
+      style: { color: '#d0a04a' },
+      text: `상관 게시판에 계약 선금 ${adv.value.toLocaleString('ko-KR')}닢짜리 일감도 있다`
+          + ` — ${CITY_BY_ID[adv.to]?.name ?? adv.to}까지 ${GOOD_BY_ID[adv.goodId]?.name ?? adv.goodId}`
+          + ` ${adv.qty}개를 ${adv.due}일차까지 넘겨야 하고,`
+          + ` 못 지키면 위약금 ${adv.fine.toLocaleString('ko-KR')}닢이 빚으로 남는다.`,
+    }) : adv && adv.need > 0 ? el('div.tav-desc', {
+      style: { color: '#8f8878' },
+      text: `상관에 일감은 있으나 선창이 ${adv.need}칸 모자라 선금을 못 받는다`
+          + ` (${adv.qty}개를 실어야 한다).`,
+    }) : null,
     el('button.btn.sm', {
-      text: '항구로 — 팔 것을 본다',
+      text: adv?.ok ? '항구로 — 팔 것 · 계약 선금을 본다' : '항구로 — 팔 것을 본다',
       title: '항구 오른쪽 맨 위 「금고가 바닥이다」 카드에 팔 것과 마지막 문이 모여 있다',
-      onclick: () => go('port'),
+      onclick: () => go('port', adv?.ok ? { tab: 'trade' } : undefined),
     }),
   ]);
 }
