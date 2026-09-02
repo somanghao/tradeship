@@ -1699,6 +1699,101 @@
       "season": "summer",
       "seasonBasis": "코로만델·벵골은 반대다 — 북동 계절풍 철(10~12월)의 사이클론이 천연 항구 없는 정박지를 쓸었다. 여는 철은 남서 계절풍 쪽이다.",
       "sources": []
+    },
+    "cambay|thatta": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "신드 — 인더스 삼각주와 쿠치 사이의 물이다. 얕은 사주가 몇 리씩 뻗어 큰 배는 뭍을 멀리 두고 돌아야 했고, 그 바깥 물이 상가니안(카티아와르·쿠치의 뱃사략)의 사냥터였다. 뭍에서 멀어질수록 사략에게 이롭다 — 지중해 앵커의 외해·적대(6~8) 아래쪽에 둔다.",
+      "sources": []
+    },
+    "diu|thatta": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "타타에서 카티아와르 반도를 돌아 디우로 내려온다. 상가니안의 앞바다를 정면으로 지나는 구간이라 타타~캄바트보다 반 눈금 높다. 디우는 1509년 디우 해전 뒤 포르투갈이 요새를 세운 자리라 그 문 앞은 안전했지만 오는 길이 그렇지 않았다.",
+      "sources": [
+        {
+          "title": "Battle of Diu",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Diu"
+        }
+      ]
+    },
+    "bharuch|cambay": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "캄바트 만 가장 안쪽의 두 부두를 잇는다. 무서운 것은 사략이 아니라 나르마다 강의 조수 역류다 — 이 만은 조수가 10m씩 오르내려 물때를 못 맞추면 배가 개펄에 앉는다. 양안이 늘 보이고 구자라트 술탄의 관선이 오가던 물이라 이 권역에서 가장 낮은 축에 둔다(내해에 준한다).",
+      "sources": [
+        {
+          "title": "Gulf of Khambhat",
+          "url": "https://en.wikipedia.org/wiki/Gulf_of_Khambhat"
+        }
+      ]
+    },
+    "bharuch|surat": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "만 안쪽의 두 강어귀를 잇는 짧은 연안이다. 수라트는 무굴의 관문 항구이자 메카 순례선이 뜨던 자리라 관의 배가 늘 떠 있었다. 바루치~캄바트와 같은 자에 반 눈금만 얹는다.",
+      "sources": []
+    },
+    "bassein|surat": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "구자라트에서 콘칸으로 내려가는 연안이다. 바세인은 1534년 이후 포르투갈 북부주(Província do Norte)의 중심이라 갈베트(연안 순찰선)가 상시 떠 있었고, 아군 해안이 늘 가까웠다. 평범한 연안(4~5.5)에 둔다.",
+      "sources": [
+        {
+          "title": "Portuguese India",
+          "url": "https://en.wikipedia.org/wiki/Portuguese_India"
+        }
+      ]
+    },
+    "bassein|chaul": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "포르투갈 북부주의 안마당이다. 바세인과 차울 둘 다 포르투갈 요새 항구였고 그 사이를 갈베트가 상시 순찰했다 — 이 바다에서 「자기 집 앞」에 가장 가까운 구간이다. ⚠️ 뒤에 마라타의 배가 이 연안에 서기 시작하면 사정이 달라지지만, 그것은 이 시대의 뒤끝이다.",
+      "sources": []
+    },
+    "quilon|tuticorin": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "코모린 곶을 도는 구간이다. 곶에서 바람이 뒤집혀 배가 서안에 밀려 붙는 일이 잦았고, 몬순이 바뀌는 철에는 아예 못 돌았다. 말라바르 쪽 절반은 마라카르(사무티리를 위해 싸운 말라바르 뱃사람들)의 물이기도 하다.",
+      "sources": [
+        {
+          "title": "Kunjali Marakkar",
+          "url": "https://en.wikipedia.org/wiki/Kunjali_Marakkar"
+        }
+      ]
+    },
+    "jaffna|tuticorin": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "마나르 만 — 진주 채취선이 떠 있는 얕은 물이라 양안이 늘 보인다. 파라바 진주잡이들이 1530년대에 포르투갈의 보호를 받기로 하면서 이 만은 사실상 한 편의 물이 됐다. 얕아서 큰 배가 못 드는 것이 오히려 안전을 만든 자리다.",
+      "sources": [
+        {
+          "title": "Gulf of Mannar",
+          "url": "https://en.wikipedia.org/wiki/Gulf_of_Mannar"
+        }
+      ]
+    },
+    "colombo|tuticorin": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "투티코린에서 콜롬보로 가려면 만나르의 사주(라마의 다리)를 우회해야 한다 — 배가 못 넘는 얕은 턱이라 실론 서안을 크게 돌아 내려간다. 그 우회 구간이 뭍에서 멀어 마나르 만 안쪽(4.5)과는 다른 자를 쓴다.",
+      "sources": [
+        {
+          "title": "Adam's Bridge",
+          "url": "https://en.wikipedia.org/wiki/Adam%27s_Bridge"
+        }
+      ]
+    },
+    "hooghly|satgaon": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "같은 강의 두 부두다. 사주가 무섭지 뭍이 안 보이는 구간은 아니다 — 그런데도 내해(null)로 두지 않는 이유가 있다: 아라칸의 마그와 포르투갈계 페링기 사략선이 삼각주의 강을 거슬러 올라와 촌락을 털고 사람을 잡아갔다. 강물길인데도 습격이 있던 자리라 평범한 연안에 둔다.",
+      "sources": [
+        {
+          "title": "Arakan",
+          "url": "https://en.wikipedia.org/wiki/Kingdom_of_Mrauk_U"
+        }
+      ]
     }
   },
   "goods": {

@@ -1775,6 +1775,150 @@
       "verdict": "probable",
       "basis": "반다해의 짧은 구간이다. 육두구를 실어 나르던 길이라 노리는 자가 있었으나 거리가 짧아 마카사르행보다 낮게 뒀다.",
       "sources": []
+    },
+    "mergui|pegu": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "마르타반 만에서 테나세림 연안으로 내려간다. 외해지만 뭍을 끼고 갈 수 있어 안다만해 횡단(7.5)보다 낮다. 메르귀는 아유타야가 벵골만으로 내는 문이었고 페구는 버마의 항구라, 두 나라가 싸울 때는 이 연안이 그대로 전선이 됐다.",
+      "sources": [
+        {
+          "title": "Mergui Archipelago",
+          "url": "https://en.wikipedia.org/wiki/Mergui_Archipelago"
+        }
+      ]
+    },
+    "ayutthaya|mergui": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "크라 지협을 걸어 넘는 뭍길이다. 인도 상인은 벵골만에서 메르귀에 배를 대고 짐을 코끼리와 수레로 옮겨 지협을 넘은 뒤 아유타야에서 다시 배를 탔다 — 말라카 해협을 통째로 건너뛰는 길이었다. 바다가 아니므로 해적 조우를 끄고 뭍의 사고에 맡긴다.",
+      "sources": [
+        {
+          "title": "Kra Isthmus",
+          "url": "https://en.wikipedia.org/wiki/Kra_Isthmus"
+        }
+      ]
+    },
+    "mergui|perak": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "말레이 반도 서안을 남하한다. 안다만해 쪽은 섬이 촘촘한데 어느 나라의 순찰도 미치지 않아 배를 숨기기 좋았다 — 섬이 많다는 것이 여기서는 안전이 아니라 위험이다(같은 지형이 조선 다도해에서는 반대로 작용한다).",
+      "sources": []
+    },
+    "ligor|patani": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "같은 왕의 두 성 사이다. 리고르(나콘시탐마랏)와 파타니는 모두 아유타야의 세력권 안에 들었고 샴만 안쪽 연안이라 뭍이 늘 보인다. 이 권역에서 가장 안전한 구간에 둔다.",
+      "sources": []
+    },
+    "hoian|ligor": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "샴만을 나와 남중국해 서안으로 올라간다. 참파의 뱃사람들이 오래 앉아 있던 물이고, 그 뒤로도 이 연안은 베트남 남부의 해적이 끊이지 않은 자리다. 뭍을 끼고 가지만 어느 쪽 관선도 지키지 않는 사이 구간이다.",
+      "sources": []
+    },
+    "brunei|hoian": {
+      "risk": 9.0,
+      "verdict": "probable",
+      "basis": "남중국해를 가로지른다. 며칠씩 뭍이 안 보이고 겨울 북동 계절풍이 배를 보르네오 쪽으로 밀어 내린다 — 파타니~브루나이(9.0)와 같은 값이다. 이 바다에서 「건너는」 구간은 「끼고 가는」 구간보다 늘 두 눈금 높다.",
+      "sources": []
+    },
+    "barus|pasai": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "수마트라 서안 연안이다. 해협 밖이라 오랑 라우트(해협의 뱃사람들)가 없고, 바루스는 장뇌로 이름난 오래된 항구라 뱃길이 잘 알려져 있었다. 다만 서안에는 피할 항구가 드물다.",
+      "sources": [
+        {
+          "title": "Barus",
+          "url": "https://en.wikipedia.org/wiki/Barus"
+        }
+      ]
+    },
+    "aceh|barus": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "수마트라 서안을 내려가는 외해다. 항구가 없어 피할 곳도 없고, 인도양에서 곧장 밀려오는 너울을 옆으로 받는다. 위험이 사람보다 물에 있는 자리다.",
+      "sources": []
+    },
+    "jambi|melaka": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "해협을 건너 바탕하리 강으로 든다. 하구의 늪과 맹그로브가 배를 숨겨 주기 때문에 오랑 라우트가 여기서 기다렸다 — 해협 병목 안쪽(믈라카~파세 8.0)과 같은 자다. 잠비는 후추 산지로 가는 문이라 짐이 값나갔다.",
+      "sources": []
+    },
+    "jambi|johor": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "해협 남단 동안에서 바탕하리 하구로 든다. 리아우 군도의 섬 사이를 지나는 구간이라 뱃길이 좁고, 조호르와 아체와 포르투갈이 서로를 노리던 삼각의 한복판이었다.",
+      "sources": [
+        {
+          "title": "Johor Sultanate",
+          "url": "https://en.wikipedia.org/wiki/Johor_Sultanate"
+        }
+      ]
+    },
+    "jambi|palembang": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "수마트라 동안의 내수로다. 뭍이 양쪽에 붙어 있고 강과 갯골을 따라 가므로 큰 배가 들어오기 어렵다. 팔렘방은 15세기에 중국계 해적이 앉았던 자리지만 정화의 원정 뒤로는 잠잠해졌다.",
+      "sources": []
+    },
+    "banten|palembang": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "방카 해협을 지나 순다로 내려간다. 얕고 좁아 물때와 바람을 함께 맞춰야 하고, 좁은 물목은 늘 기다리는 자에게 이롭다. 반텐은 후추 항구라 이 길에 짐이 많이 다녔다.",
+      "sources": []
+    },
+    "cirebon|sundakelapa": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "자바 북안 연안이다. 뭍이 늘 보이고 항구가 촘촘해 피할 곳이 많다. 순다 해안은 한 세력의 안뜰에 가까웠다 — 평범한 연안(4~5.5)의 맨 아래에 둔다.",
+      "sources": []
+    },
+    "cirebon|tuban": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "자바 북안을 동으로 간다. 투반은 마자파힛 이래의 오래된 항구이고 이 연안은 자바 여러 항구국이 나눠 지키던 물이라, 어느 한 곳의 힘이 미치지 않아도 배가 늘 다녔다.",
+      "sources": []
+    },
+    "gresik|surabaya": {
+      "risk": 3.0,
+      "verdict": "probable",
+      "basis": "걸어 다닐 거리의 두 항구다. 마두라 해협 안쪽이라 파도가 없고 양안이 붙어 있다 — 이 권역의 내해(2~3.5) 자리다.",
+      "sources": []
+    },
+    "solor|surabaya": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "소순다 열도로 내려가는 길이다. 좁은 물목이 줄줄이 이어지고 조류가 거세 물때를 못 맞추면 배가 밀린다. 솔로르는 백단향을 실어 나르던 자리라 짐이 값나갔고, 포르투갈이 요새를 세운 뒤로는 그 요새가 곧 표적이 됐다.",
+      "sources": [
+        {
+          "title": "Solor",
+          "url": "https://en.wikipedia.org/wiki/Solor"
+        }
+      ]
+    },
+    "buton|solor": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "플로레스해에서 반다해 어귀로 든다. 열도 사이의 물목이 깊고 조류가 세며, 이 구간부터는 향료제도로 가는 배가 몰리기 시작해 노리는 자도 함께 몰렸다.",
+      "sources": []
+    },
+    "buton|makassar": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "보네 만 남쪽이다. 마카사르 술탄의 순찰선이 도는 물이라 같은 외해라도 낮다 — 큰 항구가 뒤를 봐 주는 구간은 늘 한 눈금 내려간다. 부톤은 향료 길목의 물 대는 자리였다.",
+      "sources": []
+    },
+    "banda|buton": {
+      "risk": 8.5,
+      "verdict": "probable",
+      "basis": "반다해를 가로지른다. 마카사르에서 반다로 곧장 가는 밀무역 항로(9.0)보다는 낫지만 여전히 외해이고, 반다는 육두구가 나는 유일한 섬이라 그 물에 뜬 배는 무엇이든 값나갔다. 1621년 이후 네덜란드가 이 바다를 독점하면서 여기 뜬 남의 배는 그 자체로 잡히는 배가 됐다.",
+      "sources": [
+        {
+          "title": "Banda Islands",
+          "url": "https://en.wikipedia.org/wiki/Banda_Islands"
+        }
+      ]
     }
   },
   "goods": {

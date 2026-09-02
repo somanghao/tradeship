@@ -1465,7 +1465,10 @@
         "verdict": "gameplay",
         "basis": "1588년 포르투갈이 목책 요새를 세운 카슈에우 항이다. 그 전에도 카보베르데 산티아구에서 건너온 란사두(왕의 허가 없이 뭍에 산 밀무역상)들의 정착지였다 — 서안에서 포르투갈 상관 깃발을 쓰는 자리 중 하나다.",
         "sources": [
-          { "title": "Cacheu", "url": "https://en.wikipedia.org/wiki/Cacheu" }
+          {
+            "title": "Cacheu",
+            "url": "https://en.wikipedia.org/wiki/Cacheu"
+          }
         ]
       },
       "goods": {
@@ -1475,8 +1478,14 @@
           "verdict": "probable",
           "basis": "리오스 데 기네(카슈에우 일대) 교역의 밑천 셋 중 하나가 밀랍('세라 다 기네')이다 — 유럽이 초의 재료로 사 가던 물건으로 상아·쌀과 나란히 이 강 하구의 오랜 수출품으로 꼽힌다.",
           "sources": [
-            { "title": "Cacheu", "url": "https://en.wikipedia.org/wiki/Cacheu" },
-            { "title": "Guinea-Bissau", "url": "https://en.wikipedia.org/wiki/Guinea-Bissau" }
+            {
+              "title": "Cacheu",
+              "url": "https://en.wikipedia.org/wiki/Cacheu"
+            },
+            {
+              "title": "Guinea-Bissau",
+              "url": "https://en.wikipedia.org/wiki/Guinea-Bissau"
+            }
           ]
         },
         "ivory": {
@@ -1485,8 +1494,14 @@
           "verdict": "probable",
           "basis": "같은 리오스 데 기네 교역에서 밀랍과 나란히 꼽히는 물목이 상아다. 내륙 대상이 강줄기를 타고 카슈에우까지 실어 내렸다고 본다.",
           "sources": [
-            { "title": "Cacheu", "url": "https://en.wikipedia.org/wiki/Cacheu" },
-            { "title": "Guinea-Bissau", "url": "https://en.wikipedia.org/wiki/Guinea-Bissau" }
+            {
+              "title": "Cacheu",
+              "url": "https://en.wikipedia.org/wiki/Cacheu"
+            },
+            {
+              "title": "Guinea-Bissau",
+              "url": "https://en.wikipedia.org/wiki/Guinea-Bissau"
+            }
           ]
         },
         "grain": {
@@ -1495,8 +1510,14 @@
           "verdict": "probable",
           "basis": "리오스 데 기네는 서아프리카 벼(Oryza glaberrima) 재배의 오랜 중심지였고, 자급이 안 되는 카보베르데 화산섬들이 이 강 하구의 쌀·기장을 실어다 먹었다. 배율을 0.72로 약하게 둔 것은 말린디(0.64)와 같은 설계 이유다 — 산지답게 주면 유럽발 곡물 항로가 통째로 죽는다.",
           "sources": [
-            { "title": "African rice", "url": "https://en.wikipedia.org/wiki/African_rice" },
-            { "title": "Cacheu", "url": "https://en.wikipedia.org/wiki/Cacheu" }
+            {
+              "title": "African rice",
+              "url": "https://en.wikipedia.org/wiki/African_rice"
+            },
+            {
+              "title": "Cacheu",
+              "url": "https://en.wikipedia.org/wiki/Cacheu"
+            }
           ]
         },
         "camwood": {
@@ -1505,8 +1526,14 @@
           "verdict": "probable",
           "basis": "이 붉은 염료목('파우 베르멜류')의 산지가 카슈에우다 — 상위 goods.camwood 근거가 이미 카슈에우를 짚었다. 브라질우드보다 먼저 포르투갈이 서아프리카에서 사 가던 물건이다.",
           "sources": [
-            { "title": "Camwood", "url": "https://en.wikipedia.org/wiki/Baphia_nitida" },
-            { "title": "Cacheu", "url": "https://en.wikipedia.org/wiki/Cacheu" }
+            {
+              "title": "Camwood",
+              "url": "https://en.wikipedia.org/wiki/Baphia_nitida"
+            },
+            {
+              "title": "Cacheu",
+              "url": "https://en.wikipedia.org/wiki/Cacheu"
+            }
           ]
         },
         "iron": {
@@ -1515,7 +1542,10 @@
           "verdict": "probable",
           "basis": "리오스 데 기네 교역의 계산 단위 자체가 철 막대('바라')였다고 알려진다 — 유럽이 내놓은 철이 이 강들에서 상아·밀랍과 맞바뀌는 표준 물목이었다.",
           "sources": [
-            { "title": "Guinea-Bissau", "url": "https://en.wikipedia.org/wiki/Guinea-Bissau" }
+            {
+              "title": "Guinea-Bissau",
+              "url": "https://en.wikipedia.org/wiki/Guinea-Bissau"
+            }
           ]
         },
         "wine": {
@@ -1540,7 +1570,10 @@
         "verdict": "gameplay",
         "basis": "로안고 왕국(비리 사람들의 왕국)의 전용 깃발이 이 게임엔 아직 없어, 같은 기니만 토착 왕국군이 공유하는 'benin' 표시를 그대로 쓴다. 포르투갈이 끝내 요새를 못 세운 자리라 유럽 깃발을 붙일 근거도 없다.",
         "sources": [
-          { "title": "Kingdom of Loango", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango" }
+          {
+            "title": "Kingdom of Loango",
+            "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango"
+          }
         ]
       },
       "goods": {
@@ -1550,7 +1583,10 @@
           "verdict": "probable",
           "basis": "로안고 인근 민돌리·벰베의 구리 광산이 콩고 분지 구리 교역의 산지로 꼽힌다 — 카탕가 쪽 구리가 내려오는 루안다(0.40)만큼 깊지는 않으나 같은 구리 강길의 곁가지다.",
           "sources": [
-            { "title": "Kingdom of Loango", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango" }
+            {
+              "title": "Kingdom of Loango",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango"
+            }
           ]
         },
         "panos": {
@@ -1559,7 +1595,10 @@
           "verdict": "probable",
           "basis": "이 왕국의 화폐가 야자 노끈으로 짠 라피아 천(리봉고)이었다는 서술이 콩고·로안고 교역사에서 되풀이해 나온다. 화폐 구실을 했으므로 배율도 낮게(화폐답게) 뒀다.",
           "sources": [
-            { "title": "Kingdom of Loango", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango" }
+            {
+              "title": "Kingdom of Loango",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango"
+            }
           ]
         },
         "ivory": {
@@ -1568,7 +1607,10 @@
           "verdict": "probable",
           "basis": "포르투갈이 요새를 못 세운 로안고는 오히려 상아 교역에서 네덜란드·영국 배가 자유로이 값을 흥정한 항구로 꼽힌다. 내륙 대상이 끌고 내려온 상아가 이 왕국의 주력 수출품이었다.",
           "sources": [
-            { "title": "Kingdom of Loango", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango" }
+            {
+              "title": "Kingdom of Loango",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango"
+            }
           ]
         },
         "ebony": {
@@ -1577,17 +1619,26 @@
           "verdict": "probable",
           "basis": "콩고 분지의 흑단이 유럽 가구·악기재로 팔려 나갔다는 것이 상위 goods.ebony 근거다. 로안고를 산지로 짚은 것은 이 왕국이 콩고 분지 목재·상아 교역의 관문이었기 때문이다.",
           "sources": [
-            { "title": "Ebony", "url": "https://en.wikipedia.org/wiki/Ebony" },
-            { "title": "Kingdom of Loango", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango" }
+            {
+              "title": "Ebony",
+              "url": "https://en.wikipedia.org/wiki/Ebony"
+            },
+            {
+              "title": "Kingdom of Loango",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango"
+            }
           ]
         },
         "iron": {
           "side": "demand",
-          "value": 1.30,
+          "value": 1.3,
           "verdict": "probable",
           "basis": "라인란트산 철·구리가 이 해안 교역의 표준 물목이었다 — 콩고·로안고 모두 유럽 금속을 상아·구리·천과 맞바꿨다고 본다.",
           "sources": [
-            { "title": "Kingdom of Loango", "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango" }
+            {
+              "title": "Kingdom of Loango",
+              "url": "https://en.wikipedia.org/wiki/Kingdom_of_Loango"
+            }
           ]
         },
         "weapon": {
@@ -1612,7 +1663,10 @@
         "verdict": "gameplay",
         "basis": "베나디르 해안의 도시국가다(모가디슈·메르카와 나란한 자리) — 바르보자는 '돌과 석회로 잘 지은 좋은 도시'라 적었다. 소말리 전용 깃발이 아직 없어 스와힐리 총칭기를 빌려 쓴다.",
         "sources": [
-          { "title": "Brava, Somalia", "url": "https://en.wikipedia.org/wiki/Brava,_Somalia" }
+          {
+            "title": "Brava, Somalia",
+            "url": "https://en.wikipedia.org/wiki/Brava,_Somalia"
+          }
         ]
       },
       "goods": {
@@ -1622,17 +1676,26 @@
           "verdict": "probable",
           "basis": "소말리 내륙 대상로가 유향을 브라바까지 끌고 내려왔다. 본산지 하드라마우트(시흐르 0.48)보다 비싸게 둔 것은 여기가 사막을 건너온 운임이 얹힌 종착지이기 때문이다.",
           "sources": [
-            { "title": "Brava, Somalia", "url": "https://en.wikipedia.org/wiki/Brava,_Somalia" },
-            { "title": "Frankincense", "url": "https://en.wikipedia.org/wiki/Frankincense" }
+            {
+              "title": "Brava, Somalia",
+              "url": "https://en.wikipedia.org/wiki/Brava,_Somalia"
+            },
+            {
+              "title": "Frankincense",
+              "url": "https://en.wikipedia.org/wiki/Frankincense"
+            }
           ]
         },
         "wax": {
           "side": "supply",
-          "value": 0.60,
+          "value": 0.6,
           "verdict": "probable",
           "basis": "베나디르 해안의 밀랍이 아덴으로 넘어가던 수출품이었다는 것이 이 해안 교역사의 일반 서술이다.",
           "sources": [
-            { "title": "Benadir", "url": "https://en.wikipedia.org/wiki/Benadir" }
+            {
+              "title": "Benadir",
+              "url": "https://en.wikipedia.org/wiki/Benadir"
+            }
           ]
         },
         "myrrh": {
@@ -1641,8 +1704,14 @@
           "verdict": "probable",
           "basis": "몰약은 유향과 다른 나무(Commiphora)의 수지이나 같은 소말리 대상로로 함께 내려왔다. 상위 goods.myrrh 근거가 이미 이 경로를 짚었다.",
           "sources": [
-            { "title": "Myrrh", "url": "https://en.wikipedia.org/wiki/Myrrh" },
-            { "title": "Brava, Somalia", "url": "https://en.wikipedia.org/wiki/Brava,_Somalia" }
+            {
+              "title": "Myrrh",
+              "url": "https://en.wikipedia.org/wiki/Myrrh"
+            },
+            {
+              "title": "Brava, Somalia",
+              "url": "https://en.wikipedia.org/wiki/Brava,_Somalia"
+            }
           ]
         },
         "grain": {
@@ -1651,7 +1720,10 @@
           "verdict": "probable",
           "basis": "돌·석회로 지은 도시국가로 농경지가 좁은 해안 도시였다(바르보자, 1517~18). 사막 대상로 물건을 되파는 중개 경제라 곡물은 사들였을 것으로 본다.",
           "sources": [
-            { "title": "Brava, Somalia", "url": "https://en.wikipedia.org/wiki/Brava,_Somalia" }
+            {
+              "title": "Brava, Somalia",
+              "url": "https://en.wikipedia.org/wiki/Brava,_Somalia"
+            }
           ]
         },
         "ceramic": {
@@ -1660,7 +1732,10 @@
           "verdict": "probable",
           "basis": "스와힐리 해안 전역의 수입 물목에 도기·자기가 명시된다. 브라바도 이 해안 무역망의 일부라 같은 물목을 사들였다고 본다.",
           "sources": [
-            { "title": "Swahili coast", "url": "https://en.wikipedia.org/wiki/Swahili_coast" }
+            {
+              "title": "Swahili coast",
+              "url": "https://en.wikipedia.org/wiki/Swahili_coast"
+            }
           ]
         },
         "weapon": {
@@ -1669,7 +1744,10 @@
           "verdict": "probable",
           "basis": "1507년 트리스탕 다 쿠냐의 약탈을 겪은 도시다. 이후에도 캄바트 배가 계속 왔다는 것은 상비군보다 자잘한 무장 수요였다는 뜻으로 보아 배율을 얕게 뒀다.",
           "sources": [
-            { "title": "Brava, Somalia", "url": "https://en.wikipedia.org/wiki/Brava,_Somalia" }
+            {
+              "title": "Brava, Somalia",
+              "url": "https://en.wikipedia.org/wiki/Brava,_Somalia"
+            }
           ]
         }
       }
@@ -1843,6 +1921,200 @@
       "verdict": "probable",
       "basis": "소말리 해안은 항구가 드물고 여름 소말리 해류가 맹렬히 북상한다. 되짚어 내려오는 것이 특히 어려웠으므로 외해 대역(6~8)의 상단을 적용했다. 직접 요율은 없다.",
       "sources": []
+    },
+    "arguin|goree": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "사막 해안이 끝나고 세네갈 강어귀가 시작되는 구간이다. 아르갱~엘미나(9.0)를 절반으로 끊은 값 — 끊어 밟으면 물을 실을 데가 생기므로 그만큼 낮다. 아르갱은 1445년 이래 포르투갈의 첫 아프리카 요새였고 고레는 그 남쪽 끝의 섬이다. 위험은 사람이 아니라 뭍이 비어 있다는 사실 자체다.",
+      "sources": [
+        {
+          "title": "Arguin",
+          "url": "https://en.wikipedia.org/wiki/Arguin"
+        }
+      ]
+    },
+    "goree|santiago": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "카부베르드 곶에서 섬으로 500km — 이 권역에서 가장 짧은 대양 건너기다. 짧아도 뭍이 안 보이는 구간이라 연안 항해와는 자가 다르다. 산티아구는 카부베르드의 중심 섬이자 서아프리카 무역의 중계지였다.",
+      "sources": [
+        {
+          "title": "Cape Verde",
+          "url": "https://en.wikipedia.org/wiki/Cape_Verde"
+        }
+      ]
+    },
+    "cacheu|goree": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "강과 갯벌의 해안이다 — 파도는 낮은데 사주가 얕아 배를 앉힌다. 기니비사우의 강어귀는 물길이 해마다 바뀌어 현지 뱃사람 없이는 들어가지 못했고, 그것이 란사두(현지에 눌러앉은 포르투갈계 중개인)가 여기서 힘을 가진 이유다.",
+      "sources": [
+        {
+          "title": "Cacheu",
+          "url": "https://en.wikipedia.org/wiki/Cacheu"
+        }
+      ]
+    },
+    "axim|cacheu": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "시에라리온에서 후추해안을 지나 황금해안으로 든다. 며칠을 가도 기항할 데가 없고 기니만 무풍대가 걸린다 — 바람이 죽으면 물과 식량이 먼저 떨어진다. 이 권역에서 위험은 대개 사람이 아니라 거리다.",
+      "sources": []
+    },
+    "accra|elmina": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "요새와 시장 사이 하루 거리다. 황금해안에는 유럽 요새가 촘촘히 늘어서 서로를 견제했고 그만큼 배가 잦았다. ⚠️ 다만 이 해안에는 **부두가 없다** — 큰 배는 먼바다에 닻을 내리고 현지 카누가 파도를 넘어 짐을 날랐다. 하역 자체가 위험한 자리라 짧은 연안인데도 4.0 아래로는 못 내린다.",
+      "sources": [
+        {
+          "title": "Elmina Castle",
+          "url": "https://en.wikipedia.org/wiki/Elmina_Castle"
+        }
+      ]
+    },
+    "accra|whydah": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "노예해안의 파도다. 이 연안은 사주가 길게 뻗어 큰 배가 붙지 못하고, 사주를 넘는 카누가 뒤집히는 것이 상습이었다 — 위다에 닿는 짐과 사람이 그 파도에서 가장 많이 상했다. 바람과 해류는 서에서 동으로만 흘러 돌아 나오기가 더 어려웠다.",
+      "sources": [
+        {
+          "title": "Ouidah",
+          "url": "https://en.wikipedia.org/wiki/Ouidah"
+        }
+      ]
+    },
+    "gwato|whydah": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "베냉 라군과 크리크를 잇는 카누길이다. 배가 아니라 짐과 사람이 뭍 안쪽 물길로 간다 — 바다로 나가지 않고 사주 안쪽을 따라 카누가 오갔고, 길목마다 지역 권력이 통행세를 받았다. 바다가 아니므로 해적 조우를 끄고 뭍의 사고(노상·통행세)에 맡긴다.",
+      "sources": [
+        {
+          "title": "Benin City",
+          "url": "https://en.wikipedia.org/wiki/Benin_City"
+        }
+      ]
+    },
+    "loango|saotome": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "기니만을 남으로 가로지른다. 상투메~루안다 직항(8.0)보다 조금 짧다. 상투메는 사탕수수 섬이자 이 만의 중계 창고였고 로앙고는 콩고 북쪽 왕국의 항구라, 이 길은 만을 건너는 상시 항로였다.",
+      "sources": [
+        {
+          "title": "São Tomé",
+          "url": "https://en.wikipedia.org/wiki/S%C3%A3o_Tom%C3%A9"
+        }
+      ]
+    },
+    "loango|mpinda": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "콩고 강이 뱉는 물살이 바다로 100km를 뻗는다 — 남행이 특히 힘겨워 돛만으로는 하구를 거슬러 붙기 어려웠다. 음핀다는 콩고 왕국의 문이라 배가 늘 드나들었고, 위험은 사람보다 물살과 하구의 모래톱이다.",
+      "sources": [
+        {
+          "title": "Kingdom of Kongo",
+          "url": "https://en.wikipedia.org/wiki/Kingdom_of_Kongo"
+        }
+      ]
+    },
+    "luanda|mpinda": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "콩고 어귀에서 루안다로 내려가는 연안이다. 벵겔라 해류가 남에서 올라오지만 이 구간은 연안을 끼고 가므로 완만하고, 1575년 이후 루안다가 포르투갈의 거점이 되면서 배가 잦아졌다.",
+      "sources": []
+    },
+    "inhambane|sofala": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "소팔라 남쪽 — 바자루투의 사주와 아굴라스 해류가 남행을 막는다. 해류가 남서로 세게 흘러 올라오는 배는 밀리고 내려가는 배는 뭍으로 붙는다. 스와힐리 연안에서 가장 남쪽이라 산호초 안쪽 물길의 보호가 끝나는 자리이기도 하다.",
+      "sources": [
+        {
+          "title": "Agulhas Current",
+          "url": "https://en.wikipedia.org/wiki/Agulhas_Current"
+        }
+      ]
+    },
+    "quelimane|sofala": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "잠베지 삼각주다. 물이 얕고 사주가 해마다 자리를 바꿔 큰 배는 하구 밖에 서고 다우와 카누가 짐을 날랐다. 켈리마네는 잠베지 안쪽으로 드는 문이라 포르투갈의 내륙 진출이 이 하구를 통했다.",
+      "sources": [
+        {
+          "title": "Zambezi",
+          "url": "https://en.wikipedia.org/wiki/Zambezi"
+        }
+      ]
+    },
+    "mocambique|quelimane": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "모잠비크 섬에서 잠베지 하구로 내려가는 연안이다. 산호초 안쪽 물길이라 파도가 낮고, 모잠비크 섬은 인도로 가는 포르투갈 배가 겨울을 나던 자리라 순양선이 이 구간을 지켰다.",
+      "sources": [
+        {
+          "title": "Island of Mozambique",
+          "url": "https://en.wikipedia.org/wiki/Island_of_Mozambique"
+        }
+      ]
+    },
+    "angoche|mocambique": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "섬과 늪 사이의 짧은 물길이다 — 다우는 지나고 큰 배는 못 지난다. 얕다는 것이 여기서는 보호가 된다: 포르투갈의 큰 배가 못 들어오는 물이라 앙고셰가 오래 밀무역의 자리로 남았다.",
+      "sources": []
+    },
+    "angoche|kilwa": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "밀무역선의 길이다. 앙고셰는 소팔라의 금을 포르투갈의 세관을 거치지 않고 북으로 빼내는 통로였고, 그래서 포르투갈 순양선이 이 구간을 지켰다 — 값이 붙는 이유가 바다가 아니라 단속이다.",
+      "sources": [
+        {
+          "title": "Kilwa Kisiwani",
+          "url": "https://en.wikipedia.org/wiki/Kilwa_Kisiwani"
+        }
+      ]
+    },
+    "pemba|zanzibar": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "산호초 안쪽 물길이다. 스와힐리 연안은 초가 바깥 파도를 막아 다우가 계절풍만 맞춰 오가면 됐고, 두 섬은 같은 세력권에 들어 서로 배가 잦았다. 이 권역에서 가장 안전한 구간에 든다.",
+      "sources": [
+        {
+          "title": "Swahili coast",
+          "url": "https://en.wikipedia.org/wiki/Swahili_coast"
+        }
+      ]
+    },
+    "mombasa|pemba": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "펨바 해협은 깊고 물살이 빠르다 — 산호초 안쪽이면서도 조류가 세서 잔지바르~펨바보다 반 눈금 높다. 몸바사는 1593년 이후 지저스 요새가 선 자리라 포르투갈과 스와힐리 도시들이 되풀이해 다툰 항구다.",
+      "sources": [
+        {
+          "title": "Fort Jesus",
+          "url": "https://en.wikipedia.org/wiki/Fort_Jesus"
+        }
+      ]
+    },
+    "brava|lamu": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "베나디르 해안 — 부두가 없고 파도가 곧장 모래에 부딪친다. 소말리 연안은 산호초의 보호가 끝나는 곳이라 배가 뭍에 붙지 못하고, 남서 몬순 철에는 아예 접근이 어려웠다. 항구가 드물어 피할 곳도 없다.",
+      "sources": [
+        {
+          "title": "Benadir",
+          "url": "https://en.wikipedia.org/wiki/Benadir"
+        }
+      ]
+    },
+    "brava|mogadishu": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "하루 거리인데도 배를 댈 데가 없어 먼바다에 닻을 내리고 거룻배로 짐을 옮겼다. 짧은 구간에 이만한 값이 붙는 것은 거리가 아니라 **하역**이 위험해서다 — 황금해안(아크라~엘미나)과 같은 이유의 다른 바다다.",
+      "sources": [
+        {
+          "title": "Mogadishu",
+          "url": "https://en.wikipedia.org/wiki/Mogadishu"
+        }
+      ]
     }
   },
   "goods": {

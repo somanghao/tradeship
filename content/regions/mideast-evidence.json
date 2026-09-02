@@ -1653,6 +1653,186 @@
       "verdict": "probable",
       "basis": "해협에서 라르를 지나 이란고원으로 올라가는 대상로다. 뱃길이 아니므로 null이다. 이 길의 위험은 산길의 도적과 고갯길의 눈이지 바다의 해적이 아니다.",
       "sources": []
+    },
+    "suez|tur": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "수에즈 만 — 폭이 20해리도 안 되는 물길인데 양안이 암초다. 뭍이 늘 보이지만 밤에는 못 다니고 맞바람이면 며칠씩 갇힌다. 수에즈는 오스만 홍해 함대의 조선지라 관의 배가 늘 떠 있었다 — 내해로 쳐 이 바다의 아래쪽에 둔다.",
+      "sources": [
+        {
+          "title": "Gulf of Suez",
+          "url": "https://en.wikipedia.org/wiki/Gulf_of_Suez"
+        }
+      ]
+    },
+    "qusayr|tur": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "시나이 남단에서 이집트 쪽 홍해 연안으로 건넌다. 엘토르는 순례선이 물을 싣던 자리이고 쿠세이르는 나일 계곡으로 드는 문이라 배가 잦았다. 짧은 뜀뛰기지만 홍해 중앙의 산호가 시작되는 자리다.",
+      "sources": []
+    },
+    "qusayr|yanbu": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "쿠세이르에서 아라비아 쪽으로 홍해를 가로지른다 — 중앙의 산호 사주를 넘는 구간이다. 홍해는 좌초가 해적보다 무서운 바다이고, 그래서 밤에는 닻을 내리고 낮에만 갔다. 얀부는 메디나의 항구다.",
+      "sources": [
+        {
+          "title": "Red Sea",
+          "url": "https://en.wikipedia.org/wiki/Red_Sea"
+        }
+      ]
+    },
+    "jeddah|qusayr": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "같은 횡단이되 지다행이 더 길어 반 칸 높다. 지다는 메카의 항구이자 홍해 무역의 목이라, 오스만은 이 물길을 지키려고 수에즈 함대를 두었다 — 위험이 낮아서 관선이 없었던 것이 아니라 값나가는 짐이 다녀서 관선이 있었다.",
+      "sources": [
+        {
+          "title": "Jeddah",
+          "url": "https://en.wikipedia.org/wiki/Jeddah"
+        }
+      ]
+    },
+    "jeddah|luhayya": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "홍해 동안을 남하한다. 티하마 해안은 얕고 산호가 촘촘해 큰 배가 뭍에 붙지 못했고, 예멘 쪽으로 내려갈수록 오스만의 손이 옅어졌다. 짧은 뜀뛰기를 잇는 구간인데도 값이 붙는 것은 좌초와 무풍 때문이다.",
+      "sources": []
+    },
+    "luhayya|massawa": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "홍해를 가로질러 아프리카 쪽 마사와로 든다. 마사와는 오스만 하베시 주의 항구였고 이 횡단은 예멘과 에티오피아 고원을 잇는 오래된 길이다. 중앙 사주를 넘지만 남쪽이라 폭이 좁아 반 칸 낮다.",
+      "sources": [
+        {
+          "title": "Massawa",
+          "url": "https://en.wikipedia.org/wiki/Massawa"
+        }
+      ]
+    },
+    "luhayya|mokha": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "예멘 티하마 연안의 짧은 뜀뛰기다. 뭍이 늘 보이고 모카는 커피가 나가는 항구라 배가 끊이지 않았다 — 잦은 물길은 잘 아는 물길이다. 이 바다의 아래쪽에 둔다.",
+      "sources": [
+        {
+          "title": "Mocha, Yemen",
+          "url": "https://en.wikipedia.org/wiki/Mocha,_Yemen"
+        }
+      ]
+    },
+    "aden|socotra": {
+      "risk": 7.0,
+      "verdict": "probable",
+      "basis": "뭍에서 떨어진 섬으로 든다. 계절풍이 바뀌는 철에는 표류가 잦고, 소코트라 앞바다는 배를 터는 자들이 오래 앉아 있던 물이다. 아덴만 바깥의 외해값(6.5)에 섬으로 들어가는 몫을 얹었다.",
+      "sources": [
+        {
+          "title": "Socotra",
+          "url": "https://en.wikipedia.org/wiki/Socotra"
+        }
+      ]
+    },
+    "shihr|socotra": {
+      "risk": 7.5,
+      "verdict": "probable",
+      "basis": "마흐라 해안에서 소코트라로 건넌다. 아덴 쪽보다 길어 반 칸 높다. 이 섬은 1507년 포르투갈이 잠깐 요새를 세웠다가 물을 대기 어려워 버린 자리라, 조난한 배가 기댈 곳이 못 됐다.",
+      "sources": []
+    },
+    "salalah|shihr": {
+      "risk": 6.5,
+      "verdict": "probable",
+      "basis": "향의 해안이다 — 도파르까지는 뭍을 끼고 가지만 남서 계절풍철에는 항구가 통째로 닫힌다. 유향이 나는 해안이라 짐이 값나갔고, 철을 어기면 배가 아예 못 뜨는 구간이다.",
+      "sources": [
+        {
+          "title": "Dhofar",
+          "url": "https://en.wikipedia.org/wiki/Dhofar_Governorate"
+        }
+      ]
+    },
+    "salalah|sur": {
+      "risk": 8.0,
+      "verdict": "probable",
+      "basis": "쿠리아무리아와 마시라의 무인 해안을 닷새 지난다. 물도 사람도 없어 한 번 나서면 되돌아올 수 없고, 시흐르~마스카트(8.0)와 같은 자리에 둔다 — 「긴 외해를 한 번에 건너느냐, 나눠 가느냐」의 선택이 이 두 값 사이에서 생긴다.",
+      "sources": []
+    },
+    "muscat|sur": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "오만 동안의 짧은 연안이다. 수르는 다우를 짓는 항구였고 마스카트는 그 북쪽의 큰 항구라 둘 사이에 배가 늘 오갔다. 뭍을 끼고 가는 하루 거리다.",
+      "sources": []
+    },
+    "muscat|sohar": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "오만 바티나 해안 — 뭍을 끼고 가는 짧은 뜀뛰기다. 이 바다에서 가장 순한 구간이고, 소하르는 오래된 항구라 물길이 잘 알려져 있었다.",
+      "sources": [
+        {
+          "title": "Sohar",
+          "url": "https://en.wikipedia.org/wiki/Sohar"
+        }
+      ]
+    },
+    "hormuz|sohar": {
+      "risk": 5.0,
+      "verdict": "probable",
+      "basis": "바티나 해안에서 호르무즈 해협 어귀로 올라간다. 연안이지만 해협에 가까워질수록 조류가 세지고, 호르무즈 왕국(1515년 이후 포르투갈의 보호국)의 통항 관리가 시작되는 자리다.",
+      "sources": []
+    },
+    "julfar|sohar": {
+      "risk": 4.5,
+      "verdict": "probable",
+      "basis": "줄파르(라스알카이마)에서 소하르로 내려가는 연안이다. 줄파르는 진주와 다우의 항구였고 이 구간은 뭍을 끼고 간다. 바티나 해안(4.0)에 반 칸만 얹는다.",
+      "sources": []
+    },
+    "gombroon|hormuz": {
+      "risk": 4.0,
+      "verdict": "probable",
+      "basis": "호르무즈 앞바다를 건너면 되는 반나절 거리다. 곰브룬(반다르아바스)은 호르무즈 섬의 물과 먹을 것을 대던 뭍의 자리라, 두 곳은 사실상 한 항구의 두 짝이었다. 1622년 이후 곰브룬이 그 자리를 통째로 가져간다.",
+      "sources": [
+        {
+          "title": "Bandar Abbas",
+          "url": "https://en.wikipedia.org/wiki/Bandar_Abbas"
+        }
+      ]
+    },
+    "hormuz|kung": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "라리스탄 연안을 하루씩 짚어 올라간다. 페르시아만 안쪽으로 들수록 얕고 모래톱이 많아지고, 이 연안은 사파비와 호르무즈와 포르투갈의 이해가 겹치던 자리라 배가 늘 눈치를 봤다.",
+      "sources": []
+    },
+    "gombroon|sohar": {
+      "risk": 6.0,
+      "verdict": "probable",
+      "basis": "해협을 비스듬히 가로질러 이란 쪽에서 오만 쪽으로 건넌다. 해협은 모두가 지나야 하는 문이라 조류가 세고 통항료를 뜯기는 자리다 — 연안을 끼고 도는 것(5.0)보다 반 칸 이상 높다.",
+      "sources": [
+        {
+          "title": "Strait of Hormuz",
+          "url": "https://en.wikipedia.org/wiki/Strait_of_Hormuz"
+        }
+      ]
+    },
+    "bahrain|kung": {
+      "risk": 5.5,
+      "verdict": "probable",
+      "basis": "페르시아만 안쪽을 가로지른다. 얕고 좁으며 진주 어장의 모래톱이 해마다 자리를 옮겨, 작년의 물길이 올해의 물길이 아니었다. 바레인은 그 진주의 중심이라 배가 몰렸고 주인도 여러 번 바뀌었다.",
+      "sources": [
+        {
+          "title": "Bahrain",
+          "url": "https://en.wikipedia.org/wiki/Bahrain"
+        }
+      ]
+    },
+    "cairo|suez": {
+      "risk": null,
+      "verdict": "confirmed",
+      "basis": "대상로다 — 배가 다니는 길이 아니다. 홍해로 올라온 짐은 수에즈에서 내려 낙타에 실려 사막을 사흘 걸어 카이로에 닿았고, 거기서 나일을 타고 알렉산드리아로 갔다. 이 뭍 구간이 곧 향신료가 지중해로 나가는 마지막 목이었고, 그래서 맘루크·오스만이 여기서 세를 물렸다. 바다가 아니므로 해적 조우를 끄고 뭍의 사고(노상·통행세)에 맡긴다.",
+      "sources": [
+        {
+          "title": "Spice trade",
+          "url": "https://en.wikipedia.org/wiki/Spice_trade"
+        }
+      ]
     }
   },
   "goods": {
