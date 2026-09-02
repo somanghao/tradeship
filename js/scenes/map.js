@@ -38,6 +38,12 @@ import {
   /* ★ 바닥에서 나가는 문(C-17) — **판정은 규칙이 한 벌로 갖고 있다**(`state.js: recoveryOptions`).
      지도가 그 질문을 못 해서 실플레이 러너가 이 화면에서 근해를 왕복하다 멈췄다. */
   recoveryOptions,
+  /* ★ **값나가는 짐이 해적을 부른다**(회차 30 · `check-orphan-rules`가 찾아낸 자리).
+     `encounterOdds`는 `lure`를 안 넘기면 `cargoLure()`를 그대로 먹으므로 **위험 칸의 숫자에는
+     이미 들어 있었다** — 그런데 화면이 그 몫을 한 번도 말하지 않아, 짐을 채우면 '주의'가
+     '위험'으로 바뀌는 이유를 플레이어가 알 길이 없었다. 회차 27의 술집 평판과 같은 모양이다
+     (규칙은 서 있고 화면만 침묵한다). 규칙은 안 건드린다 — 이미 있는 값을 제 줄로 편다. */
+  cargoLure, cargoValue,
 } from '../state.js';
 import {
   worldTick, npcsOnLeg, tradersNearLeg, strayTrader, huntedOnLeg, rosterClosed, npcPos, removeNpc,
@@ -1459,6 +1465,15 @@ ${GOOD_BY_ID[top]?.name ?? top} ${Math.round(priceOf(c.id, top)).toLocaleString(
            + `\n해적 조우 ${Math.round(dg.odds * 100)}%`
            + (dg.risk != null ? ` (보험료율 ${dg.risk}%` : ' (내해')
            + (threat ? ` · 이 구간에 해적 ${threat}척` : '') + ')'
+           /* ★ 그 확률의 **내 몫**을 적는다. 항로 위험은 내가 못 고르지만 짐은 내가 고른다 —
+              「비싼 것을 가득 싣고 위험한 구간에 든다」가 이 게임에서 가장 자주 하는 선택인데
+              화면이 그 대가를 말한 적이 없었다. 천장(`LURE_CAP` +14%p)도 함께 적는다:
+              닿았으면 **더 실어도 조우는 안 오르므로** 그때부터는 순수 이득이다. */
+           + (cargoLure() > 0.001
+               ? `\n   그중 실은 짐이 부른 몫 +${(cargoLure() * 100).toFixed(1)}%p`
+                 + ` (화물값 ${Math.round(cargoValue()).toLocaleString('ko-KR')}닢`
+                 + (cargoLure() >= 0.1399 ? ' · 여기서 천장이다 — 더 실어도 안 오른다)' : ')')
+               : '')
            + (sn ? `\n★ ${sn.text} — ${sn.why}` : '')
            + goodsHint(c)
            + (huntHere(id) ? `\n★ ${huntHere(id)}의 사냥터다 — 여기서 그자를 만난다.`

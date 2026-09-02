@@ -136,6 +136,9 @@ export const LAYERS = [
       ['tools/evidence-load.mjs', '권역별 근거 파일을 모아 읽는다 — 검증 스크립트 공용'],
       ['tools/check-evidence.mjs', '도시 특산·깃발·입항세 ↔ 근거'],
       ['tools/check-routes.mjs', '항로 위험도 ↔ 근거 + 확률이 실제로 갈렸는가'],
+      ['tools/check-orphan-rules.mjs', '`state.js`가 내보낸 규칙 전수 ↔ 화면이 그것을 부르는가 — '
+        + '「규칙은 서 있는데 화면이 말하지 않는다」를 회차마다 손으로 훑던 것을 기계로 바꿨다. '
+        + '주석은 걷어내고 식별자만 센다(주석에 이름을 많이 적는 저장소라 안 걷으면 오탐이 무더기다). **경고만**(exit 0)'],
       ['tools/check-prices.mjs', '교역품 상대가격·임금 사다리·유지비 계수'],
       ['tools/check-wages.mjs', '부관 급여·성과급 ↔ 사료 배율'],
       ['tools/check-voyage.mjs', '항차 수익 **분포** ↔ 목표 밴드'],
