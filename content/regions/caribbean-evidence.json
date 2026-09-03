@@ -1864,7 +1864,10 @@
       "verdict": "probable",
       "basis": "만 서안의 짧은 연안이다. 탐피코는 1554년 코르테스 정복 이후 파누코 강어귀에 세워진 소항이라 은 함대가 들르는 베라크루스에 비해 오가는 짐값이 낮았고, 노리는 사략선도 그만큼 적었다. 지중해의 '평범한 연안'(4.0)보다 반 점 높게 둔 것은 그래도 뭍이 늪지라 좌초 위험이 있기 때문이다.",
       "sources": [
-        { "title": "Tampico", "url": "https://en.wikipedia.org/wiki/Tampico" }
+        {
+          "title": "Tampico",
+          "url": "https://en.wikipedia.org/wiki/Tampico"
+        }
       ]
     },
     "campeche|merida": {
@@ -1872,8 +1875,14 @@
       "verdict": "probable",
       "basis": "유카탄 서안의 짧은 연안 구간이다. 캄페체가 항구이고 메리다는 반도 내륙의 도청소재지이므로 실제로는 짐이 육로로도 오갔다 — 뱃길로 잡을 때는 개펄이 얕은 근해에 그쳐 이 권역에서 가장 낮은 축에 둔다.",
       "sources": [
-        { "title": "Campeche", "url": "https://en.wikipedia.org/wiki/Campeche" },
-        { "title": "Mérida, Yucatán", "url": "https://en.wikipedia.org/wiki/M%C3%A9rida,_Yucat%C3%A1n" }
+        {
+          "title": "Campeche",
+          "url": "https://en.wikipedia.org/wiki/Campeche"
+        },
+        {
+          "title": "Mérida, Yucatán",
+          "url": "https://en.wikipedia.org/wiki/M%C3%A9rida,_Yucat%C3%A1n"
+        }
       ]
     },
     "havana|merida": {
@@ -1887,8 +1896,14 @@
       "verdict": "probable",
       "basis": "온두라스 북안을 따라가는 30리그 남짓의 구간으로 이 권역에서 가장 짧은 뱃길 축이다. 양단이 다 온두라스의 스페인 항구(푸에르토 카바요스는 1524년 곤살레스 다빌라가 세운 최초의 카리브 안 항구, 트루히요는 1524년 올리드가 세운 온두라스 첫 수도)라 짧은 연안치고는 순한 편이지만, 두 항구 모두 16~17세기 내내 사략·해적의 표적이었다(1594·1603·1668년 각각).",
       "sources": [
-        { "title": "Raid on Puerto Caballos (1594)", "url": "https://en.wikipedia.org/wiki/Raid_on_Puerto_Caballos_(1594)" },
-        { "title": "Battle of Puerto Caballos (1603)", "url": "https://en.wikipedia.org/wiki/Battle_of_Puerto_Caballos_(1603)" }
+        {
+          "title": "Raid on Puerto Caballos (1594)",
+          "url": "https://en.wikipedia.org/wiki/Raid_on_Puerto_Caballos_(1594)"
+        },
+        {
+          "title": "Battle of Puerto Caballos (1603)",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Puerto_Caballos_(1603)"
+        }
       ]
     },
     "havana|puertocaballos": {
@@ -1896,7 +1911,10 @@
       "verdict": "probable",
       "basis": "온두라스 함대가 본대와 합류하러 카리브를 가로질러 아바나까지 올라가는 외해 구간이다. 푸에르토 카바요스는 요새가 약해(1603년 잉글랜드 함대에 함락, 1668년 버커니어의 습격) 그곳을 떠난 배도 호위 없이는 안전하지 못했다 — havana|trujillo(8.0)와 같은 값을 준다.",
       "sources": [
-        { "title": "Battle of Puerto Caballos (1603)", "url": "https://en.wikipedia.org/wiki/Battle_of_Puerto_Caballos_(1603)" }
+        {
+          "title": "Battle of Puerto Caballos (1603)",
+          "url": "https://en.wikipedia.org/wiki/Battle_of_Puerto_Caballos_(1603)"
+        }
       ]
     },
     "granada|portobelo": {
@@ -1904,8 +1922,14 @@
       "verdict": "confirmed",
       "basis": "산후안강 하구에서 모스키토 해안을 따라 포르토벨로까지 내려가는, 해도가 부실했던 물이다. 1665년 헨리 모건이 정확히 이 뱃길을 거슬러(카누로 산후안강을 올라) 니카라과 호수의 그라나다를 습격해 은 50만 파운드어치를 털고 배를 불태웠다 — 이 구간이 실제로 해적의 침입로였다는 사건이 특정된다. 지중해 사략 소굴 대역(9~11) 바로 아래에 둔다.",
       "sources": [
-        { "title": "Piracy on Lake Nicaragua", "url": "https://en.wikipedia.org/wiki/Piracy_on_Lake_Nicaragua" },
-        { "title": "Granada, Nicaragua", "url": "https://en.wikipedia.org/wiki/Granada,_Nicaragua" }
+        {
+          "title": "Piracy on Lake Nicaragua",
+          "url": "https://en.wikipedia.org/wiki/Piracy_on_Lake_Nicaragua"
+        },
+        {
+          "title": "Granada, Nicaragua",
+          "url": "https://en.wikipedia.org/wiki/Granada,_Nicaragua"
+        }
       ]
     },
     "granada|trujillo": {
@@ -1913,7 +1937,10 @@
       "verdict": "probable",
       "basis": "니카라과 고원을 넘는 노새길이다. 그라나다(니카라과 호수 안쪽)와 트루히요(온두라스 카리브 연안·1524년 세운 온두라스 첫 수도) 사이를 뭍으로 잇는 곁길로, 대양을 잇지 않으므로 요율을 null로 두어 해적을 끈다 — 다만 이 고원길 자체를 특정한 사료는 확보하지 못했다.",
       "sources": [
-        { "title": "Trujillo, Honduras", "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras" }
+        {
+          "title": "Trujillo, Honduras",
+          "url": "https://en.wikipedia.org/wiki/Trujillo,_Honduras"
+        }
       ]
     },
     "santiagocuba|trinidadcuba": {
@@ -1927,7 +1954,10 @@
       "verdict": "probable",
       "basis": "자메이카와 쿠바 남안의 트리니다드를 잇는 짧지만 트인 물이다. 트리니다드는 오리엔테·쿠아트로 비야스 지역 밀무역망의 한 축으로 18세기까지도 세관이 사실상 눈감던 항구였고, 자메이카 쪽 항구도 사정이 같아 양쪽 다 밀무역선의 길이었다.",
       "sources": [
-        { "title": "Trinidad, Cuba", "url": "https://en.wikipedia.org/wiki/Trinidad,_Cuba" }
+        {
+          "title": "Trinidad, Cuba",
+          "url": "https://en.wikipedia.org/wiki/Trinidad,_Cuba"
+        }
       ]
     },
     "puertoplata|tortuga": {
@@ -1935,8 +1965,14 @@
       "verdict": "confirmed",
       "basis": "이스파니올라 북안 사이를 잇는 구간이다. 1605~06년 '오소리오의 파괴'로 스페인이 밀무역을 끊겠다며 푸에르토플라타를 통째로 불태우고 주민을 강제 이주시켰는데, 그 결과 이 해안에 스페인 배가 기댈 곳이 아예 사라졌고 프랑스가 그 빈자리에 들어와 토르투가의 해안형제단이 되었다 — 이 정책이 오히려 자신이 막으려던 것을 만든 사례다. santiagocuba|tortuga·santodomingo|tortuga와 함께 이 권역 최고 요율 셋 가운데 하나다.",
       "sources": [
-        { "title": "Devastations of Osorio", "url": "https://en.wikipedia.org/wiki/Devastations_of_Osorio" },
-        { "title": "Tortuga (Haiti)", "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)" }
+        {
+          "title": "Devastations of Osorio",
+          "url": "https://en.wikipedia.org/wiki/Devastations_of_Osorio"
+        },
+        {
+          "title": "Tortuga (Haiti)",
+          "url": "https://en.wikipedia.org/wiki/Tortuga_(Haiti)"
+        }
       ]
     },
     "puertoplata|sanjuan": {
@@ -1944,7 +1980,10 @@
       "verdict": "probable",
       "basis": "모나 해협 북쪽을 지나는 구간이다. 뱃길 자체는 트여 있으나 오소리오의 파괴 이후 푸에르토플라타 쪽 해안에 정박할 스페인 항구가 사실상 없어져 지나는 배가 적었다 — sanjuan|santodomingo(6.0, 모나 해협 남쪽)보다 반 점 높게 둔다.",
       "sources": [
-        { "title": "Devastations of Osorio", "url": "https://en.wikipedia.org/wiki/Devastations_of_Osorio" }
+        {
+          "title": "Devastations of Osorio",
+          "url": "https://en.wikipedia.org/wiki/Devastations_of_Osorio"
+        }
       ]
     },
     "sanjuan|stkitts": {
@@ -1952,7 +1991,10 @@
       "verdict": "probable",
       "basis": "리워드 제도를 거슬러 올라가는 구간이다. 무역풍과 북적도 해류를 정면으로 받으며 동쪽으로 가야 해 시간이 걸리고, 세인트키츠는 1624년 잉글랜드·1625년 프랑스가 한 섬을 나눠 앉은 곳이라 산후안(스페인)에서 보면 적대 깃발과 이웃한 물이다.",
       "sources": [
-        { "title": "Saint Kitts", "url": "https://en.wikipedia.org/wiki/Saint_Kitts" }
+        {
+          "title": "Saint Kitts",
+          "url": "https://en.wikipedia.org/wiki/Saint_Kitts"
+        }
       ]
     },
     "barbados|stkitts": {
@@ -1960,7 +2002,10 @@
       "verdict": "probable",
       "basis": "소앤틸리스 열도 안쪽을 도는 구간이다. 섬이 늘 시야에 들어오는 물이라 길을 잃을 위험은 낮지만, 두 섬 다 잉글랜드령이라 스페인 순찰선에게는 반갑지 않은 항로였다 — 열도 바깥으로 나서는 barbados|nuevacadiz(7.5)보다는 한 점 낮게 둔다.",
       "sources": [
-        { "title": "Barbados", "url": "https://en.wikipedia.org/wiki/Barbados" }
+        {
+          "title": "Barbados",
+          "url": "https://en.wikipedia.org/wiki/Barbados"
+        }
       ]
     },
     "barbados|nuevacadiz": {
@@ -1974,8 +2019,14 @@
       "verdict": "probable",
       "basis": "아라야 반도의 소금밭에서 쿠바과 섬까지 이어지는 짧은 구간이다. 소금배와 진주배가 같은 물을 썼다 — 쿠바과의 누에바카디스는 16세기 초 서반구 최초의 진주 러시로 번성했다가 남획으로 굴이 씨가 마르고 1541년 크리스마스에 허리케인이 마을을 통째로 지워 1545년 완전히 버려졌다. 그 재해의 성격이 사람보다 날씨였으므로 이 권역 평균보다는 낮게 둔다.",
       "sources": [
-        { "title": "Nueva Cádiz", "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz" },
-        { "title": "Cubagua Island", "url": "https://en.wikipedia.org/wiki/Isla_de_Cubagua" }
+        {
+          "title": "Nueva Cádiz",
+          "url": "https://en.wikipedia.org/wiki/Nueva_C%C3%A1diz"
+        },
+        {
+          "title": "Cubagua Island",
+          "url": "https://en.wikipedia.org/wiki/Isla_de_Cubagua"
+        }
       ]
     },
     "cumana|maracaibo": {
@@ -1989,7 +2040,10 @@
       "verdict": "probable",
       "basis": "자유항 퀴라소와 진주항 리오아차 사이의 밤길이다. 1648년 이후 퀴라소는 네덜란드 서인도회사가 밀무역·사략을 사실상 눈감아 준 근거지였고, 리오아차는 진주로 부유했으나 카르타헤나에서 바람과 해류로 갈려 있어 고립된 항구라 드레이크(1569)·모건(1669)·얀 빌럼스(1680)가 차례로 노렸다 — 두 항구의 성격이 만나는 물이라 요율을 이 권역 중간대에 둔다.",
       "sources": [
-        { "title": "Dutch West India Company", "url": "https://en.wikipedia.org/wiki/Dutch_West_India_Company" }
+        {
+          "title": "Dutch West India Company",
+          "url": "https://en.wikipedia.org/wiki/Dutch_West_India_Company"
+        }
       ]
     },
     "curacao|maracaibo": {
@@ -1997,8 +2051,14 @@
       "verdict": "confirmed",
       "basis": "베네수엘라 만을 건너 마라카이보 호수 어귀의 좁은 목(바라)으로 들어서는 구간이다. 1666년 프랑스 해적 롤로네가 배 8척·650명으로 이 목의 산카를로스 요새를 깨고 마라카이보를 약탈했고, 1669년에는 헨리 모건이 같은 길로 들어가 마라카이보·히브랄타르를 턴 뒤 스페인 함대를 이 목에서 격파했다 — 좁은 목에 갇히면 못 빠진다는 이 항로의 성격이 두 사건 모두에서 그대로 드러난다.",
       "sources": [
-        { "title": "Henry Morgan's raid on Lake Maracaibo", "url": "https://en.wikipedia.org/wiki/Henry_Morgan%27s_raid_on_Lake_Maracaibo" },
-        { "title": "San Carlos de la Barra Fortress", "url": "https://en.wikipedia.org/wiki/San_Carlos_de_la_Barra_Fortress" }
+        {
+          "title": "Henry Morgan's raid on Lake Maracaibo",
+          "url": "https://en.wikipedia.org/wiki/Henry_Morgan%27s_raid_on_Lake_Maracaibo"
+        },
+        {
+          "title": "San Carlos de la Barra Fortress",
+          "url": "https://en.wikipedia.org/wiki/San_Carlos_de_la_Barra_Fortress"
+        }
       ]
     }
   },
@@ -2088,6 +2148,12 @@
           "url": "https://en.wikipedia.org/wiki/Nuestra_Se%C3%B1ora_de_Atocha"
         }
       ]
+    },
+    "sarsaparilla": {
+      "base": 140,
+      "verdict": "probable",
+      "basis": "사르사파리야 — 마른 뿌리 다발. 매독 특효약으로 팔려 유럽이 사들였으나 **실제로는 듣지 않았다.** 같은 자리의 물건인 키나 껍질(quina 15.0 · 남아메리카)이 정말로 말라리아를 낫게 한 것과 짝을 이룬다 — 하나는 들었고 하나는 안 들었는데 둘 다 팔렸다. 부피가 큰 마른 뿌리라 값은 향신료급이 아니고, 생강(ginger 6.0) 위·유향(incense 8.5) 아래인 곡물의 7.0배에 앉혔다.",
+      "sources": []
     }
   },
   "ships": {
