@@ -21,7 +21,9 @@ import { SHOCK } from './data.js';
 import { NPC, TRADER_SHIPS, PIRATE_SHIPS, TRADER_NAMES, PIRATE_NAMES, PURSE } from './npc/config.js';
 import { chooseTrade, choosePirateMove, chooseWander } from './npc/behavior.js';
 import { ALL_TRADERS, ALL_PIRATES, ALL_FIGURES, REGION_OF_CITY, FOES_BY_REGION } from './regions/index.js';
-import { seasonOf, inSeason, activeBounty, setRetireHook, setWorldHook, stirSeen } from './state.js';
+import { seasonOf, inSeason, activeBounty, setRetireHook, setWorldHook, stirSeen,
+         /* §A-11 조선 — 개항 전에는 바깥 배가 안 온다 */
+         joseonOpen } from './state.js';
 import { riskKey } from './map/geo.js';
 /* ★ **꺾인 뱃길** — NPC 배도 플레이어와 같은 폴리라인을 타게 한다(`npcPos`).
    `sprites/maps/lanes.js`는 캔버스를 안 쓰는 **순수 등록소**라(그림 함수가 없다)
@@ -96,7 +98,10 @@ export function initWorld() {
 }
 
 function makeTrader() {
-  const def = pickDef(ALL_TRADERS);
+  /* ★ 개항 전에는 **바깥 배가 안 온다**(§A-11 조선 · `openOnly`). 항로·시장·세력은 한 줄도
+     안 건드리고 **누가 오는가만** 바꾼다 — 명부 해적에서 배운 그 규약이다
+     (*"조우 확률은 그대로 두고 「누가 오는가」만 바꾼다"*). */
+  const def = pickDef(ALL_TRADERS, (d) => d.openOnly && !joseonOpen());
   const shipKey = (def?.ship && SHIPS[def.ship]) ? def.ship : pick(TRADER_SHIPS);
   // 순회로가 있으면 그 첫 항구에서 시작한다 — 도는 길이 정해진 상단이라야
   // "지금 알렉산드리아에 가면 그 배가 있겠다"는 예측이 선다

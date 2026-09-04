@@ -73,12 +73,15 @@ import {
   /* §A-11 명 — 자리(座) */
   seatCity, seatAt, seatTier, seatPrice, seatUpcharge, seatCount, buySeat, rollSeatAudit,
   seatSellerOK, holdingPrice,
+  /* §A-11 조선 — 작위와 개항 */
+  royalEligible, royalCalling, royalProgress, takeRoyal, claimRoyal, joseonOpen,
+  civicCapOf, civicDuesOf, fairOpen, rollFair,
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, FACTION, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, HOLDING_KEYS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON,
   /* C-18 — 나라가 짓는 조선소 */
-  CIVIC, ENCOUNTER_LOSS, FACTIONS, SEAT } from '../js/data.js';
+  CIVIC, ENCOUNTER_LOSS, FACTIONS, SEAT, ROYAL } from '../js/data.js';
 import { readFileSync } from 'node:fs';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
@@ -2701,5 +2704,92 @@ resetGame();
     state.boons.seat = { guangzhou: { until: 9999, tier: 3 } };
     resetGame();
     ok(!Object.keys(state.boons.seat ?? {}).length, 'resetGame이 자리를 비운다');
+  }
+
+  /* ══ 작위(爵位)와 개항 — §A-11 조선 ═══════════════════════════════
+     ★ 이 절이 지키는 것 셋 — **조선 갈래만** · **다른 나라는 안 움직인다** · **돈을 안 준다.** */
+  {
+    // ① 조정은 제 나라 사람만 부른다
+    resetGame(undefined, 'interpreter');
+    const mine = royalEligible();
+    resetGame(undefined, 'scrivano');            // 여덟 바다 갈래
+    ok(mine && !royalEligible(), '조정은 한반도 갈래만 부른다 (여덟 바다 갈래는 아니다)');
+
+    // ② 부름은 바다 하나를 잡아야 온다 — 아무 때나 열면 1일차에 카드가 뜬다
+    resetGame(undefined, 'interpreter');
+    ok(!royalCalling() && !takeRoyal().ok, '패권이 0이면 조정이 부르지 않는다');
+
+    // ③ 받들지 않았으면 작위도 없다
+    ok(!claimRoyal().ok, '뜻을 받들지 않으면 교지도 없다');
+
+    // ④ ★ 계단 셋이 저마다 다른 것을 연다 (tier를 직접 올려 잰다 — 패권을 손으로 못 채운다)
+    state.royal.taken = 1;
+    const cap0 = civicCapOf('mapo'), dues0 = civicDuesOf(0, 'mapo'), tar0 = tariffRate('busanpo');
+    state.royal.tier = 1; state.royal.opened = 1;
+    const tar1 = tariffRate('busanpo');
+    ok(joseonOpen() && tar1 < tar0 && civicCapOf('mapo') === cap0,
+       `1계단은 문을 연다 — 부산포 세 ${(tar0 * 100).toFixed(2)}% → ${(tar1 * 100).toFixed(2)}%`
+       + ` (천장은 아직 ${cap0})`);
+    state.royal.tier = 2;
+    ok(civicCapOf('mapo') === ROYAL.civicCap && civicDuesOf(0, 'mapo') === dues0,
+       `2계단은 천장을 연다 — ${cap0} → ${civicCapOf('mapo')} (문턱은 아직 그대로)`);
+    state.royal.tier = 3;
+    ok(civicDuesOf(0, 'mapo') === Math.round(dues0 * (1 - ROYAL.duesOff)),
+       `3계단은 문턱을 깎는다 — ${dues0.toLocaleString('ko-KR')} → `
+       + `${civicDuesOf(0, 'mapo').toLocaleString('ko-KR')}닢`);
+
+    // ⑤ ★ **다른 나라는 한 자리도 안 움직인다** — 안 그러면 아홉 바다가 통째로 갈린다
+    ok(civicCapOf('guangzhou') === CIVIC.cap && civicDuesOf(0, 'guangzhou') === CIVIC.dues[0],
+       '작위는 조선 깃발에만 걸린다 (명·일본은 그대로다)');
+
+    /* ⑥ ⛔ **금화를 한 닢도 주지 않는다** — 「보상으로 돈이나 수입을 주지 않는다」 규약.
+       ⚠️ `tier`를 손으로 올려 재면 아무것도 안 재는 것이다 — **`claimRoyal()` 실제 경로**로
+         밟아야 «그 함수가 몰래 금화를 주지 않는가»를 잰다(자를 잘못 대면 부호가 뒤집힌다). */
+    resetGame(undefined, 'interpreter');
+    state.royal.taken = 1;
+    const goldBefore = state.gold, cargoBefore = JSON.stringify(state.cargo);
+    /* 패권을 손으로 못 채우므로 `claimRoyal`의 문턱만 잠깐 낮춰 실제 경로를 타게 한다 —
+       규칙을 고치는 것이 아니라 **값**을 빌린다(끝나면 되돌린다). */
+    const needSaved = ROYAL.steps.map((st) => st.need);
+    for (const st of ROYAL.steps) st.need = 0;
+    let claims = 0;
+    for (let i = 0; i < ROYAL.steps.length; i++) if (claimRoyal().ok) claims++;
+    const goldAfter = state.gold, tierAfter = state.royal.tier, openedAfter = state.royal.opened;
+    ROYAL.steps.forEach((st, i) => { st.need = needSaved[i]; });
+    ok(claims === ROYAL.steps.length && tierAfter === ROYAL.steps.length,
+       `교지를 계단 수만큼 받는다 — ${claims}회 · tier ${tierAfter}`);
+    ok(goldAfter === goldBefore && JSON.stringify(state.cargo) === cargoBefore,
+       `★ 작위는 금화도 짐도 한 닢 안 준다 (${goldBefore}닢 그대로)`);
+    ok(openedAfter > 0, '첫 교지가 곧 개항이다 — 이름과 문이 한 장면이다');
+    ok(!claimRoyal().ok, '다 받으면 더 오를 자리가 없다');
+
+    // ⑦ 개시는 확률이 아니라 달력이다 — 두 시간 입구 어느 쪽에서 불러도 같다
+    resetGame(undefined, 'interpreter');
+    state.royal.tier = 1; state.royal.opened = 1;
+    const opens = [];
+    for (let d = 1; d <= 400; d++) { state.day = d; if (rollFair()) opens.push(d); }
+    ok(opens.length === Math.floor(400 / ROYAL.fairEveryDays) + 1,
+       `개시가 ${ROYAL.fairEveryDays}일마다 선다 — 400일에 ${opens.length}회(${opens.join('·')}일차)`);
+
+    // ⑧ 개항 전에는 장이 안 선다
+    resetGame(undefined, 'interpreter');
+    state.day = 181;
+    ok(!rollFair() && !fairOpen(), '개항 전에는 장이 서지 않는다');
+
+    // ⑨ 세이브 왕복 · 새 판 초기화
+    resetGame(undefined, 'interpreter');
+    state.royal = { taken: 5, tier: 2, opened: 9, fair: 40 };
+    const snapR = JSON.stringify(state.royal);
+    saveGame(); resetGame(); loadGame();
+    ok(JSON.stringify(state.royal) === snapR, `세이브 왕복에 작위가 그대로다 — ${snapR}`);
+    state.royal = { taken: 5, tier: 3, opened: 9, fair: 40 };
+    resetGame();
+    ok(!state.royal.tier && !state.royal.opened, 'resetGame이 작위를 비운다');
+
+    // ⑩ 진행도는 순수 함수다 — 두 번 불러도 상태가 안 바뀐다
+    resetGame(undefined, 'interpreter');
+    const before = JSON.stringify(state.royal);
+    royalProgress(); royalProgress();
+    ok(JSON.stringify(state.royal) === before, 'royalProgress()는 상태를 안 건드린다');
   }
 }

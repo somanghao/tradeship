@@ -14,7 +14,9 @@ import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDIN
          /* 입항세 셋째 겹(총자산 누진)을 화면 말로 옮길 때만 읽는다 — 회차 28 다-1 */
          TARIFF_SCALE,
          /* 자리(座) — §A-11 명. 값과 임기를 화면 말로 옮길 때만 읽는다 */
-         SEAT } from '../data.js';
+         SEAT,
+         /* 작위·개시 — §A-11 조선 */
+         ROYAL } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -35,6 +37,8 @@ import {
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
   /* 자리(座) — §A-11 명. `job:'官'`이 여는 문이라 `service`와 나란히 쓴다 */
   seatSellerOK, seatCity, seatAt, seatPrice, buySeat,
+  /* §A-11 조선 — 작위와 개항 */
+  royalProgress, claimRoyal, takeRoyal, fairOpen,
   /* 세력 2단계 — 웃돈·자격·선단 달력 */
   gripMarkup, enrollOffer, buyEnroll, convoyDue,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
@@ -1794,6 +1798,92 @@ function waitCard() {
 /** 깃발 이름 — 없으면 깃발 코드를 그대로 쓴다(콘텐츠가 앞서 가도 화면이 안 깨지게) */
 const flagName = (f) => FLAG_NAME[f] ?? f ?? '이 나라';
 
+/* ── 조정(朝廷) — 작위와 개항 · §A-11 조선 ─────────────────────────
+   ★ **화면이 말하지 않으면 규칙은 없는 것과 같다** — 이 저장소가 세 회차 연속 밟은 자리다.
+     그래서 이 카드는 «지금 무엇이 열려 있고, 다음 칸이 무엇을 여는가»를 전부 적는다.
+   ⚠️ **한반도 갈래가 아니면 카드 자체를 안 낸다**(`null`) — 조정은 제 나라 사람만 부른다. */
+function royalCard() {
+  const p = royalProgress();
+  if (!p.eligible) return null;
+
+  /* 아직 부름이 없다 — 무엇을 해야 오는지만 말한다(빈 카드를 내지 않는다) */
+  if (!p.calling && !p.taken) {
+    return el('div.panel', {}, [
+      el('h3', {}, el('span', { text: '조정' })),
+      el('div.ctr-sub', { style: { color: '#8f8878' },
+        html: '아직 도성에서 사람이 오지 않았다.<br>'
+            + '<b>바다 하나를 잡으면</b> 그 소식이 도성에 닿는다.' }),
+    ]);
+  }
+
+  const rows = [];
+  if (p.title) {
+    rows.push(el('div.ctr-sub', { style: { color: '#8fbf8a' },
+      html: `✓ <b>${p.title}</b> — 문서에 이름이 올랐다` }));
+  }
+  for (const st of p.steps) {
+    rows.push(el('div.ctr-sub', {
+      style: st.done ? { color: '#8fbf8a' } : null,
+      html: `${st.done ? '✓' : '·'} <b>${st.title}</b>(${st.rank}) — 아홉 바다 가운데 ${st.need}`
+          + `<br><span style="opacity:.72;margin-left:12px">${st.gain}</span>` }));
+  }
+
+  /* 지금 열려 있는 것 — 규칙이 실제로 하는 일을 숫자로 말한다 */
+  if (p.opened) {
+    const fair = fairOpen();
+    rows.push(el('div.ctr-sub', { style: { marginTop: '4px', color: '#8fbf8a' },
+      html: `개항 ${p.opened}일차 — 바깥 배가 조선 아홉 항구를 돈다 · 세 −${Math.round(ROYAL.openTariffOff * 100)}%`
+          + (fair
+              ? `<br><b style="color:#d8c07a">개시(開市)가 서 있다</b> — ${state.royal.fair - state.day}일 남았고`
+                + ` 조선 항구의 값이 +${Math.round(ROYAL.fairDemand * 100)}%다.`
+              : `<br><span style="opacity:.72">개시는 ${ROYAL.fairEveryDays}일마다 ${ROYAL.fairDays}일씩 선다.</span>`) }));
+  }
+
+  /* 받을 것이 있으면 여기서 받는다 — 인물을 다시 찾아가게 하지 않는다(작위는 문서다) */
+  if (p.canClaim) {
+    rows.push(el('button.btn', {
+      style: { marginTop: '6px' },
+      text: `${p.next.title} 교지를 받는다`,
+      onclick: () => {
+        const r = claimRoyal();
+        if (!r.ok) return toast(r.reason, 'bad');
+        pushLog(`도성에서 교지가 내려왔다 — ${r.title}.`, 'good');
+        if (r.opened) {
+          pushLog('삼포가 다시 열렸다. 바깥 배가 조선 항구로 든다.', 'good');
+          modal({
+            title: '개항',
+            body: '이름 칸이 비어 있던 종이에 이름이 적혔다.<br>'
+                + '역관의 서자도, 재상가의 서자도 문서에 제 이름을 못 올리던 나라에서 '
+                + '<b>바다에서 번 것으로 이름을 샀다</b>.<br><br>'
+                + '그리고 세 포구가 다시 열렸다 — 내이포·부산포·염포. '
+                + '쓰시마의 세견선이 들어오고, 등주에서 명 상선이 압록강을 거슬러 오고, '
+                + '류큐 배가 남해안 세 포구를 돈다.<br><br>'
+                + '<b>벌이가 늘지는 않는다.</b> 늘어난 것은 <b>오는 배</b>와 <b>서는 장</b>뿐이고, '
+                + '그 둘로 무엇을 할지는 여전히 이쪽 몫이다.<br>'
+                + '<span style="opacity:.75">공명첩에는 「납속(納粟)」이라 적혀 있다. '
+                + '실권이 없는 이름이라는 뜻이다.</span>',
+            actions: [{ label: '교지를 받는다' }],
+          });
+        }
+        buildUI(); refreshHUD();
+      },
+    }));
+  } else if (p.next) {
+    rows.push(el('div.ctr-sub', { style: { marginTop: '4px', color: '#8f8878' },
+      html: `다음 <b>${p.next.title}</b>까지 바다 <b>${Math.max(0, p.next.need - p.have)}</b>이 남았다`
+          + ` (지금 ${p.have}/9).` }));
+  }
+
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '조정' }),
+      el('span', { text: p.title ?? '교지를 기다린다',
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    ...rows,
+  ]);
+}
+
 function civicCard() {
   const p = civicProgress(city.id);
   const flag = city.flag;
@@ -2450,6 +2540,31 @@ function talkTo(f) {
     });
   }
 
+  /* ★ 조정의 뜻(§A-11 조선) — **왕의 대리인 한 사람**이 전한다(⛔ 조정은 세력이 아니다).
+     ⚠️ 부름이 없으면 단추 자체가 안 뜬다 — 아무 때나 열면 1일차에 뜨고 「부르는 장면」이 깨진다. */
+  const rp = royalProgress();
+  const isEnvoy = f.id === 'eas-mapo-jeongaeksa';
+  if (isEnvoy && rp.calling && !rp.taken) {
+    actions.push({
+      label: '왕의 뜻을 받든다',
+      onClick: () => {
+        const r = takeRoyal();
+        if (!r.ok) return toast(r.reason, 'bad');
+        pushLog('도성의 뜻을 받들었다 — 아홉 바다 가운데 셋을 잡으면 이름을 준다 하였다.', 'good');
+        refreshHUD();
+        modal({
+          title: f.name,
+          body: '“전하께서 바다의 일을 물으셨소.”<br><br>'
+              + '“아홉 바다 가운데 <b>셋</b>을 이쪽 장부 아래 두시오. 어느 바다든 상관없소 — '
+              + '도성이 보는 것은 어디냐가 아니라 <b>몇이냐</b>요.”<br><br>'
+              + '<span style="opacity:.75">“그리하시면 공명첩을 내리겠소. 이름 칸이 비어 있는 종이요 — '
+              + '거기 적힐 이름이 당신 것이 되오.”</span>',
+          actions: [{ label: '삼가 받든다', onClick: () => after() }],
+        });
+      },
+    });
+  }
+
   actions.push({ label: '자리를 뜬다' });
 
   /* ★ 결함 C — 세를 깎는 서비스(permit·smuggle)는 부관·갈래 특전이 이미 바닥(`BOON.tariffFloor`)에
@@ -2677,6 +2792,8 @@ function goalTab() {
     civicCard(),
     endingCard(),
     fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
+    /* 조정 — 한반도 갈래에만 뜬다(§A-11 조선). 아직 부름이 없으면 무엇을 해야 오는지만 말한다. */
+    fold('royal', royalCard(), false, royalProgress().title ?? null),
   ];
 }
 

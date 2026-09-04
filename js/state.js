@@ -6,7 +6,9 @@ import {
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   /* 두 회차가 같은 줄에 이름을 더했다 — 부동산·브레이크(#5·#6)와 계절(#4). 둘 다 필요하다. */
   ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, SEAT, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
-  SEA_ORIGINS, seaOriginAt,
+  SEA_ORIGINS, seaOriginAt, ORIGINS,
+  /* §A-11 조선 — 작위와 개항 */
+  ROYAL,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, CIVIC, ENDING, HEGEMONY,
   CONSIGN, LINE, FACTION, FACTION_TIES,
   TARIFF_SCALE, SEIZURE,
@@ -183,6 +185,11 @@ export const state = {
      ★ `slain`과 나란히 **여기 선언해 두어야** `resetGame`이 비우는 것을 빠뜨리지 않는다 —
        `??=`로만 만들면 새 판에 옛 판의 초무가 살아남는다. Set이 아니라 평범한 객체다. */
   tamed: {},
+  /* 작위(爵位)와 개항 — §A-11 조선. **판에 하나뿐인 상태**다(세력별 `regard`·항구별 `crewRep`·
+     깃발별 `infamy` 셋 다 다른 축이고 전부 벌점 방향이라 어느 것의 꼭대기도 아니다).
+     `taken` 수락한 날 · `tier` 받은 계단 수(0~3) · `opened` 개항을 선포한 날 · `fair` 이번 개시가 닫히는 날.
+     ★ **`slain`·`tamed`와 나란히 여기 선언한다** — `??=`로만 만들면 새 판에 옛 작위가 산다. */
+  royal: { taken: 0, tier: 0, opened: 0, fair: 0 },
   ended: 0,                  // 끝을 본 날 (0이면 아직)
   endedNine: 0,              // 두 번째 끝 「아홉 바다」를 본 날 (0이면 아직)
   boons: {
@@ -395,7 +402,11 @@ export function priceOf(cityId, goodId) {
   const local = 0.965 + wobble(cityId, goodId, state.day) * 0.07;    // 도시 사정 ±3.5%
   /* ★ `guildFactor`가 여기 곱해진다 — 상단이 나른 만큼 산지와 수요지가 서로에게 다가간다.
      상단이 없는 판(또는 `GUILD.enabled=false`)에서는 1이라 **옛 값과 한 닢도 안 달라진다.** */
-  return Math.max(1, Math.round(good.base * mul * trend * local
+  /* ★ 개시(開市 · §A-11 조선) — 나라가 여는 **정기** 장이 서면 조선 항구의 값이 오른다.
+     ⚠️ **품목을 안 가린다** — 개시는 특정 물건의 시황이 아니라 «사람이 몰려든 장»이라
+       `shockFactor`(품목별)와 층이 다르다. 그래서 곱하는 자리는 같아도 조건이 다르다. */
+  const fair = (fairOpen() && city.flag === HEGEMONY.homeFlag) ? (1 + ROYAL.fairDemand) : 1;
+  return Math.max(1, Math.round(good.base * mul * trend * local * fair
     * shockFactor(cityId, goodId) * guildFactor(cityId, goodId)));
 }
 
@@ -640,6 +651,10 @@ export function boonTariffOff(cityId = state.at) {
   const rid = REGION_OF_CITY[cityId];
   if (rid && (b.permit?.[rid] ?? 0) > state.day) off += BOON.permitTariffOff;
   if ((b.smuggle?.[cityId] ?? 0) > state.day) off += BOON.smuggleTariffOff;
+  /* ★ 개항(§A-11 조선) — 조선 항구의 세가 가벼워진다. **감면 셋과 같은 자리에서 합으로** 더해지므로
+     `BOON.tariffFloor` 바닥이 그대로 걸린다(제도는 피해 갈 수 있되 없어지지 않는다).
+     ⚠️ `tariffFromOff` 안에서만 만진다 — `tariffCutPreview`와 공식이 갈리면 화면이 거짓말을 한다. */
+  if (joseonOpen() && CITY_BY_ID[cityId]?.flag === HEGEMONY.homeFlag) off += ROYAL.openTariffOff;
   return off;
 }
 
@@ -1972,7 +1987,7 @@ export function duesOfFlag(flag) {
 /** 나라가 더 올릴 수 있는 칸이 남았나 — 도시 `industry` + `civic`이 `CIVIC.cap`을 못 넘는다 */
 export function civicRoom(cityId = state.at) {
   const base = CITY_BY_ID[cityId]?.industry ?? 0;
-  return Math.max(0, CIVIC.cap - base - civicOf(cityId));
+  return Math.max(0, civicCapOf(cityId) - base - civicOf(cityId));
 }
 
 /* ── 낸 세를 나눈다 — 「국가를 거쳐 항구로」 (2026-08-28 · 사용자 결정) ──────
@@ -2072,14 +2087,14 @@ export function civicProgress(cityId = state.at) {
     : null;
   if (!room) {
     return { cityId, base, civic, now, paid, room: 0, need: null, left: 0,
-             ready: false, days: 0, building, capped: true, cap: CIVIC.cap };
+             ready: false, days: 0, building, capped: true, cap: civicCapOf(cityId) };
   }
   const need = CIVIC.dues[Math.min(now, CIVIC.dues.length - 1)];
   return {
     cityId, base, civic, now, paid, room, need,
     left: Math.max(0, need - paid), ready: paid >= need && !building,
     days: CIVIC.days[Math.min(now, CIVIC.days.length - 1)],
-    building, capped: false, cap: CIVIC.cap,
+    building, capped: false, cap: civicCapOf(cityId),
   };
 }
 
@@ -2139,7 +2154,7 @@ export function industryPathHint(cityId = state.at) {
       to: civic.now + 1, paid: civic.paid, need: civic.need, left: civic.left,
       days: civic.days, building: civic.building, ready: civic.ready,
     },
-    capped: civic.capped, cap: CIVIC.cap,
+    capped: civic.capped, cap: civicCapOf(cityId),
   };
 }
 
@@ -2359,6 +2374,102 @@ export function hegemonyAll() {
   const seas = REGIONS.map((r) => hegemonyOf(r.id));
   const have = seas.filter((s) => s.done).length;
   return { seas, have, need: seas.length, done: have >= seas.length };
+}
+
+/* ── 작위(爵位)와 개항 — §A-11 조선 ────────────────────────────────
+   값·고증·⛔금지는 `js/data.js: ROYAL`에 적었다. 여기는 규칙만 둔다.
+   ★ **새 판정 함수를 만들지 않았다** — 「N개 권역 패자」는 `hegemonyAll().have`가 이미 센다.
+   ⛔ **금화·수입·보수를 한 닢도 주지 않는다.** 주는 것은 천장·속도·이름뿐이다. */
+
+/** 조정이 부르는 갈래인가 — **한반도 다섯**만(`ORIGINS` ↔ `SEA_ORIGINS`로 표가 갈려 한 줄로 판정된다) */
+export function royalEligible() {
+  return ORIGINS.some((o) => o.id === state.origin);
+}
+
+/** 왕의 사람이 찾아왔는가 — **첫 패권 하나를 채웠을 때** 온다.
+    ⚠️ 아무 때나 열면 1일차에 카드가 뜬다. 그러면 「부르는 장면」이 성립하지 않는다. */
+export function royalCalling() {
+  return royalEligible() && hegemonyAll().have >= 1;
+}
+
+/** 지금 어디까지 왔나 — `endingProgress()`와 같은 모양의 **순수 함수**(부작용 0) */
+export function royalProgress() {
+  const r = state.royal ?? { taken: 0, tier: 0, opened: 0 };
+  const have = hegemonyAll().have;
+  const tier = r.tier ?? 0;
+  const next = ROYAL.steps[tier] ?? null;         // 다 받았으면 null
+  const got = tier > 0 ? ROYAL.steps[tier - 1] : null;
+  return {
+    eligible: royalEligible(), calling: royalCalling(),
+    taken: r.taken ?? 0, tier, opened: r.opened ?? 0,
+    have, need: next?.need ?? null, next, title: got?.title ?? null,
+    canClaim: !!(r.taken && next && have >= next.need),
+    steps: ROYAL.steps.map((s, i) => ({ ...s, done: tier > i, now: have })),
+  };
+}
+
+/** 왕의 뜻을 받든다 — 인물이 전한다(⛔ 조정은 세력이 아니다 · §A-11 ㄴ) */
+export function takeRoyal() {
+  if (!royalCalling()) return { ok: false, reason: '아직 조정이 부르지 않았다' };
+  const r = (state.royal ??= { taken: 0, tier: 0, opened: 0, fair: 0 });
+  if (r.taken) return { ok: false, reason: '이미 받든 뜻이다' };
+  r.taken = state.day || 1;
+  return { ok: true, day: r.taken };
+}
+
+/** 작위를 받는다 — 계단 하나. ★ **한 번 적힌 이름은 안 지워진다**(패권이 깨져도 내려가지 않는다).
+    작위는 문서이기 때문이고, `hegemonyLoss()`가 되돌리는 것은 패권이지 이름이 아니다. */
+export function claimRoyal() {
+  const p = royalProgress();
+  if (!p.taken) return { ok: false, reason: '아직 조정의 뜻을 받들지 않았다' };
+  if (!p.next) return { ok: false, reason: '더 오를 자리가 없다' };
+  if (p.have < p.next.need) {
+    return { ok: false, reason: `아홉 바다 가운데 ${p.next.need}을 잡아야 한다 (지금 ${p.have})` };
+  }
+  const step = p.next;
+  state.royal.tier = (state.royal.tier ?? 0) + 1;
+  /* 첫 계단이 곧 개항이다 — **이름을 얻는 것과 항구가 열리는 것이 한 장면**이다.
+     ⓐ 일회성(선포)은 여기서 날짜를 박고(`markEnded`·`markNineEnded`와 같은 모양),
+     ⓑ 되풀이되는 장(개시)은 `rollFair()`가 연다. */
+  const opened = state.royal.tier === 1 && !state.royal.opened;
+  if (opened) state.royal.opened = state.day || 1;
+  return { ok: true, tier: state.royal.tier, step, opened, title: step.title };
+}
+
+/** 조선 항구가 바깥에 열렸나 — 개항 뒤로 계속 참이다 */
+export function joseonOpen() { return (state.royal?.opened ?? 0) > 0; }
+
+/** 나라가 올릴 수 있는 공업력의 천장 — **조선 깃발만** 작위로 한 칸 열린다.
+    ★ `CIVIC.cap`을 직접 읽던 자리를 전부 이 함수로 바꿨다(`civicRoom`·`civicProgress`·`industryOf`).
+    ⚠️ 새 값을 하나도 안 만든다 — `CIVIC.dues[3]`·`days[3]`이 이미 있고 죽어 있던 것을 살릴 뿐이다. */
+export function civicCapOf(cityId = state.at) {
+  const base = CIVIC.cap;
+  if (CITY_BY_ID[cityId]?.flag !== HEGEMONY.homeFlag) return base;
+  return (state.royal?.tier ?? 0) >= 2 ? Math.max(base, ROYAL.civicCap) : base;
+}
+
+/** 나라 조선소의 문턱 — 3계단이 조선 항구에서만 깎아 준다 */
+export function civicDuesOf(level, cityId = state.at) {
+  const raw = CIVIC.dues[Math.min(level, CIVIC.dues.length - 1)] ?? Infinity;
+  if (CITY_BY_ID[cityId]?.flag !== HEGEMONY.homeFlag) return raw;
+  return (state.royal?.tier ?? 0) >= 3 ? Math.round(raw * (1 - ROYAL.duesOff)) : raw;
+}
+
+/** ★ 개시(開市) — 나라가 여는 **정기** 장. 상시 개방이 아니다(사료가 「1년 몇 회」 꼴이다).
+    열려 있는 동안 조선 항구의 수요가 오른다. 읽을 때 견주므로 **날마다 깎는 후크가 없다.** */
+export function fairOpen() {
+  return joseonOpen() && (state.royal?.fair ?? 0) > state.day;
+}
+
+/** 개시를 열 때가 됐나 — `advanceDays`/`waitDays` 어느 쪽에서 불러도 같다(두 입구 문제 회피) */
+export function rollFair() {
+  if (!joseonOpen()) return null;
+  const r = state.royal;
+  if ((r.fair ?? 0) > state.day) return null;                 // 이미 서 있다
+  const since = state.day - (r.opened || 1);
+  if (since < 0 || since % ROYAL.fairEveryDays > 1) return null;
+  r.fair = state.day + ROYAL.fairDays;
+  return { until: r.fair, days: ROYAL.fairDays };
 }
 
 /** 두 번째 끝을 한 번만 축하한다 — 조선의 끝(`markEnded`)과 **따로 논다** */
@@ -4860,7 +4971,7 @@ export function industryOf(cityId = state.at) {
   const base = CITY_BY_ID[cityId]?.industry ?? 0;
   /* ⚠️ **`state.yards[].civic`을 직접 읽지 마라** — 공기가 지난 공사가 안 세어진다.
      실제로 그렇게 썼다가 `test-rules`의 「공기가 지나면 오른다」가 잡았다. `civicOf()`가 정본이다. */
-  const civic = Math.min(Math.max(0, CIVIC.cap - base), civicOf(cityId));
+  const civic = Math.min(Math.max(0, civicCapOf(cityId) - base), civicOf(cityId));
   const boost = state.yards?.[cityId]?.boost ?? 0;   // A-2 승급
   return Math.min(YARD.cap, base + civic + boost);
 }
@@ -6805,6 +6916,11 @@ export function settlePayroll(rand = Math.random, opts = {}) {
    `rand`를 받는 이유는 검증 스크립트가 시드를 고정해 발생률을 재기 때문이다. */
 export function rollShockEvents(days, rand = Math.random) {
   const hit = [];
+  /* ★ 개시(開市 · §A-11 조선)를 **여기서** 연다 — `advanceDays`(항해)와 `waitDays`(정박)가
+     둘 다 이 함수를 부르므로 **두 입구 문제가 안 생긴다**(항구에 서 있는 동안 층이 멈추던
+     그 사고가 `waitDays`에서 실제로 났었다). 확률이 아니라 **달력**이다 —
+     사료의 개시가 「1년 몇 회」로 정해져 있었고 `FACTIONS[].convoy`도 같은 규약을 쓴다. */
+  for (let d = 0; d < days; d++) { const f = rollFair(); if (f) hit.push({ kind: 'fair', until: f.until, days: f.days }); }
   /* ★ `perDay`는 **세계 전체에서** 하루에 몇 건이냐다. 도시가 16에서 175로 늘자
      한 도시가 사건을 겪는 주기가 20개월 → 216개월로 벌어져, "대박은 사건에서 나온다"는
      설계가 세계를 넓힌 것만으로 사실상 사라졌다. 도시 수로 환산해 **도시당 빈도**를
@@ -6919,6 +7035,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     regard: {}, _regardAge: 0, regardWhy: {},
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
     mates: {}, scouted: {}, bountyDue: [], slain: {}, tamed: {}, ended: 0, endedNine: 0,
+    royal: { taken: 0, tier: 0, opened: 0, fair: 0 },
     boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null, seat: {} },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
