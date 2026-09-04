@@ -76,12 +76,14 @@ import {
   /* §A-11 조선 — 작위와 개항 */
   royalEligible, royalCalling, royalProgress, takeRoyal, claimRoyal, joseonOpen,
   civicCapOf, civicDuesOf, fairOpen, rollFair,
+  /* §A-11 일본 — 다이묘의 문 */
+  fleetTier, daimyoOf, daimyoOpen, daimyoGate, yardOpenAt, daimyoProgress, canBuyHolding, rosterKey,
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, FACTION, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, HOLDING_KEYS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON,
   /* C-18 — 나라가 짓는 조선소 */
-  CIVIC, ENCOUNTER_LOSS, FACTIONS, SEAT, ROYAL } from '../js/data.js';
+  CIVIC, ENCOUNTER_LOSS, FACTIONS, SEAT, ROYAL, DAIMYO } from '../js/data.js';
 import { readFileSync } from 'node:fs';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
@@ -2791,5 +2793,80 @@ resetGame();
     const before = JSON.stringify(state.royal);
     royalProgress(); royalProgress();
     ok(JSON.stringify(state.royal) === before, 'royalProgress()는 상태를 안 건드린다');
+  }
+
+  /* ══ 다이묘의 문 — §A-11 일본 ═══════════════════════════════════
+     ★★ 이 절이 지키는 것은 하나다 — **동아시아 패권이 이 기능에 안 묶인다.**
+       입항도 거점도 안 막히고, 막히는 것은 조선소와 상관 둘뿐이다. */
+  {
+    resetGame(undefined, 'interpreter');
+    const set = (key, hp, guns) => { state.shipKey = key; state.maxHp = hp; state.guns = guns; };
+
+    // ① 전력은 「이길 수 있는 최고 등급」 — 세계 공용 눈금(1~5)과 같은 자다
+    set('oldsahuseon', 50, 2);
+    const t0 = fleetTier();
+    set('tekkosen', 360, 26);
+    const t5 = fleetTier();
+    ok(t0 === 0 && t5 === 5, `전력이 배로 갈린다 — 삭은 사후선 ${t0} · 철갑선 ${t5}`);
+
+    // ② ★ **배의 슬롯이 아니라 실제 장착 포로 잰다** — 전투가 쓰는 자와 같아야 한다
+    set('tekkosen', 360, 0);
+    ok(fleetTier() < t5, `대포를 안 얹으면 전력이 내려간다 (${t5} → ${fleetTier()})`);
+
+    // ③ 다이묘가 항구를 쥔다 · 류큐는 시마즈에 딸린다(1609년 그대로)
+    ok(daimyoOf('tsushima')?.id === 'so' && daimyoOf('naha')?.id === DAIMYO.ryukyuUnder
+       && !daimyoOf('busanpo') && !daimyoOf('venezia'),
+       '다이묘가 일본·류큐 항구만 쥔다 (조선·지중해는 아니다)');
+
+    // ④ 문턱을 넘으면 열린다 — 한 번에가 아니라 집집이
+    resetGame(undefined, 'interpreter');
+    set('sekibune', 100, 4);                    // tier 2
+    const openLow = ['tsushima', 'hirado', 'sakai'].map((c) => daimyoOpen(c));
+    set('tekkosen', 360, 26);                   // tier 5
+    const openHigh = ['tsushima', 'hirado', 'sakai'].map((c) => daimyoOpen(c));
+    ok(openLow[0] && !openLow[2] && openHigh.every(Boolean),
+       `항구가 집집이 열린다 — 세키부네로 쓰시마만(${openLow.map(String).join('/')}),`
+       + ` 철갑선이면 전부(${openHigh.map(String).join('/')})`);
+
+    // ⑤ ★★ **입항도 거점도 안 막힌다** — 이것이 이 기능의 방어선이다
+    resetGame(undefined, 'interpreter');
+    set('oldsahuseon', 50, 2);                  // tier 0 — 아무 집도 안 열렸다
+    state.gold = 5_000_000;
+    /* ⚠️ **`canBuyHolding`으로 재면 거점 사슬(`rental → warehouse → factory`)이 섞여 들어와
+       판정이 뒤집힌다** — 실제로 여기서 한 번 «거점이 막혔다»는 거짓 실패를 봤다.
+       이 절이 지키려는 것은 **게이트**이므로 `daimyoGate`에 직접 묻는다(자를 정확히 댄다). */
+    ok(canBuyHolding('rental', 'sakai').ok
+       && !daimyoGate('rental', 'sakai') && !daimyoGate('warehouse', 'sakai'),
+       '★ 다이묘가 안 열려도 거점은 산다 — 동아시아 패권 ①(41항구)이 이 기능에 안 묶인다');
+    ok(!!daimyoGate('slipway', 'sakai') && !!daimyoGate('factory', 'sakai')
+       && !canBuyHolding('slipway', 'sakai').ok,
+       '막히는 것은 조선소와 상관 둘뿐이다');
+    ok(!daimyoGate('slipway', 'busanpo') && !daimyoGate('factory', 'venezia')
+       && canBuyHolding('slipway', 'busanpo').ok,
+       '다른 바다는 한 자리도 안 막힌다');
+
+    // ⑥ 그 이유가 문장으로 나온다 — 화면이 말하지 않으면 규칙은 없는 것과 같다
+    const why = daimyoGate('slipway', 'sakai');
+    ok(why && why.includes('구키') && !daimyoGate('rental', 'sakai') && !daimyoGate('slipway', 'busanpo'),
+       `막힌 이유를 문장으로 준다 — "${String(why).slice(0, 34)}…"`);
+
+    // ⑦ 조선소가 실제로 닫힌다 — 그리고 전력이 오르면 열린다
+    const soldLow = Object.keys(SHIPS).filter((k) => sellsShip(k, 'sakai')).length;
+    set('tekkosen', 360, 26);
+    const soldHigh = Object.keys(SHIPS).filter((k) => sellsShip(k, 'sakai')).length;
+    ok(soldLow === 0 && soldHigh > 0 && yardOpenAt('sakai'),
+       `사카이 조선소가 전력으로 열린다 — ${soldLow}종 → ${soldHigh}종`);
+
+    // ⑧ 수군을 꺾어도 열린다 — **새 배관 없이** 명부(`state.slain`)를 그대로 읽는다
+    resetGame(undefined, 'interpreter');
+    set('oldsahuseon', 50, 2);
+    ok(!daimyoOpen('sakai'), '전력이 모자라면 닫혀 있다');
+    state.slain[rosterKey('kuki')] = 1;
+    ok(daimyoOpen('sakai'), '그 수군을 꺾으면 전력과 무관하게 열린다');
+
+    // ⑨ 화면이 읽는 표가 여섯 집을 다 낸다
+    const prog = daimyoProgress();
+    ok(prog.length === DAIMYO.clans.length && prog.every((d) => d.ports.length && d.name),
+       `다이묘 표가 ${prog.length}집을 낸다`);
   }
 }

@@ -9,6 +9,8 @@ import {
   SEA_ORIGINS, seaOriginAt, ORIGINS,
   /* §A-11 조선 — 작위와 개항 */
   ROYAL,
+  /* §A-11 일본 — 다이묘의 문 */
+  DAIMYO,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, CIVIC, ENDING, HEGEMONY,
   CONSIGN, LINE, FACTION, FACTION_TIES,
   TARIFF_SCALE, SEIZURE,
@@ -868,6 +870,11 @@ export function canBuyHolding(kind, cityId = state.at) {
       return { ok: false, reason: `이 항구 공업력이 ${need} 이상이어야 한다` };
     }
   }
+  /* ★ 다이묘의 문(§A-11 일본) — **조선소와 상관만** 닫힌다. ⛔ 입항도 거점도 안 막는다:
+     동아시아 패권 ①이 41항구 전부 거점이고 그 41에 일본·류큐 13이 들어 있어, 거점을 막으면
+     아홉 바다 엔딩이 통째로 이 기능에 묶인다. 상관 3은 일본 밖에서도 채워지므로 패권 ②도 산다. */
+  const gate = daimyoGate(kind, cityId);
+  if (gate) return { ok: false, reason: gate };
   const price = holdingPrice(kind, cityId);
   if (price > state.gold) return { ok: false, reason: `금화가 ${(price - state.gold).toLocaleString('ko-KR')}닢 모자란다`, price };
   return { ok: true, price };
@@ -5003,6 +5010,9 @@ export function sellsShip(key, cityId = state.at) {
   /* ★ **공사 중에는 배를 못 짓는다.** 부두를 넓히는 동안 그 부두가 제 일을 못 한다는 뜻이고,
      그것이 이 투자의 진짜 값이다 — 돈보다 **그 항구를 몇 달 잃는 것**이 크다. */
   if (yardBusy(cityId)) return false;
+  /* ★ 다이묘가 아직 인정하지 않은 항구는 배를 안 판다(§A-11 일본). ⛔ 입항·거점은 그대로다 —
+     닫는 것은 조선소와 상관 둘뿐이고, 그래야 동아시아 패권이 이 기능에 안 묶인다. */
+  if (!yardOpenAt(cityId)) return false;
   if (!yardAllowed(key, cityId)) return false;
   /* ★ 사다리가 **둘**이다 — 기술(`tierNeeded`)과 교역(`yardReach`). 아래 절을 볼 것. */
   const ind = industryOf(cityId);
@@ -5531,6 +5541,96 @@ export function consortMeleeBoost() {
 /** 기함이 맞을 것을 동행선이 나눠 받는 비율 (0~`FLEET.shieldCap`) */
 export function consortShield() {
   return Math.min(FLEET.shieldCap, consortCount() * FLEET.shieldPer);
+}
+
+/* ── 내 해군력 — 「이길 수 있는 최고 등급」 1~5 (§A-11 일본) ────────────
+   ★★ **새로 짜지 않았다.** 회차 30의 `.playtest/round-30/r5-probe-power.mjs`가 `battle.js`의
+     피해 식(`fire`/`foeTurn`)을 이미 옮겨 두었고 그 프로브가 카리브·중동의 패권 ③을 뒤집었다
+     (*"동행 0척이면 어떤 t3 기함으로도 지고 2척이면 이긴다"*). 그 식을 **순수 함수로 승격**한다.
+   ★ **세계의 다른 세기와 같은 눈금이다** — `PIRATES[].strength` · `ENEMIES[].level` · `mightOf`가
+     전부 1~5라, 「나」와 「저쪽」을 같은 자로 잰다.
+   ⚠️ `battle.js`는 DOM에 묶여 여기서 못 부른다. 그래서 **식을 옮겨 적되 상수는 안 새로 만든다** —
+     `ENEMIES`·`FLEET`이 정본이고 여기서는 읽기만 한다. 그쪽 계수가 바뀌면 이 함수가 따라 움직인다.
+   ⚠️ **회피(`speed`·`fleeOdds`)는 여기 안 든다** — 「이길 수 있나」와 「도망칠 수 있나」는 다른 축이다. */
+
+/** 내 한 발의 기댓값 — `battle.js: fire()`의 식(조준 미니게임은 기댓값으로 편다) */
+function shotOfMine(guns, aux, hitRate = 0.75, critRate = 0.35) {
+  const base = 4 + (guns + aux) * 1.15;          // armsFactor·SHOT.dmg는 일반탄·기본포 기준 1.0
+  return base * (critRate * 2.1 + (1 - critRate) * 1) * hitRate;
+}
+
+/** 적 한 발 — `battle.js: foeTurn()`. 동행선이 `shieldPer`만큼 대신 받는다 */
+function shotOfFoe(foeGuns, consorts, range = 60) {
+  const acc = 0.34 + (1 - range / 140) * 0.42;
+  const shield = Math.min(FLEET.shieldCap, consorts * FLEET.shieldPer);
+  return (3 + foeGuns * 1.05) * 1.025 * acc * (1 - shield);
+}
+
+/** ★ 지금 선단으로 **이길 수 있는 최고 등급**(0~5). 0이면 등급 1도 못 이긴다.
+    턴수 비교다 — 내가 저쪽을 가라앉히는 턴이 저쪽이 나를 가라앉히는 턴보다 적어야 이긴다. */
+export function fleetTier() {
+  /* ⚠️ **배의 `guns`가 아니라 `state.guns`다** — 전투는 `B.you.guns = state.guns`(=실제 장착
+     대포 수 · `syncGuns`)를 쓰고, `SHIPS[].guns`는 **얹을 수 있는 슬롯**이다. 여기서 슬롯을 세면
+     대포를 한 문도 안 산 배가 실제보다 세게 잡힌다(이 자리에서 한 번 어긋났다).
+     `aux`도 전투와 같은 `consortGunBonus`의 식이고, 선체도 전투가 쓰는 `state.maxHp`다. */
+  const guns = state.guns ?? armsTotal(state.arms ?? {});
+  const aux = consortGuns() * FLEET.gunShare;
+  const hull = state.maxHp || maxHullOf();
+  const mine = shotOfMine(guns, aux);
+  let best = 0;
+  for (let i = 0; i < ENEMIES.length; i++) {
+    const foe = ENEMIES[i];
+    const myTurns = Math.ceil(foe.hp / Math.max(1, mine));
+    const foeTurns = Math.ceil(hull / Math.max(1, shotOfFoe(foe.guns, consortCount())));
+    if (myTurns < foeTurns) best = foe.level ?? (i + 1);
+  }
+  return best;
+}
+
+/* ── 다이묘의 문 — 힘으로 여는 것 (§A-11 일본) ────────────────────
+   값·고증·⛔금지는 `js/data.js: DAIMYO`에 적었다. 여기는 규칙만 둔다.
+   ★ **선례가 이미 있다** — `oceanReady(to)`/`escortNeed()`가 *"항로를 막는 것이 아니라 조건을
+     붙이는 것"*이라는 문을 세워 두었다. 이것은 그 모양을 그대로 베낀다. */
+
+/** 그 항구를 쥔 다이묘 — 없으면 `null`(류큐는 시마즈에 딸린다 · 1609년 그대로) */
+export function daimyoOf(cityId) {
+  const c = CITY_BY_ID[cityId];
+  if (!c) return null;
+  if (c.flag === 'ryukyu') return DAIMYO.clans.find((d) => d.id === DAIMYO.ryukyuUnder) ?? null;
+  if (c.flag !== 'japan') return null;
+  return DAIMYO.clans.find((d) => d.ports.includes(cityId)) ?? null;
+}
+
+/** 그 집이 나를 상대로 인정했나 — **전력이 그 수군을 넘었거나, 그 수군을 실제로 꺾었거나**.
+    ⚠️ 후자는 명부(`state.slain`)를 그대로 읽는다 — **새 배관이 하나도 없다**(초무와 같은 자리). */
+export function daimyoOpen(cityId) {
+  const d = daimyoOf(cityId);
+  if (!d) return true;                               // 다이묘가 없는 항구는 늘 열려 있다
+  if (state.slain?.[rosterKey(d.id)]) return true;   // 그 수군을 꺾었다
+  return fleetTier() > d.strength;
+}
+
+/** 막히는 것은 **조선소와 상관 둘뿐**이다 — 막을 이유를 문장으로 돌려준다(안 막히면 `null`) */
+export function daimyoGate(kind, cityId = state.at) {
+  if (kind !== 'slipway' && kind !== 'factory') return null;
+  const d = daimyoOf(cityId);
+  if (!d || daimyoOpen(cityId)) return null;
+  const what = kind === 'slipway' ? '배를 짓게' : '상관을 두게';
+  return `${d.name}${josa(d.name, '이/가')} 아직 ${what} 해 주지 않는다`
+       + ` — 그 수군(세기 ${d.strength})을 넘어야 한다 (지금 이쪽 선단은 ${fleetTier()})`;
+}
+
+/** 조선소가 그 항구에서 도는가 — `sellsShip`·`yardAllowed`가 함께 본다 */
+export function yardOpenAt(cityId = state.at) { return !daimyoGate('slipway', cityId); }
+
+/** 화면이 읽는 표 — 어느 집이 열렸고 무엇이 남았나 */
+export function daimyoProgress() {
+  const tier = fleetTier();
+  return DAIMYO.clans.map((d) => ({
+    ...d, open: daimyoOpen(d.ports[0]), tier,
+    slain: !!state.slain?.[rosterKey(d.id)],
+    ports: d.ports.map((id) => ({ id, name: CITY_BY_ID[id]?.name ?? id })),
+  }));
 }
 
 /* ── 배가 가라앉는다 ───────────────────────────────────────────

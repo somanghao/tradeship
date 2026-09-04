@@ -29,12 +29,13 @@
 //      (`payday.js:177` · `scenes/port.js:900` · `scenes/map.js:1201`)
 //   ⑨ ★ 자리(座)를 파는 관리가 명 13항구에 하나씩 있는가 — 없으면 `SEAT`가 열린다고
 //      선언한 항구에서 아무도 안 판다(§A-11 명)
+//   ⑩ ★ 다이묘가 쥔 항구가 실재하고 겹치지 않는가 — 오타 하나가 그 집의 문을 조용히 없앤다(§A-11 일본)
 //
 //   node tools/check-figures.mjs
 //   node tools/check-figures.mjs --seats   ← 인물이 앉지 않은 항구를 권역별로 센다(§A-11)
 
 import { readFileSync } from 'node:fs';
-import { CITY_BY_ID, SEAT } from '../js/data.js';
+import { CITY_BY_ID, SEAT, DAIMYO } from '../js/data.js';
 import { ALL_FIGURES } from '../js/regions/index.js';
 import { REGION_BY_ID, REGION_OF_CITY, REGIONS } from '../js/map/geo.js';
 
@@ -169,6 +170,41 @@ for (const c of seatCities) {
   if (!has) {
     bad('자리', `${CITY_BY_ID[c].name} — 자리를 살 수 있다고 선언됐는데 관리(job:'官')가 없다 `
       + `(단추가 안 뜨고 경고도 안 난다)`);
+  }
+}
+
+/* ⑩ ★ **다이묘가 쥔 항구가 실재하는가** — §A-11 일본.
+   `DAIMYO.clans[].ports`에 오타가 있으면 그 항구는 **다이묘가 없는 것으로 읽혀 조용히 열린다**
+   (`daimyoOf`가 `null`을 돌려주고 `daimyoGate`가 `null`을 낸다). 화면도 검사도 아무 말을 안 하고,
+   그 집의 문 하나가 사라진 채로 판이 돈다 — 이 파일이 막으려는 「조용한 실패」와 같은 모양이다.
+   ⚠️ 같은 항구를 두 집이 쥐면 `find`가 앞엣것만 집어 뒤엣집이 죽는다(⑧과 같은 논리).
+   ⚠️ 일본·류큐 깃발이 아닌 항구를 쥐면 `daimyoOf`가 깃발로 먼저 거르므로 그 줄도 죽는다. */
+const claimed = new Map();
+for (const d of DAIMYO.clans ?? []) {
+  if (!d.ports?.length) bad('다이묘', `${d.name} — 쥔 항구가 없다 (이 집의 문이 영영 안 열린다)`);
+  for (const c of d.ports ?? []) {
+    if (!CITY_BY_ID[c]) { bad('다이묘', `${d.name} — '${c}'는 없는 항구다`); continue; }
+    const flag = CITY_BY_ID[c].flag;
+    if (flag !== 'japan' && flag !== 'ryukyu') {
+      bad('다이묘', `${d.name} — ${CITY_BY_ID[c].name}은 ${flag} 깃발이라 daimyoOf가 못 찾는다 (줄이 죽는다)`);
+    }
+    if (claimed.has(c)) {
+      bad('다이묘', `${CITY_BY_ID[c].name} — ${claimed.get(c)}와 ${d.name}이 함께 쥐고 있다 (뒤엣집이 죽는다)`);
+    } else claimed.set(c, d.name);
+  }
+  if (!Number.isFinite(d.strength) || d.strength < 1 || d.strength > 5) {
+    bad('다이묘', `${d.name} — 수군 세기가 1~5가 아니다 (${d.strength})`);
+  }
+}
+if (DAIMYO.ryukyuUnder && !(DAIMYO.clans ?? []).some((d) => d.id === DAIMYO.ryukyuUnder)) {
+  bad('다이묘', `류큐를 맡긴 '${DAIMYO.ryukyuUnder}'가 다이묘 표에 없다`);
+}
+/* 일본·류큐 항구 가운데 **아무도 안 쥔 곳**은 늘 열려 있다 — 구멍이 아니라 선택일 수 있으므로 경고다
+   (하카타가 그렇다: 상인이 다스린 항구라 일부러 뺐다). */
+for (const c of Object.keys(CITY_BY_ID)) {
+  const f = CITY_BY_ID[c].flag;
+  if ((f === 'japan' || f === 'ryukyu') && !claimed.has(c) && f !== 'ryukyu') {
+    soft('다이묘', `${CITY_BY_ID[c].name} — 쥔 집이 없어 늘 열려 있다 (일부러 그런 것이면 그대로)`);
   }
 }
 

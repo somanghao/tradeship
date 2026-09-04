@@ -39,6 +39,8 @@ import {
   seatSellerOK, seatCity, seatAt, seatPrice, buySeat,
   /* §A-11 조선 — 작위와 개항 */
   royalProgress, claimRoyal, takeRoyal, fairOpen,
+  /* §A-11 일본 — 다이묘의 문 */
+  daimyoProgress,
   /* 세력 2단계 — 웃돈·자격·선단 달력 */
   gripMarkup, enrollOffer, buyEnroll, convoyDue,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
@@ -1798,6 +1800,32 @@ function waitCard() {
 /** 깃발 이름 — 없으면 깃발 코드를 그대로 쓴다(콘텐츠가 앞서 가도 화면이 안 깨지게) */
 const flagName = (f) => FLAG_NAME[f] ?? f ?? '이 나라';
 
+/* ── 다이묘 — 힘으로 여는 문 (§A-11 일본) ─────────────────────────
+   ★ 조선소 화면이 «이 부두는 바깥 배를 받지 않는다»를 말하지만, **어느 집이 남았는지**는
+     한자리에서 봐야 목표가 된다. ⚠️ 동아시아에 있을 때만 낸다 — 딴 바다에서는 뜻이 없다. */
+function daimyoCard() {
+  if (regionOf(city.id) !== 'eastasia') return null;
+  const list = daimyoProgress();
+  const tier = list[0]?.tier ?? 0;
+  const open = list.filter((d) => d.open).length;
+  return el('div.panel', {}, [
+    el('h3', {}, [
+      el('span', { text: '다이묘' }),
+      el('span', { text: `${open}/${list.length}집 · 이쪽 선단 ${tier}`,
+        style: { fontSize: '11px', color: '#8f8878', letterSpacing: 0 } }),
+    ]),
+    el('div.ctr-sub', { style: { color: '#8f8878' },
+      html: '<b>사고파는 것과 거점은 막히지 않는다.</b> 닫힌 것은 <b>조선소와 상관</b>뿐이고,'
+          + ' 그 집의 수군보다 세지면 열린다.' }),
+    ...list.map((d) => el('div.ctr-sub', {
+      style: d.open ? { color: '#8fbf8a' } : null,
+      html: `${d.open ? '✓' : '·'} <b>${d.name}</b> — 수군 ${d.strength}`
+          + (d.open ? (d.slain ? ' · 꺾었다' : ' · 넘어섰다') : ` · ${d.strength + 1} 이상이 필요하다`)
+          + `<br><span style="opacity:.7;margin-left:12px">${d.ports.map((p) => p.name).join(' · ')}</span>`,
+    })),
+  ]);
+}
+
 /* ── 조정(朝廷) — 작위와 개항 · §A-11 조선 ─────────────────────────
    ★ **화면이 말하지 않으면 규칙은 없는 것과 같다** — 이 저장소가 세 회차 연속 밟은 자리다.
      그래서 이 카드는 «지금 무엇이 열려 있고, 다음 칸이 무엇을 여는가»를 전부 적는다.
@@ -2794,6 +2822,8 @@ function goalTab() {
     fold('hegemony', hegemonyCard(), false, `${hegemonyAll().have}/9 바다`),
     /* 조정 — 한반도 갈래에만 뜬다(§A-11 조선). 아직 부름이 없으면 무엇을 해야 오는지만 말한다. */
     fold('royal', royalCard(), false, royalProgress().title ?? null),
+    /* 다이묘 — 동아시아에서만 뜬다(§A-11 일본). 조선소가 왜 닫혔는지의 지도다. */
+    fold('daimyo', daimyoCard(), false, null),
   ];
 }
 

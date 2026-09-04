@@ -19,6 +19,8 @@ import {
 import {
   state, ship, cargoUsed, hire, repair, HIRE_UNIT, REPAIR_UNIT, repairUnit,
   yardNext, canUpgradeYard, upgradeYard, yardBusy, yardBuilding, industryPathHint, regionOf,
+  /* §A-11 일본 — 다이묘가 아직 인정하지 않은 부두 */
+  daimyoGate, daimyoOf,
   /* 나라가 짓는 조선소(C-18) — 값은 `data.js: CIVIC`, 규칙은 `state.js` */
   civicBuilding, civicProgress,
   /* 원양 문턱 — 「왜 지금 고쳐야 하나」를 수리 줄이 말한다(2026-08-28) */
@@ -477,6 +479,22 @@ const inScope = (key) => inScopeAs(shipScope, key);
 function shipTab() {
   const upgradeCard = yardUpgradeCard();
   const rows = [];
+
+  /* ★ 다이묘의 문(§A-11 일본) — **배가 0종인 이유를 목록 맨 앞에서 말한다.**
+     ⚠️ 처음에 `yardUpgradeCard()` 안에 넣었는데 그 카드는 `fold`가 **접어 두는** 자리라
+       화면에 있으면서 안 보였다 — 접힌 안에 있는 설명은 없는 것과 같다(실제로 프로브가
+       «조선소 화면이 아무 말도 안 한다»를 냈다). 목록 위로 뺀다.
+     ⛔ 입항도 거점도 안 막히므로 **여기 말고는 막힌 티가 안 난다.** */
+  const gate = daimyoGate('slipway', state.at);
+  if (gate) {
+    const d = daimyoOf(state.at);
+    rows.push(el('div.ctr-line', { style: { color: '#c98a6a' },
+      html: '<b>이 부두는 바깥 배를 받지 않는다</b>' }));
+    rows.push(el('div.ctr-sub', { style: { color: '#c98a6a' }, text: gate }));
+    if (d?.line) rows.push(el('div.ctr-sub', { style: { color: '#c9b98a' }, text: d.line }));
+    rows.push(el('div.ctr-sub', { style: { color: '#8f8878', marginBottom: '6px' },
+      text: '사고파는 것과 거점은 그대로다 — 닫힌 것은 조선소와 상관뿐이다.' }));
+  }
   const seenKey = preview || state.shipKey;
   const all = Object.keys(SHIPS).sort(shipOrder(state.at));
   const shown = all.filter((k) => inScope(k) || k === seenKey);
