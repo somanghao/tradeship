@@ -12,7 +12,9 @@ import { GOODS, GOOD_BY_ID, CITIES, CITY_BY_ID, SHIPS, OFFICER, HOLDINGS, HOLDIN
          /* 상단 — 세 갈래의 문턱(`pressAt`·`helpAt`)과 사주 보상을 화면 말로 옮길 때만 읽는다 */
          GUILD,
          /* 입항세 셋째 겹(총자산 누진)을 화면 말로 옮길 때만 읽는다 — 회차 28 다-1 */
-         TARIFF_SCALE } from '../data.js';
+         TARIFF_SCALE,
+         /* 자리(座) — §A-11 명. 값과 임기를 화면 말로 옮길 때만 읽는다 */
+         SEAT } from '../data.js';
 import {
   state, ship, cargoUsed, cargoFree, buy, sell, repair,
   marketTag, tagRank, pushLog, gunCap, playerTroops, REPAIR_UNIT,
@@ -31,6 +33,8 @@ import {
   officerCut, officerDeferred,
   priceOf, voyageDays, neighborsOf,
   buyService, figureFee, activeBoons, repairUnit, infamyHere, infamyTariffUp, tariffCutPreview,
+  /* 자리(座) — §A-11 명. `job:'官'`이 여는 문이라 `service`와 나란히 쓴다 */
+  seatSellerOK, seatCity, seatAt, seatPrice, buySeat,
   /* 세력 2단계 — 웃돈·자격·선단 달력 */
   gripMarkup, enrollOffer, buyEnroll, convoyDue,
   activeBounty, rosterOpenIn, bountyTipPrice, buyBountyTip, tamePrice, tamePirate,
@@ -2423,6 +2427,29 @@ function talkTo(f) {
       },
     });
   }
+  /* ★ 자리(座) — §A-11 명. **`job:'官'`인 사람이면 파는 것과 별개로 자리를 연다.**
+     감합을 파는 태감도 인(引)을 끊는 서리도, 「그 자리에 앉은 사람」이라는 점은 같다.
+     ⚠️ 명 13항구에서만 열린다(`seatCity`) — 다른 바다의 官은 이 단추가 안 뜬다. */
+  const canSeat = seatSellerOK(f) && seatCity(city.id);
+  const seatLive = canSeat ? seatAt(city.id) : null;
+  if (canSeat && !seatLive) {
+    const sf = seatPrice(city.id);
+    actions.push({
+      label: `자리값을 치른다 (${sf.toLocaleString('ko-KR')}닢)`,
+      onClick: () => {
+        const r = buySeat(city.id);
+        if (!r.ok) return toast(r.reason, 'bad');
+        pushLog(`${city.name}의 ${f.name}에게 자리값을 치렀다 — ${r.days}일 (−${r.fee.toLocaleString('ko-KR')}닢).`, 'good');
+        refreshHUD();
+        modal({
+          title: f.name,
+          body: (f.lines?.done ? `<span style="color:#c9b98a">${f.lines.done}</span><br><br>` : '') + r.line,
+          actions: [{ label: '알겠다', onClick: () => after() }],
+        });
+      },
+    });
+  }
+
   actions.push({ label: '자리를 뜬다' });
 
   /* ★ 결함 C — 세를 깎는 서비스(permit·smuggle)는 부관·갈래 특전이 이미 바닥(`BOON.tariffFloor`)에
@@ -2441,6 +2468,17 @@ function talkTo(f) {
             + ` — 사도 세는 그대로다.</span>`)
     : '';
 
+  /* 자리가 무엇인지 화면이 말해야 한다 — *"규칙이 서 있는데 화면이 말하지 않는다"*가
+     이 저장소의 3회차 연속 함정이다. 자리는 **세를 깎지 않는다**는 것을 먼저 적는다. */
+  const seatLine = !canSeat ? ''
+    : seatLive
+      ? `<br><br><span style="color:#8aa87a">자리가 서 있다 — ${seatLive.until - state.day}일 남았다`
+        + ` (거점 정가 · 관의 일감 +${Math.round(SEAT.contractUp * 100)}%).</span>`
+      : `<br><br><span style="opacity:.75">자리값(常例) ${seatPrice(city.id).toLocaleString('ko-KR')}닢 · ${SEAT.days}일`
+        + ` — 이 항구의 거점을 정가에 사고(지금은 ${Math.round(SEAT.noSeatUp * 100)}% 비싸다),`
+        + ` 관에서 나오는 일감이 ${Math.round(SEAT.contractUp * 100)}% 커진다.`
+        + `<br>세는 한 푼도 안 깎인다. 자리를 여럿 두면 어사의 눈에 든다.</span>`;
+
   modal({
     title: f.name,
     body: head
@@ -2448,7 +2486,8 @@ function talkTo(f) {
             ? `<br><br><span style="opacity:.75">파는 것 — ${SERVICE_LABEL[f.service]}`
               + (f.fee ? ` · 오늘 값 ${fee.toLocaleString('ko-KR')}닢` : ' · 값은 받지 않는다')
               + `</span>${previewLine}`
-            : ''),
+            : '')
+        + seatLine,
     actions,
   });
 }

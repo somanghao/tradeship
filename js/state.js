@@ -5,7 +5,7 @@ import {
   CANNONS, CANNON_KEYS, CANNON_REFUND, TROOPS, TROOP_REFUND, MELEE_SLOTS,
   REFITS, SHOTS, MARKET, CURRENTS, TARIFF, CITY_TARIFF, SPREAD, CONTRACT, OFFICER,
   /* 두 회차가 같은 줄에 이름을 더했다 — 부동산·브레이크(#5·#6)와 계절(#4). 둘 다 필요하다. */
-  ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
+  ROUTE_RISK, ROUTE_SEASON, SEASON, riskKey, SHOCK, INLAND_ODDS, BOON, SEAT, ROSTER, INFAMY, ORIGIN_BY_ID, DEFAULT_ORIGIN,
   SEA_ORIGINS, seaOriginAt,
   HOLDINGS, HOLDING_KEYS, HOLDING, ESTATE_KEYS, ESTATE, BANKRUPT, HULL, wreckShipOf, YARD_UPGRADE, YARD, CIVIC, ENDING, HEGEMONY,
   CONSIGN, LINE, FACTION, FACTION_TIES,
@@ -191,6 +191,11 @@ export const state = {
     repair: {},              // 도시 → 만료일. 그 항구 선장인이 수리를 깎아준다
     reroll: {},              // 도시 → 갈아 준 주문의 slot. 큰 일감을 다시 물어온다
     loan: null,              // { principal, owed, due } — 갚을 때까지 하나만
+    /* 자리(座) — 도시 → `{ until, tier }`. 명의 지방 관리에게 치른 관례(常例)다.
+       `smuggle`과 **같은 모양**(도시 id → 만료)이라 세이브가 그대로 탄다.
+       ★ `tier`는 **만료돼도 안 줄어든다** — 갱신하러 다시 오는 것이 이 인물의 값어치이고,
+         전임자가 왜 갈렸는지 다들 알기 때문에 다음 사람은 더 비싸다. → `js/data.js: SEAT` */
+    seat: {},
   },
   known: new Set(['venezia']),
   everOwned: new Set(['hulk']),   // 한 번이라도 몰아 본 선종 — 상위 선박 해금 조건(SHIPS[].requires)
@@ -701,7 +706,7 @@ export function holdingPrice(kind, cityId = state.at) {
   if (h.grades) return estatePrice(kind, estateGrade(kind, cityId) + 1, cityId);
   /* ⚠️ `priceByIndustry`(공업력에 비례하던 부두값) 분기는 사라졌다 — C-18에서 부두가
      거점 목록을 떠났고, 그 값 공식을 쓰던 유일한 거점이었다. */
-  return h.priceBase + (c.size ?? 1) * (h.priceBySize ?? 0);
+  return Math.round((h.priceBase + (c.size ?? 1) * (h.priceBySize ?? 0)) * seatUpcharge(cityId));
 }
 
 /* ── 수익형 부동산 (#5) ────────────────────────────────────────
@@ -722,7 +727,7 @@ export function estatePrice(kind, grade, cityId = state.at) {
   const g = estateDef(kind, grade);
   const c = CITY_BY_ID[cityId];
   if (!g || !c) return Infinity;
-  return g.priceBase + (c.size ?? 1) * (g.priceBySize ?? 0);
+  return Math.round((g.priceBase + (c.size ?? 1) * (g.priceBySize ?? 0)) * seatUpcharge(cityId));
 }
 
 /** 한 등급 올리는 값 — 자리와 자재를 그대로 쓰므로 **차액**이다 */
@@ -2563,7 +2568,9 @@ export function contractFactionOK(cityId) {
 /** 그 세력이 지금 이것을 파는가 — 안 팔면 **거절 문구**를 돌려준다(팔면 null).
     ★ 무엇이 막히는지는 그 세력이 **무엇을 파느냐**(`sells`)로 갈린다 —
       종이(카르타스)·순서(감합)·세(카피툴레이션)가 전부 `BOON.permit` 한 자리에 붙어 있다. */
-const SELLS_FOR = { permit: ['paper', 'order', 'toll'] };
+/* ★ `seat`(자리)는 **`order`를 파는 세력만** 막을 수 있다 — 명의 시박사가 그것이다.
+   원수(`refuseAt`)면 값을 더 받는 것이 아니라 아예 안 받는다: 관계가 무는 것은 세율이 아니라 접근권이다. */
+const SELLS_FOR = { permit: ['paper', 'order', 'toll'], seat: ['order'] };
 export function sellBlocked(cityId, service = 'permit') {
   const fid = factionOfCity(cityId);
   const f = FACTIONS[fid];
@@ -2933,6 +2940,108 @@ export function rollFactionRaid(days = 1) {
 }
 
 /** 지금 이 항구에서 누리고 있는 혜택 — 화면이 "무엇이 걸려 있나"를 보여줄 때 쓴다 */
+/* ── 자리(座) — 명의 지방 관리에게 치르는 관례(常例) ────────────────
+   §A-11 명. 값·경위·⛔금지는 `js/data.js: SEAT`에 적었다. 여기는 규칙만 둔다.
+   ★ **`regard`와 분리해 둔다.** 자리값이 `regard`를 올리고 그것이 세율을 깎으면
+     `check-factions` ⑤(이중과세 금지)가 FAIL한다 — 자리는 세율에 한 자리도 안 닿는다.
+   ★ **날마다 깎는 후크를 만들지 않는다.** 만료는 `until`을 **읽을 때** 견준다
+     (`crewRepAt`과 같은 규약) — 그래야 `advanceDays`/`waitDays` 두 입구 문제가 애초에 안 생긴다. */
+
+/** 그 항구에 자리를 살 수 있는 사람이 앉아 있는가 — **`job:'官'`이 열쇠다.**
+    ★ 문서(`service`)를 파는 것과 자리를 여는 것은 다른 층이다. 한 인물이 둘 다 한다:
+      감합을 파는 태감도, 인(引)을 끊는 서리도, 그 자리에 앉은 사람이라는 점은 같다.
+    ⚠️ 인물 명부는 `world.js`에 있고 state는 그쪽을 import 못 한다(순환 참조) —
+      그래서 **화면이 인물을 넘겨준다**(`figuresAt(city).find((f) => f.job === '官')`). */
+export function seatSellerOK(f) { return f?.job === '官'; }
+
+/** 지금 살아 있는 자리 — 없으면 `null`. 만료는 읽을 때 견준다. */
+export function seatAt(cityId = state.at) {
+  const s = state.boons?.seat?.[cityId];
+  return s && (s.until ?? 0) > state.day ? s : null;
+}
+
+/** 지금까지 이 항구에서 몇 번째 자리인가 — **만료돼도 안 줄어든다**(경질의 대가) */
+export function seatTier(cityId = state.at) {
+  return state.boons?.seat?.[cityId]?.tier ?? 0;
+}
+
+/** 자리를 살 수 있는 항구인가 — **명 13항구뿐이다**(성(省) 표가 그 명단이다).
+    ⚠️ 이 문이 없으면 할증이 **아홉 바다 전체**에 붙는다. 마카오(포르투갈)·쌍서·계롱처럼
+      명 깃발이 아닌 항구는 여기 없고, 그래서 쌍서는 「자리를 안 사도 되는 항구」로 남는다. */
+export function seatCity(cityId) {
+  return Object.values(SEAT.provinces).some((list) => list.includes(cityId));
+}
+
+/** 거점값에 붙는 곱 — **자리가 없으면 비싸다. 못 사는 것이 아니다.**
+    ⛔ `canBuyHolding`은 한 줄도 안 고친다(§A-11 · 동아시아 패권 ①이 이 기능에 잠기면 안 된다). */
+export function seatUpcharge(cityId = state.at) {
+  if (!seatCity(cityId) || seatAt(cityId)) return 1;
+  return 1 + SEAT.noSeatUp;
+}
+
+/** 살아 있는 자리 수 — 감찰 확률이 이것에 비례한다 */
+export function seatCount() {
+  return Object.keys(state.boons?.seat ?? {}).filter((c) => seatAt(c)).length;
+}
+
+/** 같은 성(省)에 살아 있는 자리가 있으면 값이 깎인다 — 「소문이 옆 고을로 간다」 */
+export function seatSpreadOff(cityId) {
+  for (const list of Object.values(SEAT.provinces)) {
+    if (!list.includes(cityId)) continue;
+    if (list.some((c) => c !== cityId && seatAt(c))) return SEAT.spread;
+    return 0;
+  }
+  return 0;
+}
+
+/** 자리값 — `bySize × size × 1.45^tier`에서 같은 성의 할인을 뺀다 */
+export function seatPrice(cityId = state.at) {
+  const c = CITY_BY_ID[cityId];
+  if (!c) return Infinity;
+  const raw = SEAT.bySize * (c.size ?? 1) * Math.pow(1 + SEAT.step, seatTier(cityId));
+  return Math.round(raw * (1 - seatSpreadOff(cityId)));
+}
+
+/** 값을 치르고 자리를 얻는다. ⚠️ **선불이라 빚이 안 생긴다** — 그 성질을 지킨다. */
+export function buySeat(cityId = state.at) {
+  const c = CITY_BY_ID[cityId];
+  if (!c) return { ok: false, reason: '여기가 아니다' };
+  if (seatAt(cityId)) return { ok: false, reason: '이미 이 항구에 자리가 있다' };
+  /* ★ 원수(regard ≤ refuseAt)면 값을 더 받는 것이 아니라 **아예 안 받는다** —
+     관계가 무는 것은 세율이 아니라 접근권이다(`permit`이 이미 그렇게 판정한다). */
+  const refused = sellBlocked(cityId, 'seat');
+  if (refused) return { ok: false, reason: refused };
+  const fee = seatPrice(cityId);
+  if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
+  state.gold -= fee;
+  book('outgo', 'port', fee);
+  const b = (state.boons ??= {});
+  const seats = (b.seat ??= {});
+  const tier = (seats[cityId]?.tier ?? 0) + 1;
+  seats[cityId] = { until: state.day + SEAT.days, tier };
+  return { ok: true, fee, tier, days: SEAT.days,
+           line: `${c.name}에서 ${SEAT.days}일 동안 자리가 선다 — 거점을 정가에 사고, `
+               + `관에서 나오는 일감이 ${Math.round(SEAT.contractUp * 100)}% 커진다.`
+               + (tier > 1 ? `<br><span style="opacity:.75">${tier}번째 자리다. 다음은 더 비싸다.</span>` : '') };
+}
+
+/** ★ 감찰(監察) — 살아 있는 자리 수에 비례한다. 입항할 때 한 번 묻는다.
+    걸리면 **그 항구의 자리가 환불 없이 사라지고** 시박사와의 사이가 상한다.
+    ⚠️ 짐을 뺏는 몫은 여기서 새로 세지 않는다 — 임검(`seizeCargo`)을 그대로 쓴다
+      (새 몰수식을 만들면 「3닢에 2,000닢」이 재발한다). */
+export function rollSeatAudit(cityId = state.at, r = Math.random()) {
+  const n = seatCount();
+  if (!n || !seatAt(cityId)) return null;
+  const p = Math.min(SEAT.auditCap, SEAT.auditPer * n);
+  if (r >= p) return null;
+  /* ★ 자리는 죽이되 `tier`는 남긴다 — 다음에 다시 사면 더 비싸다(경질의 대가).
+     `until: 0`으로 두면 `seatAt`이 죽은 것으로 읽고 `seatTier`는 그대로 센다. */
+  const tier = state.boons.seat[cityId]?.tier ?? 1;
+  state.boons.seat[cityId] = { until: 0, tier };
+  addRegard('shibosi', SEAT.auditRegard, 'audit');
+  return { city: cityId, n, p };
+}
+
 export function activeBoons(cityId = state.at) {
   const b = state.boons ?? {};
   const out = [];
@@ -2947,6 +3056,11 @@ export function activeBoons(cityId = state.at) {
   }
   if ((b.repair?.[cityId] ?? 0) > state.day) {
     out.push({ kind: 'repair', text: `수리 −${Math.round(BOON.repairOff * 100)}%`, until: b.repair[cityId] });
+  }
+  if (seatAt(cityId)) {
+    out.push({ kind: 'seat',
+               text: `자리 (거점 정가 · 일감 +${Math.round(SEAT.contractUp * 100)}%)`,
+               until: b.seat[cityId].until });
   }
   if (b.loan) out.push({ kind: 'loan', text: `빚 ${b.loan.owed.toLocaleString('ko-KR')}닢`, until: b.loan.due });
   return out;
@@ -2968,7 +3082,7 @@ export function figureFee(f) {
 export function buyService(f, cityId = state.at) {
   const fee = figureFee(f);
   if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
-  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null });
+  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null, seat: {} });
   const rid = REGION_OF_CITY[cityId];
   const pay = () => { state.gold -= fee; if (fee) book('outgo', 'port', fee); };
 
@@ -3284,8 +3398,14 @@ export function contractOffer(cityId = state.at, day = state.day) {
      걸린 큰 배의 일감을 눌러 놓고 있었다). 값싼 물건이 걸렸을 때만 실제로 문다. */
   const qhi = Math.max(CONTRACT.qtyFloor, Math.round(cap * CONTRACT.qtyCap));
   const qty = Math.max(CONTRACT.qtyFloor, Math.min(qhi, Math.round(target / Math.max(1, unit * mul))));
-  // 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
-  const pay = Math.round(unit * qty * mul * (1 + officerPerk('contractUp') + originPerk('contractUp', cityId)));
+  /* 부관이 계약서를 짚으면 보수가 오른다 (수량은 그대로 — 규모가 아니라 조건을 고치는 것이다)
+     ★ **자리(座)도 같은 자리에 더한다**(§A-11 명) — *"순서는 규칙이 아니라 내 재량이오"*의
+       정확한 번역이다: 관에서 나오는 일감을 먼저, 크게 받는다. **수량은 안 건드린다** —
+       실어 나르는 것은 그대로이고 값만 오른다. `officerPerk`와 나란히 **합**으로 더해
+       곱셈 폭주를 피한다. */
+  const pay = Math.round(unit * qty * mul
+    * (1 + officerPerk('contractUp') + originPerk('contractUp', cityId)
+         + (seatAt(cityId) ? SEAT.contractUp : 0)));
 
   /* ★ 직선이 아니라 **실제로 가는 길**이다(C-3 · 위 `hopDays` 주석).
      2홉 안에 길이 없으면 예전처럼 직선으로 떨어뜨린다 — 일감이 사라지지는 않게. */
@@ -3383,7 +3503,7 @@ export function payFine(amount, why = '', { ledger = true } = {}) {
   const owed = amount - paid;
   if (owed <= 0) return { paid, owed: 0 };
 
-  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null });
+  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null, seat: {} });
   if (b.loan) {
     b.loan.owed += owed;                       // 이미 빚이 있으면 얹는다
   } else {
@@ -3939,7 +4059,7 @@ export function buyBountyTip(def) {
   if (!def?.id) return { ok: false, reason: '이 소식은 팔 것이 없다' };
   const fee = bountyTipPrice(def);
   if (fee > state.gold) return { ok: false, reason: `금화가 ${(fee - state.gold).toLocaleString('ko-KR')}닢 모자란다` };
-  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null });
+  const b = (state.boons ??= { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null, seat: {} });
   state.gold -= fee;
   book('outgo', 'port', fee);
   b.bounty = { id: def.id, until: state.day + ROSTER.tipDays };
@@ -6799,7 +6919,7 @@ export function resetGame(at = DEFAULT_START, originId = null) {
     regard: {}, _regardAge: 0, regardWhy: {},
     /* 새 판은 아무도 꺾지 않았다 — 안 비우면 옛 판의 패권이 그대로 살아난다 */
     mates: {}, scouted: {}, bountyDue: [], slain: {}, tamed: {}, ended: 0, endedNine: 0,
-    boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null },
+    boons: { permit: {}, smuggle: {}, repair: {}, reroll: {}, loan: null, seat: {} },
     officer: initialOfficer(),   // 에이미는 첫날부터 타고 있다 — 고르는 인물이 아니다
     bands: [], hired: [],        // 갑판이 비어 있다. 술집에서 사람을 모아야 배가 뜬다
     /* 술집 평판(다-3) — 체불·이탈이 항구에 남긴 자국 `{ <항구id>: { v, day } }`.

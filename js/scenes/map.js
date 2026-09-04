@@ -18,7 +18,7 @@ import {
 import {
   state, ship, neighborsOf, voyageDays, distanceBetween, advanceDays,
   rollSeaEvent, pickEnemy, legRegion, pushLog, cargoFree, routeWindLabel, voyageCost, windName,
-  knowPort, priceKnown, priceOf, payBounties, activeBounty, insuranceShare,
+  knowPort, priceKnown, priceOf, payBounties, activeBounty, insuranceShare, rollSeatAudit,
   hasOfficer, officerPerk, routeDangerLabel,
   jettisonOdds, jettisonCargo, banditRaid, payToll, activeShocks, trimLoadout,
   /* 입항세를 **운영비용으로 보여 주는** 자리(#6) · 관선 임검 */
@@ -423,6 +423,15 @@ function arrive(cityId) {
     // '의'는 형태가 하나뿐이라 조사 함수를 부를 자리가 아니다 (GRAND #18 — `josa(names,'의')`가
     // `잠비undefined`를 찍었다. `josa()`는 이제 짝이 아닌 인자에 경고를 내지만, 부르지 않는 것이 맞다)
     pushLog(`부두에서 소문을 들었다 — ${names}의 시세가 열렸다.`, 'good');
+  }
+  /* ★ 감찰(監察) — §A-11 명. **자리를 넓힐수록 어사의 눈에 든다.**
+     입항 한 번에 한 번 묻는다(살아 있는 자리 하나당 2%p · 상한 14%p). 걸리면 그 항구의
+     자리가 환불 없이 사라지고 시박사와 사이가 상한다 — **원인과 결과가 같은 화면에서**
+     나야 하므로 로그를 여기서 적는다. ⚠️ 짐을 뺏는 몫은 임검(`seizeCargo`)이 따로 한다. */
+  const audit = rollSeatAudit(cityId);
+  if (audit) {
+    pushLog(`순안어사(巡按御史)가 ${c.name}의 장부를 뒤졌다 — 자리가 없어지고 값은 돌려받지 못했다.`
+          + ` (자리 ${audit.n}곳을 두고 있었다)`, 'bad');
   }
   for (const line of newsLines(news, 2)) pushLog(`[소문] ${line.text}`, line.kind);
   refreshHUD();

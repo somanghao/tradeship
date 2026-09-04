@@ -1,4 +1,4 @@
-// check-figures.mjs — 항구 인물(`FIGURES`) 71명이 실제로 말을 하고 물건을 파는가
+// check-figures.mjs — 항구 인물(`FIGURES`)이 실제로 말을 하고 물건을 파는가
 //
 // ★ **이 검사가 없던 동안 인물은 무방비였다.** `check-world` ⑦의 id 유일성은 `ALL_PIRATES`·
 //   `ALL_MATES`만 보고 `ALL_FIGURES`는 빠져 있었으며, `check-evidence`엔 `figures`라는 개념
@@ -27,12 +27,14 @@
 //   ⑧ ★ **한 항구에 같은 service가 둘이면 뒤엣것은 죽은 인물이다** — 화면과 규칙이
 //      `figuresAt(city).find((f) => f.service === …)`로 **첫 하나만** 집는다
 //      (`payday.js:177` · `scenes/port.js:900` · `scenes/map.js:1201`)
+//   ⑨ ★ 자리(座)를 파는 관리가 명 13항구에 하나씩 있는가 — 없으면 `SEAT`가 열린다고
+//      선언한 항구에서 아무도 안 판다(§A-11 명)
 //
 //   node tools/check-figures.mjs
 //   node tools/check-figures.mjs --seats   ← 인물이 앉지 않은 항구를 권역별로 센다(§A-11)
 
 import { readFileSync } from 'node:fs';
-import { CITY_BY_ID } from '../js/data.js';
+import { CITY_BY_ID, SEAT } from '../js/data.js';
 import { ALL_FIGURES } from '../js/regions/index.js';
 import { REGION_BY_ID, REGION_OF_CITY, REGIONS } from '../js/map/geo.js';
 
@@ -152,6 +154,21 @@ for (const f of ALL_FIGURES) {
     const key = `${c}|${f.service}`;
     if (!bySeat.has(key)) bySeat.set(key, []);
     bySeat.get(key).push(who);
+  }
+}
+
+/* ⑨ ★ **자리(座)를 파는 사람이 명 13항구에 하나씩 있는가** — §A-11 명.
+   `job:'官'`이 자리를 여는 열쇠라(`state.js: seatSellerOK`), 官이 없는 항구는 `SEAT`가
+   *열린다고 선언해 놓고* 아무도 안 파는 자리가 된다. **화면에 단추가 안 뜨고 경고도 없다** —
+   이 파일이 막으려는 「조용한 실패」의 정확한 모양이라 실패(exit 1)로 둔다.
+   ⚠️ 규칙(`SEAT.provinces`)과 명부(`FIGURES`)의 **코드-코드 불일치**이므로 경고가 아니다. */
+const seatCities = Object.values(SEAT.provinces ?? {}).flat();
+for (const c of seatCities) {
+  if (!CITY_BY_ID[c]) { bad('자리', `SEAT.provinces에 없는 항구 '${c}'가 있다`); continue; }
+  const has = ALL_FIGURES.some((f) => f.job === '官' && (f.at === c || f.roam?.includes(c)));
+  if (!has) {
+    bad('자리', `${CITY_BY_ID[c].name} — 자리를 살 수 있다고 선언됐는데 관리(job:'官')가 없다 `
+      + `(단추가 안 뜨고 경고도 안 난다)`);
   }
 }
 

@@ -70,12 +70,15 @@ import {
   yardReach, yardShortOf,
   routeSeason, inRouteSeason, seasonFactor, seasonRiskMul, routeSeasonLabel, seasonOf,
   routeFactor, windFactor, currentFactor, YEAR_DAYS,
+  /* §A-11 명 — 자리(座) */
+  seatCity, seatAt, seatTier, seatPrice, seatUpcharge, seatCount, buySeat, rollSeatAudit,
+  seatSellerOK, holdingPrice,
 } from '../js/state.js';
 import { HOLDING, BANKRUPT, MONTH_DAYS, HULL, wreckShipOf, seaOriginAt, WORKS, WORK, CHAIN, CHAIN_BY_ID, FACTION, ROSTER, FLEET, COMMENDA, CONTRACT, ALL_PIRATES,
   PRIVATE_TRADE, INSURANCE_RATE, INSURANCE_RATE_OCEAN, TOTAL_LOSS, HEGEMONY,
   HOLDINGS, HOLDING_KEYS, ESTATE_KEYS, ESTATE, TARIFF_SCALE, SEIZURE, SEA_EVENTS, SHOCK, SEASON,
   /* C-18 — 나라가 짓는 조선소 */
-  CIVIC, ENCOUNTER_LOSS, FACTIONS } from '../js/data.js';
+  CIVIC, ENCOUNTER_LOSS, FACTIONS, SEAT } from '../js/data.js';
 import { readFileSync } from 'node:fs';
 import { LIVE_LANES } from '../js/regions/index.js';
 import { saveGame, savedHead, loadGame, clearSave, stashSave, restoreStashed } from '../js/save.js';
@@ -2623,4 +2626,80 @@ resetGame();
   ok(!Object.keys(state.guilds).length && !Object.keys(state.guildFlow).length
      && !state.guildBoon && !state.guildOffer,
      'resetGame이 상단 장부·자국·신용장·사주를 전부 비운다');
+
+  /* ══ 자리(座) — §A-11 명 ═══════════════════════════════════════
+     ★ 이 절이 지키는 것은 **막지 않는다**와 **세를 안 건드린다** 둘이다.
+       둘 중 하나라도 무너지면 동아시아 패권이 이 기능에 잠기거나 `check-factions` ⑤가 깨진다. */
+  {
+    resetGame(); state.gold = 5_000_000;
+    const MING = Object.values(SEAT.provinces).flat();
+
+    // ① 자리는 **명 13항구에서만** 열린다 — 아니면 할증이 아홉 바다 전체에 붙는다
+    ok(MING.length === 13 && MING.every((c) => seatCity(c))
+       && !seatCity('macau') && !seatCity('busanpo') && !seatCity('venezia'),
+       `자리는 명 13항구에서만 열린다 (마카오·부산포·베네치아는 아니다)`);
+
+    // ② `job:'官'`이 여는 열쇠다 — 문서를 파는 것과 다른 층이다
+    ok(seatSellerOK({ job: '官' }) && !seatSellerOK({ job: 'broker' }) && !seatSellerOK(null),
+       `자리를 여는 열쇠는 job:'官'이다`);
+
+    // ③ 값은 규모에 비례하고 두 번째부터 누진한다
+    const p1 = seatPrice('guangzhou');
+    buySeat('guangzhou');
+    state.boons.seat.guangzhou.until = 0;          // 임기가 끝난 것으로 둔다
+    const p2 = seatPrice('guangzhou');
+    ok(p1 === SEAT.bySize * 3 && Math.abs(p2 - p1 * (1 + SEAT.step)) <= 1,
+       `자리값이 누진한다 — ${p1.toLocaleString('ko-KR')} → ${p2.toLocaleString('ko-KR')}닢`);
+
+    // ④ ★ **막지 않고 값을 물린다** — 자리가 없으면 거점이 비싸지만 살 수는 있다
+    resetGame(); state.gold = 5_000_000;
+    const noSeat = holdingPrice('warehouse', 'ningbo');
+    buySeat('ningbo');
+    const withSeat = holdingPrice('warehouse', 'ningbo');
+    ok(seatUpcharge('ningbo') === 1 && Math.abs(noSeat / withSeat - (1 + SEAT.noSeatUp)) < 0.01,
+       `★ 자리가 없으면 거점이 ${Math.round(SEAT.noSeatUp * 100)}% 비싸다 — 막는 것이 아니다`
+       + ` (${withSeat.toLocaleString('ko-KR')} → ${noSeat.toLocaleString('ko-KR')}닢)`);
+
+    // ⑤ ★ **세는 한 자리도 안 움직인다**(`check-factions` ⑤ 이중과세 금지와 같은 선)
+    resetGame(); state.gold = 5_000_000;
+    const tBefore = tariffRate('guangzhou');
+    buySeat('guangzhou');
+    ok(tariffRate('guangzhou') === tBefore,
+       `★ 자리를 사도 입항세가 안 움직인다 — ${(tBefore * 100).toFixed(3)}% 그대로`);
+
+    // ⑥ 다른 바다는 값이 안 변한다 — 할증이 새어 나가면 세계가 통째로 비싸진다
+    resetGame();
+    ok(seatUpcharge('venezia') === 1 && seatUpcharge('busanpo') === 1 && seatUpcharge('macau') === 1,
+       '명이 아닌 항구의 거점값은 자리와 무관하다');
+
+    // ⑦ 계약 보수가 커지되 **수량은 그대로다** — 실어 나르는 것은 안 변한다
+    resetGame(); state.gold = 5_000_000;
+    const cb = contractOffer('ningbo', 0);
+    buySeat('ningbo');
+    const ca = contractOffer('ningbo', 0);
+    ok(!cb || (ca.pay > cb.pay && ca.qty === cb.qty),
+       `자리가 있으면 관의 일감이 커진다 — ${cb ? cb.pay.toLocaleString('ko-KR') : '-'} → `
+       + `${ca ? ca.pay.toLocaleString('ko-KR') : '-'}닢 (수량 ${cb ? cb.qty : '-'} 그대로)`);
+
+    // ⑧ 감찰 — 걸리면 자리가 사라지되 `tier`는 남는다(다음이 더 비싸다)
+    resetGame(); state.gold = 5_000_000;
+    buySeat('ningbo');
+    const hit = rollSeatAudit('ningbo', 0);        // r=0이면 반드시 걸린다
+    ok(hit && !seatAt('ningbo') && seatTier('ningbo') === 1,
+       '감찰에 걸리면 자리가 사라지고 값은 안 돌려받는다 — 다만 tier는 남는다');
+    ok(!rollSeatAudit('ningbo', 0), '죽은 자리는 다시 감찰에 안 걸린다');
+
+    // ⑨ 세이브 왕복 — `boons` 안이라 그릇은 그대로여야 한다
+    resetGame(); state.gold = 5_000_000;
+    buySeat('guangzhou'); buySeat('penghu');
+    const snapSeat = JSON.stringify(state.boons.seat);
+    saveGame(); resetGame(); loadGame();
+    ok(JSON.stringify(state.boons.seat) === snapSeat && seatCount() === 2,
+       `세이브 왕복에 자리가 그대로다 — ${seatCount()}곳`);
+
+    // ⑩ 새 판은 자리도 처음부터다 — `??=`로만 만들면 옛 판의 자리가 살아남는다(state.tamed가 실제로 그랬다)
+    state.boons.seat = { guangzhou: { until: 9999, tier: 3 } };
+    resetGame();
+    ok(!Object.keys(state.boons.seat ?? {}).length, 'resetGame이 자리를 비운다');
+  }
 }
